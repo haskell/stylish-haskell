@@ -4,10 +4,10 @@ module StylishHaskellImports
 
 
 --------------------------------------------------------------------------------
-import Data.Either (lefts, rights)
-import Data.Function (on)
-import Data.List (groupBy, sort)
-import Control.Arrow ((|||))
+import           Control.Arrow ((|||))
+import           Data.Either   (lefts, rights)
+import           Data.Function (on)
+import           Data.List     (groupBy, sort)
 
 
 --------------------------------------------------------------------------------

@@ -4,12 +4,12 @@ module Main
 
 
 --------------------------------------------------------------------------------
-import Control.Monad ((>=>))
-import System.Environment (getArgs)
+import           Control.Monad         ((>=>))
+import           System.Environment    (getArgs)
 
 
 --------------------------------------------------------------------------------
-import StylishHaskellImports
+import           StylishHaskellImports
 
 
 --------------------------------------------------------------------------------
