@@ -28,3 +28,11 @@ into
     import           Herp.Derp.Internals
 
     herp = putStrLn "import Hello world"
+
+Status
+------
+
+Doesn't yet work for multi-line imports, e.g.,
+
+    import Control.Monad (forM,
+        replicateM)
