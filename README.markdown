@@ -1,4 +1,4 @@
 stylish-haskell-imports
 =======================
 
-TODO
+Align and sort imports in Haskell source code

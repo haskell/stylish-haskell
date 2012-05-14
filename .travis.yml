@@ -1,0 +1,3 @@
+language: haskell
+before_script:
+  - "cabal install HUnit test-framework test-framework-hunit"

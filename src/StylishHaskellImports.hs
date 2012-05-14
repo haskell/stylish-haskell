@@ -45,7 +45,7 @@ stylishImports longest is = map stylishImport $ sort is
     pad str = str ++ replicate (longest - length str) ' '
 
     stylishImport (Import n q "") = unwords
-        ["import", stylishQualified q, pad n]
+        ["import", stylishQualified q, n]
     stylishImport (Import n q e)  = unwords
         ["import", stylishQualified q, pad n, e]
 
