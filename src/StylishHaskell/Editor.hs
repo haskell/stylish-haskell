@@ -1,18 +1,14 @@
-module Block
-    ( Lines
-
-    , Block (..)
-    , blockLength
-    , fromSrcSpanInfo
-    , moveBlock
-    , adjacent
-    , merge
-    , overlapping
-    
-    , Change (..)
-    , moveChange
-    , changeExtraLines
-    , makeChanges
+--------------------------------------------------------------------------------
+-- | This module provides you with a line-based editor. It's main feature is
+-- that you can specify multiple changes at the same time, e.g.:
+--
+-- > [deleteLine 3, changeLine 4 ["Foo"]]
+--
+-- when this is evaluated, we take into account that 4th line will become the
+-- 3rd line before it needs changing.
+module StylishHaskell.Editor
+    ( Change (..)
+    , applyChanges
 
     , change
     , changeLine
@@ -23,57 +19,7 @@ module Block
 
 
 --------------------------------------------------------------------------------
-import           Control.Arrow                   (arr, (>>>), (&&&))
-import           Language.Haskell.Exts.Annotated
-
-
---------------------------------------------------------------------------------
-type Lines = [String]
-
-
---------------------------------------------------------------------------------
--- Indicates a line span
-data Block = Block
-    { blockStart :: Int
-    , blockEnd   :: Int
-    } deriving (Eq, Ord, Show)
-
-
---------------------------------------------------------------------------------
-blockLength :: Block -> Int
-blockLength (Block start end) = end - start + 1
-
-
---------------------------------------------------------------------------------
-fromSrcSpanInfo :: SrcSpanInfo -> Block
-fromSrcSpanInfo = srcInfoSpan >>>
-    srcSpanStartLine &&& srcSpanEndLine >>>
-    arr (uncurry Block)
-
-
---------------------------------------------------------------------------------
-moveBlock :: Int -> Block -> Block
-moveBlock offset (Block start end) = Block (start + offset) (end + offset)
-
-
---------------------------------------------------------------------------------
-adjacent :: Block -> Block -> Bool
-adjacent b1 b2 = follows b1 b2 || follows b2 b1
-  where
-    follows (Block _ e1) (Block s2 _) = e1 + 1 == s2
-
-
---------------------------------------------------------------------------------
-merge :: Block -> Block -> Block
-merge (Block s1 e1) (Block s2 e2) = Block (min s1 s2) (max e1 e2)
-
-
---------------------------------------------------------------------------------
-overlapping :: [Block] -> Bool
-overlapping blocks =
-    any (uncurry overlapping') $ zip blocks (drop 1 blocks)
-  where
-    overlapping' (Block _ e1) (Block s2 _) = e1 >= s2
+import           StylishHaskell.Block
 
 
 --------------------------------------------------------------------------------
@@ -96,10 +42,11 @@ changeExtraLines (Change block ls) = length ls - blockLength block
 
 
 --------------------------------------------------------------------------------
-makeChanges :: [Change] -> Lines -> Lines
-makeChanges changes
-    | overlapping blocks = error
-        "Block.makeChanges: refusing to make overlapping changes"
+applyChanges :: [Change] -> Lines -> Lines
+applyChanges changes
+    | overlapping blocks = error $
+        "StylishHaskell.Editor.applyChanges: " ++
+        "refusing to make overlapping changes"
     | otherwise          = go 1 changes
   where
     blocks = map changeBlock changes

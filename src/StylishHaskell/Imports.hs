@@ -1,37 +1,42 @@
-import Control.Applicative ((<$>))
-import Language.Haskell.Exts.Annotated
-import System.Environment (getArgs)
-import Data.Ord (comparing)
-import Data.Maybe (isJust, maybeToList)
-import Data.List (sortBy)
-import Control.Arrow ((&&&))
+--------------------------------------------------------------------------------
+module StylishHaskell.Imports
+    ( stylish
+    ) where
 
 
 --------------------------------------------------------------------------------
-import Block
-import qualified Block
-import qualified Block as Herp
+import           Control.Arrow                   ((&&&))
+import           Data.List                       (sortBy)
+import           Data.Maybe                      (isJust, maybeToList)
+import           Data.Ord                        (comparing)
+import qualified Language.Haskell.Exts.Annotated as H
 
 
 --------------------------------------------------------------------------------
-imports :: Module l -> [ImportDecl l]
-imports (Module _ _ _ is _) = is
-imports _                   = []
+import           StylishHaskell.Block
+import           StylishHaskell.Editor
+import           StylishHaskell.Parse
 
 
 --------------------------------------------------------------------------------
-importName :: ImportDecl l -> String
-importName i = let (ModuleName _ n) = importModule i in n
+imports :: H.Module l -> [H.ImportDecl l]
+imports (H.Module _ _ _ is _) = is
+imports _                     = []
 
 
 --------------------------------------------------------------------------------
-longestImport :: [ImportDecl l] -> Int
+importName :: H.ImportDecl l -> String
+importName i = let (H.ModuleName _ n) = H.importModule i in n
+
+
+--------------------------------------------------------------------------------
+longestImport :: [H.ImportDecl l] -> Int
 longestImport = maximum . map (length . importName)
 
 
 --------------------------------------------------------------------------------
 -- | Groups adjacent imports into larger import blocks
-groupAdjacent :: [ImportDecl Block] -> [(Block, [ImportDecl Block])]
+groupAdjacent :: [H.ImportDecl Block] -> [(Block, [H.ImportDecl Block])]
 groupAdjacent = foldr step []
   where
     -- This code is ugly and not optimal, and no fucks were given.
@@ -39,30 +44,30 @@ groupAdjacent = foldr step []
         (_, [])                 -> (b1, [imp]) : is
         (xs, ((b2, imps) : ys)) -> (merge b1 b2, imp : imps) : (xs ++ ys)
       where
-        b1 = ann imp
+        b1 = H.ann imp
 
 
 --------------------------------------------------------------------------------
 -- | Compare imports for ordering
-compareImports :: ImportDecl l -> ImportDecl l -> Ordering
-compareImports = comparing (importName &&& importQualified)
+compareImports :: H.ImportDecl l -> H.ImportDecl l -> Ordering
+compareImports = comparing (importName &&& H.importQualified)
 
 
 --------------------------------------------------------------------------------
-prettyImport :: Int -> ImportDecl l -> String
+prettyImport :: Int -> H.ImportDecl l -> String
 prettyImport longest imp = unwords $ concat
     [ ["import"]
-    , [if importQualified imp then "qualified" else "         "]
+    , [if H.importQualified imp then "qualified" else "         "]
     , [(if hasExtras then padRight longest else id) (importName imp)]
-    , ["as " ++ as | ModuleName _ as <- maybeToList $ importAs imp]
-    , [prettyPrint specs | specs <- maybeToList $ importSpecs imp]
+    , ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp]
+    , [H.prettyPrint specs | specs <- maybeToList $ H.importSpecs imp]
     ]
   where
-    hasExtras = isJust (importAs imp) || isJust (importSpecs imp)
+    hasExtras = isJust (H.importAs imp) || isJust (H.importSpecs imp)
 
 
 --------------------------------------------------------------------------------
-prettyImportGroup :: Int -> [ImportDecl Block] -> Lines
+prettyImportGroup :: Int -> [H.ImportDecl Block] -> Lines
 prettyImportGroup longest = map (prettyImport longest) . sortBy compareImports
 
 
@@ -72,26 +77,12 @@ padRight len str = str ++ replicate (len - length str) ' '
 
 
 --------------------------------------------------------------------------------
-changes :: Module Block -> [Change]
-changes module' =
+stylish :: Lines -> Module -> [Change]
+stylish _ (module', _) =
     [ change block (prettyImportGroup longest importGroup)
     | (block, importGroup) <- groups
     ]
   where
-    imps    = imports module'
+    imps    = imports $ fmap fromSrcSpanInfo module'
     longest = longestImport imps
     groups  = groupAdjacent imps
-
-
---------------------------------------------------------------------------------
-main :: IO ()
-main = do
-    (filePath : _) <- getArgs
-    parseResult    <- parseFile filePath
-    contents       <- lines <$> readFile filePath
-    case parseResult of
-        ParseOk x       -> do
-            let module' = fmap fromSrcSpanInfo x
-            putStr $ unlines $ makeChanges (changes module') contents
-        ParseFailed l s ->
-            error $ "Parse failed: " ++ show l ++ " " ++ show s

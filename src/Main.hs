@@ -1,21 +1,34 @@
+--------------------------------------------------------------------------------
 module Main
     ( main
     ) where
 
 
 --------------------------------------------------------------------------------
-import           Control.Monad         ((>=>))
-import           System.Environment    (getArgs)
+import           Control.Applicative    ((<$>))
+import           Data.Maybe             (listToMaybe)
+import           System.Environment     (getArgs)
 
 
 --------------------------------------------------------------------------------
-import           StylishHaskellImports
+import           StylishHaskell.Editor
+import           StylishHaskell.Imports
+import           StylishHaskell.Parse
+
+
+--------------------------------------------------------------------------------
+stylishHaskell :: Maybe FilePath -> String -> IO ()
+stylishHaskell mfp string = case parseModule mfp string of
+    Left err      -> error err
+    Right module' -> do
+        let ls      = lines string
+            changes = stylish ls module'
+        putStr $ unlines $ applyChanges changes ls
 
 
 --------------------------------------------------------------------------------
 main :: IO ()
 main = do
-    args <- getArgs
-    case args of
-        [] -> interact stylishHaskellImports
-        _  -> mapM_ (readFile >=> putStr . stylishHaskellImports) args
+    filePath <- listToMaybe <$> getArgs
+    contents <- maybe getContents readFile filePath
+    stylishHaskell filePath contents

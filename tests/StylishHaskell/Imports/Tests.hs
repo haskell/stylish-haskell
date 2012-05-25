@@ -1,4 +1,4 @@
-module StylishHaskellImports.Tests
+module StylishHaskell.Imports.Tests
     ( tests
     ) where
 
@@ -10,7 +10,9 @@ import           Test.HUnit                     ((@=?))
 
 
 --------------------------------------------------------------------------------
-import           StylishHaskellImports         
+import           StylishHaskell.Editor
+import           StylishHaskell.Imports
+import           StylishHaskell.Parse
 
 
 --------------------------------------------------------------------------------
@@ -22,7 +24,7 @@ tests = testGroup "StylishHaskellImports.Tests"
 
 --------------------------------------------------------------------------------
 case01 :: Test
-case01 = testCase "case 01" $ expected @=? stylishHaskellImports input
+case01 = testCase "case 01" $ expected @=? testStylish input
   where
     input = unlines
         [ "module Herp where"
@@ -47,3 +49,12 @@ case01 = testCase "case 01" $ expected @=? stylishHaskellImports input
         , ""
         , "herp = putStrLn \"import Hello world\""
         ]
+
+
+--------------------------------------------------------------------------------
+testStylish :: String -> String
+testStylish str = case parseModule Nothing str of
+    Left err      -> error err
+    Right module' -> unlines $ applyChanges (stylish ls module') ls
+  where
+    ls = lines str

@@ -4,15 +4,15 @@ module Main
 
 
 --------------------------------------------------------------------------------
-import           Test.Framework              (defaultMain)
+import           Test.Framework               (defaultMain)
 
 
 --------------------------------------------------------------------------------
-import qualified StylishHaskellImports.Tests
+import qualified StylishHaskell.Imports.Tests
 
 
 --------------------------------------------------------------------------------
 main :: IO ()
 main = defaultMain
-    [ StylishHaskellImports.Tests.tests
+    [ StylishHaskell.Imports.Tests.tests
     ]
