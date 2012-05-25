@@ -21,6 +21,7 @@ Executable stylish-haskell-imports
     StylishHaskell.Block
     StylishHaskell.Editor
     StylishHaskell.Imports
+    StylishHaskell.LanguagePragmas
     StylishHaskell.Parse
 
   Build-depends:
@@ -35,6 +36,7 @@ Test-suite stylish-haskell-imports-tests
 
   Other-modules:
     StylishHaskell.Imports.Tests
+    StylishHaskell.LanguagePragmas.Tests
 
   Build-depends:
     HUnit                >= 1.2 && < 1.3,
