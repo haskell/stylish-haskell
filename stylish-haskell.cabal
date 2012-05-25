@@ -1,8 +1,8 @@
-Name:          stylish-haskell-imports
+Name:          stylish-haskell
 Version:       0.1.0.0
-Synopsis:      Align and sort imports in Haskell source code
-Description:   Align and sort imports in Haskell source code
-Homepage:      https://github.com/jaspervdj/stylish-haskell-imports
+Synopsis:      Haskell code prettifier
+Description:   Haskell code prettifier
+Homepage:      https://github.com/jaspervdj/stylish-haskell
 License:       BSD3
 License-file:  LICENSE
 Author:        Jasper Van der Jeugt <m@jaspervdj.be>
@@ -12,7 +12,7 @@ Category:      Language
 Build-type:    Simple
 Cabal-version: >= 1.8
 
-Executable stylish-haskell-imports
+Executable stylish-haskell
   Ghc-options:    -Wall -O2
   Hs-source-dirs: src
   Main-is:        Main.hs
@@ -28,7 +28,7 @@ Executable stylish-haskell-imports
     base             >= 4    && < 5,
     haskell-src-exts >= 1.13 && < 1.14
 
-Test-suite stylish-haskell-imports-tests
+Test-suite stylish-haskell-tests
   Ghc-options:    -Wall
   Hs-source-dirs: src tests
   Main-is:        TestSuite.hs
@@ -48,4 +48,4 @@ Test-suite stylish-haskell-imports-tests
 
 Source-repository head
   Type:     git
-  Location: https://github.com/jaspervdj/websockets
+  Location: https://github.com/jaspervdj/stylish-haskell

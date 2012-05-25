@@ -1,5 +1,5 @@
-stylish-haskell-imports
-=======================
+stylish-haskell
+===============
 
 [![Build Status](https://secure.travis-ci.org/jaspervdj/stylish-haskell-imports.png?branch=master)](http://travis-ci.org/jaspervdj/stylish-haskell-imports)
 
