@@ -1,3 +1,36 @@
+module Block
+    ( Lines
+
+    , Block (..)
+    , blockLength
+    , fromSrcSpanInfo
+    , moveBlock
+    , adjacent
+    , merge
+    , overlapping
+    
+    , Change (..)
+    , moveChange
+    , changeExtraLines
+    , makeChanges
+
+    , change
+    , changeLine
+    , delete
+    , deleteLine
+    , insert
+    ) where
+
+
+--------------------------------------------------------------------------------
+import           Control.Arrow                   (arr, (>>>), (&&&))
+import           Language.Haskell.Exts.Annotated
+
+
+--------------------------------------------------------------------------------
+type Lines = [String]
+
+
 --------------------------------------------------------------------------------
 -- Indicates a line span
 data Block = Block
@@ -12,8 +45,27 @@ blockLength (Block start end) = end - start + 1
 
 
 --------------------------------------------------------------------------------
+fromSrcSpanInfo :: SrcSpanInfo -> Block
+fromSrcSpanInfo = srcInfoSpan >>>
+    srcSpanStartLine &&& srcSpanEndLine >>>
+    arr (uncurry Block)
+
+
+--------------------------------------------------------------------------------
 moveBlock :: Int -> Block -> Block
 moveBlock offset (Block start end) = Block (start + offset) (end + offset)
+
+
+--------------------------------------------------------------------------------
+adjacent :: Block -> Block -> Bool
+adjacent b1 b2 = follows b1 b2 || follows b2 b1
+  where
+    follows (Block _ e1) (Block s2 _) = e1 + 1 == s2
+
+
+--------------------------------------------------------------------------------
+merge :: Block -> Block -> Block
+merge (Block s1 e1) (Block s2 e2) = Block (min s1 s2) (max e1 e2)
 
 
 --------------------------------------------------------------------------------
@@ -22,10 +74,6 @@ overlapping blocks =
     any (uncurry overlapping') $ zip blocks (drop 1 blocks)
   where
     overlapping' (Block _ e1) (Block s2 _) = e1 >= s2
-
-
---------------------------------------------------------------------------------
-type Lines = [String]
 
 
 --------------------------------------------------------------------------------
@@ -107,18 +155,3 @@ deleteLine start = delete (Block start start)
 -- | Insert something /before/ the given lines
 insert :: Int -> Lines -> Change
 insert start = Change (Block start (start - 1))
-
-
---------------------------------------------------------------------------------
-test :: Lines
-test = makeChanges
-    [ deleteLine 1
-    , insert 3 ["import Data.Set"]
-    , changeLine 5 ["bar :: ()", "bar = ()"]
-    ]
-    [ "module Foo where"
-    , ""
-    , "import Data.Map"
-    , ""
-    , "foo = undefined"
-    ]
