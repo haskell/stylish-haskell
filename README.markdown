@@ -3,8 +3,15 @@ stylish-haskell
 
 [![Build Status](https://secure.travis-ci.org/jaspervdj/stylish-haskell-imports.png?branch=master)](http://travis-ci.org/jaspervdj/stylish-haskell-imports)
 
-What
-----
+Introduction
+------------
+
+A simple Haskell code prettifier
+
+Features
+--------
+
+### Imports
 
 Align and sort imports in Haskell source code
 
@@ -14,23 +21,34 @@ Turns
 
     import qualified Data.Map  as M
     import Control.Monad
-    import       Data.Map     (Map)
+    import       Data.Map     (lookup, (!), insert, Map)
 
     import Herp.Derp.Internals
 
     herp = putStrLn "import Hello world"
+
+    module Herp where
+
 
 into
 
     module Herp where
 
     import           Control.Monad
-    import           Data.Map            (Map)
+    import           Data.Map            (Map, insert, lookup, (!))
     import qualified Data.Map            as M
 
     import           Herp.Derp.Internals
 
     herp = putStrLn "import Hello world"
+
+### {-# LANGUAGE #-} pragmas
+
+(TODO)
+
+### Trailing whitespace
+
+Removal of trailing whitespace.
 
 Status
 ------
