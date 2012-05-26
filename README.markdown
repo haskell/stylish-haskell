@@ -11,44 +11,9 @@ A simple Haskell code prettifier
 Features
 --------
 
-### Imports
-
-Align and sort imports in Haskell source code
-
-Turns
-
-    module Herp where
-
-    import qualified Data.Map  as M
-    import Control.Monad
-    import       Data.Map     (lookup, (!), insert, Map)
-
-    import Herp.Derp.Internals
-
-    herp = putStrLn "import Hello world"
-
-    module Herp where
-
-
-into
-
-    module Herp where
-
-    import           Control.Monad
-    import           Data.Map            (Map, insert, lookup, (!))
-    import qualified Data.Map            as M
-
-    import           Herp.Derp.Internals
-
-    herp = putStrLn "import Hello world"
-
-### {-# LANGUAGE #-} pragmas
-
-(TODO)
-
-### Trailing whitespace
-
-Removal of trailing whitespace.
+- Align and sort `import` statements
+- Groups and wraps `{-# LANGUAGE #-}` pragmas (TODO)
+- Removes trailing whitespace
 
 Status
 ------
