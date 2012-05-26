@@ -22,6 +22,7 @@ Executable stylish-haskell
     StylishHaskell.Editor
     StylishHaskell.Imports
     StylishHaskell.LanguagePragmas
+    StylishHaskell.TrailingWhitespace
     StylishHaskell.Parse
 
   Build-depends:
@@ -37,6 +38,8 @@ Test-suite stylish-haskell-tests
   Other-modules:
     StylishHaskell.Imports.Tests
     StylishHaskell.LanguagePragmas.Tests
+    StylishHaskell.Tests.Util
+    StylishHaskell.TrailingWhitespace.Tests
 
   Build-depends:
     HUnit                >= 1.2 && < 1.3,
