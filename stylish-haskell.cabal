@@ -24,6 +24,7 @@ Executable stylish-haskell
     StylishHaskell.LanguagePragmas
     StylishHaskell.TrailingWhitespace
     StylishHaskell.Parse
+    StylishHaskell.Util
 
   Build-depends:
     base             >= 4    && < 5,

@@ -9,6 +9,7 @@ import           Control.Arrow                   ((&&&))
 import           Data.List                       (sortBy)
 import           Data.Maybe                      (isJust, maybeToList)
 import           Data.Ord                        (comparing)
+import Data.Char (isAlpha)
 import qualified Language.Haskell.Exts.Annotated as H
 
 
@@ -16,6 +17,7 @@ import qualified Language.Haskell.Exts.Annotated as H
 import           StylishHaskell.Block
 import           StylishHaskell.Editor
 import           StylishHaskell.Parse
+import           StylishHaskell.Util
 
 
 --------------------------------------------------------------------------------
@@ -54,6 +56,31 @@ compareImports = comparing (importName &&& H.importQualified)
 
 
 --------------------------------------------------------------------------------
+-- | The implementation is a bit hacky to get proper sorting for input specs:
+-- constructors first, followed by functions, and then operators.
+compareImportSpecs :: H.ImportSpec l -> H.ImportSpec l -> Ordering
+compareImportSpecs = comparing key
+  where
+    key :: H.ImportSpec l -> (Int, Int, String)
+    key (H.IVar _ x)         = let n = nameToString x in (1, operator n, n)
+    key (H.IAbs _ x)         = (0, 0, nameToString x)
+    key (H.IThingAll _ x)    = (0, 0, nameToString x)
+    key (H.IThingWith _ x _) = (0, 0, nameToString x)
+
+    operator []      = 0  -- But this should not happen
+    operator (x : _) = if isAlpha x then 0 else 1
+
+
+--------------------------------------------------------------------------------
+-- | Sort the input spec list inside an 'H.ImportDecl'
+sortImportSpecs :: H.ImportDecl l -> H.ImportDecl l
+sortImportSpecs imp = imp {H.importSpecs = fmap sort $ H.importSpecs imp}
+  where
+    sort (H.ImportSpecList l h specs) = H.ImportSpecList l h $
+        sortBy compareImportSpecs specs
+
+
+--------------------------------------------------------------------------------
 prettyImport :: Int -> H.ImportDecl l -> String
 prettyImport longest imp = unwords $ concat
     [ ["import"]
@@ -83,6 +110,6 @@ stylish ls (module', _) = flip applyChanges ls
     | (block, importGroup) <- groups
     ]
   where
-    imps    = imports $ fmap fromSrcSpanInfo module'
+    imps    = map sortImportSpecs $ imports $ fmap fromSrcSpanInfo module'
     longest = longestImport imps
     groups  = groupAdjacent imps
