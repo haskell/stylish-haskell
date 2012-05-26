@@ -41,10 +41,13 @@ prettyPragmas pragmas' =
 
 
 --------------------------------------------------------------------------------
-stylish :: Lines -> Module -> [Change]
-stylish _ (module', _) = insert loc (prettyPragmas uniques) : deletes
+stylish :: Lines -> Module -> Lines
+stylish ls (module', _)
+    | null pragmas' = ls
+    | otherwise     = applyChanges changes ls
   where
     pragmas' = pragmas $ fmap fromSrcSpanInfo module'
     deletes  = map (delete . fst) pragmas'
     uniques  = nub $ sort $ concatMap snd pragmas'
     loc      = firstLocation pragmas'
+    changes  = insert loc (prettyPragmas uniques) : deletes

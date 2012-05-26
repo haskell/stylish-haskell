@@ -77,8 +77,8 @@ padRight len str = str ++ replicate (len - length str) ' '
 
 
 --------------------------------------------------------------------------------
-stylish :: Lines -> Module -> [Change]
-stylish _ (module', _) =
+stylish :: Lines -> Module -> Lines
+stylish ls (module', _) = flip applyChanges ls
     [ change block (prettyImportGroup longest importGroup)
     | (block, importGroup) <- groups
     ]
