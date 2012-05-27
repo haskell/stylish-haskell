@@ -22,6 +22,7 @@ Executable stylish-haskell
     StylishHaskell.Editor
     StylishHaskell.Imports
     StylishHaskell.LanguagePragmas
+    StylishHaskell.Tabs
     StylishHaskell.TrailingWhitespace
     StylishHaskell.Parse
     StylishHaskell.Util
@@ -40,6 +41,7 @@ Test-suite stylish-haskell-tests
     StylishHaskell.Imports.Tests
     StylishHaskell.LanguagePragmas.Tests
     StylishHaskell.Tests.Util
+    StylishHaskell.Tabs.Tests
     StylishHaskell.TrailingWhitespace.Tests
 
   Build-depends:

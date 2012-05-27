@@ -15,6 +15,7 @@ import           StylishHaskell.Block
 import qualified StylishHaskell.Imports
 import qualified StylishHaskell.LanguagePragmas
 import           StylishHaskell.Parse
+import qualified StylishHaskell.Tabs
 import qualified StylishHaskell.TrailingWhitespace
 
 
@@ -43,5 +44,6 @@ main = do
     filters =
         [ StylishHaskell.Imports.stylish
         , StylishHaskell.LanguagePragmas.stylish
+        , StylishHaskell.Tabs.stylish
         , StylishHaskell.TrailingWhitespace.stylish
         ]

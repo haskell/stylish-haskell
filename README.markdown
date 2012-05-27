@@ -11,14 +11,7 @@ A simple Haskell code prettifier
 Features
 --------
 
-- Align and sort `import` statements
-- Groups and wraps `{-# LANGUAGE #-}` pragmas (TODO)
+- Aligns and sorts `import` statements
+- Groups and wraps `{-# LANGUAGE #-}` pragmas (WIP)
 - Removes trailing whitespace
-
-Status
-------
-
-Doesn't yet work for multi-line imports, e.g.,
-
-    import Control.Monad (forM,
-        replicateM)
+- Replaces tabs by four spaces

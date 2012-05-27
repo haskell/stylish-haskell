@@ -13,7 +13,7 @@ module StylishHaskell.Block
 
 
 --------------------------------------------------------------------------------
-import           Control.Arrow                   (arr, (>>>), (&&&))
+import           Control.Arrow                   (arr, (&&&), (>>>))
 import qualified Language.Haskell.Exts.Annotated as H
 
 
