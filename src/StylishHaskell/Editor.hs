@@ -7,7 +7,7 @@
 -- when this is evaluated, we take into account that 4th line will become the
 -- 3rd line before it needs changing.
 module StylishHaskell.Editor
-    ( Change (..)
+    ( Change
     , applyChanges
 
     , change
@@ -20,6 +20,7 @@ module StylishHaskell.Editor
 
 --------------------------------------------------------------------------------
 import           StylishHaskell.Block
+import           StylishHaskell.Stylish
 
 
 --------------------------------------------------------------------------------
@@ -65,13 +66,13 @@ applyChanges changes
         -- > new
         -- > (recurse)
         --
-        let Change block new = ch
+        let block      = changeBlock ch
             (pre, ls') = splitAt (blockStart block - n) ls
             (_, post)  = splitAt (blockLength block) ls'
             extraLines = changeExtraLines ch
             chs'       = map (moveChange extraLines) chs
             n'         = blockStart block + blockLength block + extraLines
-        in pre ++ new ++ go n' chs' post
+        in pre ++ (changeLines ch) ++ go n' chs' post
 
 
 --------------------------------------------------------------------------------

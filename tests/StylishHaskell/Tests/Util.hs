@@ -4,12 +4,12 @@ module StylishHaskell.Tests.Util
 
 
 --------------------------------------------------------------------------------
-import           StylishHaskell.Block
 import           StylishHaskell.Parse
+import           StylishHaskell.Stylish
 
 
 --------------------------------------------------------------------------------
-testStylish :: (Lines -> Module -> Lines) -> String -> String
+testStylish :: Stylish -> String -> String
 testStylish stylish str = case parseModule Nothing str of
     Left err      -> error err
     Right module' -> unlines $ stylish ls module'

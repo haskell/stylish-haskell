@@ -5,8 +5,7 @@ module StylishHaskell.Tabs
 
 
 --------------------------------------------------------------------------------
-import           StylishHaskell.Block
-import           StylishHaskell.Parse
+import           StylishHaskell.Stylish
 
 
 --------------------------------------------------------------------------------
@@ -18,5 +17,5 @@ removeTabs = concatMap removeTabs'
 
 
 --------------------------------------------------------------------------------
-stylish :: Lines -> Module -> Lines
+stylish :: Stylish
 stylish ls _ = map removeTabs ls

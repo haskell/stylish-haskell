@@ -1,21 +1,16 @@
 --------------------------------------------------------------------------------
 module StylishHaskell.Parse
-    ( Module
-    , parseModule
+    ( parseModule
     ) where
 
 
 --------------------------------------------------------------------------------
 import           Data.Maybe                      (fromMaybe)
-
-
---------------------------------------------------------------------------------
 import qualified Language.Haskell.Exts.Annotated as H
 
 
 --------------------------------------------------------------------------------
--- | Concrete module type
-type Module = (H.Module H.SrcSpanInfo, [H.Comment])
+import           StylishHaskell.Stylish
 
 
 --------------------------------------------------------------------------------

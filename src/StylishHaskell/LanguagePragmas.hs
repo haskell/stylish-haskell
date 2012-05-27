@@ -1,5 +1,7 @@
 --------------------------------------------------------------------------------
-module StylishHaskell.LanguagePragmas where
+module StylishHaskell.LanguagePragmas
+    ( stylish
+    ) where
 
 
 --------------------------------------------------------------------------------
@@ -10,7 +12,7 @@ import qualified Language.Haskell.Exts.Annotated as H
 --------------------------------------------------------------------------------
 import           StylishHaskell.Block
 import           StylishHaskell.Editor
-import           StylishHaskell.Parse
+import           StylishHaskell.Stylish
 import           StylishHaskell.Util
 
 
@@ -35,7 +37,7 @@ prettyPragmas pragmas' =
 
 
 --------------------------------------------------------------------------------
-stylish :: Lines -> Module -> Lines
+stylish :: Stylish
 stylish ls (module', _)
     | null pragmas' = ls
     | otherwise     = applyChanges changes ls

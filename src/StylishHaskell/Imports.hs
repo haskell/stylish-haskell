@@ -6,17 +6,17 @@ module StylishHaskell.Imports
 
 --------------------------------------------------------------------------------
 import           Control.Arrow                   ((&&&))
+import           Data.Char                       (isAlpha)
 import           Data.List                       (sortBy)
 import           Data.Maybe                      (isJust, maybeToList)
 import           Data.Ord                        (comparing)
-import Data.Char (isAlpha)
 import qualified Language.Haskell.Exts.Annotated as H
 
 
 --------------------------------------------------------------------------------
 import           StylishHaskell.Block
 import           StylishHaskell.Editor
-import           StylishHaskell.Parse
+import           StylishHaskell.Stylish
 import           StylishHaskell.Util
 
 
@@ -104,7 +104,7 @@ padRight len str = str ++ replicate (len - length str) ' '
 
 
 --------------------------------------------------------------------------------
-stylish :: Lines -> Module -> Lines
+stylish :: Stylish
 stylish ls (module', _) = flip applyChanges ls
     [ change block (prettyImportGroup longest importGroup)
     | (block, importGroup) <- groups

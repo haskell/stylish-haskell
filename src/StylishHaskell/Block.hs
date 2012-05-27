@@ -1,8 +1,6 @@
 --------------------------------------------------------------------------------
 module StylishHaskell.Block
-    ( Lines
-
-    , Block (..)
+    ( Block (..)
     , blockLength
     , fromSrcSpanInfo
     , moveBlock
@@ -15,10 +13,6 @@ module StylishHaskell.Block
 --------------------------------------------------------------------------------
 import           Control.Arrow                   (arr, (&&&), (>>>))
 import qualified Language.Haskell.Exts.Annotated as H
-
-
---------------------------------------------------------------------------------
-type Lines = [String]
 
 
 --------------------------------------------------------------------------------
