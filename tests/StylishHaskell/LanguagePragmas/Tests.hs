@@ -34,6 +34,8 @@ case01 = testCase "case 01" $ expected @=? testStylish stylish input
         ]
 
     expected = unlines
-        [ "{-# LANGUAGE ScopedTypeVariables, TemplateHaskell, ViewPatterns #-}"
+        [ "{-# LANGUAGE ScopedTypeVariables #-}"
+        , "{-# LANGUAGE TemplateHaskell     #-}"
+        , "{-# LANGUAGE ViewPatterns        #-}"
         , "module Main where"
         ]

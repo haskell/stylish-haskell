@@ -5,7 +5,7 @@ module StylishHaskell.LanguagePragmas
 
 
 --------------------------------------------------------------------------------
-import           Data.List                       (intercalate, nub, sort)
+import           Data.List                       (nub, sort)
 import qualified Language.Haskell.Exts.Annotated as H
 
 
@@ -33,7 +33,11 @@ firstLocation = minimum . map (blockStart . fst)
 -- | TODO: multiple lines if longer than 80 columns
 prettyPragmas :: [String] -> Lines
 prettyPragmas pragmas' =
-    ["{-# LANGUAGE " ++ intercalate ", " pragmas' ++ " #-}"]
+    [ "{-# LANGUAGE " ++ padRight longest pragma ++ " #-}"
+    | pragma <- pragmas'
+    ]
+  where
+    longest = maximum $ map length pragmas'
 
 
 --------------------------------------------------------------------------------

@@ -22,9 +22,10 @@ Executable stylish-haskell
     StylishHaskell.Editor
     StylishHaskell.Imports
     StylishHaskell.LanguagePragmas
+    StylishHaskell.Parse
+    StylishHaskell.Stylish
     StylishHaskell.Tabs
     StylishHaskell.TrailingWhitespace
-    StylishHaskell.Parse
     StylishHaskell.Util
 
   Build-depends:

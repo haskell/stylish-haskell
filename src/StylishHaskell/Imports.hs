@@ -99,11 +99,6 @@ prettyImportGroup longest = map (prettyImport longest) . sortBy compareImports
 
 
 --------------------------------------------------------------------------------
-padRight :: Int -> String -> String
-padRight len str = str ++ replicate (len - length str) ' '
-
-
---------------------------------------------------------------------------------
 stylish :: Stylish
 stylish ls (module', _) = flip applyChanges ls
     [ change block (prettyImportGroup longest importGroup)
