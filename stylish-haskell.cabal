@@ -19,7 +19,7 @@ Description:
     <https://github.com/jaspervdj/stylish-haskell/blob/master/README.markdown>
 
 Executable stylish-haskell
-  Ghc-options:    -Wall -O2
+  Ghc-options:    -Wall
   Hs-source-dirs: src
   Main-is:        Main.hs
 
