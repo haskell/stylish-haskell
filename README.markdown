@@ -7,9 +7,10 @@ Introduction
 ------------
 
 A simple Haskell code prettifier. The goal is not to format all of the code in
-a file, since I find those kind of tools often "get in the way".
+a file, since I find those kind of tools often "get in the way". However,
+manually cleaning up import statements etc. gets tedious very quickly.
 
-Instead, this tool just tries to help where necessary.
+This tool tries to help where necessary without getting in the way.
 
 You can install it using `cabal install stylish-haskell`.
 
@@ -30,12 +31,10 @@ Example
 
 Turns:
 
-    -- | Some badly formatted Haskell code
-    
     {-# LANGUAGE ViewPatterns, TemplateHaskell #-}
     {-# LANGUAGE GeneralizedNewtypeDeriving,
-            ViewPatterns,
-            ScopedTypeVariables #-}
+                ViewPatterns,
+        ScopedTypeVariables #-}
     
     module Bad where
     
@@ -47,8 +46,6 @@ Turns:
 
 into:
 
-    -- | Some badly formatted Haskell code
-    
     {-# LANGUAGE GeneralizedNewtypeDeriving #-}
     {-# LANGUAGE ScopedTypeVariables        #-}
     {-# LANGUAGE TemplateHaskell            #-}

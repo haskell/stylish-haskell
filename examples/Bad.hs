@@ -1,9 +1,7 @@
--- | Some badly formatted Haskell code
-
 {-# LANGUAGE ViewPatterns, TemplateHaskell #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving,
-        ViewPatterns,
-        ScopedTypeVariables #-}
+            ViewPatterns,
+    ScopedTypeVariables #-}
 
 module Bad where
 
