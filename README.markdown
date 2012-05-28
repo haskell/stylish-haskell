@@ -20,7 +20,7 @@ Features
 - Aligns and sorts `import` statements
 - Groups and wraps `{-# LANGUAGE #-}` pragmas
 - Removes trailing whitespace
-- Replaces tabs by four spaces
+- Replaces tabs by four spaces (note that this is turned off by default)
 
 Feature requests are welcome! Use the [issue tracker] for that.
 
