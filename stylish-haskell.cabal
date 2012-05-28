@@ -1,7 +1,6 @@
 Name:          stylish-haskell
 Version:       0.1.0.0
 Synopsis:      Haskell code prettifier
-Description:   Haskell code prettifier
 Homepage:      https://github.com/jaspervdj/stylish-haskell
 License:       BSD3
 License-file:  LICENSE
@@ -11,6 +10,13 @@ Copyright:     2012 Jasper Van der Jeugt
 Category:      Language
 Build-type:    Simple
 Cabal-version: >= 1.8
+
+Description:
+    A Haskell code prettifier. For more information, see:
+
+    .
+
+    <https://github.com/jaspervdj/stylish-haskell/blob/master/README.markdown>
 
 Executable stylish-haskell
   Ghc-options:    -Wall -O2
