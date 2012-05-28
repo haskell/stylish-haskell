@@ -68,3 +68,13 @@ Just call
     :%!stylish-haskell
 
 or add a keybinding for it.
+
+Emacs integration
+-----------------
+
+[haskell-mode] for Emacs supports `stylish-haskell`. For configuration, see
+[Emacs/Formatting] on the HaskellWiki.
+
+
+[haskell-mode]: https://github.com/haskell/haskell-mode
+[Emacs/Formatting]: http://www.haskell.org/haskellwiki/Emacs/Formatting
