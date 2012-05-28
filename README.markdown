@@ -11,6 +11,8 @@ a file, since I find those kind of tools often "get in the way".
 
 Instead, this tool just tries to help where necessary.
 
+You can install it using `cabal install stylish-haskell`.
+
 Features
 --------
 
@@ -22,16 +24,6 @@ Features
 Feature requests are welcome! Use the [issue tracker] for that.
 
 [issue tracker]: https://github.com/jaspervdj/stylish-haskell/issues
-
-VIM integration
----------------
-
-Since it works as a filter it is pretty easy to integrate this with VIM.
-Just call
-
-    :%!stylish-haskell
-
-or add a keybinding for it.
 
 Example
 -------
@@ -69,3 +61,13 @@ into:
     
     import           Data.Map            (Map, keys, (!))
     import qualified Data.Map            as M
+
+VIM integration
+---------------
+
+Since it works as a filter it is pretty easy to integrate this with VIM.
+Just call
+
+    :%!stylish-haskell
+
+or add a keybinding for it.
