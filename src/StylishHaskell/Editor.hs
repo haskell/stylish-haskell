@@ -20,30 +20,29 @@ module StylishHaskell.Editor
 
 --------------------------------------------------------------------------------
 import           StylishHaskell.Block
-import           StylishHaskell.Stylish
 
 
 --------------------------------------------------------------------------------
 -- | Changes the lines indicated by the 'Block' into the given 'Lines'
-data Change = Change
+data Change a = Change
     { changeBlock :: Block
-    , changeLines :: Lines
+    , changeLines :: [a]
     } deriving (Eq, Show)
 
 
 --------------------------------------------------------------------------------
-moveChange :: Int -> Change -> Change
+moveChange :: Int -> Change a -> Change a
 moveChange offset (Change block ls) = Change (moveBlock offset block) ls
 
 
 --------------------------------------------------------------------------------
 -- | Number of additional lines introduced when a change is made.
-changeExtraLines :: Change -> Int
+changeExtraLines :: Change a -> Int
 changeExtraLines (Change block ls) = length ls - blockLength block
 
 
 --------------------------------------------------------------------------------
-applyChanges :: [Change] -> Lines -> Lines
+applyChanges :: [Change a] -> [a] -> [a]
 applyChanges changes
     | overlapping blocks = error $
         "StylishHaskell.Editor.applyChanges: " ++
@@ -77,29 +76,29 @@ applyChanges changes
 
 --------------------------------------------------------------------------------
 -- | Change a block of lines for some other lines
-change :: Block -> Lines -> Change
+change :: Block -> [a] -> Change a
 change = Change
 
 
 --------------------------------------------------------------------------------
 -- | Change a single line for some other lines
-changeLine :: Int -> Lines -> Change
+changeLine :: Int -> [a] -> Change a
 changeLine start = change (Block start start)
 
 
 --------------------------------------------------------------------------------
 -- | Delete a block of lines
-delete :: Block -> Change
+delete :: Block -> Change a
 delete block = Change block []
 
 
 --------------------------------------------------------------------------------
 -- | Delete a single line
-deleteLine :: Int -> Change
+deleteLine :: Int -> Change a
 deleteLine start = delete (Block start start)
 
 
 --------------------------------------------------------------------------------
 -- | Insert something /before/ the given lines
-insert :: Int -> Lines -> Change
+insert :: Int -> [a] -> Change a
 insert start = Change (Block start (start - 1))
