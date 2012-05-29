@@ -1,42 +1,42 @@
 --------------------------------------------------------------------------------
+{-# LANGUAGE DeriveDataTypeable #-}
 module Main
     ( main
     ) where
 
 
 --------------------------------------------------------------------------------
-import           Control.Applicative               ((<$>))
 import           Data.Maybe                        (listToMaybe)
-import           System.Environment                (getArgs)
+import           System.Console.CmdArgs
 
 
 --------------------------------------------------------------------------------
+import           StylishHaskell
 import qualified StylishHaskell.Imports
 import qualified StylishHaskell.LanguagePragmas
-import           StylishHaskell.Parse
-import           StylishHaskell.Stylish
 import qualified StylishHaskell.TrailingWhitespace
 
 
 --------------------------------------------------------------------------------
-runStylish :: Maybe FilePath -> Stylish -> Lines -> Lines
-runStylish mfp f ls = case parseModule mfp (unlines ls) of
-    Left err      -> error err  -- TODO: maybe return original lines?
-    Right module' -> f ls module'
+data StylishArgs = StylishArgs
+    { config :: Maybe FilePath
+    , files  :: [FilePath]
+    } deriving (Data, Show, Typeable)
 
 
 --------------------------------------------------------------------------------
-chainStylish :: Maybe FilePath -> [Stylish] -> Lines -> Lines
-chainStylish mfp filters = foldr (.) id filters'
-  where
-    filters' :: [Lines -> Lines]
-    filters' = map (runStylish mfp) filters
+stylishArgs :: StylishArgs
+stylishArgs = StylishArgs
+    { config = Nothing &= typFile &= help "Configuration file"
+    , files  = []      &= typFile &= args
+    } &= summary "stylish-haskell"
 
 
 --------------------------------------------------------------------------------
 main :: IO ()
 main = do
-    filePath <- listToMaybe <$> getArgs
+    sa <- cmdArgs stylishArgs
+    let filePath = listToMaybe $ files sa
     contents <- maybe getContents readFile filePath
     putStr $ unlines $ chainStylish filePath filters $ lines contents
   where
