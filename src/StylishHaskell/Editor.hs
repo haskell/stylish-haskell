@@ -25,7 +25,7 @@ import           StylishHaskell.Block
 --------------------------------------------------------------------------------
 -- | Changes the lines indicated by the 'Block' into the given 'Lines'
 data Change a = Change
-    { changeBlock :: Block
+    { changeBlock :: Block a
     , changeLines :: [a]
     } deriving (Eq, Show)
 
@@ -76,7 +76,7 @@ applyChanges changes
 
 --------------------------------------------------------------------------------
 -- | Change a block of lines for some other lines
-change :: Block -> [a] -> Change a
+change :: Block a -> [a] -> Change a
 change = Change
 
 
@@ -88,7 +88,7 @@ changeLine start = change (Block start start)
 
 --------------------------------------------------------------------------------
 -- | Delete a block of lines
-delete :: Block -> Change a
+delete :: Block a -> Change a
 delete block = Change block []
 
 

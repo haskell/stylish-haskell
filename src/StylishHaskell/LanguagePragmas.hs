@@ -25,7 +25,7 @@ pragmas _                     = []
 
 --------------------------------------------------------------------------------
 -- | The start of the first block
-firstLocation :: [(Block, [String])] -> Int
+firstLocation :: [(Block a, [String])] -> Int
 firstLocation = minimum . map (blockStart . fst)
 
 

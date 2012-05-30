@@ -1,6 +1,8 @@
 --------------------------------------------------------------------------------
 module StylishHaskell.Block
     ( Block (..)
+    , LineBlock
+    , SpanBlock
     , blockLength
     , fromSrcSpanInfo
     , moveBlock
@@ -17,43 +19,51 @@ import qualified Language.Haskell.Exts.Annotated as H
 
 --------------------------------------------------------------------------------
 -- | Indicates a line span
-data Block = Block
+data Block a = Block
     { blockStart :: Int
     , blockEnd   :: Int
     } deriving (Eq, Ord, Show)
 
 
 --------------------------------------------------------------------------------
-blockLength :: Block -> Int
+type LineBlock = Block String
+
+
+--------------------------------------------------------------------------------
+type SpanBlock = Block Char
+
+
+--------------------------------------------------------------------------------
+blockLength :: Block a -> Int
 blockLength (Block start end) = end - start + 1
 
 
 --------------------------------------------------------------------------------
-fromSrcSpanInfo :: H.SrcSpanInfo -> Block
+fromSrcSpanInfo :: H.SrcSpanInfo -> Block String
 fromSrcSpanInfo = H.srcInfoSpan >>>
     H.srcSpanStartLine &&& H.srcSpanEndLine >>>
     arr (uncurry Block)
 
 
 --------------------------------------------------------------------------------
-moveBlock :: Int -> Block -> Block
+moveBlock :: Int -> Block a -> Block a
 moveBlock offset (Block start end) = Block (start + offset) (end + offset)
 
 
 --------------------------------------------------------------------------------
-adjacent :: Block -> Block -> Bool
+adjacent :: Block a -> Block a -> Bool
 adjacent b1 b2 = follows b1 b2 || follows b2 b1
   where
     follows (Block _ e1) (Block s2 _) = e1 + 1 == s2
 
 
 --------------------------------------------------------------------------------
-merge :: Block -> Block -> Block
+merge :: Block a -> Block a -> Block a
 merge (Block s1 e1) (Block s2 e2) = Block (min s1 s2) (max e1 e2)
 
 
 --------------------------------------------------------------------------------
-overlapping :: [Block] -> Bool
+overlapping :: [Block a] -> Bool
 overlapping blocks =
     any (uncurry overlapping') $ zip blocks (drop 1 blocks)
   where

@@ -38,7 +38,8 @@ longestImport = maximum . map (length . importName)
 
 --------------------------------------------------------------------------------
 -- | Groups adjacent imports into larger import blocks
-groupAdjacent :: [H.ImportDecl Block] -> [(Block, [H.ImportDecl Block])]
+groupAdjacent :: [H.ImportDecl LineBlock]
+              -> [(LineBlock, [H.ImportDecl LineBlock])]
 groupAdjacent = foldr step []
   where
     -- This code is ugly and not optimal, and no fucks were given.
@@ -94,7 +95,7 @@ prettyImport longest imp = unwords $ concat
 
 
 --------------------------------------------------------------------------------
-prettyImportGroup :: Int -> [H.ImportDecl Block] -> Lines
+prettyImportGroup :: Int -> [H.ImportDecl LineBlock] -> Lines
 prettyImportGroup longest = map (prettyImport longest) . sortBy compareImports
 
 
