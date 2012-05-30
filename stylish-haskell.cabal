@@ -45,6 +45,7 @@ Executable stylish-haskell
     directory        >= 1.1  && < 1.2,
     filepath         >= 1.1  && < 1.4,
     haskell-src-exts >= 1.13 && < 1.14,
+    syb              >= 0.3  && < 0.4,
     yaml             >= 0.7  && < 0.8
 
 Test-suite stylish-haskell-tests
@@ -72,6 +73,7 @@ Test-suite stylish-haskell-tests
     directory        >= 1.1  && < 1.2,
     filepath         >= 1.1  && < 1.4,
     haskell-src-exts >= 1.13 && < 1.14,
+    syb              >= 0.3  && < 0.4,
     yaml             >= 0.7  && < 0.8
 
 Source-repository head
