@@ -1,3 +1,4 @@
 enabled:
   - LanguagePragmas
   - Imports
+  - UnicodeSyntax

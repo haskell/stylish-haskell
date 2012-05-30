@@ -1,5 +1,4 @@
 --------------------------------------------------------------------------------
-{-# LANGUAGE UnicodeSyntax #-}
 module StylishHaskell.Stylish.UnicodeSyntax
     ( stylish
     ) where
@@ -24,6 +23,7 @@ import           StylishHaskell.Util
 unicodeReplacements :: Map String String
 unicodeReplacements = M.fromList
     [ ("->", "→")
+    , ("=>", "⇒")
     ]
 
 
@@ -59,13 +59,24 @@ groupPerLine = M.toList . M.fromListWith (++) .
 
 
 --------------------------------------------------------------------------------
-types :: H.Module H.SrcSpanInfo -> Lines -> [((Int, Int), String)]
-types module' ls =
+typeFuns :: H.Module H.SrcSpanInfo -> Lines -> [((Int, Int), String)]
+typeFuns module' ls =
     [ (pos, "->")
     | H.TyFun _ t1 t2 <- everything module'
     , let start = H.srcSpanEnd $ H.srcInfoSpan $ H.ann t1
     , let end   = H.srcSpanStart $ H.srcInfoSpan $ H.ann t2
     , pos <- maybeToList $ between start end "->" ls
+    ]
+
+
+--------------------------------------------------------------------------------
+contexts :: H.Module H.SrcSpanInfo -> Lines -> [((Int, Int), String)]
+contexts module' ls =
+    [ (pos, "=>")
+    | context <- everything module' :: [H.Context H.SrcSpanInfo]
+    , point   <- H.srcInfoPoints $ H.ann context
+    , let (start, end) = (H.srcSpanStart point, H.srcSpanEnd point)
+    , pos <- maybeToList $ between start end "=>" ls
     ]
 
 
@@ -100,4 +111,6 @@ stylish :: Stylish
 stylish ls (module', _) = applyChanges changes ls
   where
     changes = replaceAll perLine ls
-    perLine = sort $ groupPerLine $ types module' ls
+    perLine = sort $ groupPerLine $
+        typeFuns module' ls ++
+        contexts module' ls
