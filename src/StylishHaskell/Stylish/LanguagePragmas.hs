@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
-module StylishHaskell.LanguagePragmas
+module StylishHaskell.Stylish.LanguagePragmas
     ( stylish
     ) where
 

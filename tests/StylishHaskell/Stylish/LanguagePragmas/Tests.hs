@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
-module StylishHaskell.Tabs.Tests
+module StylishHaskell.Stylish.LanguagePragmas.Tests
     ( tests
     ) where
 
@@ -11,13 +11,15 @@ import           Test.HUnit                     ((@=?))
 
 
 --------------------------------------------------------------------------------
-import           StylishHaskell.Tabs
+import           StylishHaskell.Stylish.LanguagePragmas
 import           StylishHaskell.Tests.Util
 
 
 --------------------------------------------------------------------------------
 tests :: Test
-tests = testGroup "StylishHaskell.Tabs.Tests" [case01]
+tests = testGroup "StylishHaskell.Stylish.LanguagePragmas.Tests"
+    [ case01
+    ]
 
 
 --------------------------------------------------------------------------------
@@ -25,18 +27,15 @@ case01 :: Test
 case01 = testCase "case 01" $ expected @=? testStylish stylish input
   where
     input = unlines
-        [ "module Main"
-        , "\t\twhere"
-        , "data Foo"
-        , "\t= Bar"
-        , "    | Qux"
+        [ "{-# LANGUAGE ViewPatterns #-}"
+        , "{-# LANGUAGE TemplateHaskell, ViewPatterns #-}"
+        , "{-# LANGUAGE ScopedTypeVariables #-}"
+        , "module Main where"
         ]
 
     expected = unlines
-        [ "module Main"
-        , "        where"
-        , "data Foo"
-        , "    = Bar"
-        , "    | Qux"
+        [ "{-# LANGUAGE ScopedTypeVariables #-}"
+        , "{-# LANGUAGE TemplateHaskell     #-}"
+        , "{-# LANGUAGE ViewPatterns        #-}"
+        , "module Main where"
         ]
-

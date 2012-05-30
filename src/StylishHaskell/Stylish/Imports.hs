@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
-module StylishHaskell.Imports
+module StylishHaskell.Stylish.Imports
     ( stylish
     ) where
 

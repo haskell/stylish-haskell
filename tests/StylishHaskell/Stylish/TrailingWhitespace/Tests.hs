@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
-module StylishHaskell.LanguagePragmas.Tests
+module StylishHaskell.Stylish.TrailingWhitespace.Tests
     ( tests
     ) where
 
@@ -11,15 +11,13 @@ import           Test.HUnit                     ((@=?))
 
 
 --------------------------------------------------------------------------------
-import           StylishHaskell.LanguagePragmas
+import           StylishHaskell.Stylish.TrailingWhitespace
 import           StylishHaskell.Tests.Util
 
 
 --------------------------------------------------------------------------------
 tests :: Test
-tests = testGroup "StylishHaskell.LanguagePragmas.Tests"
-    [ case01
-    ]
+tests = testGroup "StylishHaskell.Stylish.TrailingWhitespace.Tests" [case01]
 
 
 --------------------------------------------------------------------------------
@@ -27,15 +25,13 @@ case01 :: Test
 case01 = testCase "case 01" $ expected @=? testStylish stylish input
   where
     input = unlines
-        [ "{-# LANGUAGE ViewPatterns #-}"
-        , "{-# LANGUAGE TemplateHaskell, ViewPatterns #-}"
-        , "{-# LANGUAGE ScopedTypeVariables #-}"
-        , "module Main where"
+        [ "module Main where"
+        , " "
+        , "data Foo = Bar | Qux\t "
         ]
 
     expected = unlines
-        [ "{-# LANGUAGE ScopedTypeVariables #-}"
-        , "{-# LANGUAGE TemplateHaskell     #-}"
-        , "{-# LANGUAGE ViewPatterns        #-}"
-        , "module Main where"
+        [ "module Main where"
+        , ""
+        , "data Foo = Bar | Qux"
         ]

@@ -9,17 +9,17 @@ import           Test.Framework               (defaultMain)
 
 
 --------------------------------------------------------------------------------
-import qualified StylishHaskell.Imports.Tests
-import qualified StylishHaskell.LanguagePragmas.Tests
-import qualified StylishHaskell.Tabs.Tests
-import qualified StylishHaskell.TrailingWhitespace.Tests
+import qualified StylishHaskell.Stylish.Imports.Tests
+import qualified StylishHaskell.Stylish.LanguagePragmas.Tests
+import qualified StylishHaskell.Stylish.Tabs.Tests
+import qualified StylishHaskell.Stylish.TrailingWhitespace.Tests
 
 
 --------------------------------------------------------------------------------
 main :: IO ()
 main = defaultMain
-    [ StylishHaskell.Imports.Tests.tests
-    , StylishHaskell.LanguagePragmas.Tests.tests
-    , StylishHaskell.Tabs.Tests.tests
-    , StylishHaskell.TrailingWhitespace.Tests.tests
+    [ StylishHaskell.Stylish.Imports.Tests.tests
+    , StylishHaskell.Stylish.LanguagePragmas.Tests.tests
+    , StylishHaskell.Stylish.Tabs.Tests.tests
+    , StylishHaskell.Stylish.TrailingWhitespace.Tests.tests
     ]
