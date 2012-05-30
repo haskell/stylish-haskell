@@ -106,6 +106,6 @@ stylish ls (module', _) = flip applyChanges ls
     | (block, importGroup) <- groups
     ]
   where
-    imps    = map sortImportSpecs $ imports $ fmap fromSrcSpanInfo module'
+    imps    = map sortImportSpecs $ imports $ fmap linesFromSrcSpan module'
     longest = longestImport imps
     groups  = groupAdjacent imps

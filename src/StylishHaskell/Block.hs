@@ -4,7 +4,8 @@ module StylishHaskell.Block
     , LineBlock
     , SpanBlock
     , blockLength
-    , fromSrcSpanInfo
+    , linesFromSrcSpan
+    , spanFromSrcSpan
     , moveBlock
     , adjacent
     , merge
@@ -39,9 +40,16 @@ blockLength (Block start end) = end - start + 1
 
 
 --------------------------------------------------------------------------------
-fromSrcSpanInfo :: H.SrcSpanInfo -> Block String
-fromSrcSpanInfo = H.srcInfoSpan >>>
+linesFromSrcSpan :: H.SrcSpanInfo -> LineBlock
+linesFromSrcSpan = H.srcInfoSpan >>>
     H.srcSpanStartLine &&& H.srcSpanEndLine >>>
+    arr (uncurry Block)
+
+
+--------------------------------------------------------------------------------
+spanFromSrcSpan :: H.SrcSpanInfo -> SpanBlock
+spanFromSrcSpan = H.srcInfoSpan >>>
+    H.srcSpanStartColumn &&& H.srcSpanEndColumn >>>
     arr (uncurry Block)
 
 
