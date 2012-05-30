@@ -26,6 +26,7 @@ Executable stylish-haskell
   Other-modules:
     StylishHaskell
     StylishHaskell.Block
+    StylishHaskell.Config
     StylishHaskell.Editor
     StylishHaskell.Imports
     StylishHaskell.LanguagePragmas
