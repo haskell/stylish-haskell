@@ -1,12 +1,14 @@
 --------------------------------------------------------------------------------
 module StylishHaskell.Stylish.Catalog
     ( catalog
+    , fromCatalog
     ) where
 
 
 --------------------------------------------------------------------------------
 import           Data.Map                                  (Map)
 import qualified Data.Map                                  as M
+import           Data.Maybe                                (mapMaybe)
 
 
 --------------------------------------------------------------------------------
@@ -25,3 +27,8 @@ catalog = M.fromList
     , ("Tabs",               StylishHaskell.Stylish.Tabs.stylish)
     , ("TrailingWhitespace", StylishHaskell.Stylish.TrailingWhitespace.stylish)
     ]
+
+
+--------------------------------------------------------------------------------
+fromCatalog :: [String] -> [Stylish]
+fromCatalog = mapMaybe (`M.lookup` catalog)

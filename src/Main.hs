@@ -6,14 +6,13 @@ module Main
 
 
 --------------------------------------------------------------------------------
-import qualified Data.Map                       as M
-import           Data.Maybe                     (catMaybes, listToMaybe)
+import           Data.Maybe             (listToMaybe)
 import           System.Console.CmdArgs
 
 
 --------------------------------------------------------------------------------
 import           StylishHaskell
-import           StylishHaskell.Stylish.Catalog
+import           StylishHaskell.Config
 
 
 --------------------------------------------------------------------------------
@@ -34,14 +33,9 @@ stylishArgs = StylishArgs
 --------------------------------------------------------------------------------
 main :: IO ()
 main = do
-    sa <- cmdArgs stylishArgs
+    sa   <- cmdArgs stylishArgs
+    conf <- loadConfig (config sa)
     let filePath = listToMaybe $ files sa
+        stylish  = configStylish conf
     contents <- maybe getContents readFile filePath
-    putStr $ unlines $ chainStylish filePath filters $ lines contents
-  where
-    filters = catMaybes $ map (`M.lookup` catalog)
-        [ "Imports"
-        , "LanguagePragmas"
-        -- , "Tabs"
-        , "TrailingWhitespace"
-        ]
+    putStr $ unlines $ chainStylish filePath stylish $ lines contents
