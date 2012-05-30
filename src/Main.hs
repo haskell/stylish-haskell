@@ -6,15 +6,14 @@ module Main
 
 
 --------------------------------------------------------------------------------
-import           Data.Maybe                        (listToMaybe)
+import qualified Data.Map                       as M
+import           Data.Maybe                     (catMaybes, listToMaybe)
 import           System.Console.CmdArgs
 
 
 --------------------------------------------------------------------------------
 import           StylishHaskell
-import qualified StylishHaskell.Stylish.Imports
-import qualified StylishHaskell.Stylish.LanguagePragmas
-import qualified StylishHaskell.Stylish.TrailingWhitespace
+import           StylishHaskell.Stylish.Catalog
 
 
 --------------------------------------------------------------------------------
@@ -40,9 +39,9 @@ main = do
     contents <- maybe getContents readFile filePath
     putStr $ unlines $ chainStylish filePath filters $ lines contents
   where
-    filters =
-        [ StylishHaskell.Stylish.Imports.stylish
-        , StylishHaskell.Stylish.LanguagePragmas.stylish
-        -- , StylishHaskell.Tabs.stylish
-        , StylishHaskell.Stylish.TrailingWhitespace.stylish
+    filters = catMaybes $ map (`M.lookup` catalog)
+        [ "Imports"
+        , "LanguagePragmas"
+        -- , "Tabs"
+        , "TrailingWhitespace"
         ]

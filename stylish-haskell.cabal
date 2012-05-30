@@ -30,6 +30,7 @@ Executable stylish-haskell
     StylishHaskell.Editor
     StylishHaskell.Parse
     StylishHaskell.Stylish
+    StylishHaskell.Stylish.Catalog
     StylishHaskell.Stylish.Imports
     StylishHaskell.Stylish.LanguagePragmas
     StylishHaskell.Stylish.Tabs
@@ -39,6 +40,7 @@ Executable stylish-haskell
   Build-depends:
     base             >= 4    && < 5,
     cmdargs          >= 0.9  && < 0.10,
+    containers       >= 0.3  && < 0.6,
     haskell-src-exts >= 1.13 && < 1.14
 
 Test-suite stylish-haskell-tests
