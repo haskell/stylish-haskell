@@ -1,24 +1,67 @@
 --------------------------------------------------------------------------------
--- module StylishHaskell.Stylish.UnicodeSyntax where
+{-# LANGUAGE UnicodeSyntax #-}
+module StylishHaskell.Stylish.UnicodeSyntax
+    ( stylish
+    ) where
 
 
 --------------------------------------------------------------------------------
+import           Data.List                       (isPrefixOf, sort)
+import           Data.Map                        (Map)
+import qualified Data.Map                        as M
+import           Data.Maybe                      (maybeToList)
 import qualified Language.Haskell.Exts.Annotated as H
-import System.Environment
-import Data.Maybe (maybeToList)
-import Data.List (isPrefixOf)
 
 
 --------------------------------------------------------------------------------
-import StylishHaskell.Stylish
-import StylishHaskell.Util
-import StylishHaskell.Parse
+import           StylishHaskell.Block
+import           StylishHaskell.Editor
+import           StylishHaskell.Stylish
+import           StylishHaskell.Util
 
 
 --------------------------------------------------------------------------------
-types :: H.Module H.SrcSpanInfo -> Lines -> [(Int, Int)]
+unicodeReplacements :: Map String String
+unicodeReplacements = M.fromList
+    [ ("->", "→")
+    ]
+
+
+--------------------------------------------------------------------------------
+replaceAll :: [(Int, [(Int, String)])] -> Lines -> [Change String]
+replaceAll positions ls =
+    zipWith changeLine' positions $ selectLines (map fst positions) ls
+  where
+    changeLine' (r, ns) str = changeLine r $ return $ flip applyChanges str
+        [ change (Block c ec) repl
+        | (c, needle) <- sort ns
+        , let ec = c + length needle - 1
+        , repl <- maybeToList $ M.lookup needle unicodeReplacements
+        ]
+
+
+
+--------------------------------------------------------------------------------
+selectLines :: [Int] -> Lines -> [String]
+selectLines = go 1
+  where
+    go _ []      _         = []
+    go _ _       []        = []
+    go r (x : xs) (l : ls)
+        | r == x                    = l : go (r + 1) xs ls
+        | otherwise                 = go (r + 1) (x : xs) ls
+
+
+--------------------------------------------------------------------------------
+groupPerLine :: [((Int, Int), a)] -> [(Int, [(Int, a)])]
+groupPerLine = M.toList . M.fromListWith (++) .
+    map (\((r, c), x) -> (r, [(c, x)]))
+
+
+--------------------------------------------------------------------------------
+types :: H.Module H.SrcSpanInfo -> Lines -> [((Int, Int), String)]
 types module' ls =
-    [ pos
+    [ (pos, "->")
     | H.TyFun _ t1 t2 <- everything module'
     , let start = H.srcSpanEnd $ H.srcInfoSpan $ H.ann t1
     , let end   = H.srcSpanStart $ H.srcInfoSpan $ H.ann t2
@@ -53,10 +96,8 @@ between (startRow, startCol) (endRow, endCol) needle =
 
 
 --------------------------------------------------------------------------------
-main :: IO ()
-main = do
-    (filePath : _) <- getArgs
-    contents       <- readFile filePath
-    case parseModule (Just filePath) contents of
-        Left err           -> error err
-        Right (module', _) -> print $ types module' (lines contents)
+stylish :: Stylish
+stylish ls (module', _) = applyChanges changes ls
+  where
+    changes = replaceAll perLine ls
+    perLine = sort $ groupPerLine $ types module' ls

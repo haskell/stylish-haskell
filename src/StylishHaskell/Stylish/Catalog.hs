@@ -17,6 +17,7 @@ import qualified StylishHaskell.Stylish.Imports
 import qualified StylishHaskell.Stylish.LanguagePragmas
 import qualified StylishHaskell.Stylish.Tabs
 import qualified StylishHaskell.Stylish.TrailingWhitespace
+import qualified StylishHaskell.Stylish.UnicodeSyntax
 
 
 --------------------------------------------------------------------------------
@@ -26,6 +27,7 @@ catalog = M.fromList
     , ("LanguagePragmas",    StylishHaskell.Stylish.LanguagePragmas.stylish)
     , ("Tabs",               StylishHaskell.Stylish.Tabs.stylish)
     , ("TrailingWhitespace", StylishHaskell.Stylish.TrailingWhitespace.stylish)
+    , ("UnicodeSyntax",      StylishHaskell.Stylish.UnicodeSyntax.stylish)
     ]
 
 

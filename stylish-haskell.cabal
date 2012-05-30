@@ -35,6 +35,7 @@ Executable stylish-haskell
     StylishHaskell.Stylish.LanguagePragmas
     StylishHaskell.Stylish.Tabs
     StylishHaskell.Stylish.TrailingWhitespace
+    StylishHaskell.Stylish.UnicodeSyntax
     StylishHaskell.Util
 
   Build-depends:

@@ -1,4 +1,3 @@
 enabled:
-  - Imports
   - LanguagePragmas
-  - TrailingWhitespace
+  - Imports
