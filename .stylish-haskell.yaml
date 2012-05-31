@@ -1,4 +1,8 @@
-enabled:
-  - LanguagePragmas
-  - Imports
-  # - UnicodeSyntax
+tabs:
+    spaces: 8
+
+imports:
+    enabled: true
+
+trailing_whitespace:
+    enabled: true

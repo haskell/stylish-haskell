@@ -22,7 +22,7 @@ tests = testGroup "StylishHaskell.Stylish.Tabs.Tests" [case01]
 
 --------------------------------------------------------------------------------
 case01 :: Test
-case01 = testCase "case 01" $ expected @=? testStylish stylish input
+case01 = testCase "case 01" $ expected @=? testStylish (stylish 4) input
   where
     input = unlines
         [ "module Main"

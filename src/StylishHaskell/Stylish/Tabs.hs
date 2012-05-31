@@ -9,13 +9,13 @@ import           StylishHaskell.Stylish
 
 
 --------------------------------------------------------------------------------
-removeTabs :: String -> String
-removeTabs = concatMap removeTabs'
+removeTabs :: Int -> String -> String
+removeTabs spaces = concatMap removeTabs'
   where
-    removeTabs' '\t' = "    "
+    removeTabs' '\t' = replicate spaces ' '
     removeTabs' x    = [x]
 
 
 --------------------------------------------------------------------------------
-stylish :: Stylish
-stylish ls _ = map removeTabs ls
+stylish :: Int -> Stylish
+stylish spaces ls _ = map (removeTabs spaces) ls

@@ -8,20 +8,25 @@ module StylishHaskell.Config
 
 
 --------------------------------------------------------------------------------
-import           Control.Applicative            ((<$>))
-import           Control.Monad                  (msum, mzero)
-import           Data.Aeson                     (FromJSON(..))
-import qualified Data.Aeson                     as A
-import qualified Data.Aeson.Types               as A
-import qualified Data.ByteString                as B
-import           Data.Yaml                      (decodeEither)
+import           Control.Applicative                       ((<$>))
+import           Control.Monad                             (msum, mzero)
+import           Data.Aeson                                (FromJSON(..))
+import qualified Data.Aeson                                as A
+import qualified Data.Aeson.Types                          as A
+import qualified Data.ByteString                           as B
+import           Data.Maybe                                (catMaybes)
+import           Data.Text                                 (Text)
+import           Data.Yaml                                 (decodeEither)
 import           System.Directory
-import           System.FilePath                ((</>))
+import           System.FilePath                           ((</>))
 
 
 --------------------------------------------------------------------------------
 import           StylishHaskell.Stylish
-import           StylishHaskell.Stylish.Catalog
+import qualified StylishHaskell.Stylish.Imports
+import qualified StylishHaskell.Stylish.LanguagePragmas
+import qualified StylishHaskell.Stylish.Tabs
+import qualified StylishHaskell.Stylish.TrailingWhitespace
 
 
 --------------------------------------------------------------------------------
@@ -32,19 +37,16 @@ data Config = Config
 
 --------------------------------------------------------------------------------
 instance FromJSON Config where
-    parseJSON (A.Object o) = Config <$> (parseEnabled =<< o A..: "enabled")
-    parseJSON _            = mzero
+    parseJSON = parseConfig
 
 
 --------------------------------------------------------------------------------
 defaultConfig :: Config
 defaultConfig = Config $
-    fromCatalog ["Imports", "LanguagePragmas", "TrailingWhitespace"]
-
-
---------------------------------------------------------------------------------
-parseEnabled :: A.Value -> A.Parser [Stylish]
-parseEnabled = fmap fromCatalog . parseJSON
+    [ StylishHaskell.Stylish.Imports.stylish
+    , StylishHaskell.Stylish.LanguagePragmas.stylish
+    , StylishHaskell.Stylish.TrailingWhitespace.stylish
+    ]
 
 
 --------------------------------------------------------------------------------
@@ -79,3 +81,46 @@ loadConfig mfp = do
                     "StylishHaskell.Config.loadConfig: " ++
                     "Could not load " ++ fp ++ ": " ++ err
                 Right config -> return config
+
+
+--------------------------------------------------------------------------------
+optional :: A.Object -> Text -> (A.Object -> A.Parser a) -> A.Parser (Maybe a)
+optional object key parser = do
+    val <- object A..:? key
+    case val of
+        Nothing           -> return Nothing
+        Just (A.Object o) -> Just <$> parser o
+        Just _            -> mzero
+
+
+--------------------------------------------------------------------------------
+parseConfig :: A.Value -> A.Parser Config
+parseConfig (A.Object o) = Config . catMaybes <$> sequence
+    [ optional o "imports"             parseImports
+    , optional o "languages_pragmas"   parseLanguagePragmas
+    , optional o "tabs"                parseTabs
+    , optional o "trailing_whitespace" parseTrailingWhitespace
+    ]
+parseConfig _            = mzero
+
+
+--------------------------------------------------------------------------------
+parseImports :: A.Object -> A.Parser Stylish
+parseImports _ = return StylishHaskell.Stylish.Imports.stylish
+
+
+--------------------------------------------------------------------------------
+parseLanguagePragmas :: A.Object -> A.Parser Stylish
+parseLanguagePragmas _ = return StylishHaskell.Stylish.LanguagePragmas.stylish
+
+
+--------------------------------------------------------------------------------
+parseTabs :: A.Object -> A.Parser Stylish
+parseTabs o = StylishHaskell.Stylish.Tabs.stylish
+    <$> o A..: "spaces"
+
+
+--------------------------------------------------------------------------------
+parseTrailingWhitespace :: A.Object -> A.Parser Stylish
+parseTrailingWhitespace _ =
+    return StylishHaskell.Stylish.TrailingWhitespace.stylish
