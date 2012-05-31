@@ -13,8 +13,8 @@ import           Control.Monad                  (msum, mzero)
 import           Data.Aeson                     (FromJSON(..))
 import qualified Data.Aeson                     as A
 import qualified Data.Aeson.Types               as A
-import           Data.Maybe                     (fromMaybe)
-import           Data.Yaml                      (decodeFile)
+import qualified Data.ByteString                as B
+import           Data.Yaml                      (decodeEither)
 import           System.Directory
 import           System.FilePath                ((</>))
 
@@ -70,5 +70,12 @@ configFilePath userSpecified = do
 loadConfig :: Maybe FilePath -> IO Config
 loadConfig mfp = do
     mfp' <- configFilePath mfp
-    mc   <- maybe (return Nothing) decodeFile mfp'
-    return $ fromMaybe defaultConfig mc
+    case mfp' of
+        Nothing -> return defaultConfig
+        Just fp -> do
+            bs <- B.readFile fp
+            case decodeEither bs of
+                Left err     -> error $
+                    "StylishHaskell.Config.loadConfig: " ++
+                    "Could not load " ++ fp ++ ": " ++ err
+                Right config -> return config
