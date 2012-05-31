@@ -1,8 +1,17 @@
+# Import cleanup
+imports:
+    # Align import names and import lists
+    align: true
+
+# Language pragmas
+languages_pragmas:
+    enable: true
+
+# Replace tabs by spaces
 tabs:
+    # Number of spaces to use for each tab
     spaces: 8
 
-imports:
-    enabled: true
-
+# Remove trailing whitespace
 trailing_whitespace:
-    enabled: true
+    enable: true

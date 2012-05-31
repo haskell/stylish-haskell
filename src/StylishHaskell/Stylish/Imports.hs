@@ -82,27 +82,33 @@ sortImportSpecs imp = imp {H.importSpecs = fmap sort $ H.importSpecs imp}
 
 
 --------------------------------------------------------------------------------
-prettyImport :: Int -> H.ImportDecl l -> String
-prettyImport longest imp = unwords $ concat
+prettyImport :: Bool -> Int -> H.ImportDecl l -> String
+prettyImport align longest imp = unwords $ concat
     [ ["import"]
-    , [if H.importQualified imp then "qualified" else "         "]
-    , [(if hasExtras then padRight longest else id) (importName imp)]
+    , qualified
+    , [(if hasExtras && align then padRight longest else id) (importName imp)]
     , ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp]
     , [H.prettyPrint specs | specs <- maybeToList $ H.importSpecs imp]
     ]
   where
     hasExtras = isJust (H.importAs imp) || isJust (H.importSpecs imp)
 
+    qualified
+        | H.importQualified imp = ["qualified"]
+        | align                 = ["         "]
+        | otherwise             = []
+
 
 --------------------------------------------------------------------------------
-prettyImportGroup :: Int -> [H.ImportDecl LineBlock] -> Lines
-prettyImportGroup longest = map (prettyImport longest) . sortBy compareImports
+prettyImportGroup :: Bool -> Int -> [H.ImportDecl LineBlock] -> Lines
+prettyImportGroup align longest =
+    map (prettyImport align longest) . sortBy compareImports
 
 
 --------------------------------------------------------------------------------
-stylish :: Stylish
-stylish ls (module', _) = flip applyChanges ls
-    [ change block (prettyImportGroup longest importGroup)
+stylish :: Bool -> Stylish
+stylish align ls (module', _) = flip applyChanges ls
+    [ change block (prettyImportGroup align longest importGroup)
     | (block, importGroup) <- groups
     ]
   where

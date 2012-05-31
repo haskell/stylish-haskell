@@ -43,7 +43,7 @@ instance FromJSON Config where
 --------------------------------------------------------------------------------
 defaultConfig :: Config
 defaultConfig = Config $
-    [ StylishHaskell.Stylish.Imports.stylish
+    [ StylishHaskell.Stylish.Imports.stylish True
     , StylishHaskell.Stylish.LanguagePragmas.stylish
     , StylishHaskell.Stylish.TrailingWhitespace.stylish
     ]
@@ -106,7 +106,8 @@ parseConfig _            = mzero
 
 --------------------------------------------------------------------------------
 parseImports :: A.Object -> A.Parser Stylish
-parseImports _ = return StylishHaskell.Stylish.Imports.stylish
+parseImports o = StylishHaskell.Stylish.Imports.stylish
+    <$> o A..: "align"
 
 
 --------------------------------------------------------------------------------
