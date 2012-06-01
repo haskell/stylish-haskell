@@ -44,15 +44,19 @@ prettyPragmas pragmas' =
 
 
 --------------------------------------------------------------------------------
-stylish :: Stylish
-stylish ls (module', _)
+stylish :: Bool -> Stylish
+stylish removeRedundant ls (module', _)
     | null pragmas' = ls
     | otherwise     = applyChanges changes ls
   where
+    filterRedundant
+        | removeRedundant = filter (not . isRedundant module')
+        | otherwise       = id
+
     pragmas' = pragmas $ fmap linesFromSrcSpan module'
-    deletes  = map (delete . fst) pragmas'
-    uniques  = nub $ sort $ concatMap snd pragmas'
+    uniques  = filterRedundant $ nub $ sort $ snd =<< pragmas'
     loc      = firstLocation pragmas'
+    deletes  = map (delete . fst) pragmas'
     changes  = insert loc (prettyPragmas uniques) : deletes
 
 
@@ -66,3 +70,18 @@ addLanguagePragma pragma modu
     pragmas' = pragmas (fmap linesFromSrcSpan modu)
     present  = concatMap snd pragmas'
     line     = if null pragmas' then 1 else firstLocation pragmas'
+
+
+--------------------------------------------------------------------------------
+-- | Check if a language pragma is redundant. We can't do this for all pragmas,
+-- but we do a best effort.
+isRedundant :: H.Module H.SrcSpanInfo -> String -> Bool
+isRedundant m "ViewPatterns" = isRedundantViewPatterns m
+isRedundant _ _              = False
+
+
+--------------------------------------------------------------------------------
+-- | Check if the ViewPatterns language pragma is redundant.
+isRedundantViewPatterns :: H.Module H.SrcSpanInfo -> Bool
+isRedundantViewPatterns m = null
+    [() | H.PViewPat _ _ _ <- everything m :: [H.Pat H.SrcSpanInfo]]

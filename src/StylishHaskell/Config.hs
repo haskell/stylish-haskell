@@ -14,8 +14,8 @@ import           Data.Aeson                                (FromJSON(..))
 import qualified Data.Aeson                                as A
 import qualified Data.Aeson.Types                          as A
 import qualified Data.ByteString                           as B
-import Data.Map (Map)
-import qualified Data.Map as M
+import           Data.Map                                  (Map)
+import qualified Data.Map                                  as M
 import           Data.Yaml                                 (decodeEither)
 import           System.Directory
 import           System.FilePath                           ((</>))
@@ -45,7 +45,7 @@ instance FromJSON Config where
 defaultConfig :: Config
 defaultConfig = Config $
     [ StylishHaskell.Stylish.Imports.stylish True
-    , StylishHaskell.Stylish.LanguagePragmas.stylish
+    , StylishHaskell.Stylish.LanguagePragmas.stylish True
     , StylishHaskell.Stylish.TrailingWhitespace.stylish
     ]
 
@@ -114,18 +114,19 @@ parseStylish val = do
 --------------------------------------------------------------------------------
 parseImports :: A.Object -> A.Parser Stylish
 parseImports o = StylishHaskell.Stylish.Imports.stylish
-    <$> o A..: "align"
+    <$> o A..:? "align" A..!= True
 
 
 --------------------------------------------------------------------------------
 parseLanguagePragmas :: A.Object -> A.Parser Stylish
-parseLanguagePragmas _ = return StylishHaskell.Stylish.LanguagePragmas.stylish
+parseLanguagePragmas o = StylishHaskell.Stylish.LanguagePragmas.stylish
+    <$> o A..:? "remove_redundant" A..!= True
 
 
 --------------------------------------------------------------------------------
 parseTabs :: A.Object -> A.Parser Stylish
 parseTabs o = StylishHaskell.Stylish.Tabs.stylish
-    <$> o A..: "spaces"
+    <$> o A..:? "spaces" A..!= 8
 
 
 --------------------------------------------------------------------------------

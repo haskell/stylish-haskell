@@ -1,18 +1,22 @@
 stylish:
   # Convert some ASCII sequences to their Unicode equivalents
-  - unicode_syntax: {}
+  # - unicode_syntax: {}
 
   # Import cleanup
   - imports:
-      # Align import names and import lists
+      # Align import names and import lists. Default: true.
       align: true
 
   # Language pragmas
-  - languages_pragmas: {}
+  - languages_pragmas:
+      # stylish-haskell can detect redundancy of some language pragmas. If this
+      # is set to true, it will remove those redundant pragmas. Default: true.
+      remove_redundant: true
 
   # Replace tabs by spaces
   - tabs:
-      # Number of spaces to use for each tab
+      # Number of spaces to use for each tab. Default: 8, as specified by the
+      # Haskell report.
       spaces: 8
 
   # Remove trailing whitespace
