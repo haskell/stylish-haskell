@@ -77,6 +77,7 @@ addLanguagePragma pragma modu
 -- but we do a best effort.
 isRedundant :: H.Module H.SrcSpanInfo -> String -> Bool
 isRedundant m "ViewPatterns" = isRedundantViewPatterns m
+isRedundant m "BangPatterns" = isRedundantBangPatterns m
 isRedundant _ _              = False
 
 
@@ -85,3 +86,10 @@ isRedundant _ _              = False
 isRedundantViewPatterns :: H.Module H.SrcSpanInfo -> Bool
 isRedundantViewPatterns m = null
     [() | H.PViewPat _ _ _ <- everything m :: [H.Pat H.SrcSpanInfo]]
+
+
+--------------------------------------------------------------------------------
+-- | Check if the BangPatterns language pragma is redundant.
+isRedundantBangPatterns :: H.Module H.SrcSpanInfo -> Bool
+isRedundantBangPatterns m = null
+    [() | H.PBangPat _ _ <- everything m :: [H.Pat H.SrcSpanInfo]]

@@ -48,7 +48,8 @@ case02 :: Test
 case02 = testCase "case 02" $ expected @=? testStylish (stylish True) input
   where
     input = unlines
-        [ "{-# LANGUAGE ViewPatterns #-}"
+        [ "{-# LANGUAGE BangPatterns #-}"
+        , "{-# LANGUAGE ViewPatterns #-}"
         , "increment ((+ 1) -> x) = x"
         ]
 
@@ -63,10 +64,12 @@ case03 :: Test
 case03 = testCase "case 03" $ expected @=? testStylish (stylish True) input
   where
     input = unlines
-        [ "{-# LANGUAGE ViewPatterns #-}"
-        , "increment x = x + 1"
+        [ "{-# LANGUAGE BangPatterns #-}"
+        , "{-# LANGUAGE ViewPatterns #-}"
+        , "increment x = case x of !_ -> x + 1"
         ]
 
     expected = unlines
-        [ "increment x = x + 1"
+        [ "{-# LANGUAGE BangPatterns #-}"
+        , "increment x = case x of !_ -> x + 1"
         ]
