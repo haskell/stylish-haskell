@@ -19,4 +19,4 @@ runStylish mfp f ls = case parseModule mfp (unlines ls) of
 
 --------------------------------------------------------------------------------
 chainStylish :: Maybe FilePath -> [Stylish] -> Lines -> Lines
-chainStylish mfp = foldr (.) id . map (runStylish mfp)
+chainStylish mfp = foldr (flip (.)) id . map (runStylish mfp)

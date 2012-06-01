@@ -1,17 +1,19 @@
-unicode_syntax: {}
+stylish:
+  # Convert some ASCII sequences to their Unicode equivalents
+  - unicode_syntax: {}
 
-# Import cleanup
-imports:
-    # Align import names and import lists
-    align: true
+  # Import cleanup
+  - imports:
+      # Align import names and import lists
+      align: true
 
-# Language pragmas
-languages_pragmas: {}
+  # Language pragmas
+  - languages_pragmas: {}
 
-# Replace tabs by spaces
-tabs:
-    # Number of spaces to use for each tab
-    spaces: 8
+  # Replace tabs by spaces
+  - tabs:
+      # Number of spaces to use for each tab
+      spaces: 8
 
-# Remove trailing whitespace
-trailing_whitespace: {}
+  # Remove trailing whitespace
+  - trailing_whitespace: {}

@@ -9,13 +9,13 @@ module StylishHaskell.Config
 
 --------------------------------------------------------------------------------
 import           Control.Applicative                       ((<$>))
-import           Control.Monad                             (msum, mzero)
+import           Control.Monad                             (forM, msum, mzero)
 import           Data.Aeson                                (FromJSON(..))
 import qualified Data.Aeson                                as A
 import qualified Data.Aeson.Types                          as A
 import qualified Data.ByteString                           as B
-import           Data.Maybe                                (catMaybes)
-import           Data.Text                                 (Text)
+import Data.Map (Map)
+import qualified Data.Map as M
 import           Data.Yaml                                 (decodeEither)
 import           System.Directory
 import           System.FilePath                           ((</>))
@@ -85,25 +85,30 @@ loadConfig mfp = do
 
 
 --------------------------------------------------------------------------------
-optional :: A.Object -> Text -> (A.Object -> A.Parser a) -> A.Parser (Maybe a)
-optional object key parser = do
-    val <- object A..:? key
-    case val of
-        Nothing           -> return Nothing
-        Just (A.Object o) -> Just <$> parser o
-        Just _            -> mzero
+parseConfig :: A.Value -> A.Parser Config
+parseConfig (A.Object o) = Config
+    <$> (o A..: "stylish" >>= fmap concat . mapM parseStylish)
+parseConfig _            = mzero
 
 
 --------------------------------------------------------------------------------
-parseConfig :: A.Value -> A.Parser Config
-parseConfig (A.Object o) = Config . catMaybes <$> sequence
-    [ optional o "imports"             parseImports
-    , optional o "languages_pragmas"   parseLanguagePragmas
-    , optional o "tabs"                parseTabs
-    , optional o "trailing_whitespace" parseTrailingWhitespace
-    , optional o "unicode_syntax"      parseUnicodeSyntax
+catalog :: Map String (A.Object -> A.Parser Stylish)
+catalog = M.fromList
+    [ ("imports",             parseImports)
+    , ("languages_pragmas",   parseLanguagePragmas)
+    , ("tabs",                parseTabs)
+    , ("trailing_whitespace", parseTrailingWhitespace)
+    , ("unicode_syntax",      parseUnicodeSyntax)
     ]
-parseConfig _            = mzero
+
+
+--------------------------------------------------------------------------------
+parseStylish :: A.Value -> A.Parser [Stylish]
+parseStylish val = do
+    map' <- parseJSON val :: A.Parser (Map String A.Value)
+    forM (M.toList map') $ \(k, v) -> case (M.lookup k catalog, v) of
+        (Just parser, A.Object o) -> parser o
+        _                         -> fail $ "Invalid declaration for " ++ k
 
 
 --------------------------------------------------------------------------------
