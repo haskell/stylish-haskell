@@ -1,3 +1,5 @@
+unicode_syntax: {}
+
 # Import cleanup
 imports:
     # Align import names and import lists

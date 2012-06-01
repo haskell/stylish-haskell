@@ -1,22 +1,23 @@
 --------------------------------------------------------------------------------
-{-# LANGUAGE UnicodeSyntax #-}
+{-# LANGUAGE ViewPatterns #-}
 module StylishHaskell.Stylish.UnicodeSyntax
     ( stylish
     ) where
 
 
 --------------------------------------------------------------------------------
-import           Data.List                       (isPrefixOf, sort)
-import           Data.Map                        (Map)
-import qualified Data.Map                        as M
-import           Data.Maybe                      (maybeToList)
-import qualified Language.Haskell.Exts.Annotated as H
+import           Data.List                              (isPrefixOf, sort)
+import           Data.Map                               (Map)
+import qualified Data.Map                               as M
+import           Data.Maybe                             (maybeToList)
+import qualified Language.Haskell.Exts.Annotated        as H
 
 
 --------------------------------------------------------------------------------
 import           StylishHaskell.Block
 import           StylishHaskell.Editor
 import           StylishHaskell.Stylish
+import           StylishHaskell.Stylish.LanguagePragmas (addLanguagePragma)
 import           StylishHaskell.Util
 
 
@@ -121,7 +122,7 @@ between (startRow, startCol) (endRow, endCol) needle =
 stylish :: Stylish
 stylish ls (module', _) = applyChanges changes ls
   where
-    changes = replaceAll perLine ls
+    changes = addLanguagePragma "UnicodeSyntax" module' ++ replaceAll perLine ls
     perLine = sort $ groupPerLine $
         typeSigs module' ls ++
         contexts module' ls ++

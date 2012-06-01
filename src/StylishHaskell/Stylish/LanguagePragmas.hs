@@ -1,6 +1,9 @@
 --------------------------------------------------------------------------------
 module StylishHaskell.Stylish.LanguagePragmas
     ( stylish
+
+      -- * Utilities
+    , addLanguagePragma
     ) where
 
 
@@ -51,3 +54,15 @@ stylish ls (module', _)
     uniques  = nub $ sort $ concatMap snd pragmas'
     loc      = firstLocation pragmas'
     changes  = insert loc (prettyPragmas uniques) : deletes
+
+
+--------------------------------------------------------------------------------
+-- | Add a LANGUAGE pragma to a module if it is not present already.
+addLanguagePragma :: String -> H.Module H.SrcSpanInfo -> [Change String]
+addLanguagePragma pragma modu
+    | pragma `elem` present = []
+    | otherwise             = [insert line ["{-# LANGUAGE " ++ pragma ++ "#-}"]]
+  where
+    pragmas' = pragmas (fmap linesFromSrcSpan modu)
+    present  = concatMap snd pragmas'
+    line     = if null pragmas' then 1 else firstLocation pragmas'

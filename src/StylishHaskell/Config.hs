@@ -27,6 +27,7 @@ import qualified StylishHaskell.Stylish.Imports
 import qualified StylishHaskell.Stylish.LanguagePragmas
 import qualified StylishHaskell.Stylish.Tabs
 import qualified StylishHaskell.Stylish.TrailingWhitespace
+import qualified StylishHaskell.Stylish.UnicodeSyntax
 
 
 --------------------------------------------------------------------------------
@@ -100,6 +101,7 @@ parseConfig (A.Object o) = Config . catMaybes <$> sequence
     , optional o "languages_pragmas"   parseLanguagePragmas
     , optional o "tabs"                parseTabs
     , optional o "trailing_whitespace" parseTrailingWhitespace
+    , optional o "unicode_syntax"      parseUnicodeSyntax
     ]
 parseConfig _            = mzero
 
@@ -125,3 +127,8 @@ parseTabs o = StylishHaskell.Stylish.Tabs.stylish
 parseTrailingWhitespace :: A.Object -> A.Parser Stylish
 parseTrailingWhitespace _ =
     return StylishHaskell.Stylish.TrailingWhitespace.stylish
+
+
+--------------------------------------------------------------------------------
+parseUnicodeSyntax :: A.Object -> A.Parser Stylish
+parseUnicodeSyntax _ = return StylishHaskell.Stylish.UnicodeSyntax.stylish
