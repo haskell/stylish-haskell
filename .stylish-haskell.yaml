@@ -4,8 +4,7 @@ imports:
     align: true
 
 # Language pragmas
-languages_pragmas:
-    enable: true
+languages_pragmas: {}
 
 # Replace tabs by spaces
 tabs:
@@ -13,5 +12,4 @@ tabs:
     spaces: 8
 
 # Remove trailing whitespace
-trailing_whitespace:
-    enable: true
+trailing_whitespace: {}
