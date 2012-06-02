@@ -8,7 +8,7 @@ stylish:
       align: true
 
   # Language pragmas
-  - languages_pragmas:
+  - language_pragmas:
       # We can generate different styles of language pragma lists.
       #
       # - vertical: Vertical-spaced language pragmas, one per line.

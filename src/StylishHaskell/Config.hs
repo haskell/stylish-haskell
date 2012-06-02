@@ -96,7 +96,7 @@ parseConfig _            = mzero
 catalog :: Map String (A.Object -> A.Parser Stylish)
 catalog = M.fromList
     [ ("imports",             parseImports)
-    , ("languages_pragmas",   parseLanguagePragmas)
+    , ("language_pragmas",    parseLanguagePragmas)
     , ("tabs",                parseTabs)
     , ("trailing_whitespace", parseTrailingWhitespace)
     , ("unicode_syntax",      parseUnicodeSyntax)
