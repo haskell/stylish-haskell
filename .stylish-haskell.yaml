@@ -9,6 +9,14 @@ stylish:
 
   # Language pragmas
   - languages_pragmas:
+      # We can generate different styles of language pragma lists.
+      #
+      # - vertical: Vertical-spaced language pragmas, one per line.
+      # - compact: A more compact style.
+      #
+      # Default: vertical.
+      style: vertical
+
       # stylish-haskell can detect redundancy of some language pragmas. If this
       # is set to true, it will remove those redundant pragmas. Default: true.
       remove_redundant: true

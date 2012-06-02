@@ -8,12 +8,13 @@ module StylishHaskell.Config
 
 
 --------------------------------------------------------------------------------
-import           Control.Applicative                       ((<$>))
+import           Control.Applicative                       ((<$>), (<*>))
 import           Control.Monad                             (forM, msum, mzero)
 import           Data.Aeson                                (FromJSON(..))
 import qualified Data.Aeson                                as A
 import qualified Data.Aeson.Types                          as A
 import qualified Data.ByteString                           as B
+import           Data.List                                 (intercalate)
 import           Data.Map                                  (Map)
 import qualified Data.Map                                  as M
 import           Data.Yaml                                 (decodeEither)
@@ -23,11 +24,11 @@ import           System.FilePath                           ((</>))
 
 --------------------------------------------------------------------------------
 import           StylishHaskell.Stylish
-import qualified StylishHaskell.Stylish.Imports
-import qualified StylishHaskell.Stylish.LanguagePragmas
-import qualified StylishHaskell.Stylish.Tabs
-import qualified StylishHaskell.Stylish.TrailingWhitespace
-import qualified StylishHaskell.Stylish.UnicodeSyntax
+import qualified StylishHaskell.Stylish.Imports            as Imports
+import qualified StylishHaskell.Stylish.LanguagePragmas    as LanguagePragmas
+import qualified StylishHaskell.Stylish.Tabs               as Tabs
+import qualified StylishHaskell.Stylish.TrailingWhitespace as TrailingWhitespace
+import qualified StylishHaskell.Stylish.UnicodeSyntax      as UnicodeSyntax
 
 
 --------------------------------------------------------------------------------
@@ -44,9 +45,9 @@ instance FromJSON Config where
 --------------------------------------------------------------------------------
 defaultConfig :: Config
 defaultConfig = Config $
-    [ StylishHaskell.Stylish.Imports.stylish True
-    , StylishHaskell.Stylish.LanguagePragmas.stylish True
-    , StylishHaskell.Stylish.TrailingWhitespace.stylish
+    [ Imports.stylish True
+    , LanguagePragmas.stylish LanguagePragmas.Vertical True
+    , TrailingWhitespace.stylish
     ]
 
 
@@ -112,29 +113,44 @@ parseStylish val = do
 
 
 --------------------------------------------------------------------------------
+-- | Utility for enum-like options
+parseEnum :: [(String, a)] -> a -> Maybe String -> A.Parser a
+parseEnum _    def Nothing  = return def
+parseEnum strs _   (Just k) = case lookup k strs of
+    Just v  -> return v
+    Nothing -> fail $ "Unknown option: " ++ k ++ ", should be one of: " ++
+        intercalate ", " (map fst strs)
+
+
+--------------------------------------------------------------------------------
 parseImports :: A.Object -> A.Parser Stylish
-parseImports o = StylishHaskell.Stylish.Imports.stylish
+parseImports o = Imports.stylish
     <$> o A..:? "align" A..!= True
 
 
 --------------------------------------------------------------------------------
 parseLanguagePragmas :: A.Object -> A.Parser Stylish
-parseLanguagePragmas o = StylishHaskell.Stylish.LanguagePragmas.stylish
-    <$> o A..:? "remove_redundant" A..!= True
+parseLanguagePragmas o = LanguagePragmas.stylish
+    <$> (o A..:? "style" >>= parseEnum styles LanguagePragmas.Vertical)
+    <*> o A..:? "remove_redundant" A..!= True
+  where
+    styles =
+        [ ("vertical", LanguagePragmas.Vertical)
+        , ("compact",  LanguagePragmas.Compact)
+        ]
 
 
 --------------------------------------------------------------------------------
 parseTabs :: A.Object -> A.Parser Stylish
-parseTabs o = StylishHaskell.Stylish.Tabs.stylish
+parseTabs o = Tabs.stylish
     <$> o A..:? "spaces" A..!= 8
 
 
 --------------------------------------------------------------------------------
 parseTrailingWhitespace :: A.Object -> A.Parser Stylish
-parseTrailingWhitespace _ =
-    return StylishHaskell.Stylish.TrailingWhitespace.stylish
+parseTrailingWhitespace _ = return TrailingWhitespace.stylish
 
 
 --------------------------------------------------------------------------------
 parseUnicodeSyntax :: A.Object -> A.Parser Stylish
-parseUnicodeSyntax _ = return StylishHaskell.Stylish.UnicodeSyntax.stylish
+parseUnicodeSyntax _ = return UnicodeSyntax.stylish

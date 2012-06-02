@@ -1,6 +1,7 @@
 --------------------------------------------------------------------------------
 module StylishHaskell.Stylish.LanguagePragmas
-    ( stylish
+    ( Style (..)
+    , stylish
 
       -- * Utilities
     , addLanguagePragma
@@ -17,6 +18,13 @@ import           StylishHaskell.Block
 import           StylishHaskell.Editor
 import           StylishHaskell.Stylish
 import           StylishHaskell.Util
+
+
+--------------------------------------------------------------------------------
+data Style
+    = Vertical
+    | Compact
+    deriving (Eq, Show)
 
 
 --------------------------------------------------------------------------------
@@ -50,8 +58,14 @@ compactPragmas pragmas' = wrap 80 "{-# LANGUAGE" 13 $
 
 
 --------------------------------------------------------------------------------
-stylish :: Bool -> Stylish
-stylish removeRedundant ls (module', _)
+prettyPragmas :: Style -> [String] -> Lines
+prettyPragmas Vertical = verticalPragmas
+prettyPragmas Compact  = compactPragmas
+
+
+--------------------------------------------------------------------------------
+stylish :: Style -> Bool -> Stylish
+stylish style removeRedundant ls (module', _)
     | null pragmas' = ls
     | otherwise     = applyChanges changes ls
   where
@@ -63,7 +77,7 @@ stylish removeRedundant ls (module', _)
     uniques  = filterRedundant $ nub $ sort $ snd =<< pragmas'
     loc      = firstLocation pragmas'
     deletes  = map (delete . fst) pragmas'
-    changes  = insert loc (compactPragmas uniques) : deletes
+    changes  = insert loc (prettyPragmas style uniques) : deletes
 
 
 --------------------------------------------------------------------------------
