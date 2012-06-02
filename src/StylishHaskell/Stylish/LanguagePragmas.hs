@@ -34,13 +34,19 @@ firstLocation = minimum . map (blockStart . fst)
 
 --------------------------------------------------------------------------------
 -- | TODO: multiple lines if longer than 80 columns
-prettyPragmas :: [String] -> Lines
-prettyPragmas pragmas' =
+verticalPragmas :: [String] -> Lines
+verticalPragmas pragmas' =
     [ "{-# LANGUAGE " ++ padRight longest pragma ++ " #-}"
     | pragma <- pragmas'
     ]
   where
     longest = maximum $ map length pragmas'
+
+
+--------------------------------------------------------------------------------
+compactPragmas :: [String] -> Lines
+compactPragmas pragmas' = wrap 80 "{-# LANGUAGE" 13 $
+    map (++ ",") (init pragmas') ++ [last pragmas', "#-}"]
 
 
 --------------------------------------------------------------------------------
@@ -57,7 +63,7 @@ stylish removeRedundant ls (module', _)
     uniques  = filterRedundant $ nub $ sort $ snd =<< pragmas'
     loc      = firstLocation pragmas'
     deletes  = map (delete . fst) pragmas'
-    changes  = insert loc (prettyPragmas uniques) : deletes
+    changes  = insert loc (compactPragmas uniques) : deletes
 
 
 --------------------------------------------------------------------------------
