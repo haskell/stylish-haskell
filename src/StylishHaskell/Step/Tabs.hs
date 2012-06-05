@@ -18,4 +18,4 @@ removeTabs spaces = concatMap removeTabs'
 
 --------------------------------------------------------------------------------
 step :: Int -> Step
-step spaces ls _ = map (removeTabs spaces) ls
+step spaces = makeStep "Tabs" $ \ls _ -> map (removeTabs spaces) ls

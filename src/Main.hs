@@ -6,6 +6,7 @@ module Main
 
 
 --------------------------------------------------------------------------------
+import           Control.Monad          (forM_)
 import           Data.List              (intercalate)
 import           Data.Maybe             (listToMaybe)
 import           Data.Version           (Version(..))
@@ -16,6 +17,7 @@ import           System.Console.CmdArgs
 import           Paths_stylish_haskell  (version)
 import           StylishHaskell
 import           StylishHaskell.Config
+import           StylishHaskell.Step
 import           StylishHaskell.Verbose
 
 
@@ -46,5 +48,7 @@ main = do
     conf <- loadConfig verbose' (config sa)
     let filePath  = listToMaybe $ files sa
         steps     = configSteps conf
+
+    forM_ steps $ \step -> verbose' $ "Enabled " ++ stepName step ++ " step"
     contents <- maybe getContents readFile filePath
     putStr $ unlines $ runSteps filePath steps $ lines contents

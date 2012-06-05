@@ -65,7 +65,12 @@ prettyPragmas Compact  = compactPragmas
 
 --------------------------------------------------------------------------------
 step :: Style -> Bool -> Step
-step style removeRedundant ls (module', _)
+step style = makeStep "LanguagePragmas" . step' style
+
+
+--------------------------------------------------------------------------------
+step' :: Style -> Bool -> Lines -> Module -> Lines
+step' style removeRedundant ls (module', _)
     | null pragmas' = ls
     | otherwise     = applyChanges changes ls
   where

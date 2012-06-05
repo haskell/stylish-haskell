@@ -12,9 +12,9 @@ import           StylishHaskell.Step
 
 --------------------------------------------------------------------------------
 runStep :: Maybe FilePath -> Step -> Lines -> Lines
-runStep mfp f ls = case parseModule mfp (unlines ls) of
+runStep mfp step ls = case parseModule mfp (unlines ls) of
     Left err      -> error err  -- TODO: maybe return original lines?
-    Right module' -> f ls module'
+    Right module' -> stepFilter step ls module'
 
 
 --------------------------------------------------------------------------------

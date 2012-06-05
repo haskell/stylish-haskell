@@ -2,7 +2,8 @@
 module StylishHaskell.Step
     ( Lines
     , Module
-    , Step
+    , Step (..)
+    , makeStep
     ) where
 
 
@@ -20,4 +21,12 @@ type Module = (H.Module H.SrcSpanInfo, [H.Comment])
 
 
 --------------------------------------------------------------------------------
-type Step = Lines -> Module -> Lines
+data Step = Step
+    { stepName   :: String
+    , stepFilter :: Lines -> Module -> Lines
+    }
+
+
+--------------------------------------------------------------------------------
+makeStep :: String -> (Lines -> Module -> Lines) -> Step
+makeStep = Step

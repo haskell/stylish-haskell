@@ -107,7 +107,12 @@ prettyImportGroup align longest =
 
 --------------------------------------------------------------------------------
 step :: Bool -> Step
-step align ls (module', _) = flip applyChanges ls
+step = makeStep "Imports" . step'
+
+
+--------------------------------------------------------------------------------
+step' :: Bool -> Lines -> Module -> Lines
+step' align ls (module', _) = flip applyChanges ls
     [ change block (prettyImportGroup align longest importGroup)
     | (block, importGroup) <- groups
     ]

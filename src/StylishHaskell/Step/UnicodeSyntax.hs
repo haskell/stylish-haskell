@@ -120,7 +120,12 @@ between (startRow, startCol) (endRow, endCol) needle =
 
 --------------------------------------------------------------------------------
 step :: Step
-step ls (module', _) = applyChanges changes ls
+step = makeStep "UnicodeSyntax" step'
+
+
+--------------------------------------------------------------------------------
+step' :: Lines -> Module -> Lines
+step' ls (module', _) = applyChanges changes ls
   where
     changes = addLanguagePragma "UnicodeSyntax" module' ++ replaceAll perLine ls
     perLine = sort $ groupPerLine $

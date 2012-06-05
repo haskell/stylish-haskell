@@ -19,4 +19,4 @@ dropTrailingWhitespace = reverse . dropWhile isSpace . reverse
 
 --------------------------------------------------------------------------------
 step :: Step
-step ls _ = map dropTrailingWhitespace ls
+step = makeStep "TrailingWhitespace" $ \ls _ -> map dropTrailingWhitespace ls
