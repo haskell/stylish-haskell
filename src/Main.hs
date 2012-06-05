@@ -6,11 +6,14 @@ module Main
 
 
 --------------------------------------------------------------------------------
+import           Data.List              (intercalate)
 import           Data.Maybe             (listToMaybe)
+import           Data.Version           (Version(..))
 import           System.Console.CmdArgs
 
 
 --------------------------------------------------------------------------------
+import           Paths_stylish_haskell  (version)
 import           StylishHaskell
 import           StylishHaskell.Config
 
@@ -27,7 +30,9 @@ stylishArgs :: StylishArgs
 stylishArgs = StylishArgs
     { config = Nothing &= typFile &= help "Configuration file"
     , files  = []      &= typFile &= args
-    } &= summary "stylish-haskell"
+    } &= summary ("stylish-haskell-" ++ versionString version)
+  where
+    versionString = intercalate "." . map show . versionBranch
 
 
 --------------------------------------------------------------------------------

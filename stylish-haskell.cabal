@@ -24,6 +24,7 @@ Executable stylish-haskell
   Main-is:        Main.hs
 
   Other-modules:
+    Paths_stylish_haskell
     StylishHaskell
     StylishHaskell.Block
     StylishHaskell.Config

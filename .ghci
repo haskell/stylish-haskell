@@ -1,1 +1,1 @@
-:set -isrc -itests -idraft
+:set -isrc -itests -idist/build/autogen
