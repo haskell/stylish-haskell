@@ -16,20 +16,23 @@ import           System.Console.CmdArgs
 import           Paths_stylish_haskell  (version)
 import           StylishHaskell
 import           StylishHaskell.Config
+import           StylishHaskell.Verbose
 
 
 --------------------------------------------------------------------------------
 data StylishArgs = StylishArgs
-    { config :: Maybe FilePath
-    , files  :: [FilePath]
+    { config  :: Maybe FilePath
+    , verbose :: Bool
+    , files   :: [FilePath]
     } deriving (Data, Show, Typeable)
 
 
 --------------------------------------------------------------------------------
 stylishArgs :: StylishArgs
 stylishArgs = StylishArgs
-    { config = Nothing &= typFile &= help "Configuration file"
-    , files  = []      &= typFile &= args
+    { config  = Nothing &= typFile &= help "Configuration file"
+    , verbose = False              &= help "Run in verbose mode"
+    , files   = []      &= typFile &= args
     } &= summary ("stylish-haskell-" ++ versionString version)
   where
     versionString = intercalate "." . map show . versionBranch
@@ -39,8 +42,9 @@ stylishArgs = StylishArgs
 main :: IO ()
 main = do
     sa   <- cmdArgs stylishArgs
-    conf <- loadConfig (config sa)
-    let filePath = listToMaybe $ files sa
-        stylish  = configStylish conf
+    let verbose'  = makeVerbose (verbose sa)
+    conf <- loadConfig verbose' (config sa)
+    let filePath  = listToMaybe $ files sa
+        stylish   = configStylish conf
     contents <- maybe getContents readFile filePath
     putStr $ unlines $ chainStylish filePath stylish $ lines contents

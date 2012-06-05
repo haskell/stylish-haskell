@@ -29,6 +29,7 @@ import qualified StylishHaskell.Stylish.LanguagePragmas    as LanguagePragmas
 import qualified StylishHaskell.Stylish.Tabs               as Tabs
 import qualified StylishHaskell.Stylish.TrailingWhitespace as TrailingWhitespace
 import qualified StylishHaskell.Stylish.UnicodeSyntax      as UnicodeSyntax
+import           StylishHaskell.Verbose
 
 
 --------------------------------------------------------------------------------
@@ -57,31 +58,37 @@ configFileName = ".stylish-haskell.yaml"
 
 
 --------------------------------------------------------------------------------
-configFilePath :: Maybe FilePath -> IO (Maybe FilePath)
-configFilePath userSpecified = do
+configFilePath :: Verbose -> Maybe FilePath -> IO (Maybe FilePath)
+configFilePath verbose userSpecified = do
     current  <- (</> configFileName) <$> getCurrentDirectory
     currentE <- doesFileExist current
+    report current currentE
     home     <- (</> configFileName) <$> getHomeDirectory
     homeE    <- doesFileExist home
+    report home homeE
     return $ msum
         [ userSpecified
         , if currentE then Just current else Nothing
         , if homeE then Just home else Nothing
         ]
+  where
+    report fp e = verbose $ fp ++ if e then " exists" else " does not exist"
 
 
 --------------------------------------------------------------------------------
-loadConfig :: Maybe FilePath -> IO Config
-loadConfig mfp = do
-    mfp' <- configFilePath mfp
+loadConfig :: Verbose -> Maybe FilePath -> IO Config
+loadConfig verbose mfp = do
+    mfp' <- configFilePath verbose mfp
     case mfp' of
-        Nothing -> return defaultConfig
+        Nothing -> do
+            verbose $ "Using default configuration"
+            return defaultConfig
         Just fp -> do
+            verbose $ "Loading configuration at " ++ fp
             bs <- B.readFile fp
             case decodeEither bs of
                 Left err     -> error $
-                    "StylishHaskell.Config.loadConfig: " ++
-                    "Could not load " ++ fp ++ ": " ++ err
+                    "StylishHaskell.Config.loadConfig: " ++ err
                 Right config -> return config
 
 
