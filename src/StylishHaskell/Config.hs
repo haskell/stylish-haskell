@@ -23,18 +23,18 @@ import           System.FilePath                           ((</>))
 
 
 --------------------------------------------------------------------------------
-import           StylishHaskell.Stylish
-import qualified StylishHaskell.Stylish.Imports            as Imports
-import qualified StylishHaskell.Stylish.LanguagePragmas    as LanguagePragmas
-import qualified StylishHaskell.Stylish.Tabs               as Tabs
-import qualified StylishHaskell.Stylish.TrailingWhitespace as TrailingWhitespace
-import qualified StylishHaskell.Stylish.UnicodeSyntax      as UnicodeSyntax
+import           StylishHaskell.Step
+import qualified StylishHaskell.Step.Imports            as Imports
+import qualified StylishHaskell.Step.LanguagePragmas    as LanguagePragmas
+import qualified StylishHaskell.Step.Tabs               as Tabs
+import qualified StylishHaskell.Step.TrailingWhitespace as TrailingWhitespace
+import qualified StylishHaskell.Step.UnicodeSyntax      as UnicodeSyntax
 import           StylishHaskell.Verbose
 
 
 --------------------------------------------------------------------------------
 data Config = Config
-    { configStylish :: [Stylish]
+    { configSteps :: [Step]
     }
 
 
@@ -46,9 +46,9 @@ instance FromJSON Config where
 --------------------------------------------------------------------------------
 defaultConfig :: Config
 defaultConfig = Config $
-    [ Imports.stylish True
-    , LanguagePragmas.stylish LanguagePragmas.Vertical True
-    , TrailingWhitespace.stylish
+    [ Imports.step True
+    , LanguagePragmas.step LanguagePragmas.Vertical True
+    , TrailingWhitespace.step
     ]
 
 
@@ -95,12 +95,12 @@ loadConfig verbose mfp = do
 --------------------------------------------------------------------------------
 parseConfig :: A.Value -> A.Parser Config
 parseConfig (A.Object o) = Config
-    <$> (o A..: "stylish" >>= fmap concat . mapM parseStylish)
+    <$> (o A..: "steps" >>= fmap concat . mapM parseSteps)
 parseConfig _            = mzero
 
 
 --------------------------------------------------------------------------------
-catalog :: Map String (A.Object -> A.Parser Stylish)
+catalog :: Map String (A.Object -> A.Parser Step)
 catalog = M.fromList
     [ ("imports",             parseImports)
     , ("language_pragmas",    parseLanguagePragmas)
@@ -111,8 +111,8 @@ catalog = M.fromList
 
 
 --------------------------------------------------------------------------------
-parseStylish :: A.Value -> A.Parser [Stylish]
-parseStylish val = do
+parseSteps :: A.Value -> A.Parser [Step]
+parseSteps val = do
     map' <- parseJSON val :: A.Parser (Map String A.Value)
     forM (M.toList map') $ \(k, v) -> case (M.lookup k catalog, v) of
         (Just parser, A.Object o) -> parser o
@@ -130,14 +130,14 @@ parseEnum strs _   (Just k) = case lookup k strs of
 
 
 --------------------------------------------------------------------------------
-parseImports :: A.Object -> A.Parser Stylish
-parseImports o = Imports.stylish
+parseImports :: A.Object -> A.Parser Step
+parseImports o = Imports.step
     <$> o A..:? "align" A..!= True
 
 
 --------------------------------------------------------------------------------
-parseLanguagePragmas :: A.Object -> A.Parser Stylish
-parseLanguagePragmas o = LanguagePragmas.stylish
+parseLanguagePragmas :: A.Object -> A.Parser Step
+parseLanguagePragmas o = LanguagePragmas.step
     <$> (o A..:? "style" >>= parseEnum styles LanguagePragmas.Vertical)
     <*> o A..:? "remove_redundant" A..!= True
   where
@@ -148,16 +148,16 @@ parseLanguagePragmas o = LanguagePragmas.stylish
 
 
 --------------------------------------------------------------------------------
-parseTabs :: A.Object -> A.Parser Stylish
-parseTabs o = Tabs.stylish
+parseTabs :: A.Object -> A.Parser Step
+parseTabs o = Tabs.step
     <$> o A..:? "spaces" A..!= 8
 
 
 --------------------------------------------------------------------------------
-parseTrailingWhitespace :: A.Object -> A.Parser Stylish
-parseTrailingWhitespace _ = return TrailingWhitespace.stylish
+parseTrailingWhitespace :: A.Object -> A.Parser Step
+parseTrailingWhitespace _ = return TrailingWhitespace.step
 
 
 --------------------------------------------------------------------------------
-parseUnicodeSyntax :: A.Object -> A.Parser Stylish
-parseUnicodeSyntax _ = return UnicodeSyntax.stylish
+parseUnicodeSyntax :: A.Object -> A.Parser Step
+parseUnicodeSyntax _ = return UnicodeSyntax.step

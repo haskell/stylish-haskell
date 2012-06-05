@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
-module StylishHaskell.Stylish.Tabs.Tests
+module StylishHaskell.Step.UnicodeSyntax.Tests
     ( tests
     ) where
 
@@ -11,32 +11,31 @@ import           Test.HUnit                     ((@=?))
 
 
 --------------------------------------------------------------------------------
-import           StylishHaskell.Stylish.Tabs
+import           StylishHaskell.Step.UnicodeSyntax
 import           StylishHaskell.Tests.Util
 
 
 --------------------------------------------------------------------------------
 tests :: Test
-tests = testGroup "StylishHaskell.Stylish.Tabs.Tests" [case01]
+tests = testGroup "StylishHaskell.Step.UnicodeSyntax.Tests"
+    [ case01
+    ]
 
 
 --------------------------------------------------------------------------------
 case01 :: Test
-case01 = testCase "case 01" $ expected @=? testStylish (stylish 4) input
+case01 = testCase "case 01" $ expected @=? testStep step input
   where
     input = unlines
-        [ "module Main"
-        , "\t\twhere"
-        , "data Foo"
-        , "\t= Bar"
-        , "    | Qux"
+        [ "{-# LANGUAGE UnicodeSyntax #-}"  -- TODO: remove
+        , ""
+        , "sort :: Ord a => [a] -> [a]"
+        , "sort _ = []"
         ]
 
     expected = unlines
-        [ "module Main"
-        , "        where"
-        , "data Foo"
-        , "    = Bar"
-        , "    | Qux"
+        [ "{-# LANGUAGE UnicodeSyntax #-}"
+        , ""
+        , "sort ∷ Ord a ⇒ [a] → [a]"
+        , "sort _ = []"
         ]
-

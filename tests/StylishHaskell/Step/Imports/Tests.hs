@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
-module StylishHaskell.Stylish.Imports.Tests
+module StylishHaskell.Step.Imports.Tests
     ( tests
     ) where
 
@@ -11,13 +11,13 @@ import           Test.HUnit                     ((@=?))
 
 
 --------------------------------------------------------------------------------
-import           StylishHaskell.Stylish.Imports
+import           StylishHaskell.Step.Imports
 import           StylishHaskell.Tests.Util
 
 
 --------------------------------------------------------------------------------
 tests :: Test
-tests = testGroup "StylishHaskell.Stylish.Imports.Tests"
+tests = testGroup "StylishHaskell.Step.Imports.Tests"
     [ case01
     , case02
     ]
@@ -40,7 +40,7 @@ input = unlines
 
 --------------------------------------------------------------------------------
 case01 :: Test
-case01 = testCase "case 01" $ expected @=? testStylish (stylish True) input
+case01 = testCase "case 01" $ expected @=? testStep (step True) input
   where
     expected = unlines
         [ "module Herp where"
@@ -57,7 +57,7 @@ case01 = testCase "case 01" $ expected @=? testStylish (stylish True) input
 
 --------------------------------------------------------------------------------
 case02 :: Test
-case02 = testCase "case 02" $ expected @=? testStylish (stylish False) input
+case02 = testCase "case 02" $ expected @=? testStep (step False) input
   where
     expected = unlines
         [ "module Herp where"

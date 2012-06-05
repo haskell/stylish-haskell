@@ -30,12 +30,12 @@ Executable stylish-haskell
     StylishHaskell.Config
     StylishHaskell.Editor
     StylishHaskell.Parse
-    StylishHaskell.Stylish
-    StylishHaskell.Stylish.Imports
-    StylishHaskell.Stylish.LanguagePragmas
-    StylishHaskell.Stylish.Tabs
-    StylishHaskell.Stylish.TrailingWhitespace
-    StylishHaskell.Stylish.UnicodeSyntax
+    StylishHaskell.Step
+    StylishHaskell.Step.Imports
+    StylishHaskell.Step.LanguagePragmas
+    StylishHaskell.Step.Tabs
+    StylishHaskell.Step.TrailingWhitespace
+    StylishHaskell.Step.UnicodeSyntax
     StylishHaskell.Util
 
   Build-depends:
@@ -57,11 +57,11 @@ Test-suite stylish-haskell-tests
   Type:           exitcode-stdio-1.0
 
   Other-modules:
-    StylishHaskell.Stylish.Imports.Tests
-    StylishHaskell.Stylish.LanguagePragmas.Tests
-    StylishHaskell.Stylish.Tabs.Tests
-    StylishHaskell.Stylish.TrailingWhitespace.Tests
-    StylishHaskell.Stylish.UnicodeSyntax.Tests
+    StylishHaskell.Step.Imports.Tests
+    StylishHaskell.Step.LanguagePragmas.Tests
+    StylishHaskell.Step.Tabs.Tests
+    StylishHaskell.Step.TrailingWhitespace.Tests
+    StylishHaskell.Step.UnicodeSyntax.Tests
     StylishHaskell.Tests.Util
 
   Build-depends:

@@ -10,7 +10,7 @@ import qualified Language.Haskell.Exts.Annotated as H
 
 
 --------------------------------------------------------------------------------
-import           StylishHaskell.Stylish
+import           StylishHaskell.Step
 
 
 --------------------------------------------------------------------------------

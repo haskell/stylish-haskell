@@ -5,23 +5,23 @@ module Main
 
 
 --------------------------------------------------------------------------------
-import           Test.Framework               (defaultMain)
+import           Test.Framework                               (defaultMain)
 
 
 --------------------------------------------------------------------------------
-import qualified StylishHaskell.Stylish.Imports.Tests
-import qualified StylishHaskell.Stylish.LanguagePragmas.Tests
-import qualified StylishHaskell.Stylish.Tabs.Tests
-import qualified StylishHaskell.Stylish.TrailingWhitespace.Tests
-import qualified StylishHaskell.Stylish.UnicodeSyntax.Tests
+import qualified StylishHaskell.Step.Imports.Tests
+import qualified StylishHaskell.Step.LanguagePragmas.Tests
+import qualified StylishHaskell.Step.Tabs.Tests
+import qualified StylishHaskell.Step.TrailingWhitespace.Tests
+import qualified StylishHaskell.Step.UnicodeSyntax.Tests
 
 
 --------------------------------------------------------------------------------
 main :: IO ()
 main = defaultMain
-    [ StylishHaskell.Stylish.Imports.Tests.tests
-    , StylishHaskell.Stylish.LanguagePragmas.Tests.tests
-    , StylishHaskell.Stylish.Tabs.Tests.tests
-    , StylishHaskell.Stylish.TrailingWhitespace.Tests.tests
-    , StylishHaskell.Stylish.UnicodeSyntax.Tests.tests
+    [ StylishHaskell.Step.Imports.Tests.tests
+    , StylishHaskell.Step.LanguagePragmas.Tests.tests
+    , StylishHaskell.Step.Tabs.Tests.tests
+    , StylishHaskell.Step.TrailingWhitespace.Tests.tests
+    , StylishHaskell.Step.UnicodeSyntax.Tests.tests
     ]

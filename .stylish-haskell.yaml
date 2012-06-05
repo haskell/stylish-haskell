@@ -1,4 +1,4 @@
-stylish:
+steps:
   # Convert some ASCII sequences to their Unicode equivalents
   # - unicode_syntax: {}
 

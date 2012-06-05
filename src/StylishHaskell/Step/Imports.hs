@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
-module StylishHaskell.Stylish.Imports
-    ( stylish
+module StylishHaskell.Step.Imports
+    ( step
     ) where
 
 
@@ -16,7 +16,7 @@ import qualified Language.Haskell.Exts.Annotated as H
 --------------------------------------------------------------------------------
 import           StylishHaskell.Block
 import           StylishHaskell.Editor
-import           StylishHaskell.Stylish
+import           StylishHaskell.Step
 import           StylishHaskell.Util
 
 
@@ -40,10 +40,10 @@ longestImport = maximum . map (length . importName)
 -- | Groups adjacent imports into larger import blocks
 groupAdjacent :: [H.ImportDecl LineBlock]
               -> [(LineBlock, [H.ImportDecl LineBlock])]
-groupAdjacent = foldr step []
+groupAdjacent = foldr go []
   where
     -- This code is ugly and not optimal, and no fucks were given.
-    step imp is = case break (adjacent b1 . fst) is of
+    go imp is = case break (adjacent b1 . fst) is of
         (_, [])                 -> (b1, [imp]) : is
         (xs, ((b2, imps) : ys)) -> (merge b1 b2, imp : imps) : (xs ++ ys)
       where
@@ -106,8 +106,8 @@ prettyImportGroup align longest =
 
 
 --------------------------------------------------------------------------------
-stylish :: Bool -> Stylish
-stylish align ls (module', _) = flip applyChanges ls
+step :: Bool -> Step
+step align ls (module', _) = flip applyChanges ls
     [ change block (prettyImportGroup align longest importGroup)
     | (block, importGroup) <- groups
     ]

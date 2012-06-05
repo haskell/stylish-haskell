@@ -1,22 +1,23 @@
 --------------------------------------------------------------------------------
-module StylishHaskell.Stylish.TrailingWhitespace
-    ( stylish
+module StylishHaskell.Step
+    ( Lines
+    , Module
+    , Step
     ) where
 
 
 --------------------------------------------------------------------------------
-import           Data.Char            (isSpace)
+import qualified Language.Haskell.Exts.Annotated as H
 
 
 --------------------------------------------------------------------------------
-import           StylishHaskell.Stylish
+type Lines = [String]
 
 
 --------------------------------------------------------------------------------
-dropTrailingWhitespace :: String -> String
-dropTrailingWhitespace = reverse . dropWhile isSpace . reverse
+-- | Concrete module type
+type Module = (H.Module H.SrcSpanInfo, [H.Comment])
 
 
 --------------------------------------------------------------------------------
-stylish :: Stylish
-stylish ls _ = map dropTrailingWhitespace ls
+type Step = Lines -> Module -> Lines

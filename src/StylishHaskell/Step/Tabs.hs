@@ -1,11 +1,11 @@
 --------------------------------------------------------------------------------
-module StylishHaskell.Stylish.Tabs
-    ( stylish
+module StylishHaskell.Step.Tabs
+    ( step
     ) where
 
 
 --------------------------------------------------------------------------------
-import           StylishHaskell.Stylish
+import           StylishHaskell.Step
 
 
 --------------------------------------------------------------------------------
@@ -17,5 +17,5 @@ removeTabs spaces = concatMap removeTabs'
 
 
 --------------------------------------------------------------------------------
-stylish :: Int -> Stylish
-stylish spaces ls _ = map (removeTabs spaces) ls
+step :: Int -> Step
+step spaces ls _ = map (removeTabs spaces) ls

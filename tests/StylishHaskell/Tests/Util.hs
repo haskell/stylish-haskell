@@ -1,17 +1,17 @@
 module StylishHaskell.Tests.Util
-    ( testStylish
+    ( testStep
     ) where
 
 
 --------------------------------------------------------------------------------
 import           StylishHaskell.Parse
-import           StylishHaskell.Stylish
+import           StylishHaskell.Step
 
 
 --------------------------------------------------------------------------------
-testStylish :: Stylish -> String -> String
-testStylish stylish str = case parseModule Nothing str of
+testStep :: Step -> String -> String
+testStep step str = case parseModule Nothing str of
     Left err      -> error err
-    Right module' -> unlines $ stylish ls module'
+    Right module' -> unlines $ step ls module'
   where
     ls = lines str

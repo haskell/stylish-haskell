@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 {-# LANGUAGE ViewPatterns #-}
-module StylishHaskell.Stylish.UnicodeSyntax
-    ( stylish
+module StylishHaskell.Step.UnicodeSyntax
+    ( step
     ) where
 
 
@@ -16,8 +16,8 @@ import qualified Language.Haskell.Exts.Annotated        as H
 --------------------------------------------------------------------------------
 import           StylishHaskell.Block
 import           StylishHaskell.Editor
-import           StylishHaskell.Stylish
-import           StylishHaskell.Stylish.LanguagePragmas (addLanguagePragma)
+import           StylishHaskell.Step
+import           StylishHaskell.Step.LanguagePragmas (addLanguagePragma)
 import           StylishHaskell.Util
 
 
@@ -119,8 +119,8 @@ between (startRow, startCol) (endRow, endCol) needle =
 
 
 --------------------------------------------------------------------------------
-stylish :: Stylish
-stylish ls (module', _) = applyChanges changes ls
+step :: Step
+step ls (module', _) = applyChanges changes ls
   where
     changes = addLanguagePragma "UnicodeSyntax" module' ++ replaceAll perLine ls
     perLine = sort $ groupPerLine $

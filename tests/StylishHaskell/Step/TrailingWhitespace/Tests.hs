@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
-module StylishHaskell.Stylish.UnicodeSyntax.Tests
+module StylishHaskell.Step.TrailingWhitespace.Tests
     ( tests
     ) where
 
@@ -11,31 +11,27 @@ import           Test.HUnit                     ((@=?))
 
 
 --------------------------------------------------------------------------------
-import           StylishHaskell.Stylish.UnicodeSyntax
+import           StylishHaskell.Step.TrailingWhitespace
 import           StylishHaskell.Tests.Util
 
 
 --------------------------------------------------------------------------------
 tests :: Test
-tests = testGroup "StylishHaskell.Stylish.UnicodeSyntax.Tests"
-    [ case01
-    ]
+tests = testGroup "StylishHaskell.Step.TrailingWhitespace.Tests" [case01]
 
 
 --------------------------------------------------------------------------------
 case01 :: Test
-case01 = testCase "case 01" $ expected @=? testStylish stylish input
+case01 = testCase "case 01" $ expected @=? testStep step input
   where
     input = unlines
-        [ "{-# LANGUAGE UnicodeSyntax #-}"  -- TODO: remove
-        , ""
-        , "sort :: Ord a => [a] -> [a]"
-        , "sort _ = []"
+        [ "module Main where"
+        , " "
+        , "data Foo = Bar | Qux\t "
         ]
 
     expected = unlines
-        [ "{-# LANGUAGE UnicodeSyntax #-}"
+        [ "module Main where"
         , ""
-        , "sort ∷ Ord a ⇒ [a] → [a]"
-        , "sort _ = []"
+        , "data Foo = Bar | Qux"
         ]

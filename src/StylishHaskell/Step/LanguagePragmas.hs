@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
-module StylishHaskell.Stylish.LanguagePragmas
+module StylishHaskell.Step.LanguagePragmas
     ( Style (..)
-    , stylish
+    , step
 
       -- * Utilities
     , addLanguagePragma
@@ -16,7 +16,7 @@ import qualified Language.Haskell.Exts.Annotated as H
 --------------------------------------------------------------------------------
 import           StylishHaskell.Block
 import           StylishHaskell.Editor
-import           StylishHaskell.Stylish
+import           StylishHaskell.Step
 import           StylishHaskell.Util
 
 
@@ -64,8 +64,8 @@ prettyPragmas Compact  = compactPragmas
 
 
 --------------------------------------------------------------------------------
-stylish :: Style -> Bool -> Stylish
-stylish style removeRedundant ls (module', _)
+step :: Style -> Bool -> Step
+step style removeRedundant ls (module', _)
     | null pragmas' = ls
     | otherwise     = applyChanges changes ls
   where

@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
-module StylishHaskell.Stylish.TrailingWhitespace.Tests
+module StylishHaskell.Step.Tabs.Tests
     ( tests
     ) where
 
@@ -11,27 +11,32 @@ import           Test.HUnit                     ((@=?))
 
 
 --------------------------------------------------------------------------------
-import           StylishHaskell.Stylish.TrailingWhitespace
+import           StylishHaskell.Step.Tabs
 import           StylishHaskell.Tests.Util
 
 
 --------------------------------------------------------------------------------
 tests :: Test
-tests = testGroup "StylishHaskell.Stylish.TrailingWhitespace.Tests" [case01]
+tests = testGroup "StylishHaskell.Step.Tabs.Tests" [case01]
 
 
 --------------------------------------------------------------------------------
 case01 :: Test
-case01 = testCase "case 01" $ expected @=? testStylish stylish input
+case01 = testCase "case 01" $ expected @=? testStep (step 4) input
   where
     input = unlines
-        [ "module Main where"
-        , " "
-        , "data Foo = Bar | Qux\t "
+        [ "module Main"
+        , "\t\twhere"
+        , "data Foo"
+        , "\t= Bar"
+        , "    | Qux"
         ]
 
     expected = unlines
-        [ "module Main where"
-        , ""
-        , "data Foo = Bar | Qux"
+        [ "module Main"
+        , "        where"
+        , "data Foo"
+        , "    = Bar"
+        , "    | Qux"
         ]
+

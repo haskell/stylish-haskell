@@ -45,6 +45,6 @@ main = do
     let verbose'  = makeVerbose (verbose sa)
     conf <- loadConfig verbose' (config sa)
     let filePath  = listToMaybe $ files sa
-        stylish   = configStylish conf
+        steps     = configSteps conf
     contents <- maybe getContents readFile filePath
-    putStr $ unlines $ chainStylish filePath stylish $ lines contents
+    putStr $ unlines $ runSteps filePath steps $ lines contents

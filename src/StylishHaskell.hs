@@ -1,22 +1,22 @@
 --------------------------------------------------------------------------------
 module StylishHaskell
-    ( runStylish
-    , chainStylish
+    ( runStep
+    , runSteps
     ) where
 
 
 --------------------------------------------------------------------------------
 import           StylishHaskell.Parse
-import           StylishHaskell.Stylish
+import           StylishHaskell.Step
 
 
 --------------------------------------------------------------------------------
-runStylish :: Maybe FilePath -> Stylish -> Lines -> Lines
-runStylish mfp f ls = case parseModule mfp (unlines ls) of
+runStep :: Maybe FilePath -> Step -> Lines -> Lines
+runStep mfp f ls = case parseModule mfp (unlines ls) of
     Left err      -> error err  -- TODO: maybe return original lines?
     Right module' -> f ls module'
 
 
 --------------------------------------------------------------------------------
-chainStylish :: Maybe FilePath -> [Stylish] -> Lines -> Lines
-chainStylish mfp = foldr (flip (.)) id . map (runStylish mfp)
+runSteps :: Maybe FilePath -> [Step] -> Lines -> Lines
+runSteps mfp = foldr (flip (.)) id . map (runStep mfp)

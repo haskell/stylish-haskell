@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
-module StylishHaskell.Stylish.LanguagePragmas.Tests
+module StylishHaskell.Step.LanguagePragmas.Tests
     ( tests
     ) where
 
@@ -11,13 +11,13 @@ import           Test.HUnit                     ((@=?))
 
 
 --------------------------------------------------------------------------------
-import           StylishHaskell.Stylish.LanguagePragmas
+import           StylishHaskell.Step.LanguagePragmas
 import           StylishHaskell.Tests.Util
 
 
 --------------------------------------------------------------------------------
 tests :: Test
-tests = testGroup "StylishHaskell.Stylish.LanguagePragmas.Tests"
+tests = testGroup "StylishHaskell.Step.LanguagePragmas.Tests"
     [ case01
     , case02
     , case03
@@ -28,7 +28,7 @@ tests = testGroup "StylishHaskell.Stylish.LanguagePragmas.Tests"
 --------------------------------------------------------------------------------
 case01 :: Test
 case01 = testCase "case 01" $
-    expected @=? testStylish (stylish Vertical False) input
+    expected @=? testStep (step Vertical False) input
   where
     input = unlines
         [ "{-# LANGUAGE ViewPatterns #-}"
@@ -48,7 +48,7 @@ case01 = testCase "case 01" $
 --------------------------------------------------------------------------------
 case02 :: Test
 case02 = testCase "case 02" $
-    expected @=? testStylish (stylish Vertical True) input
+    expected @=? testStep (step Vertical True) input
   where
     input = unlines
         [ "{-# LANGUAGE BangPatterns #-}"
@@ -65,7 +65,7 @@ case02 = testCase "case 02" $
 --------------------------------------------------------------------------------
 case03 :: Test
 case03 = testCase "case 03" $
-    expected @=? testStylish (stylish Vertical True) input
+    expected @=? testStep (step Vertical True) input
   where
     input = unlines
         [ "{-# LANGUAGE BangPatterns #-}"
@@ -82,7 +82,7 @@ case03 = testCase "case 03" $
 --------------------------------------------------------------------------------
 case04 :: Test
 case04 = testCase "case 04" $
-    expected @=? testStylish (stylish Compact False) input
+    expected @=? testStep (step Compact False) input
   where
     input = unlines
         [ "{-# LANGUAGE TypeOperators, StandaloneDeriving, DeriveDataTypeable,"
