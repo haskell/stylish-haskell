@@ -1,5 +1,6 @@
 steps:
-  # Convert some ASCII sequences to their Unicode equivalents
+  # Convert some ASCII sequences to their Unicode equivalents. This is disabled
+  # by default.
   # - unicode_syntax: {}
 
   # Import cleanup
@@ -32,11 +33,11 @@ steps:
       # is set to true, it will remove those redundant pragmas. Default: true.
       remove_redundant: true
 
-  # Replace tabs by spaces
-  - tabs:
-      # Number of spaces to use for each tab. Default: 8, as specified by the
-      # Haskell report.
-      spaces: 8
+  # Replace tabs by spaces. This is disabled by default.
+  # - tabs:
+  #     # Number of spaces to use for each tab. Default: 8, as specified by the
+  #     # Haskell report.
+  #     spaces: 8
 
   # Remove trailing whitespace
   - trailing_whitespace: {}
