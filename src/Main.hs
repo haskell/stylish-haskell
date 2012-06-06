@@ -14,7 +14,7 @@ import           System.Console.CmdArgs
 
 
 --------------------------------------------------------------------------------
-import           Paths_stylish_haskell  (version)
+import           Paths_stylish_haskell  (getDataFileName, version)
 import           StylishHaskell
 import           StylishHaskell.Config
 import           StylishHaskell.Step
@@ -23,18 +23,20 @@ import           StylishHaskell.Verbose
 
 --------------------------------------------------------------------------------
 data StylishArgs = StylishArgs
-    { config  :: Maybe FilePath
-    , verbose :: Bool
-    , files   :: [FilePath]
+    { config   :: Maybe FilePath
+    , verbose  :: Bool
+    , defaults :: Bool
+    , files    :: [FilePath]
     } deriving (Data, Show, Typeable)
 
 
 --------------------------------------------------------------------------------
 stylishArgs :: StylishArgs
 stylishArgs = StylishArgs
-    { config  = Nothing &= typFile &= help "Configuration file"
-    , verbose = False              &= help "Run in verbose mode"
-    , files   = []      &= typFile &= args
+    { config   = Nothing &= typFile &= help "Configuration file"
+    , verbose  = False              &= help "Run in verbose mode"
+    , defaults = False              &= help "Dump default config and exit"
+    , files    = []      &= typFile &= args
     } &= summary ("stylish-haskell-" ++ versionString version)
   where
     versionString = intercalate "." . map show . versionBranch
@@ -42,13 +44,22 @@ stylishArgs = StylishArgs
 
 --------------------------------------------------------------------------------
 main :: IO ()
-main = do
-    sa   <- cmdArgs stylishArgs
-    let verbose'  = makeVerbose (verbose sa)
-    conf <- loadConfig verbose' (config sa)
-    let filePath  = listToMaybe $ files sa
-        steps     = configSteps conf
+main = cmdArgs stylishArgs >>= stylishHaskell
 
-    forM_ steps $ \step -> verbose' $ "Enabled " ++ stepName step ++ " step"
-    contents <- maybe getContents readFile filePath
-    putStr $ unlines $ runSteps filePath steps $ lines contents
+
+--------------------------------------------------------------------------------
+stylishHaskell :: StylishArgs -> IO ()
+stylishHaskell sa
+    | defaults sa = do
+        fileName <- getDataFileName ".stylish-haskell.yaml"
+        verbose' $ "Dumping config from " ++ fileName
+        readFile fileName >>= putStr
+    | otherwise   = do
+        conf <- loadConfig verbose' (config sa)
+        let steps = configSteps conf
+        forM_ steps $ \s -> verbose' $ "Enabled " ++ stepName s ++ " step"
+        contents <- maybe getContents readFile filePath
+        putStr $ unlines $ runSteps filePath steps $ lines contents
+  where
+    verbose' = makeVerbose (verbose sa)
+    filePath = listToMaybe $ files sa

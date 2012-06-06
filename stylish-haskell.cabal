@@ -18,6 +18,9 @@ Description:
 
     <https://github.com/jaspervdj/stylish-haskell/blob/master/README.markdown>
 
+Data-files:
+  .stylish-haskell.yaml
+
 Executable stylish-haskell
   Ghc-options:    -Wall
   Hs-source-dirs: src
