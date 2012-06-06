@@ -58,7 +58,7 @@ case01 = testCase "case 01" $ expected @=? testStep (step Global) input
 
 --------------------------------------------------------------------------------
 case02 :: Test
-case02 = testCase "case 02" $ expected @=? testStep (step Groups) input
+case02 = testCase "case 02" $ expected @=? testStep (step Group) input
   where
     expected = unlines
         [ "module Herp where"
