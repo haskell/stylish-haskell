@@ -2,27 +2,29 @@
 {-# LANGUAGE OverloadedStrings #-}
 module StylishHaskell.Config
     ( Config (..)
+    , defaultConfigFilePath
     , configFilePath
     , loadConfig
     ) where
 
 
 --------------------------------------------------------------------------------
-import           Control.Applicative                       ((<$>), (<*>))
-import           Control.Monad                             (forM, msum, mzero)
-import           Data.Aeson                                (FromJSON(..))
-import qualified Data.Aeson                                as A
-import qualified Data.Aeson.Types                          as A
-import qualified Data.ByteString                           as B
-import           Data.List                                 (intercalate)
-import           Data.Map                                  (Map)
-import qualified Data.Map                                  as M
-import           Data.Yaml                                 (decodeEither)
+import           Control.Applicative                    ((<$>), (<*>))
+import           Control.Monad                          (forM, msum, mzero)
+import           Data.Aeson                             (FromJSON(..))
+import qualified Data.Aeson                             as A
+import qualified Data.Aeson.Types                       as A
+import qualified Data.ByteString                        as B
+import           Data.List                              (intercalate)
+import           Data.Map                               (Map)
+import qualified Data.Map                               as M
+import           Data.Yaml                              (decodeEither)
 import           System.Directory
-import           System.FilePath                           ((</>))
+import           System.FilePath                        ((</>))
 
 
 --------------------------------------------------------------------------------
+import           Paths_stylish_haskell                  (getDataFileName)
 import           StylishHaskell.Step
 import qualified StylishHaskell.Step.Imports            as Imports
 import qualified StylishHaskell.Step.LanguagePragmas    as LanguagePragmas
@@ -44,12 +46,8 @@ instance FromJSON Config where
 
 
 --------------------------------------------------------------------------------
-defaultConfig :: Config
-defaultConfig = Config $
-    [ Imports.step Imports.Global
-    , LanguagePragmas.step LanguagePragmas.Vertical True
-    , TrailingWhitespace.step
-    ]
+emptyConfig :: Config
+emptyConfig = Config []
 
 
 --------------------------------------------------------------------------------
@@ -58,21 +56,28 @@ configFileName = ".stylish-haskell.yaml"
 
 
 --------------------------------------------------------------------------------
+defaultConfigFilePath :: IO FilePath
+defaultConfigFilePath = getDataFileName ".stylish-haskell.yaml"
+
+
+--------------------------------------------------------------------------------
 configFilePath :: Verbose -> Maybe FilePath -> IO (Maybe FilePath)
 configFilePath verbose userSpecified = do
-    current  <- (</> configFileName) <$> getCurrentDirectory
-    currentE <- doesFileExist current
-    report current currentE
-    home     <- (</> configFileName) <$> getHomeDirectory
-    homeE    <- doesFileExist home
-    report home homeE
+    (current, currentE) <- check $ (</> configFileName) <$> getCurrentDirectory
+    (home, homeE)       <- check $ (</> configFileName) <$> getHomeDirectory
+    (def, defE)         <- check defaultConfigFilePath
     return $ msum
         [ userSpecified
         , if currentE then Just current else Nothing
         , if homeE then Just home else Nothing
+        , if defE then Just def else Nothing
         ]
   where
-    report fp e = verbose $ fp ++ if e then " exists" else " does not exist"
+    check fp = do
+        fp' <- fp
+        ex  <- doesFileExist fp'
+        verbose $ fp' ++ if ex then " exists" else " does not exist"
+        return (fp', ex)
 
 
 --------------------------------------------------------------------------------
@@ -81,8 +86,8 @@ loadConfig verbose mfp = do
     mfp' <- configFilePath verbose mfp
     case mfp' of
         Nothing -> do
-            verbose $ "Using default configuration"
-            return defaultConfig
+            verbose $ "Using empty configuration"
+            return emptyConfig
         Just fp -> do
             verbose $ "Loading configuration at " ++ fp
             bs <- B.readFile fp

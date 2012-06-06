@@ -14,7 +14,7 @@ import           System.Console.CmdArgs
 
 
 --------------------------------------------------------------------------------
-import           Paths_stylish_haskell  (getDataFileName, version)
+import           Paths_stylish_haskell  (version)
 import           StylishHaskell
 import           StylishHaskell.Config
 import           StylishHaskell.Step
@@ -51,7 +51,7 @@ main = cmdArgs stylishArgs >>= stylishHaskell
 stylishHaskell :: StylishArgs -> IO ()
 stylishHaskell sa
     | defaults sa = do
-        fileName <- getDataFileName ".stylish-haskell.yaml"
+        fileName <- defaultConfigFilePath
         verbose' $ "Dumping config from " ++ fileName
         readFile fileName >>= putStr
     | otherwise   = do
