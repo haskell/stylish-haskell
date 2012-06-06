@@ -4,14 +4,25 @@ steps:
 
   # Import cleanup
   - imports:
-      # Align import names and import lists. Default: true.
-      align: true
+      # There are different ways we can align names and lists.
+      #
+      # - global: Align the import names and import list throughout the entire
+      #   file.
+      #
+      # - group: Only align the imports per group (a group is formed by adjacent
+      #   import lines).
+      #
+      # - none: Do not perform any alignment.
+      #
+      # Default: global.
+      align: global
 
   # Language pragmas
   - language_pragmas:
       # We can generate different styles of language pragma lists.
       #
       # - vertical: Vertical-spaced language pragmas, one per line.
+      #
       # - compact: A more compact style.
       #
       # Default: vertical.

@@ -1,6 +1,7 @@
 --------------------------------------------------------------------------------
 module StylishHaskell.Step.Imports
-    ( step
+    ( Align (..)
+    , step
     ) where
 
 
@@ -18,6 +19,14 @@ import           StylishHaskell.Block
 import           StylishHaskell.Editor
 import           StylishHaskell.Step
 import           StylishHaskell.Util
+
+
+--------------------------------------------------------------------------------
+data Align
+    = Global
+    | Group
+    | None
+    deriving (Eq, Show)
 
 
 --------------------------------------------------------------------------------
@@ -82,11 +91,11 @@ sortImportSpecs imp = imp {H.importSpecs = fmap sort $ H.importSpecs imp}
 
 
 --------------------------------------------------------------------------------
-prettyImport :: Bool -> Int -> H.ImportDecl l -> String
-prettyImport align longest imp = unwords $ concat
+prettyImport :: Bool -> Bool -> Int -> H.ImportDecl l -> String
+prettyImport padQualified padName longest imp = unwords $ concat
     [ ["import"]
     , qualified
-    , [(if hasExtras && align then padRight longest else id) (importName imp)]
+    , [(if hasExtras && padName then padRight longest else id) (importName imp)]
     , ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp]
     , [H.prettyPrint specs | specs <- maybeToList $ H.importSpecs imp]
     ]
@@ -95,23 +104,34 @@ prettyImport align longest imp = unwords $ concat
 
     qualified
         | H.importQualified imp = ["qualified"]
-        | align                 = ["         "]
+        | padQualified          = ["         "]
         | otherwise             = []
 
 
 --------------------------------------------------------------------------------
-prettyImportGroup :: Bool -> Int -> [H.ImportDecl LineBlock] -> Lines
-prettyImportGroup align longest =
-    map (prettyImport align longest) . sortBy compareImports
+prettyImportGroup :: Align -> Int -> [H.ImportDecl LineBlock] -> Lines
+prettyImportGroup align longest imps =
+    map (prettyImport padQual padName longest') $ sortBy compareImports imps
+  where
+    longest' = case align of
+        Group -> longestImport imps
+        _     -> longest
+
+    padName = align /= None
+
+    padQual = case align of
+        Global -> True
+        Group  -> any H.importQualified imps
+        None   -> False
 
 
 --------------------------------------------------------------------------------
-step :: Bool -> Step
+step :: Align -> Step
 step = makeStep "Imports" . step'
 
 
 --------------------------------------------------------------------------------
-step' :: Bool -> Lines -> Module -> Lines
+step' :: Align -> Lines -> Module -> Lines
 step' align ls (module', _) = flip applyChanges ls
     [ change block (prettyImportGroup align longest importGroup)
     | (block, importGroup) <- groups

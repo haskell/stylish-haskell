@@ -46,7 +46,7 @@ instance FromJSON Config where
 --------------------------------------------------------------------------------
 defaultConfig :: Config
 defaultConfig = Config $
-    [ Imports.step True
+    [ Imports.step Imports.Global
     , LanguagePragmas.step LanguagePragmas.Vertical True
     , TrailingWhitespace.step
     ]
@@ -132,7 +132,13 @@ parseEnum strs _   (Just k) = case lookup k strs of
 --------------------------------------------------------------------------------
 parseImports :: A.Object -> A.Parser Step
 parseImports o = Imports.step
-    <$> o A..:? "align" A..!= True
+    <$> (o A..:? "align" >>= parseEnum aligns Imports.Global)
+  where
+    aligns =
+        [ ("global", Imports.Global)
+        , ("group",  Imports.Group)
+        , ("none",   Imports.None)
+        ]
 
 
 --------------------------------------------------------------------------------
