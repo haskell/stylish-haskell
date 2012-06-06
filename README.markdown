@@ -18,9 +18,12 @@ Features
 --------
 
 - Aligns and sorts `import` statements
-- Groups and wraps `{-# LANGUAGE #-}` pragmas
+- Groups and wraps `{-# LANGUAGE #-}` pragmas, can remove (some) redundant
+  pragmas
 - Removes trailing whitespace
-- Replaces tabs by four spaces (note that this is turned off by default)
+- Replaces tabs by four spaces (turned off by default)
+- Replaces some ASCII sequences by their Unicode equivalents (turned off by
+  default)
 
 Feature requests are welcome! Use the [issue tracker] for that.
 
@@ -58,6 +61,11 @@ into:
     
     import           Data.Map            (Map, keys, (!))
     import qualified Data.Map            as M
+
+Configuration
+-------------
+
+The tool is customizable to some extent.
 
 VIM integration
 ---------------
