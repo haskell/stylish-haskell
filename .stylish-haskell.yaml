@@ -1,7 +1,19 @@
+# stylish-haskell configuration file
+# ==================================
+#
+# The stylish-haskell tool is mainly configured by specifying steps. These steps
+# are a list, so they have an order, and one specific step may appear more than
+# once (if needed). Each file is processed by these steps in the given order.
 steps:
   # Convert some ASCII sequences to their Unicode equivalents. This is disabled
   # by default.
-  # - unicode_syntax: {}
+  # - unicode_syntax:
+  #     # In order to make this work, we also need to insert the UnicodeSyntax
+  #     # language pragma. If this flag is set to true, we insert it when it's
+  #     # not already present. You may want to disable it if you configure
+  #     # language extensions using some other method than pragmas. Default:
+  #     # true.
+  #     add_language_pragma: true
 
   # Import cleanup
   - imports:

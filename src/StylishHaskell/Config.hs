@@ -171,4 +171,5 @@ parseTrailingWhitespace _ = return TrailingWhitespace.step
 
 --------------------------------------------------------------------------------
 parseUnicodeSyntax :: A.Object -> A.Parser Step
-parseUnicodeSyntax _ = return UnicodeSyntax.step
+parseUnicodeSyntax o = UnicodeSyntax.step
+    <$> o A..:? "add_language_pragma" A..!= True

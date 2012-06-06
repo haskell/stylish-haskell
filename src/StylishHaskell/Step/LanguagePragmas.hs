@@ -88,9 +88,9 @@ step' style removeRedundant ls (module', _)
 --------------------------------------------------------------------------------
 -- | Add a LANGUAGE pragma to a module if it is not present already.
 addLanguagePragma :: String -> H.Module H.SrcSpanInfo -> [Change String]
-addLanguagePragma pragma modu
-    | pragma `elem` present = []
-    | otherwise             = [insert line ["{-# LANGUAGE " ++ pragma ++ "#-}"]]
+addLanguagePragma prag modu
+    | prag `elem` present = []
+    | otherwise           = [insert line ["{-# LANGUAGE " ++ prag ++ " #-}"]]
   where
     pragmas' = pragmas (fmap linesFromSrcSpan modu)
     present  = concatMap snd pragmas'

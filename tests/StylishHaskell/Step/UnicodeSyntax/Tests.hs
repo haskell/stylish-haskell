@@ -24,18 +24,15 @@ tests = testGroup "StylishHaskell.Step.UnicodeSyntax.Tests"
 
 --------------------------------------------------------------------------------
 case01 :: Test
-case01 = testCase "case 01" $ expected @=? testStep step input
+case01 = testCase "case 01" $ expected @=? testStep (step True) input
   where
     input = unlines
-        [ "{-# LANGUAGE UnicodeSyntax #-}"  -- TODO: remove
-        , ""
-        , "sort :: Ord a => [a] -> [a]"
+        [ "sort :: Ord a => [a] -> [a]"
         , "sort _ = []"
         ]
 
     expected = unlines
         [ "{-# LANGUAGE UnicodeSyntax #-}"
-        , ""
         , "sort ∷ Ord a ⇒ [a] → [a]"
         , "sort _ = []"
         ]
