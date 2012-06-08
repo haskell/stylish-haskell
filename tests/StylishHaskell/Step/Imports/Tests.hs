@@ -34,6 +34,7 @@ input = unlines
     , "import       Data.Map     (lookup, (!), insert, Map)"
     , ""
     , "import Herp.Derp.Internals hiding (foo)"
+    , "import HURR"
     , ""
     , "herp = putStrLn \"import Hello world\""
     ]
@@ -51,6 +52,7 @@ case01 = testCase "case 01" $ expected @=? testStep (step Global) input
         , "import qualified Data.Map            as M"
         , ""
         , "import           Herp.Derp.Internals hiding (foo)"
+        , "import           HURR"
         , ""
         , "herp = putStrLn \"import Hello world\""
         ]
@@ -68,6 +70,7 @@ case02 = testCase "case 02" $ expected @=? testStep (step Group) input
         , "import qualified Data.Map      as M"
         , ""
         , "import Herp.Derp.Internals hiding (foo)"
+        , "import HURR"
         , ""
         , "herp = putStrLn \"import Hello world\""
         ]
@@ -85,6 +88,7 @@ case03 = testCase "case 03" $ expected @=? testStep (step None) input
         , "import qualified Data.Map as M"
         , ""
         , "import Herp.Derp.Internals hiding (foo)"
+        , "import HURR"
         , ""
         , "herp = putStrLn \"import Hello world\""
         ]
