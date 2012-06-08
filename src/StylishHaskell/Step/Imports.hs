@@ -7,7 +7,7 @@ module StylishHaskell.Step.Imports
 
 --------------------------------------------------------------------------------
 import           Control.Arrow                   ((&&&))
-import           Data.Char                       (isAlpha)
+import           Data.Char                       (isAlpha, toLower)
 import           Data.List                       (sortBy)
 import           Data.Maybe                      (isJust, maybeToList)
 import           Data.Ord                        (comparing)
@@ -62,7 +62,7 @@ groupAdjacent = foldr go []
 --------------------------------------------------------------------------------
 -- | Compare imports for ordering
 compareImports :: H.ImportDecl l -> H.ImportDecl l -> Ordering
-compareImports = comparing (importName &&& H.importQualified)
+compareImports = comparing (map toLower . importName &&& H.importQualified)
 
 
 --------------------------------------------------------------------------------
