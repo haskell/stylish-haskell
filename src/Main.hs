@@ -11,6 +11,8 @@ import           Data.List              (intercalate)
 import           Data.Maybe             (listToMaybe)
 import           Data.Version           (Version(..))
 import           System.Console.CmdArgs
+import           System.IO.Strict       (readFile)
+import           Prelude                hiding (readFile)
 
 
 --------------------------------------------------------------------------------
@@ -26,6 +28,7 @@ data StylishArgs = StylishArgs
     { config   :: Maybe FilePath
     , verbose  :: Bool
     , defaults :: Bool
+    , inPlace  :: Bool
     , files    :: [FilePath]
     } deriving (Data, Show, Typeable)
 
@@ -36,6 +39,7 @@ stylishArgs = StylishArgs
     { config   = Nothing &= typFile &= help "Configuration file"
     , verbose  = False              &= help "Run in verbose mode"
     , defaults = False              &= help "Dump default config and exit"
+    , inPlace  = False              &= help "Overwrite the given files in place"
     , files    = []      &= typFile &= args
     } &= summary ("stylish-haskell-" ++ versionString version)
   where
@@ -59,7 +63,10 @@ stylishHaskell sa
         let steps = configSteps conf
         forM_ steps $ \s -> verbose' $ "Enabled " ++ stepName s ++ " step"
         contents <- maybe getContents readFile filePath
-        putStr $ unlines $ runSteps filePath steps $ lines contents
+        write $ unlines $ runSteps filePath steps $ lines contents
   where
     verbose' = makeVerbose (verbose sa)
     filePath = listToMaybe $ files sa
+    write = maybe putStr
+                  (if inPlace sa then writeFile else const putStr)
+                  filePath
