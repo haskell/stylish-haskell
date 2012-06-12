@@ -5,7 +5,7 @@ module StylishHaskell.Step.TrailingWhitespace
 
 
 --------------------------------------------------------------------------------
-import           Data.Char            (isSpace)
+import           Data.Char           (isSpace)
 
 
 --------------------------------------------------------------------------------

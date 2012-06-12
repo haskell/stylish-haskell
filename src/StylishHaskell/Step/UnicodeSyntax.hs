@@ -1,16 +1,15 @@
 --------------------------------------------------------------------------------
-{-# LANGUAGE ViewPatterns #-}
 module StylishHaskell.Step.UnicodeSyntax
     ( step
     ) where
 
 
 --------------------------------------------------------------------------------
-import           Data.List                              (isPrefixOf, sort)
-import           Data.Map                               (Map)
-import qualified Data.Map                               as M
-import           Data.Maybe                             (maybeToList)
-import qualified Language.Haskell.Exts.Annotated        as H
+import           Data.List                           (isPrefixOf, sort)
+import           Data.Map                            (Map)
+import qualified Data.Map                            as M
+import           Data.Maybe                          (maybeToList)
+import qualified Language.Haskell.Exts.Annotated     as H
 
 
 --------------------------------------------------------------------------------

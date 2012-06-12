@@ -8,11 +8,10 @@ module Main
 --------------------------------------------------------------------------------
 import           Control.Monad          (forM_)
 import           Data.List              (intercalate)
-import           Data.Maybe             (listToMaybe)
 import           Data.Version           (Version(..))
+import           Prelude                hiding (readFile)
 import           System.Console.CmdArgs
 import           System.IO.Strict       (readFile)
-import           Prelude                hiding (readFile)
 
 
 --------------------------------------------------------------------------------
@@ -62,11 +61,17 @@ stylishHaskell sa
         conf <- loadConfig verbose' (config sa)
         let steps = configSteps conf
         forM_ steps $ \s -> verbose' $ "Enabled " ++ stepName s ++ " step"
-        contents <- maybe getContents readFile filePath
-        write $ unlines $ runSteps filePath steps $ lines contents
+        mapM_ (file sa conf) files'
   where
     verbose' = makeVerbose (verbose sa)
-    filePath = listToMaybe $ files sa
-    write = maybe putStr
-                  (if inPlace sa then writeFile else const putStr)
-                  filePath
+    files'   = if null (files sa) then [Nothing] else map Just (files sa)
+
+
+--------------------------------------------------------------------------------
+-- | Processes a single file, or stdin if no filepath is given
+file :: StylishArgs -> Config -> Maybe FilePath -> IO ()
+file sa conf mfp = do
+    contents <- maybe getContents readFile mfp
+    write $ unlines $ runSteps mfp (configSteps conf) $ lines contents
+  where
+    write = maybe putStr (if inPlace sa then writeFile else const putStr) mfp

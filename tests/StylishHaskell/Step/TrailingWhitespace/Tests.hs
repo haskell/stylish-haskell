@@ -5,9 +5,9 @@ module StylishHaskell.Step.TrailingWhitespace.Tests
 
 
 --------------------------------------------------------------------------------
-import           Test.Framework                 (Test, testGroup)
-import           Test.Framework.Providers.HUnit (testCase)
-import           Test.HUnit                     ((@=?))
+import           Test.Framework                         (Test, testGroup)
+import           Test.Framework.Providers.HUnit         (testCase)
+import           Test.HUnit                             ((@=?))
 
 
 --------------------------------------------------------------------------------
