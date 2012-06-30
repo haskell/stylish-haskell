@@ -5,11 +5,13 @@ module StylishHaskell.Parse
 
 
 --------------------------------------------------------------------------------
+import           Control.Monad.Error             (throwError)
 import           Data.Maybe                      (fromMaybe)
 import qualified Language.Haskell.Exts.Annotated as H
 
 
 --------------------------------------------------------------------------------
+import           StylishHaskell.Config
 import           StylishHaskell.Step
 
 
@@ -23,19 +25,32 @@ unCpp = unlines . map unCpp' . lines
 
 
 --------------------------------------------------------------------------------
+-- | Read an extension name from a string
+parseExtension :: String -> Either String H.Extension
+parseExtension str = case reads str of
+    [(x, "")] -> return x
+    _         -> throwError $ "Unknown extension: " ++ str
+
+
+--------------------------------------------------------------------------------
 -- | Abstraction over HSE's parsing
-parseModule :: Maybe FilePath -> String -> Either String Module
-parseModule mfp string =
-    let fp       = fromMaybe "<unknown>" mfp
-        -- Determine the extensions used in the file, and update the parsing
-        -- mode based upon those
-        exts     = fromMaybe [] $ H.readExtensions string
+parseModule :: Extensions -> Maybe FilePath -> String -> Either String Module
+parseModule extraExts mfp string = do
+    -- Determine the extensions: those specified in the file and the extra ones 
+    extraExts' <- mapM parseExtension extraExts
+    let fileExts = fromMaybe [] $ H.readExtensions string
+        exts     = fileExts ++ extraExts'
+
+        -- Parsing options...
+        fp       = fromMaybe "<unknown>" mfp
         mode     = H.defaultParseMode
             {H.extensions = exts, H.fixities = Nothing}
+
         -- Special handling for CPP, haskell-src-exts can't deal with it
         string'  = if H.CPP `elem` exts then unCpp string else string
-    in case H.parseModuleWithComments mode string' of
-        H.ParseOk md -> Right md
-        err          -> Left $
+
+    case H.parseModuleWithComments mode string' of
+        H.ParseOk md -> return md
+        err          -> throwError $
             "StylishHaskell.Parse.parseModule: could not parse " ++
             fp ++ ": " ++ show err

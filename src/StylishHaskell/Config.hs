@@ -1,7 +1,8 @@
 --------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
 module StylishHaskell.Config
-    ( Config (..)
+    ( Extensions
+    , Config (..)
     , defaultConfigFilePath
     , configFilePath
     , loadConfig
@@ -32,6 +33,10 @@ import qualified StylishHaskell.Step.Tabs               as Tabs
 import qualified StylishHaskell.Step.TrailingWhitespace as TrailingWhitespace
 import qualified StylishHaskell.Step.UnicodeSyntax      as UnicodeSyntax
 import           StylishHaskell.Verbose
+
+
+--------------------------------------------------------------------------------
+type Extensions = [String]
 
 
 --------------------------------------------------------------------------------

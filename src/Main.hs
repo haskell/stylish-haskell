@@ -74,6 +74,7 @@ stylishHaskell sa
 file :: StylishArgs -> Config -> Maybe FilePath -> IO ()
 file sa conf mfp = do
     contents <- maybe getContents readFile mfp
-    write $ unlines $ runSteps mfp (configSteps conf) $ lines contents
+    write $ unlines $ runSteps (configLanguageExtensions conf)
+        mfp (configSteps conf) $ lines contents
   where
     write = maybe putStr (if inPlace sa then writeFile else const putStr) mfp

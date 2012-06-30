@@ -51,9 +51,10 @@ Executable stylish-haskell
     directory        >= 1.1  && < 1.2,
     filepath         >= 1.1  && < 1.4,
     haskell-src-exts >= 1.13 && < 1.14,
+    mtl              >= 2.0  && < 2.2,
+    strict           >= 0.3  && < 0.4,
     syb              >= 0.3  && < 0.4,
-    yaml             >= 0.7  && < 0.9,
-    strict           >= 0.3  && < 0.4
+    yaml             >= 0.7  && < 0.9
 
 Test-suite stylish-haskell-tests
   Ghc-options:    -Wall
@@ -82,9 +83,10 @@ Test-suite stylish-haskell-tests
     directory        >= 1.1  && < 1.2,
     filepath         >= 1.1  && < 1.4,
     haskell-src-exts >= 1.13 && < 1.14,
+    mtl              >= 2.0  && < 2.2,
+    strict           >= 0.3  && < 0.4,
     syb              >= 0.3  && < 0.4,
-    yaml             >= 0.7  && < 0.9,
-    strict           >= 0.3  && < 0.4
+    yaml             >= 0.7  && < 0.9
 
 Source-repository head
   Type:     git

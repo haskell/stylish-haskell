@@ -10,7 +10,7 @@ import           StylishHaskell.Step
 
 --------------------------------------------------------------------------------
 testStep :: Step -> String -> String
-testStep step str = case parseModule Nothing str of
+testStep step str = case parseModule [] Nothing str of
     Left err      -> error err
     Right module' -> unlines $ stepFilter step ls module'
   where
