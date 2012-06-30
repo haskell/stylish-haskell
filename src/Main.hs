@@ -61,6 +61,8 @@ stylishHaskell sa
         conf <- loadConfig verbose' (config sa)
         let steps = configSteps conf
         forM_ steps $ \s -> verbose' $ "Enabled " ++ stepName s ++ " step"
+        verbose' $ "Extra language extensions: " ++
+            show (configLanguageExtensions conf)
         mapM_ (file sa conf) files'
   where
     verbose' = makeVerbose (verbose sa)

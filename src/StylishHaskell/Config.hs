@@ -36,7 +36,8 @@ import           StylishHaskell.Verbose
 
 --------------------------------------------------------------------------------
 data Config = Config
-    { configSteps :: [Step]
+    { configSteps              :: [Step]
+    , configLanguageExtensions :: [String]
     }
 
 
@@ -47,7 +48,7 @@ instance FromJSON Config where
 
 --------------------------------------------------------------------------------
 emptyConfig :: Config
-emptyConfig = Config []
+emptyConfig = Config [] []
 
 
 --------------------------------------------------------------------------------
@@ -101,6 +102,7 @@ loadConfig verbose mfp = do
 parseConfig :: A.Value -> A.Parser Config
 parseConfig (A.Object o) = Config
     <$> (o A..: "steps" >>= fmap concat . mapM parseSteps)
+    <*> (o A..:? "language_extensions" A..!= [])
 parseConfig _            = mzero
 
 
