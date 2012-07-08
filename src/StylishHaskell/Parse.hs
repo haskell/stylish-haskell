@@ -25,6 +25,14 @@ unCpp = unlines . map unCpp' . lines
 
 
 --------------------------------------------------------------------------------
+-- | If the given string is prefixed with an UTF-8 Byte Order Mark, drop it
+-- because haskell-src-exts can't handle it.
+dropBom :: String -> String
+dropBom ('\xfeff' : str) = str
+dropBom str              = str
+
+
+--------------------------------------------------------------------------------
 -- | Read an extension name from a string
 parseExtension :: String -> Either String H.Extension
 parseExtension str = case reads str of
@@ -46,8 +54,8 @@ parseModule extraExts mfp string = do
         mode     = H.defaultParseMode
             {H.extensions = exts, H.fixities = Nothing}
 
-        -- Special handling for CPP, haskell-src-exts can't deal with it
-        string'  = if H.CPP `elem` exts then unCpp string else string
+        -- Preprocessing
+        string'  = dropBom $ (if H.CPP `elem` exts then unCpp else id) $ string
 
     case H.parseModuleWithComments mode string' of
         H.ParseOk md -> return md
