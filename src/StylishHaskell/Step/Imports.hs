@@ -92,14 +92,20 @@ sortImportSpecs imp = imp {H.importSpecs = fmap sort $ H.importSpecs imp}
 
 --------------------------------------------------------------------------------
 prettyImport :: Bool -> Bool -> Int -> H.ImportDecl l -> String
-prettyImport padQualified padName longest imp = unwords $ concat
-    [ ["import"]
-    , qualified
-    , [(if hasExtras && padName then padRight longest else id) (importName imp)]
-    , ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp]
-    , [H.prettyPrint specs | specs <- maybeToList $ H.importSpecs imp]
-    ]
+prettyImport padQualified padName longest imp =
+  unwords $ base : maybeToList specs
   where
+    base = unwords $ concat
+         [ ["import"]
+         , qualified
+         , [(if hasExtras && padName then padRight longest else id)
+            (importName imp)]
+         , ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp]]
+    specs = fmap (unlines . padSpecs . lines  . H.prettyPrint)
+            $ H.importSpecs imp
+    pad = replicate (length base) ' '
+    padSpecs [] = []
+    padSpecs (h:rest) = h : map (pad ++) rest
     hasExtras = isJust (H.importAs imp) || isJust (H.importSpecs imp)
 
     qualified
