@@ -105,6 +105,6 @@ case04 = expected @=? testStep (step 80 Global) input'
 
     expected = unlines
         [ "import           Data.Aeson.Types (FromJSON(..), ToJSON(..), Value(..), object,"
-        , "                                  parseEither, typeMismatch, (.!=), (.:), (.:?),"
-        , "                                  (.=))"
+        , "                                   parseEither, typeMismatch, (.!=), (.:),"
+        , "                                   (.:?), (.=))"
         ]

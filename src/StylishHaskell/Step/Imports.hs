@@ -94,7 +94,7 @@ sortImportSpecs imp = imp {H.importSpecs = fmap sort $ H.importSpecs imp}
 prettyImport :: Int -> Bool -> Bool -> Int -> H.ImportDecl l -> String
 prettyImport columns padQualified padName longest imp =
     intercalate "\n" $
-    wrap columns base (length base + 1) $
+    wrap columns base (length base + 2) $
     (if hiding then ("hiding" :) else id) $
     withInit (++ ",") $
     withHead ("(" ++) $
