@@ -91,10 +91,10 @@ sortImportSpecs imp = imp {H.importSpecs = fmap sort $ H.importSpecs imp}
 
 
 --------------------------------------------------------------------------------
-prettyImport :: Bool -> Bool -> Int -> H.ImportDecl l -> String
-prettyImport padQualified padName longest imp =
+prettyImport :: Int -> Bool -> Bool -> Int -> H.ImportDecl l -> String
+prettyImport columns padQualified padName longest imp =
     intercalate "\n" $
-    wrap 80 base (length base + 1) $
+    wrap columns base (length base + 1) $
     (if hiding then ("hiding" :) else id) $
     withInit (++ ",") $
     withHead ("(" ++) $
@@ -123,9 +123,10 @@ prettyImport padQualified padName longest imp =
 
 
 --------------------------------------------------------------------------------
-prettyImportGroup :: Align -> Int -> [H.ImportDecl LineBlock] -> Lines
-prettyImportGroup align longest imps =
-    map (prettyImport padQual padName longest') $ sortBy compareImports imps
+prettyImportGroup :: Int -> Align -> Int -> [H.ImportDecl LineBlock] -> Lines
+prettyImportGroup columns align longest imps =
+    map (prettyImport columns padQual padName longest') $
+    sortBy compareImports imps
   where
     longest' = case align of
         Group -> longestImport imps
@@ -140,14 +141,14 @@ prettyImportGroup align longest imps =
 
 
 --------------------------------------------------------------------------------
-step :: Align -> Step
-step = makeStep "Imports" . step'
+step :: Int -> Align -> Step
+step columns = makeStep "Imports" . step' columns
 
 
 --------------------------------------------------------------------------------
-step' :: Align -> Lines -> Module -> Lines
-step' align ls (module', _) = flip applyChanges ls
-    [ change block (prettyImportGroup align longest importGroup)
+step' :: Int -> Align -> Lines -> Module -> Lines
+step' columns align ls (module', _) = flip applyChanges ls
+    [ change block (prettyImportGroup columns align longest importGroup)
     | (block, importGroup) <- groups
     ]
   where

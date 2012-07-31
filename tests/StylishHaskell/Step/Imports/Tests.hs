@@ -43,7 +43,7 @@ input = unlines
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testStep (step Global) input
+case01 = expected @=? testStep (step 80 Global) input
   where
     expected = unlines
         [ "module Herp where"
@@ -61,7 +61,7 @@ case01 = expected @=? testStep (step Global) input
 
 --------------------------------------------------------------------------------
 case02 :: Assertion
-case02 = expected @=? testStep (step Group) input
+case02 = expected @=? testStep (step 80 Group) input
   where
     expected = unlines
         [ "module Herp where"
@@ -79,7 +79,7 @@ case02 = expected @=? testStep (step Group) input
 
 --------------------------------------------------------------------------------
 case03 :: Assertion
-case03 = expected @=? testStep (step None) input
+case03 = expected @=? testStep (step 80 None) input
   where
     expected = unlines
         [ "module Herp where"
@@ -97,7 +97,7 @@ case03 = expected @=? testStep (step None) input
 
 --------------------------------------------------------------------------------
 case04 :: Assertion
-case04 = expected @=? testStep (step Global) input'
+case04 = expected @=? testStep (step 80 Global) input'
   where
     input' =
         "import Data.Aeson.Types (object, typeMismatch, FromJSON(..)," ++

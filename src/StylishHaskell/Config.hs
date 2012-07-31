@@ -10,7 +10,7 @@ module StylishHaskell.Config
 
 
 --------------------------------------------------------------------------------
-import           Control.Applicative                    ((<$>), (<*>))
+import           Control.Applicative                    (pure, (<$>), (<*>))
 import           Control.Monad                          (forM, msum, mzero)
 import           Data.Aeson                             (FromJSON(..))
 import qualified Data.Aeson                             as A
@@ -42,6 +42,7 @@ type Extensions = [String]
 --------------------------------------------------------------------------------
 data Config = Config
     { configSteps              :: [Step]
+    , configColumns            :: Int
     , configLanguageExtensions :: [String]
     }
 
@@ -53,7 +54,7 @@ instance FromJSON Config where
 
 --------------------------------------------------------------------------------
 emptyConfig :: Config
-emptyConfig = Config [] []
+emptyConfig = Config [] 80 []
 
 
 --------------------------------------------------------------------------------
@@ -105,14 +106,21 @@ loadConfig verbose mfp = do
 
 --------------------------------------------------------------------------------
 parseConfig :: A.Value -> A.Parser Config
-parseConfig (A.Object o) = Config
-    <$> (o A..: "steps" >>= fmap concat . mapM parseSteps)
-    <*> (o A..:? "language_extensions" A..!= [])
+parseConfig (A.Object o) = do
+    -- First load the config without the actual steps
+    config <- Config
+        <$> pure []
+        <*> (o A..:? "columns"             A..!= 80)
+        <*> (o A..:? "language_extensions" A..!= [])
+
+    -- Then fill in the steps based on the partial config we already have
+    steps <- (o A..:  "steps" >>= fmap concat . mapM (parseSteps config))
+    return config {configSteps = steps}
 parseConfig _            = mzero
 
 
 --------------------------------------------------------------------------------
-catalog :: Map String (A.Object -> A.Parser Step)
+catalog :: Map String (Config -> A.Object -> A.Parser Step)
 catalog = M.fromList
     [ ("imports",             parseImports)
     , ("language_pragmas",    parseLanguagePragmas)
@@ -123,11 +131,11 @@ catalog = M.fromList
 
 
 --------------------------------------------------------------------------------
-parseSteps :: A.Value -> A.Parser [Step]
-parseSteps val = do
+parseSteps :: Config -> A.Value -> A.Parser [Step]
+parseSteps config val = do
     map' <- parseJSON val :: A.Parser (Map String A.Value)
     forM (M.toList map') $ \(k, v) -> case (M.lookup k catalog, v) of
-        (Just parser, A.Object o) -> parser o
+        (Just parser, A.Object o) -> parser config o
         _                         -> fail $ "Invalid declaration for " ++ k
 
 
@@ -142,9 +150,10 @@ parseEnum strs _   (Just k) = case lookup k strs of
 
 
 --------------------------------------------------------------------------------
-parseImports :: A.Object -> A.Parser Step
-parseImports o = Imports.step
-    <$> (o A..:? "align" >>= parseEnum aligns Imports.Global)
+parseImports :: Config -> A.Object -> A.Parser Step
+parseImports config o = Imports.step
+    <$> pure (configColumns config)
+    <*> (o A..:? "align" >>= parseEnum aligns Imports.Global)
   where
     aligns =
         [ ("global", Imports.Global)
@@ -154,8 +163,8 @@ parseImports o = Imports.step
 
 
 --------------------------------------------------------------------------------
-parseLanguagePragmas :: A.Object -> A.Parser Step
-parseLanguagePragmas o = LanguagePragmas.step
+parseLanguagePragmas :: Config -> A.Object -> A.Parser Step
+parseLanguagePragmas _ o = LanguagePragmas.step
     <$> (o A..:? "style" >>= parseEnum styles LanguagePragmas.Vertical)
     <*> o A..:? "remove_redundant" A..!= True
   where
@@ -166,17 +175,17 @@ parseLanguagePragmas o = LanguagePragmas.step
 
 
 --------------------------------------------------------------------------------
-parseTabs :: A.Object -> A.Parser Step
-parseTabs o = Tabs.step
+parseTabs :: Config -> A.Object -> A.Parser Step
+parseTabs _ o = Tabs.step
     <$> o A..:? "spaces" A..!= 8
 
 
 --------------------------------------------------------------------------------
-parseTrailingWhitespace :: A.Object -> A.Parser Step
-parseTrailingWhitespace _ = return TrailingWhitespace.step
+parseTrailingWhitespace :: Config -> A.Object -> A.Parser Step
+parseTrailingWhitespace _ _ = return TrailingWhitespace.step
 
 
 --------------------------------------------------------------------------------
-parseUnicodeSyntax :: A.Object -> A.Parser Step
-parseUnicodeSyntax o = UnicodeSyntax.step
+parseUnicodeSyntax :: Config -> A.Object -> A.Parser Step
+parseUnicodeSyntax _ o = UnicodeSyntax.step
     <$> o A..:? "add_language_pragma" A..!= True
