@@ -164,8 +164,9 @@ parseImports config o = Imports.step
 
 --------------------------------------------------------------------------------
 parseLanguagePragmas :: Config -> A.Object -> A.Parser Step
-parseLanguagePragmas _ o = LanguagePragmas.step
-    <$> (o A..:? "style" >>= parseEnum styles LanguagePragmas.Vertical)
+parseLanguagePragmas config o = LanguagePragmas.step
+    <$> pure (configColumns config)
+    <*> (o A..:? "style" >>= parseEnum styles LanguagePragmas.Vertical)
     <*> o A..:? "remove_redundant" A..!= True
   where
     styles =

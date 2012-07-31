@@ -27,7 +27,7 @@ tests = testGroup "StylishHaskell.Step.LanguagePragmas.Tests"
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testStep (step Vertical False) input
+case01 = expected @=? testStep (step 80 Vertical False) input
   where
     input = unlines
         [ "{-# LANGUAGE ViewPatterns #-}"
@@ -46,7 +46,7 @@ case01 = expected @=? testStep (step Vertical False) input
 
 --------------------------------------------------------------------------------
 case02 :: Assertion
-case02 = expected @=? testStep (step Vertical True) input
+case02 = expected @=? testStep (step 80 Vertical True) input
   where
     input = unlines
         [ "{-# LANGUAGE BangPatterns #-}"
@@ -62,7 +62,7 @@ case02 = expected @=? testStep (step Vertical True) input
 
 --------------------------------------------------------------------------------
 case03 :: Assertion
-case03 = expected @=? testStep (step Vertical True) input
+case03 = expected @=? testStep (step 80 Vertical True) input
   where
     input = unlines
         [ "{-# LANGUAGE BangPatterns #-}"
@@ -78,7 +78,7 @@ case03 = expected @=? testStep (step Vertical True) input
 
 --------------------------------------------------------------------------------
 case04 :: Assertion
-case04 = expected @=? testStep (step Compact False) input
+case04 = expected @=? testStep (step 80 Compact False) input
   where
     input = unlines
         [ "{-# LANGUAGE TypeOperators, StandaloneDeriving, DeriveDataTypeable,"
