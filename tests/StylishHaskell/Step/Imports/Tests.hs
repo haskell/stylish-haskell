@@ -7,7 +7,7 @@ module StylishHaskell.Step.Imports.Tests
 --------------------------------------------------------------------------------
 import           Test.Framework                 (Test, testGroup)
 import           Test.Framework.Providers.HUnit (testCase)
-import           Test.HUnit                     ((@=?))
+import           Test.HUnit                     (Assertion, (@=?))
 
 
 --------------------------------------------------------------------------------
@@ -18,10 +18,10 @@ import           StylishHaskell.Tests.Util
 --------------------------------------------------------------------------------
 tests :: Test
 tests = testGroup "StylishHaskell.Step.Imports.Tests"
-    [ case01
-    , case02
-    , case03
-    , case04
+    [ testCase "case 01" case01
+    , testCase "case 02" case02
+    , testCase "case 03" case03
+    , testCase "case 04" case04
     ]
 
 
@@ -42,8 +42,8 @@ input = unlines
 
 
 --------------------------------------------------------------------------------
-case01 :: Test
-case01 = testCase "case 01" $ expected @=? testStep (step Global) input
+case01 :: Assertion
+case01 = expected @=? testStep (step Global) input
   where
     expected = unlines
         [ "module Herp where"
@@ -60,8 +60,8 @@ case01 = testCase "case 01" $ expected @=? testStep (step Global) input
 
 
 --------------------------------------------------------------------------------
-case02 :: Test
-case02 = testCase "case 02" $ expected @=? testStep (step Group) input
+case02 :: Assertion
+case02 = expected @=? testStep (step Group) input
   where
     expected = unlines
         [ "module Herp where"
@@ -78,8 +78,8 @@ case02 = testCase "case 02" $ expected @=? testStep (step Group) input
 
 
 --------------------------------------------------------------------------------
-case03 :: Test
-case03 = testCase "case 03" $ expected @=? testStep (step None) input
+case03 :: Assertion
+case03 = expected @=? testStep (step None) input
   where
     expected = unlines
         [ "module Herp where"
@@ -94,8 +94,10 @@ case03 = testCase "case 03" $ expected @=? testStep (step None) input
         , "herp = putStrLn \"import Hello world\""
         ]
 
-case04 :: Test
-case04 = testCase "case 04" $ expected @=? testStep (step Global) input'
+
+--------------------------------------------------------------------------------
+case04 :: Assertion
+case04 = expected @=? testStep (step Global) input'
   where
     input' =
         "import Data.Aeson.Types (object, typeMismatch, FromJSON(..)," ++

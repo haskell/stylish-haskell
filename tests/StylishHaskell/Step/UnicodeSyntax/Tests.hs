@@ -7,7 +7,7 @@ module StylishHaskell.Step.UnicodeSyntax.Tests
 --------------------------------------------------------------------------------
 import           Test.Framework                    (Test, testGroup)
 import           Test.Framework.Providers.HUnit    (testCase)
-import           Test.HUnit                        ((@=?))
+import           Test.HUnit                        (Assertion, (@=?))
 
 
 --------------------------------------------------------------------------------
@@ -18,13 +18,13 @@ import           StylishHaskell.Tests.Util
 --------------------------------------------------------------------------------
 tests :: Test
 tests = testGroup "StylishHaskell.Step.UnicodeSyntax.Tests"
-    [ case01
+    [ testCase "case 01" case01
     ]
 
 
 --------------------------------------------------------------------------------
-case01 :: Test
-case01 = testCase "case 01" $ expected @=? testStep (step True) input
+case01 :: Assertion
+case01 = expected @=? testStep (step True) input
   where
     input = unlines
         [ "sort :: Ord a => [a] -> [a]"

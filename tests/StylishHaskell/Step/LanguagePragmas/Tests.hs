@@ -7,7 +7,7 @@ module StylishHaskell.Step.LanguagePragmas.Tests
 --------------------------------------------------------------------------------
 import           Test.Framework                      (Test, testGroup)
 import           Test.Framework.Providers.HUnit      (testCase)
-import           Test.HUnit                          ((@=?))
+import           Test.HUnit                          (Assertion, (@=?))
 
 
 --------------------------------------------------------------------------------
@@ -18,17 +18,16 @@ import           StylishHaskell.Tests.Util
 --------------------------------------------------------------------------------
 tests :: Test
 tests = testGroup "StylishHaskell.Step.LanguagePragmas.Tests"
-    [ case01
-    , case02
-    , case03
-    , case04
+    [ testCase "case 01" case01
+    , testCase "case 02" case02
+    , testCase "case 03" case03
+    , testCase "case 04" case04
     ]
 
 
 --------------------------------------------------------------------------------
-case01 :: Test
-case01 = testCase "case 01" $
-    expected @=? testStep (step Vertical False) input
+case01 :: Assertion
+case01 = expected @=? testStep (step Vertical False) input
   where
     input = unlines
         [ "{-# LANGUAGE ViewPatterns #-}"
@@ -46,9 +45,8 @@ case01 = testCase "case 01" $
 
 
 --------------------------------------------------------------------------------
-case02 :: Test
-case02 = testCase "case 02" $
-    expected @=? testStep (step Vertical True) input
+case02 :: Assertion
+case02 = expected @=? testStep (step Vertical True) input
   where
     input = unlines
         [ "{-# LANGUAGE BangPatterns #-}"
@@ -63,9 +61,8 @@ case02 = testCase "case 02" $
 
 
 --------------------------------------------------------------------------------
-case03 :: Test
-case03 = testCase "case 03" $
-    expected @=? testStep (step Vertical True) input
+case03 :: Assertion
+case03 = expected @=? testStep (step Vertical True) input
   where
     input = unlines
         [ "{-# LANGUAGE BangPatterns #-}"
@@ -80,9 +77,8 @@ case03 = testCase "case 03" $
 
 
 --------------------------------------------------------------------------------
-case04 :: Test
-case04 = testCase "case 04" $
-    expected @=? testStep (step Compact False) input
+case04 :: Assertion
+case04 = expected @=? testStep (step Compact False) input
   where
     input = unlines
         [ "{-# LANGUAGE TypeOperators, StandaloneDeriving, DeriveDataTypeable,"

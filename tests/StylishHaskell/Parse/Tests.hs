@@ -7,7 +7,7 @@ module StylishHaskell.Parse.Tests
 --------------------------------------------------------------------------------
 import           Test.Framework                 (Test, testGroup)
 import           Test.Framework.Providers.HUnit (testCase)
-import           Test.HUnit                     (assert)
+import           Test.HUnit                     (Assertion, assert)
 
 
 --------------------------------------------------------------------------------
@@ -17,15 +17,14 @@ import           StylishHaskell.Parse
 --------------------------------------------------------------------------------
 tests :: Test
 tests = testGroup "StylishHaskell.Parse"
-    [ testBom
-    , testExtraExtensions
+    [ testCase "UTF-8 Byte Order Mark" testBom
+    , testCase "Extra extensions"      testExtraExtensions
     ]
 
 
 --------------------------------------------------------------------------------
-testBom :: Test
-testBom = testCase "UTF-8 Byte Order Mark" $ assert $ isRight $
-    parseModule [] Nothing input
+testBom :: Assertion
+testBom = assert $ isRight $ parseModule [] Nothing input
   where
     input = unlines
         [ '\xfeff' : "foo :: Int"
@@ -34,8 +33,8 @@ testBom = testCase "UTF-8 Byte Order Mark" $ assert $ isRight $
 
 
 --------------------------------------------------------------------------------
-testExtraExtensions :: Test
-testExtraExtensions = testCase "Extra extensions" $ assert $ isRight $
+testExtraExtensions :: Assertion
+testExtraExtensions = assert $ isRight $
     parseModule ["TemplateHaskell"] Nothing "$(foo)"
 
 

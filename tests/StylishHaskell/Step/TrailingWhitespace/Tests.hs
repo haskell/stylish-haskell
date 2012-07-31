@@ -7,7 +7,7 @@ module StylishHaskell.Step.TrailingWhitespace.Tests
 --------------------------------------------------------------------------------
 import           Test.Framework                         (Test, testGroup)
 import           Test.Framework.Providers.HUnit         (testCase)
-import           Test.HUnit                             ((@=?))
+import           Test.HUnit                             (Assertion, (@=?))
 
 
 --------------------------------------------------------------------------------
@@ -17,12 +17,14 @@ import           StylishHaskell.Tests.Util
 
 --------------------------------------------------------------------------------
 tests :: Test
-tests = testGroup "StylishHaskell.Step.TrailingWhitespace.Tests" [case01]
+tests = testGroup "StylishHaskell.Step.TrailingWhitespace.Tests"
+    [ testCase "case 01" case01
+    ]
 
 
 --------------------------------------------------------------------------------
-case01 :: Test
-case01 = testCase "case 01" $ expected @=? testStep step input
+case01 :: Assertion
+case01 = expected @=? testStep step input
   where
     input = unlines
         [ "module Main where"
