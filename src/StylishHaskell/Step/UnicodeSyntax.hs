@@ -103,13 +103,6 @@ between (startRow, startCol) (endRow, endCol) needle =
     take (endRow - startRow + 1) .
     drop (startRow - 1)
   where
-    withHead _ []       = []
-    withHead f (x : xs) = (f x) : xs
-
-    withLast f [x]      = [f x]
-    withLast f (x : xs) = x : withLast f xs
-    withLast _ []       = []
-
     search _      []            = Nothing
     search (r, _) ([] : xs)     = search (r + 1, 1) xs
     search (r, c) (x : xs)

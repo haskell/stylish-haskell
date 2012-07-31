@@ -6,6 +6,7 @@ module StylishHaskell.Step.Imports
 
 
 --------------------------------------------------------------------------------
+import           Control.Applicative             ((<$>))
 import           Control.Arrow                   ((&&&))
 import           Data.Char                       (isAlpha, toLower)
 import           Data.List                       (sortBy)
@@ -93,25 +94,41 @@ sortImportSpecs imp = imp {H.importSpecs = fmap sort $ H.importSpecs imp}
 --------------------------------------------------------------------------------
 prettyImport :: Bool -> Bool -> Int -> H.ImportDecl l -> String
 prettyImport padQualified padName longest imp =
-  unwords $ base : maybeToList specs
+    unlines specs
   where
     base = unwords $ concat
          [ ["import"]
          , qualified
          , [(if hasExtras && padName then padRight longest else id)
             (importName imp)]
-         , ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp]]
-    specs = fmap (unlines . padSpecs . lines  . H.prettyPrint)
-            $ H.importSpecs imp
-    pad = replicate (length base) ' '
-    padSpecs [] = []
-    padSpecs (h:rest) = h : map (pad ++) rest
+         , ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp]
+         ]
+
+
+    -- specs = unlines . indentSpecs . lines . H.prettyPrint <$> H.importSpecs imp
+    specs = wrap 80 base (length base + 1) $
+        (if hiding then ("hiding" :) else id) $
+        withInit (++ ",") $
+        withHead ("(" ++) $
+        withLast (++ ")") $
+        map H.prettyPrint $
+        importSpecs
+
+    hiding = case H.importSpecs imp of
+        Just (H.ImportSpecList _ h _) -> h
+        _                             -> False
+
+    importSpecs = case H.importSpecs imp of
+        Just (H.ImportSpecList _ _ l) -> l
+        _                             -> []
+
     hasExtras = isJust (H.importAs imp) || isJust (H.importSpecs imp)
 
     qualified
         | H.importQualified imp = ["qualified"]
         | padQualified          = ["         "]
         | otherwise             = []
+
 
 
 --------------------------------------------------------------------------------
