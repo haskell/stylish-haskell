@@ -11,6 +11,7 @@ import           Data.List              (intercalate)
 import           Data.Version           (Version(..))
 import           Prelude                hiding (readFile)
 import           System.Console.CmdArgs
+import           System.IO              (hPutStrLn, stderr)
 import           System.IO.Strict       (readFile)
 
 
@@ -74,7 +75,11 @@ stylishHaskell sa
 file :: StylishArgs -> Config -> Maybe FilePath -> IO ()
 file sa conf mfp = do
     contents <- maybe getContents readFile mfp
-    write $ unlines $ runSteps (configLanguageExtensions conf)
-        mfp (configSteps conf) $ lines contents
+    let result = runSteps (configLanguageExtensions conf)
+            mfp (configSteps conf) $ lines contents
+
+    case result of
+        Left  err -> hPutStrLn stderr err >> write contents
+        Right ok  -> write $ unlines ok
   where
     write = maybe putStr (if inPlace sa then writeFile else const putStr) mfp

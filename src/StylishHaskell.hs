@@ -6,18 +6,23 @@ module StylishHaskell
 
 
 --------------------------------------------------------------------------------
+import           Control.Applicative   ((<$>))
+import           Control.Monad         (foldM)
+
+
+--------------------------------------------------------------------------------
 import           StylishHaskell.Config
 import           StylishHaskell.Parse
 import           StylishHaskell.Step
 
 
 --------------------------------------------------------------------------------
-runStep :: Extensions -> Maybe FilePath -> Step -> Lines -> Lines
-runStep exts mfp step ls = case parseModule exts mfp (unlines ls) of
-    Left err      -> error err  -- TODO: maybe return original lines?
-    Right module' -> stepFilter step ls module'
+runStep :: Extensions -> Maybe FilePath -> Lines -> Step -> Either String Lines
+runStep exts mfp ls step =
+    stepFilter step ls <$> parseModule exts mfp (unlines ls)
 
 
 --------------------------------------------------------------------------------
-runSteps :: Extensions -> Maybe FilePath -> [Step] -> Lines -> Lines
-runSteps exts mfp = foldr (flip (.)) id . map (runStep exts mfp)
+runSteps :: Extensions -> Maybe FilePath -> [Step] -> Lines
+         -> Either String Lines
+runSteps exts mfp steps ls = foldM (runStep exts mfp) ls steps
