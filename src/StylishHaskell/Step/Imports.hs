@@ -6,10 +6,9 @@ module StylishHaskell.Step.Imports
 
 
 --------------------------------------------------------------------------------
-import           Control.Applicative             ((<$>))
 import           Control.Arrow                   ((&&&))
 import           Data.Char                       (isAlpha, toLower)
-import           Data.List                       (sortBy)
+import           Data.List                       (intercalate, sortBy)
 import           Data.Maybe                      (isJust, maybeToList)
 import           Data.Ord                        (comparing)
 import qualified Language.Haskell.Exts.Annotated as H
@@ -94,7 +93,14 @@ sortImportSpecs imp = imp {H.importSpecs = fmap sort $ H.importSpecs imp}
 --------------------------------------------------------------------------------
 prettyImport :: Bool -> Bool -> Int -> H.ImportDecl l -> String
 prettyImport padQualified padName longest imp =
-    unlines specs
+    intercalate "\n" $
+    wrap 80 base (length base + 1) $
+    (if hiding then ("hiding" :) else id) $
+    withInit (++ ",") $
+    withHead ("(" ++) $
+    withLast (++ ")") $
+    map H.prettyPrint $
+    importSpecs
   where
     base = unwords $ concat
          [ ["import"]
@@ -104,23 +110,9 @@ prettyImport padQualified padName longest imp =
          , ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp]
          ]
 
-
-    -- specs = unlines . indentSpecs . lines . H.prettyPrint <$> H.importSpecs imp
-    specs = wrap 80 base (length base + 1) $
-        (if hiding then ("hiding" :) else id) $
-        withInit (++ ",") $
-        withHead ("(" ++) $
-        withLast (++ ")") $
-        map H.prettyPrint $
-        importSpecs
-
-    hiding = case H.importSpecs imp of
-        Just (H.ImportSpecList _ h _) -> h
-        _                             -> False
-
-    importSpecs = case H.importSpecs imp of
-        Just (H.ImportSpecList _ _ l) -> l
-        _                             -> []
+    (hiding, importSpecs) = case H.importSpecs imp of
+        Just (H.ImportSpecList _ h l) -> (h, l)
+        _                             -> (False, [])
 
     hasExtras = isJust (H.importAs imp) || isJust (H.importSpecs imp)
 
@@ -128,7 +120,6 @@ prettyImport padQualified padName longest imp =
         | H.importQualified imp = ["qualified"]
         | padQualified          = ["         "]
         | otherwise             = []
-
 
 
 --------------------------------------------------------------------------------

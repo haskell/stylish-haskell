@@ -21,6 +21,7 @@ tests = testGroup "StylishHaskell.Step.Imports.Tests"
     [ case01
     , case02
     , case03
+    , case04
     ]
 
 
@@ -91,4 +92,17 @@ case03 = testCase "case 03" $ expected @=? testStep (step None) input
         , "import HURR"
         , ""
         , "herp = putStrLn \"import Hello world\""
+        ]
+
+case04 :: Test
+case04 = testCase "case 04" $ expected @=? testStep (step Global) input'
+  where
+    input' =
+        "import Data.Aeson.Types (object, typeMismatch, FromJSON(..)," ++
+        "ToJSON(..), Value(..), parseEither, (.!=), (.:), (.:?), (.=))"
+
+    expected = unlines
+        [ "import           Data.Aeson.Types (FromJSON(..), ToJSON(..), Value(..), object,"
+        , "                                  parseEither, typeMismatch, (.!=), (.:), (.:?),"
+        , "                                  (.=))"
         ]
