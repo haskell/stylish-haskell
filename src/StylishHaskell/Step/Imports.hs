@@ -91,6 +91,23 @@ sortImportSpecs imp = imp {H.importSpecs = fmap sort $ H.importSpecs imp}
 
 
 --------------------------------------------------------------------------------
+-- | By default, haskell-src-exts pretty-prints
+--
+-- > import Foo (Bar(..))
+--
+-- but we want
+--
+-- > import Foo (Bar (..))
+--
+-- instead.
+prettyImportSpec :: H.ImportSpec l -> String
+prettyImportSpec (H.IThingAll  _ n)     = H.prettyPrint n ++ " (..)"
+prettyImportSpec (H.IThingWith _ n cns) = H.prettyPrint n ++ " (" ++
+    intercalate ", " (map H.prettyPrint cns) ++ ")"
+prettyImportSpec x                      = H.prettyPrint x
+
+
+--------------------------------------------------------------------------------
 prettyImport :: Int -> Bool -> Bool -> Int -> H.ImportDecl l -> String
 prettyImport columns padQualified padName longest imp =
     intercalate "\n" $
@@ -99,7 +116,7 @@ prettyImport columns padQualified padName longest imp =
     withInit (++ ",") $
     withHead ("(" ++) $
     withLast (++ ")") $
-    map H.prettyPrint $
+    map prettyImportSpec $
     importSpecs
   where
     base = unwords $ concat

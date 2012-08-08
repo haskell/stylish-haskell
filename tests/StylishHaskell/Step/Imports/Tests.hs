@@ -70,7 +70,7 @@ case02 = expected @=? testStep (step 80 Group) input
         , "import           Data.Map      (Map, insert, lookup, (!))"
         , "import qualified Data.Map      as M"
         , ""
-        , "import Foo                        (Bar (..))"
+        , "import Foo                 (Bar (..))"
         , "import Herp.Derp.Internals hiding (foo)"
         , ""
         , "herp = putStrLn \"import Hello world\""
@@ -104,7 +104,7 @@ case04 = expected @=? testStep (step 80 Global) input'
         "ToJSON(..), Value(..), parseEither, (.!=), (.:), (.:?), (.=))"
 
     expected = unlines
-        [ "import           Data.Aeson.Types (FromJSON(..), ToJSON(..), Value(..), object,"
-        , "                                   parseEither, typeMismatch, (.!=), (.:),"
-        , "                                   (.:?), (.=))"
+        [ "import           Data.Aeson.Types (FromJSON (..), ToJSON (..), Value (..),"
+        , "                                   object, parseEither, typeMismatch, (.!=),"
+        , "                                   (.:), (.:?), (.=))"
         ]
