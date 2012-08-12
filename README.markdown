@@ -38,29 +38,38 @@ Turns:
     {-# LANGUAGE GeneralizedNewtypeDeriving,
                 ViewPatterns,
         ScopedTypeVariables #-}
-    
+
     module Bad where
-    
+
     import Control.Applicative ((<$>))
     import System.Directory (doesFileExist)
-    
+
     import qualified Data.Map as M
     import      Data.Map    ((!), keys, Map)   
+
+    data Point = Point
+        { pointX, pointY :: Double
+        , pointName :: String
+        } deriving (Show)
 
 into:
 
     {-# LANGUAGE GeneralizedNewtypeDeriving #-}
     {-# LANGUAGE ScopedTypeVariables        #-}
     {-# LANGUAGE TemplateHaskell            #-}
-    {-# LANGUAGE ViewPatterns               #-}
-    
+
     module Bad where
-    
+
     import           Control.Applicative ((<$>))
     import           System.Directory    (doesFileExist)
-    
+
     import           Data.Map            (Map, keys, (!))
     import qualified Data.Map            as M
+
+    data Point = Point
+        { pointX, pointY :: Double
+        , pointName      :: String
+        } deriving (Show)
 
 Configuration
 -------------
