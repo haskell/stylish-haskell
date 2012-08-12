@@ -30,28 +30,16 @@ unicodeReplacements = M.fromList
 
 
 --------------------------------------------------------------------------------
-replaceAll :: [(Int, [(Int, String)])] -> Lines -> [Change String]
-replaceAll positions ls =
-    zipWith changeLine' positions $ selectLines (map fst positions) ls
+replaceAll :: [(Int, [(Int, String)])] -> [Change String]
+replaceAll = map changeLine'
   where
-    changeLine' (r, ns) str = changeLine r $ return $ flip applyChanges str
-        [ change (Block c ec) repl
-        | (c, needle) <- sort ns
-        , let ec = c + length needle - 1
-        , repl <- maybeToList $ M.lookup needle unicodeReplacements
-        ]
-
-
-
---------------------------------------------------------------------------------
-selectLines :: [Int] -> Lines -> [String]
-selectLines = go 1
-  where
-    go _ []      _         = []
-    go _ _       []        = []
-    go r (x : xs) (l : ls)
-        | r == x                    = l : go (r + 1) xs ls
-        | otherwise                 = go (r + 1) (x : xs) ls
+    changeLine' (r, ns) = changeLine r $ \str -> return $
+        flip applyChanges str
+            [ change (Block c ec) (const repl)
+            | (c, needle) <- sort ns
+            , let ec = c + length needle - 1
+            , repl <- maybeToList $ M.lookup needle unicodeReplacements
+            ]
 
 
 --------------------------------------------------------------------------------
@@ -120,7 +108,7 @@ step' :: Bool -> Lines -> Module -> Lines
 step' alp ls (module', _) = applyChanges changes ls
   where
     changes = (if alp then addLanguagePragma "UnicodeSyntax" module' else []) ++
-        replaceAll perLine ls
+        replaceAll perLine
     perLine = sort $ groupPerLine $
         typeSigs module' ls ++
         contexts module' ls ++
