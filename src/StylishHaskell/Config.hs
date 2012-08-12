@@ -12,7 +12,7 @@ module StylishHaskell.Config
 --------------------------------------------------------------------------------
 import           Control.Applicative                    (pure, (<$>), (<*>))
 import           Control.Monad                          (forM, msum, mzero)
-import           Data.Aeson                             (FromJSON(..))
+import           Data.Aeson                             (FromJSON (..))
 import qualified Data.Aeson                             as A
 import qualified Data.Aeson.Types                       as A
 import qualified Data.ByteString                        as B
@@ -29,6 +29,7 @@ import           Paths_stylish_haskell                  (getDataFileName)
 import           StylishHaskell.Step
 import qualified StylishHaskell.Step.Imports            as Imports
 import qualified StylishHaskell.Step.LanguagePragmas    as LanguagePragmas
+import qualified StylishHaskell.Step.Records            as Records
 import qualified StylishHaskell.Step.Tabs               as Tabs
 import qualified StylishHaskell.Step.TrailingWhitespace as TrailingWhitespace
 import qualified StylishHaskell.Step.UnicodeSyntax      as UnicodeSyntax
@@ -124,6 +125,7 @@ catalog :: Map String (Config -> A.Object -> A.Parser Step)
 catalog = M.fromList
     [ ("imports",             parseImports)
     , ("language_pragmas",    parseLanguagePragmas)
+    , ("records",             parseRecords)
     , ("tabs",                parseTabs)
     , ("trailing_whitespace", parseTrailingWhitespace)
     , ("unicode_syntax",      parseUnicodeSyntax)
@@ -173,6 +175,11 @@ parseLanguagePragmas config o = LanguagePragmas.step
         [ ("vertical", LanguagePragmas.Vertical)
         , ("compact",  LanguagePragmas.Compact)
         ]
+
+
+--------------------------------------------------------------------------------
+parseRecords :: Config -> A.Object -> A.Parser Step
+parseRecords _ _ = return Records.step
 
 
 --------------------------------------------------------------------------------

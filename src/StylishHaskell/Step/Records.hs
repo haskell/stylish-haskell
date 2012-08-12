@@ -1,15 +1,18 @@
 --------------------------------------------------------------------------------
-module StylishHaskell.Step.Records where
+module StylishHaskell.Step.Records
+    ( step
+    ) where
 
 
 --------------------------------------------------------------------------------
-import           Control.Arrow                   (second)
+import           Data.Char                       (isSpace)
 import           Data.List                       (nub)
 import qualified Language.Haskell.Exts.Annotated as H
 
 
 --------------------------------------------------------------------------------
 import           StylishHaskell.Editor
+import           StylishHaskell.Step
 import           StylishHaskell.Util
 
 
@@ -24,24 +27,32 @@ records modu =
 
 
 --------------------------------------------------------------------------------
--- | Align the types of a field
+-- | Align the type of a field
 alignType :: Int -> H.FieldDecl H.SrcSpan -> Change String
 alignType longest (H.FieldDecl srcSpan _ _) =
     changeLine (H.srcSpanStartLine srcSpan) alignType'
   where
     alignType' str =
-        let (pre, post) = second (drop 2) $ break (== ':') str
-        in [padRight longest pre ++ post]
+        let (pre, post) = break (== ':') str
+        in [padRight longest (trimRight pre) ++ post]
+
+    trimRight = reverse . dropWhile isSpace . reverse
 
 
 --------------------------------------------------------------------------------
 -- | Find the length of the longest field name in a record
 longestFieldName :: [H.FieldDecl H.SrcSpan] -> Int
 longestFieldName fields = maximum
-    [ H.srcSpanEndColumn $ H.ann name
+    [ H.srcSpanEndColumn (H.ann name)
     | H.FieldDecl _ names _ <- fields
     , name                  <- names
     ]
+
+
+--------------------------------------------------------------------------------
+-- | Align all fields in a record
+alignRecord :: [H.FieldDecl H.SrcSpan] -> [Change String]
+alignRecord fields = map (alignType $ longestFieldName fields) fields
 
 
 --------------------------------------------------------------------------------
@@ -54,3 +65,11 @@ fixable fields = all singleLine srcSpans && nonOverlapping srcSpans
     srcSpans          = map H.ann fields
     singleLine s      = H.srcSpanStartLine s == H.srcSpanEndLine s
     nonOverlapping ss = length ss == length (nub $ map H.srcSpanStartLine ss)
+
+
+--------------------------------------------------------------------------------
+step :: Step
+step = makeStep "Records" $ \ls (module', _) ->
+    let module''       = fmap H.srcInfoSpan module'
+        fixableRecords = filter fixable $ records module''
+    in applyChanges (fixableRecords >>= alignRecord) ls

@@ -36,6 +36,7 @@ Executable stylish-haskell
     StylishHaskell.Step
     StylishHaskell.Step.Imports
     StylishHaskell.Step.LanguagePragmas
+    StylishHaskell.Step.Records
     StylishHaskell.Step.Tabs
     StylishHaskell.Step.TrailingWhitespace
     StylishHaskell.Step.UnicodeSyntax
@@ -65,6 +66,7 @@ Test-suite stylish-haskell-tests
   Other-modules:
     StylishHaskell.Step.Imports.Tests
     StylishHaskell.Step.LanguagePragmas.Tests
+    StylishHaskell.Step.Records.Tests
     StylishHaskell.Step.Tabs.Tests
     StylishHaskell.Step.TrailingWhitespace.Tests
     StylishHaskell.Step.UnicodeSyntax.Tests
