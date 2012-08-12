@@ -26,19 +26,13 @@ import           StylishHaskell.Block
 -- | Changes the lines indicated by the 'Block' into the given 'Lines'
 data Change a = Change
     { changeBlock :: Block a
-    , changeLines :: [a]
-    } deriving (Eq, Show)
+    , changeLines :: ([a] -> [a])
+    }
 
 
 --------------------------------------------------------------------------------
 moveChange :: Int -> Change a -> Change a
 moveChange offset (Change block ls) = Change (moveBlock offset block) ls
-
-
---------------------------------------------------------------------------------
--- | Number of additional lines introduced when a change is made.
-changeExtraLines :: Change a -> Int
-changeExtraLines (Change block ls) = length ls - blockLength block
 
 
 --------------------------------------------------------------------------------
@@ -65,31 +59,34 @@ applyChanges changes
         -- > new
         -- > (recurse)
         --
-        let block      = changeBlock ch
-            (pre, ls') = splitAt (blockStart block - n) ls
-            (_, post)  = splitAt (blockLength block) ls'
-            extraLines = changeExtraLines ch
-            chs'       = map (moveChange extraLines) chs
-            n'         = blockStart block + blockLength block + extraLines
-        in pre ++ (changeLines ch) ++ go n' chs' post
+        let block       = changeBlock ch
+            (pre, ls')  = splitAt (blockStart block - n) ls
+            (old, post) = splitAt (blockLength block) ls'
+            new         = changeLines ch old
+            extraLines  = length new - blockLength block
+            chs'        = map (moveChange extraLines) chs
+            n'          = blockStart block + blockLength block + extraLines
+        in pre ++ new ++ go n' chs' post
 
 
 --------------------------------------------------------------------------------
 -- | Change a block of lines for some other lines
-change :: Block a -> [a] -> Change a
+change :: Block a -> ([a] -> [a]) -> Change a
 change = Change
 
 
 --------------------------------------------------------------------------------
 -- | Change a single line for some other lines
-changeLine :: Int -> [a] -> Change a
-changeLine start = change (Block start start)
+changeLine :: Int -> (a -> [a]) -> Change a
+changeLine start f = change (Block start start) $ \xs -> case xs of
+    []      -> []
+    (x : _) -> f x
 
 
 --------------------------------------------------------------------------------
 -- | Delete a block of lines
 delete :: Block a -> Change a
-delete block = Change block []
+delete block = Change block $ const []
 
 
 --------------------------------------------------------------------------------
@@ -101,4 +98,4 @@ deleteLine start = delete (Block start start)
 --------------------------------------------------------------------------------
 -- | Insert something /before/ the given lines
 insert :: Int -> [a] -> Change a
-insert start = Change (Block start (start - 1))
+insert start = Change (Block start (start - 1)) . const

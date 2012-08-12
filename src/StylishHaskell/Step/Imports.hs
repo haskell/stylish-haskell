@@ -165,7 +165,7 @@ step columns = makeStep "Imports" . step' columns
 --------------------------------------------------------------------------------
 step' :: Int -> Align -> Lines -> Module -> Lines
 step' columns align ls (module', _) = flip applyChanges ls
-    [ change block (prettyImportGroup columns align longest importGroup)
+    [ change block (const $ prettyImportGroup columns align longest importGroup)
     | (block, importGroup) <- groups
     ]
   where
