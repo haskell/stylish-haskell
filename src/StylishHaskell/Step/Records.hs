@@ -3,13 +3,14 @@ module StylishHaskell.Step.Records where
 
 
 --------------------------------------------------------------------------------
+import           Control.Arrow                   (second)
 import           Data.List                       (nub)
 import qualified Language.Haskell.Exts.Annotated as H
 
 
 --------------------------------------------------------------------------------
-import           StylishHaskell.Block
 import           StylishHaskell.Editor
+import           StylishHaskell.Util
 
 
 --------------------------------------------------------------------------------
@@ -24,12 +25,13 @@ records modu =
 
 --------------------------------------------------------------------------------
 -- | Align the types of a field
-{-
-alignType :: Int -> H.FieldDecl H.SrcSpan -> Int -> Change String
-alignType longest (H.FieldDecl _ names _) line = 
+alignType :: Int -> H.FieldDecl H.SrcSpan -> Change String
+alignType longest (H.FieldDecl srcSpan _ _) =
+    changeLine (H.srcSpanStartLine srcSpan) alignType'
   where
-    end = 
--}
+    alignType' str =
+        let (pre, post) = second (drop 2) $ break (== ':') str
+        in [padRight longest pre ++ post]
 
 
 --------------------------------------------------------------------------------
