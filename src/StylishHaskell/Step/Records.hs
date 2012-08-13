@@ -28,31 +28,27 @@ records modu =
 
 --------------------------------------------------------------------------------
 -- | Align the type of a field
-alignType :: Int -> H.FieldDecl H.SrcSpan -> Change String
-alignType longest (H.FieldDecl srcSpan _ _) =
-    changeLine (H.srcSpanStartLine srcSpan) alignType'
+align :: [(Int, Int)] -> [Change String]
+align alignment = map align' alignment
   where
-    alignType' str =
-        let (pre, post) = break (== ':') str
-        in [padRight longest (trimRight pre) ++ post]
+    longest = maximum $ map snd alignment
 
-    trimRight = reverse . dropWhile isSpace . reverse
+    align' (line, column) = changeLine line $ \str ->
+        let (pre, post) = splitAt column str
+        in [padRight longest (trimRight pre) ++ trimLeft post]
+
+    trimLeft  = dropWhile isSpace
+    trimRight = reverse . trimLeft . reverse
 
 
 --------------------------------------------------------------------------------
--- | Find the length of the longest field name in a record
-longestFieldName :: [H.FieldDecl H.SrcSpan] -> Int
-longestFieldName fields = maximum
-    [ H.srcSpanEndColumn (H.ann name)
+-- | Determine alignment of fields
+fieldAlignment :: [H.FieldDecl H.SrcSpan] -> [(Int, Int)]
+fieldAlignment fields =
+    [ (H.srcSpanStartLine ann, H.srcSpanEndColumn ann)
     | H.FieldDecl _ names _ <- fields
-    , name                  <- names
+    , let ann = H.ann (last names)
     ]
-
-
---------------------------------------------------------------------------------
--- | Align all fields in a record
-alignRecord :: [H.FieldDecl H.SrcSpan] -> [Change String]
-alignRecord fields = map (alignType $ longestFieldName fields) fields
 
 
 --------------------------------------------------------------------------------
@@ -72,4 +68,4 @@ step :: Step
 step = makeStep "Records" $ \ls (module', _) ->
     let module''       = fmap H.srcInfoSpan module'
         fixableRecords = filter fixable $ records module''
-    in applyChanges (fixableRecords >>= alignRecord) ls
+    in applyChanges (fixableRecords >>= align . fieldAlignment) ls
