@@ -64,6 +64,7 @@ Test-suite stylish-haskell-tests
   Type:           exitcode-stdio-1.0
 
   Other-modules:
+    StylishHaskell.Parse.Tests
     StylishHaskell.Step.Imports.Tests
     StylishHaskell.Step.LanguagePragmas.Tests
     StylishHaskell.Step.Records.Tests
