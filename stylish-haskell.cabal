@@ -47,7 +47,7 @@ Executable stylish-haskell
     aeson            >= 0.6  && < 0.7,
     base             >= 4    && < 5,
     bytestring       >= 0.9  && < 0.10,
-    cmdargs          >= 0.9  && < 0.10,
+    cmdargs          >= 0.9  && < 0.11,
     containers       >= 0.3  && < 0.6,
     directory        >= 1.1  && < 1.2,
     filepath         >= 1.1  && < 1.4,
@@ -64,6 +64,7 @@ Test-suite stylish-haskell-tests
   Type:           exitcode-stdio-1.0
 
   Other-modules:
+    StylishHaskell.Parse.Tests
     StylishHaskell.Step.Imports.Tests
     StylishHaskell.Step.LanguagePragmas.Tests
     StylishHaskell.Step.Records.Tests
@@ -80,7 +81,7 @@ Test-suite stylish-haskell-tests
     aeson            >= 0.6  && < 0.7,
     base             >= 4    && < 5,
     bytestring       >= 0.9  && < 0.10,
-    cmdargs          >= 0.9  && < 0.10,
+    cmdargs          >= 0.9  && < 0.11,
     containers       >= 0.3  && < 0.6,
     directory        >= 1.1  && < 1.2,
     filepath         >= 1.1  && < 1.4,
