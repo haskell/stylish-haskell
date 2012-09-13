@@ -16,11 +16,7 @@ import           System.IO.Strict       (readFile)
 
 
 --------------------------------------------------------------------------------
-import           Paths_stylish_haskell  (version)
-import           StylishHaskell
-import           StylishHaskell.Config
-import           StylishHaskell.Step
-import           StylishHaskell.Verbose
+import           Language.Haskell.Stylish
 
 
 --------------------------------------------------------------------------------
