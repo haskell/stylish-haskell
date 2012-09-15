@@ -1,5 +1,5 @@
 Name:          stylish-haskell
-Version:       0.3.2.0
+Version:       0.4.0.0
 Synopsis:      Haskell code prettifier
 Homepage:      https://github.com/jaspervdj/stylish-haskell
 License:       BSD3
@@ -21,12 +21,11 @@ Description:
 Data-files:
   .stylish-haskell.yaml
 
-Executable stylish-haskell
-  Ghc-options:    -Wall
+Library
+  Exposed-modules: Language.Haskell.Stylish
   Hs-source-dirs: src
-  Main-is:        Main.hs
-
-  Other-modules:
+  Ghc-options:    -Wall
+  other-modules:
     Paths_stylish_haskell
     StylishHaskell
     StylishHaskell.Block
@@ -47,15 +46,24 @@ Executable stylish-haskell
     aeson            >= 0.6  && < 0.7,
     base             >= 4    && < 5,
     bytestring       >= 0.9  && < 0.10,
-    cmdargs          >= 0.9  && < 0.10,
     containers       >= 0.3  && < 0.6,
     directory        >= 1.1  && < 1.2,
     filepath         >= 1.1  && < 1.4,
     haskell-src-exts >= 1.13 && < 1.14,
     mtl              >= 2.0  && < 2.2,
-    strict           >= 0.3  && < 0.4,
     syb              >= 0.3  && < 0.4,
     yaml             >= 0.7  && < 0.9
+
+Executable stylish-haskell
+  Ghc-options:    -Wall
+  Hs-source-dirs: app
+  Main-is:        Main.hs
+
+  Build-depends:
+    base             >= 4    && < 5,
+    cmdargs          >= 0.9  && < 0.11,
+    strict           >= 0.3  && < 0.4,
+    stylish-haskell
 
 Test-suite stylish-haskell-tests
   Ghc-options:    -Wall
@@ -64,6 +72,7 @@ Test-suite stylish-haskell-tests
   Type:           exitcode-stdio-1.0
 
   Other-modules:
+    StylishHaskell.Parse.Tests
     StylishHaskell.Step.Imports.Tests
     StylishHaskell.Step.LanguagePragmas.Tests
     StylishHaskell.Step.Records.Tests
@@ -80,7 +89,7 @@ Test-suite stylish-haskell-tests
     aeson            >= 0.6  && < 0.7,
     base             >= 4    && < 5,
     bytestring       >= 0.9  && < 0.10,
-    cmdargs          >= 0.9  && < 0.10,
+    cmdargs          >= 0.9  && < 0.11,
     containers       >= 0.3  && < 0.6,
     directory        >= 1.1  && < 1.2,
     filepath         >= 1.1  && < 1.4,
