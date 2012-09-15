@@ -65,7 +65,7 @@ configFileName = ".stylish-haskell.yaml"
 
 --------------------------------------------------------------------------------
 defaultConfigFilePath :: IO FilePath
-defaultConfigFilePath = getDataFileName ".stylish-haskell.yaml"
+defaultConfigFilePath = getDataFileName "data/stylish-haskell.yaml"
 
 
 --------------------------------------------------------------------------------

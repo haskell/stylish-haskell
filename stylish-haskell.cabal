@@ -19,7 +19,7 @@ Description:
     <https://github.com/jaspervdj/stylish-haskell/blob/master/README.markdown>
 
 Data-files:
-  .stylish-haskell.yaml
+  data/stylish-haskell.yaml
 
 Library
   Exposed-modules: Language.Haskell.Stylish
