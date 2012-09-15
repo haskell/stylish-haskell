@@ -68,6 +68,8 @@ tabs :: Int -- ^ number of spaces
      -> Step
 tabs = Tabs.step
 
+
+--------------------------------------------------------------------------------
 trailingWhitespace :: Step
 trailingWhitespace = TrailingWhitespace.step
 
