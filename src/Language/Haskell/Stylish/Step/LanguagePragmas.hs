@@ -24,6 +24,7 @@ import           Language.Haskell.Stylish.Util
 data Style
     = Vertical
     | Compact
+    | Line
     deriving (Eq, Show)
 
 
@@ -57,9 +58,29 @@ compactPragmas columns pragmas' = wrap columns "{-# LANGUAGE" 13 $
 
 
 --------------------------------------------------------------------------------
+linePragmas :: Int -> [String] -> Lines
+linePragmas _ [] = []
+linePragmas columns (p:pragmas') =
+  let (ls, curr, _) = foldl step ([], p, length p) pragmas'
+      ps = ls ++ [curr]
+      longest = maximum $ map length ps
+  in map (wrapLANGUAGE . padRight longest) ps
+  where
+    maxWidth = columns - 17
+    step (ls, curr, width) str
+      | width' > maxWidth = (ls ++ [curr], str, len)
+      | otherwise         = (ls, curr ++ ", " ++ str, width')
+      where
+        len = length str
+        width' = width + 2 + len
+    wrapLANGUAGE ps = "{-# LANGUAGE " ++ ps ++  " #-}"
+
+
+--------------------------------------------------------------------------------
 prettyPragmas :: Int -> Style -> [String] -> Lines
 prettyPragmas _       Vertical = verticalPragmas
 prettyPragmas columns Compact  = compactPragmas columns
+prettyPragmas columns Line     = linePragmas    columns
 
 
 --------------------------------------------------------------------------------
