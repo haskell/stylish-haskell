@@ -122,6 +122,7 @@ prettyImport columns padQualified padName longest imp =
     base = unwords $ concat
          [ ["import"]
          , qualified
+         , (fmap show $ maybeToList $ H.importPkg imp)
          , [(if hasExtras && padName then padRight longest else id)
             (importName imp)]
          , ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp]
