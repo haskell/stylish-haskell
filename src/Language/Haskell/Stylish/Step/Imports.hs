@@ -108,9 +108,8 @@ prettyImportSpec x                      = H.prettyPrint x
 
 
 --------------------------------------------------------------------------------
-prettyImport :: Int -> Bool -> Bool -> Int -> H.ImportDecl l -> String
+prettyImport :: Int -> Bool -> Bool -> Int -> H.ImportDecl l -> [String]
 prettyImport columns padQualified padName longest imp =
-    intercalate "\n" $
     wrap columns base (length base + 2) $
     (if hiding then ("hiding" :) else id) $
     withInit (++ ",") $
@@ -143,7 +142,7 @@ prettyImport columns padQualified padName longest imp =
 --------------------------------------------------------------------------------
 prettyImportGroup :: Int -> Align -> Int -> [H.ImportDecl LineBlock] -> Lines
 prettyImportGroup columns align longest imps =
-    map (prettyImport columns padQual padName longest') $
+    concatMap (prettyImport columns padQual padName longest') $
     sortBy compareImports imps
   where
     longest' = case align of
