@@ -112,11 +112,15 @@ prettyImport :: Int -> Bool -> Bool -> Int -> H.ImportDecl l -> [String]
 prettyImport columns padQualified padName longest imp =
     wrap columns base (length base + 2) $
     (if hiding then ("hiding" :) else id) $
-    withInit (++ ",") $
-    withHead ("(" ++) $
-    withLast (++ ")") $
-    map prettyImportSpec $
-    importSpecs
+    case importSpecs of
+        Nothing -> []     -- Import everything
+        Just [] -> ["()"] -- Instance only imports
+        Just is ->
+            withInit (++ ",") $
+            withHead ("(" ++) $
+            withLast (++ ")") $
+            map prettyImportSpec $
+            is
   where
     base = unwords $ concat
          [ ["import"]
@@ -128,8 +132,8 @@ prettyImport columns padQualified padName longest imp =
          ]
 
     (hiding, importSpecs) = case H.importSpecs imp of
-        Just (H.ImportSpecList _ h l) -> (h, l)
-        _                             -> (False, [])
+        Just (H.ImportSpecList _ h l) -> (h, Just l)
+        _                             -> (False, Nothing)
 
     hasExtras = isJust (H.importAs imp) || isJust (H.importSpecs imp)
 
