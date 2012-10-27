@@ -65,11 +65,14 @@ wrap maxWidth leading ind strs =
     -- TODO: In order to optimize this, use a difference list instead of a
     -- regular list for 'ls'.
     step (ls, curr, width) str
-        | width' > maxWidth = (ls ++ [curr], indent ind str, ind + len)
-        | otherwise         = (ls, curr ++ " " ++ str, width')
+        | nextLine  = (ls ++ [curr], indent ind str, ind + len)
+        | otherwise = (ls, curr ++ " " ++ str, width')
       where
-        len    = length str
-        width' = width + 1 + len
+        -- Put it on the next line if it would make the current line too long,
+        -- AND if it doesn't make the next line too long.
+        nextLine = width' > maxWidth && ind + len <= maxWidth
+        len      = length str
+        width'   = width + 1 + len
 
 
 --------------------------------------------------------------------------------
