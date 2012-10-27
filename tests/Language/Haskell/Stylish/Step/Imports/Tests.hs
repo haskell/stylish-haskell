@@ -22,6 +22,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 02" case02
     , testCase "case 03" case03
     , testCase "case 04" case04
+    , testCase "case 05" case05
     ]
 
 
@@ -112,3 +113,11 @@ case04 = expected @=? testStep (step 80 Global) input'
         , "                                   object, parseEither, typeMismatch, (.!=),"
         , "                                   (.:), (.:?), (.=))"
         ]
+
+
+--------------------------------------------------------------------------------
+case05 :: Assertion
+case05 = input' @=? testStep (step 80 Group) input'
+  where
+    input' = "import Distribution.PackageDescription.Configuration " ++
+        "(finalizePackageDescription)\n"
