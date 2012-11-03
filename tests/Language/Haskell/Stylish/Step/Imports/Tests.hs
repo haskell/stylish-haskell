@@ -23,6 +23,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 03" case03
     , testCase "case 04" case04
     , testCase "case 05" case05
+    , testCase "case 06" case06
     ]
 
 
@@ -121,3 +122,16 @@ case05 = input' @=? testStep (step 80 Group) input'
   where
     input' = "import Distribution.PackageDescription.Configuration " ++
         "(finalizePackageDescription)\n"
+
+--------------------------------------------------------------------------------
+case06 :: Assertion
+case06 = expected @=? testStep (step 80 File) input'
+  where
+    input' =
+        "import Data.Aeson.Types (object, typeMismatch, FromJSON(..)," ++
+        "ToJSON(..), Value(..), parseEither, (.!=), (.:), (.:?), (.=))"
+
+    expected = unlines
+        [ "import Data.Aeson.Types (FromJSON (..), ToJSON (..), Value (..), object,"
+        , "                         parseEither, typeMismatch, (.!=), (.:), (.:?), (.=))"
+        ]
