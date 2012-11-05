@@ -159,6 +159,7 @@ parseImports config o = Imports.step
   where
     aligns =
         [ ("global", Imports.Global)
+        , ("file",   Imports.File)
         , ("group",  Imports.Group)
         , ("none",   Imports.None)
         ]
