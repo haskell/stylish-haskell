@@ -22,6 +22,9 @@ steps:
       # - global: Align the import names and import list throughout the entire
       #   file.
       #
+      # - file: Like global, but don't add padding when there are no qualified
+      #   imports in the file.
+      #
       # - group: Only align the imports per group (a group is formed by adjacent
       #   import lines).
       #

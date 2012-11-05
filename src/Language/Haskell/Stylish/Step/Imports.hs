@@ -24,6 +24,7 @@ import           Language.Haskell.Stylish.Util
 --------------------------------------------------------------------------------
 data Align
     = Global
+    | File
     | Group
     | None
     deriving (Eq, Show)
@@ -144,8 +145,9 @@ prettyImport columns padQualified padName longest imp =
 
 
 --------------------------------------------------------------------------------
-prettyImportGroup :: Int -> Align -> Int -> [H.ImportDecl LineBlock] -> Lines
-prettyImportGroup columns align longest imps =
+prettyImportGroup :: Int -> Align -> Bool -> Int -> [H.ImportDecl LineBlock]
+                     -> Lines
+prettyImportGroup columns align padQual' longest imps =
     concatMap (prettyImport columns padQual padName longest') $
     sortBy compareImports imps
   where
@@ -159,6 +161,7 @@ prettyImportGroup columns align longest imps =
         Global -> True
         Group  -> any H.importQualified imps
         None   -> False
+        File   -> padQual'
 
 
 --------------------------------------------------------------------------------
@@ -169,10 +172,15 @@ step columns = makeStep "Imports" . step' columns
 --------------------------------------------------------------------------------
 step' :: Int -> Align -> Lines -> Module -> Lines
 step' columns align ls (module', _) = flip applyChanges ls
-    [ change block (const $ prettyImportGroup columns align longest importGroup)
+    [ change block (const $ prettyImportGroup columns align padQual
+                    longest importGroup)
     | (block, importGroup) <- groups
     ]
   where
     imps    = map sortImportSpecs $ imports $ fmap linesFromSrcSpan module'
     longest = longestImport imps
     groups  = groupAdjacent imps
+
+    padQual = case align of
+        File -> any H.importQualified imps
+        _    -> False
