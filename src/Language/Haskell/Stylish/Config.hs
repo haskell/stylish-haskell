@@ -16,12 +16,13 @@ import           Data.Aeson                             (FromJSON (..))
 import qualified Data.Aeson                             as A
 import qualified Data.Aeson.Types                       as A
 import qualified Data.ByteString                        as B
-import           Data.List                              (intercalate)
+import           Data.List                              (inits, intercalate)
 import           Data.Map                               (Map)
 import qualified Data.Map                               as M
 import           Data.Yaml                              (decodeEither)
 import           System.Directory
-import           System.FilePath                        ((</>))
+import           System.FilePath                        (joinPath, splitPath,
+                                                         (</>))
 
 
 --------------------------------------------------------------------------------
@@ -71,16 +72,32 @@ defaultConfigFilePath = getDataFileName "data/stylish-haskell.yaml"
 --------------------------------------------------------------------------------
 configFilePath :: Verbose -> Maybe FilePath -> IO (Maybe FilePath)
 configFilePath verbose userSpecified = do
-    (current, currentE) <- check $ (</> configFileName) <$> getCurrentDirectory
-    (home, homeE)       <- check $ (</> configFileName) <$> getHomeDirectory
-    (def, defE)         <- check defaultConfigFilePath
+    (current, currentE)         <- check $ (</> configFileName) <$>
+                                   getCurrentDirectory
+    (projectRoot, projectRootE) <- checkUntilFound =<< (map (</> configFileName))
+                                   <$> getAncestorDirectories
+    (home, homeE)               <- check $ (</> configFileName) <$>
+                                   getHomeDirectory
+    (def, defE)                 <- check defaultConfigFilePath
     return $ msum
         [ userSpecified
         , if currentE then Just current else Nothing
+        , if projectRootE then Just projectRoot else Nothing
         , if homeE then Just home else Nothing
         , if defE then Just def else Nothing
         ]
   where
+    getAncestorDirectories :: IO [FilePath]
+    getAncestorDirectories = map joinPath . reverse . drop 2
+                             . inits . splitPath <$> getCurrentDirectory
+
+    checkUntilFound :: [FilePath] -> IO (FilePath, Bool)
+    checkUntilFound []     = return ("", False)
+    checkUntilFound (f:fs) = do
+      res@(_, ex) <- check (return f)
+      if ex then return res else checkUntilFound fs
+
+    check :: IO FilePath -> IO (FilePath, Bool)
     check fp = do
         fp' <- fp
         ex  <- doesFileExist fp'
