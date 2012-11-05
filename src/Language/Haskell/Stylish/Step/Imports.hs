@@ -146,8 +146,8 @@ prettyImport columns padQualified padName longest imp =
 
 --------------------------------------------------------------------------------
 prettyImportGroup :: Int -> Align -> Bool -> Int -> [H.ImportDecl LineBlock]
-                     -> Lines
-prettyImportGroup columns align padQual' longest imps =
+                  -> Lines
+prettyImportGroup columns align fileAlign longest imps =
     concatMap (prettyImport columns padQual padName longest') $
     sortBy compareImports imps
   where
@@ -159,9 +159,9 @@ prettyImportGroup columns align padQual' longest imps =
 
     padQual = case align of
         Global -> True
+        File   -> fileAlign
         Group  -> any H.importQualified imps
         None   -> False
-        File   -> padQual'
 
 
 --------------------------------------------------------------------------------
@@ -172,8 +172,8 @@ step columns = makeStep "Imports" . step' columns
 --------------------------------------------------------------------------------
 step' :: Int -> Align -> Lines -> Module -> Lines
 step' columns align ls (module', _) = flip applyChanges ls
-    [ change block (const $ prettyImportGroup columns align padQual
-                    longest importGroup)
+    [ change block $ const $
+        prettyImportGroup columns align fileAlign longest importGroup
     | (block, importGroup) <- groups
     ]
   where
@@ -181,6 +181,6 @@ step' columns align ls (module', _) = flip applyChanges ls
     longest = longestImport imps
     groups  = groupAdjacent imps
 
-    padQual = case align of
+    fileAlign = case align of
         File -> any H.importQualified imps
         _    -> False
