@@ -8,7 +8,8 @@ module Language.Haskell.Stylish.Step.Imports
 --------------------------------------------------------------------------------
 import           Control.Arrow                   ((&&&))
 import           Data.Char                       (isAlpha, toLower)
-import           Data.List                       (intercalate, sortBy)
+import           Data.List                       (intercalate, intersperse,
+                                                  sortBy)
 import           Data.Maybe                      (isJust, maybeToList)
 import           Data.Ord                        (comparing)
 import qualified Language.Haskell.Exts.Annotated as H
@@ -19,6 +20,7 @@ import           Language.Haskell.Stylish.Block
 import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
+import           Language.Haskell.Stylish.Wrap
 
 
 --------------------------------------------------------------------------------
@@ -111,17 +113,14 @@ prettyImportSpec x                      = H.prettyPrint x
 --------------------------------------------------------------------------------
 prettyImport :: Int -> Bool -> Bool -> Int -> H.ImportDecl l -> [String]
 prettyImport columns padQualified padName longest imp =
-    wrap columns base (length base + 2) $
-    (if hiding then ("hiding" :) else id) $
-    case importSpecs of
-        Nothing -> []     -- Import everything
-        Just [] -> ["()"] -- Instance only imports
-        Just is ->
-            withInit (++ ",") $
-            withHead ("(" ++) $
-            withLast (++ ")") $
-            map prettyImportSpec $
-            is
+    regularWrap columns (length base + 2) $
+        case importSpecs of
+            Nothing -> [Open base]                     -- Import everything
+            Just [] -> [Open base, Space, Close "()"]  -- Instance only imports
+            Just is ->
+                [Open base, Space, String "("] ++
+                intersperse Comma (map (String . prettyImportSpec) is) ++
+                [Close ")"]
   where
     base = unwords $ concat
          [ ["import"]
@@ -130,6 +129,7 @@ prettyImport columns padQualified padName longest imp =
          , [(if hasExtras && padName then padRight longest else id)
             (importName imp)]
          , ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp]
+         , ["hiding" | hiding]
          ]
 
     (hiding, importSpecs) = case H.importSpecs imp of

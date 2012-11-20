@@ -9,7 +9,7 @@ module Language.Haskell.Stylish.Step.LanguagePragmas
 
 
 --------------------------------------------------------------------------------
-import           Data.List                       (nub, sort)
+import           Data.List                       (intersperse, nub, sort)
 import qualified Language.Haskell.Exts.Annotated as H
 
 
@@ -18,6 +18,7 @@ import           Language.Haskell.Stylish.Block
 import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
+import           Language.Haskell.Stylish.Wrap
 
 
 --------------------------------------------------------------------------------
@@ -52,8 +53,10 @@ verticalPragmas pragmas' =
 
 --------------------------------------------------------------------------------
 compactPragmas :: Int -> [String] -> Lines
-compactPragmas columns pragmas' = wrap columns "{-# LANGUAGE" 13 $
-    map (++ ",") (init pragmas') ++ [last pragmas', "#-}"]
+compactPragmas columns pragmas' = regularWrap columns 13 $
+    [Open "{-# LANGUAGE"] ++
+    intersperse Comma (map String pragmas') ++
+    [Space, Close "#-}"]
 
 
 --------------------------------------------------------------------------------

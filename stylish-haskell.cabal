@@ -40,6 +40,7 @@ Library
     Language.Haskell.Stylish.Step.UnicodeSyntax
     Language.Haskell.Stylish.Util
     Language.Haskell.Stylish.Verbose
+    Language.Haskell.Stylish.Wrap
     Paths_stylish_haskell
 
   Build-depends:
