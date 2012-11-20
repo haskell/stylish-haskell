@@ -52,27 +52,28 @@ verticalPragmas pragmas' =
 
 
 --------------------------------------------------------------------------------
-compactPragmas :: Int -> [String] -> Lines
-compactPragmas columns pragmas' = regularWrap columns 13 $
-    [Open "{-# LANGUAGE"] ++
+compactPragmas :: WrapStyle -> Int -> [String] -> Lines
+compactPragmas wrapStyle columns pragmas' = wrapWith wrapStyle columns $
+    [String "{-# LANGUAGE", Space] ++
     intersperse Comma (map String pragmas') ++
-    [Space, Close "#-}"]
+    [Space, String "#-}"]
 
 
 --------------------------------------------------------------------------------
-prettyPragmas :: Int -> Style -> [String] -> Lines
-prettyPragmas _       Vertical = verticalPragmas
-prettyPragmas columns Compact  = compactPragmas columns
+prettyPragmas :: WrapStyle -> Int -> Style -> [String] -> Lines
+prettyPragmas _         _       Vertical = verticalPragmas
+prettyPragmas wrapStyle columns Compact  = compactPragmas wrapStyle columns
 
 
 --------------------------------------------------------------------------------
-step :: Int -> Style -> Bool -> Step
-step columns style = makeStep "LanguagePragmas" . step' columns style
+step :: WrapStyle -> Int -> Style -> Bool -> Step
+step wrapStyle columns style = makeStep "LanguagePragmas" .
+    step' wrapStyle columns style
 
 
 --------------------------------------------------------------------------------
-step' :: Int -> Style -> Bool -> Lines -> Module -> Lines
-step' columns style removeRedundant ls (module', _)
+step' :: WrapStyle -> Int -> Style -> Bool -> Lines -> Module -> Lines
+step' wrapStyle columns style removeRedundant ls (module', _)
     | null pragmas' = ls
     | otherwise     = applyChanges changes ls
   where
@@ -84,7 +85,8 @@ step' columns style removeRedundant ls (module', _)
     uniques  = filterRedundant $ nub $ sort $ snd =<< pragmas'
     loc      = firstLocation pragmas'
     deletes  = map (delete . fst) pragmas'
-    changes  = insert loc (prettyPragmas columns style uniques) : deletes
+    changes  =
+        insert loc (prettyPragmas wrapStyle columns style uniques) : deletes
 
 
 --------------------------------------------------------------------------------

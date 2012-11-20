@@ -10,6 +10,7 @@ module Language.Haskell.Stylish
     , trailingWhitespace
     , unicodeSyntax
       -- ** Data types
+    , WrapStyle (..)
     , Imports.Align (..)
     , LanguagePragmas.Style (..)
       -- ** Helpers
@@ -34,6 +35,7 @@ import Language.Haskell.Stylish.Config
 import Language.Haskell.Stylish.Step
 import Language.Haskell.Stylish.Verbose
 import Language.Haskell.Stylish.Parse
+import Language.Haskell.Stylish.Wrap
 import Paths_stylish_haskell  (version)
 import qualified Language.Haskell.Stylish.Step.Imports as Imports
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas as LanguagePragmas
@@ -44,14 +46,16 @@ import qualified Language.Haskell.Stylish.Step.UnicodeSyntax as UnicodeSyntax
 
 
 --------------------------------------------------------------------------------
-imports :: Int -- ^ columns
+imports :: WrapStyle
+        -> Int -- ^ columns
         -> Imports.Align
         -> Step
 imports = Imports.step
 
 
 --------------------------------------------------------------------------------
-languagePragmas :: Int -- ^ columns
+languagePragmas :: WrapStyle
+                -> Int -- ^ columns
                 -> LanguagePragmas.Style
                 -> Bool -- ^ remove redundant?
                 -> Step

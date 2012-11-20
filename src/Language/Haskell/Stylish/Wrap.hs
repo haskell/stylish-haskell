@@ -1,7 +1,10 @@
 --------------------------------------------------------------------------------
 module Language.Haskell.Stylish.Wrap
-    ( Wrap (..)
+    ( WrapStyle (..)
+    , Wrap (..)
+    , wrapWith
     , regularWrap
+    , utrechtWrap
     ) where
 
 
@@ -11,38 +14,81 @@ import           Language.Haskell.Stylish.Util
 
 
 --------------------------------------------------------------------------------
+data WrapStyle
+    = Regular
+    | Utrecht
+    deriving (Show)
+
+
+--------------------------------------------------------------------------------
 data Wrap
-    = Open String
-    | Close String
-    | String String
+    = String String
     | Space
     | Comma
     deriving (Show)
 
 
 --------------------------------------------------------------------------------
-regularWrap :: Int     -- ^ Maximum line width
-            -> Int     -- ^ Indentation
-            -> [Wrap]  -- ^ Stuff to wrap
-            -> Lines   -- ^ Resulting lines
-regularWrap maxWidth indentation wraps =
-    let (leading, strs) = regularJoin wraps
-    in wrap " " maxWidth indentation leading strs
+wrapWith :: WrapStyle  -- ^ Wrapping style to use
+         -> Int        -- ^ Maximum line width
+         -> [Wrap]     -- ^ Stuff to wrap
+         -> Lines      -- ^ Resulting lines
+wrapWith Regular = regularWrap
+wrapWith Utrecht = utrechtWrap
 
 
 --------------------------------------------------------------------------------
-regularJoin :: [Wrap] -> (String, [String])
-regularJoin wraps = case wraps of
-    (Open x : xs) -> (x, go xs)
-    _             -> error $ "Language.Haskell.Stylish.Wrap.regularJoin: " ++
-        "wrap spec should start with Open but got: " ++ show wraps
+regularWrap :: Int     -- ^ Maximum line width
+            -> [Wrap]  -- ^ Stuff to wrap
+            -> Lines   -- ^ Resulting lines
+regularWrap maxWidth wraps =
+    let (leading : strs) = regularJoin wraps
+    in wrap " " maxWidth (length leading) leading strs
+
+
+--------------------------------------------------------------------------------
+regularJoin :: [Wrap] -> [String]
+regularJoin wraps = go wraps
   where
     go (String x : String y : xs) = go (String (x ++ y) : xs)
     go (String x : Comma : xs)    = (x ++ ",") : go xs
-    go (String x : Space : xs)    = x : go xs
-    go (String x : Close y : [])  = [x ++ y]
-    go (Close x : [])             = [x]
+    go (String x : xs)            = x : go xs
     go (Space : xs)               = go xs
+    go []                         = []
+    go ws                         = error $
+        "Language.Haskell.Stylish.Wrap.regularJoin: go: " ++
+        show ws ++ " is invalid, in: " ++ show wraps
+
+
+--------------------------------------------------------------------------------
+utrechtWrap :: Int      -- ^ Maximum line width
+            -> [Wrap]   -- ^ Stuff to wrap
+            -> Lines    -- ^ Resulting lines
+utrechtWrap maxWidth wraps =
+    -- If we can put everything on one line, we use regular wrapping
+    case regularWrap maxWidth wraps of
+        [line]                    -> [line]
+        xs
+            | length utrechts < 3 -> xs  -- Should not happen!
+            | otherwise           ->
+                let (leading : strs) = utrechts
+                in wrap "" maxWidth (length leading - 1)
+                    (leading ++ " ") (init strs) ++
+                    [replicate (length leading - 1) ' ' ++ last strs]
+  where
+    utrechts = utrechtJoin wraps
+
+
+--------------------------------------------------------------------------------
+utrechtJoin :: [Wrap] -> [String]
+utrechtJoin wraps = case wraps of
+    (String x : xs) -> x : go xs  -- Never join first string in utrecht style
+    _               -> go wraps   -- Should this ever happen?
+  where
+    go (Space : xs)               = go xs
+    go (String x : String y : xs) = go (String (x ++ y) : xs)
+    go (Comma : String x : xs)    = (", " ++ x ) : go xs
+    go (String x : xs)            = x : go xs
     go []                         = []
     go ws                         = error $
         "Language.Haskell.Stylish.Wrap.regularJoin: go: " ++

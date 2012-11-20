@@ -35,6 +35,7 @@ import qualified Language.Haskell.Stylish.Step.Tabs               as Tabs
 import qualified Language.Haskell.Stylish.Step.TrailingWhitespace as TrailingWhitespace
 import qualified Language.Haskell.Stylish.Step.UnicodeSyntax      as UnicodeSyntax
 import           Language.Haskell.Stylish.Verbose
+import           Language.Haskell.Stylish.Wrap
 
 
 --------------------------------------------------------------------------------
@@ -45,6 +46,7 @@ type Extensions = [String]
 data Config = Config
     { configSteps              :: [Step]
     , configColumns            :: Int
+    , configWrapStyle          :: WrapStyle
     , configLanguageExtensions :: [String]
     }
 
@@ -56,7 +58,7 @@ instance FromJSON Config where
 
 --------------------------------------------------------------------------------
 emptyConfig :: Config
-emptyConfig = Config [] 80 []
+emptyConfig = Config [] 80 Regular []
 
 
 --------------------------------------------------------------------------------
@@ -116,12 +118,19 @@ parseConfig (A.Object o) = do
     -- First load the config without the actual steps
     config <- Config
         <$> pure []
-        <*> (o A..:? "columns"             A..!= 80)
+        <*> (o A..:? "columns" A..!= 80)
+        <*> (o A..:? "wrap_style" >>= parseEnum wrapStyles Regular)
         <*> (o A..:? "language_extensions" A..!= [])
 
     -- Then fill in the steps based on the partial config we already have
     steps <- (o A..:  "steps" >>= fmap concat . mapM (parseSteps config))
     return config {configSteps = steps}
+  where
+    wrapStyles =
+        [ ("regular", Regular)
+        , ("utrecht", Utrecht)
+        ]
+
 parseConfig _            = mzero
 
 
@@ -159,7 +168,8 @@ parseEnum strs _   (Just k) = case lookup k strs of
 --------------------------------------------------------------------------------
 parseImports :: Config -> A.Object -> A.Parser Step
 parseImports config o = Imports.step
-    <$> pure (configColumns config)
+    <$> pure (configWrapStyle config)
+    <*> pure (configColumns config)
     <*> (o A..:? "align" >>= parseEnum aligns Imports.Global)
   where
     aligns =
@@ -173,7 +183,8 @@ parseImports config o = Imports.step
 --------------------------------------------------------------------------------
 parseLanguagePragmas :: Config -> A.Object -> A.Parser Step
 parseLanguagePragmas config o = LanguagePragmas.step
-    <$> pure (configColumns config)
+    <$> pure (configWrapStyle config)
+    <*> pure (configColumns config)
     <*> (o A..:? "style" >>= parseEnum styles LanguagePragmas.Vertical)
     <*> o A..:? "remove_redundant" A..!= True
   where

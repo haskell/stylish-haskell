@@ -111,16 +111,17 @@ prettyImportSpec x                      = H.prettyPrint x
 
 
 --------------------------------------------------------------------------------
-prettyImport :: Int -> Bool -> Bool -> Int -> H.ImportDecl l -> [String]
-prettyImport columns padQualified padName longest imp =
-    regularWrap columns (length base + 2) $
+prettyImport :: WrapStyle -> Int -> Bool -> Bool -> Int -> H.ImportDecl l
+             -> [String]
+prettyImport wrapStyle columns padQualified padName longest imp =
+    wrapWith wrapStyle columns $
         case importSpecs of
-            Nothing -> [Open base]                     -- Import everything
-            Just [] -> [Open base, Space, Close "()"]  -- Instance only imports
+            Nothing -> [String base]                      -- Import everything
+            Just [] -> [String base, Space, String "()"]  -- Instance only
             Just is ->
-                [Open base, Space, String "("] ++
+                [String (base ++ " (")] ++
                 intersperse Comma (map (String . prettyImportSpec) is) ++
-                [Close ")"]
+                [String ")"]
   where
     base = unwords $ concat
          [ ["import"]
@@ -145,10 +146,10 @@ prettyImport columns padQualified padName longest imp =
 
 
 --------------------------------------------------------------------------------
-prettyImportGroup :: Int -> Align -> Bool -> Int -> [H.ImportDecl LineBlock]
-                  -> Lines
-prettyImportGroup columns align fileAlign longest imps =
-    concatMap (prettyImport columns padQual padName longest') $
+prettyImportGroup :: WrapStyle -> Int -> Align -> Bool -> Int
+                  -> [H.ImportDecl LineBlock] -> Lines
+prettyImportGroup wrapStyle columns align fileAlign longest imps =
+    concatMap (prettyImport wrapStyle columns padQual padName longest') $
     sortBy compareImports imps
   where
     longest' = case align of
@@ -165,15 +166,15 @@ prettyImportGroup columns align fileAlign longest imps =
 
 
 --------------------------------------------------------------------------------
-step :: Int -> Align -> Step
-step columns = makeStep "Imports" . step' columns
+step :: WrapStyle -> Int -> Align -> Step
+step wrapStyle columns = makeStep "Imports" . step' wrapStyle columns
 
 
 --------------------------------------------------------------------------------
-step' :: Int -> Align -> Lines -> Module -> Lines
-step' columns align ls (module', _) = flip applyChanges ls
+step' :: WrapStyle -> Int -> Align -> Lines -> Module -> Lines
+step' wrapStyle columns align ls (module', _) = flip applyChanges ls
     [ change block $ const $
-        prettyImportGroup columns align fileAlign longest importGroup
+        prettyImportGroup wrapStyle columns align fileAlign longest importGroup
     | (block, importGroup) <- groups
     ]
   where
