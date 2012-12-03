@@ -33,21 +33,13 @@ dropBom str              = str
 
 
 --------------------------------------------------------------------------------
--- | Read an extension name from a string
-parseExtension :: String -> Either String H.Extension
-parseExtension str = case reads str of
-    [(x, "")] -> return x
-    _         -> throwError $ "Unknown extension: " ++ str
-
-
---------------------------------------------------------------------------------
 -- | Abstraction over HSE's parsing
 parseModule :: Extensions -> Maybe FilePath -> String -> Either String Module
 parseModule extraExts mfp string = do
-    -- Determine the extensions: those specified in the file and the extra ones 
-    extraExts' <- mapM parseExtension extraExts
-    let fileExts = fromMaybe [] $ H.readExtensions string
-        exts     = fileExts ++ extraExts'
+    -- Determine the extensions: those specified in the file and the extra ones
+    let extraExts' = map H.classifyExtension extraExts
+        fileExts   = fromMaybe [] $ H.readExtensions string
+        exts       = fileExts ++ extraExts'
 
         -- Parsing options...
         fp       = fromMaybe "<unknown>" mfp
