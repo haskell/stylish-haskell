@@ -47,20 +47,6 @@ longestImport = maximum . map (length . importName)
 
 
 --------------------------------------------------------------------------------
--- | Groups adjacent imports into larger import blocks
-groupAdjacent :: [H.ImportDecl LineBlock]
-              -> [(LineBlock, [H.ImportDecl LineBlock])]
-groupAdjacent = foldr go []
-  where
-    -- This code is ugly and not optimal, and no fucks were given.
-    go imp is = case break (adjacent b1 . fst) is of
-        (_, [])                 -> (b1, [imp]) : is
-        (xs, ((b2, imps) : ys)) -> (merge b1 b2, imp : imps) : (xs ++ ys)
-      where
-        b1 = H.ann imp
-
-
---------------------------------------------------------------------------------
 -- | Compare imports for ordering
 compareImports :: H.ImportDecl l -> H.ImportDecl l -> Ordering
 compareImports = comparing (map toLower . importName &&& H.importQualified)
@@ -179,7 +165,7 @@ step' columns align ls (module', _) = flip applyChanges ls
   where
     imps    = map sortImportSpecs $ imports $ fmap linesFromSrcSpan module'
     longest = longestImport imps
-    groups  = groupAdjacent imps
+    groups  = groupAdjacent [(H.ann i, i) | i <- imps]
 
     fileAlign = case align of
         File -> any H.importQualified imps
