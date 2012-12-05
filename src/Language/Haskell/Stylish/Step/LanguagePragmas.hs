@@ -9,7 +9,7 @@ module Language.Haskell.Stylish.Step.LanguagePragmas
 
 
 --------------------------------------------------------------------------------
-import           Data.List                       (nub, sort)
+import qualified Data.Set                        as S
 import qualified Language.Haskell.Exts.Annotated as H
 
 
@@ -41,13 +41,11 @@ firstLocation = minimum . map (blockStart . fst)
 
 
 --------------------------------------------------------------------------------
-verticalPragmas :: [String] -> Lines
-verticalPragmas pragmas' =
+verticalPragmas :: Int -> [String] -> Lines
+verticalPragmas longest pragmas' =
     [ "{-# LANGUAGE " ++ padRight longest pragma ++ " #-}"
     | pragma <- pragmas'
     ]
-  where
-    longest = maximum $ map length pragmas'
 
 
 --------------------------------------------------------------------------------
@@ -57,9 +55,26 @@ compactPragmas columns pragmas' = wrap columns "{-# LANGUAGE" 13 $
 
 
 --------------------------------------------------------------------------------
-prettyPragmas :: Int -> Style -> [String] -> Lines
-prettyPragmas _       Vertical = verticalPragmas
-prettyPragmas columns Compact  = compactPragmas columns
+prettyPragmas :: Int -> Int -> Style -> [String] -> Lines
+prettyPragmas _       longest Vertical = verticalPragmas longest
+prettyPragmas columns _       Compact  = compactPragmas columns
+
+
+--------------------------------------------------------------------------------
+-- | Filter redundant (and duplicate) pragmas out of the groups. As a side
+-- effect, we also sort the pragmas in their group...
+filterRedundant :: (String -> Bool)
+                -> [(l, [String])]
+                -> [(l, [String])]
+filterRedundant isRedundant' = snd . foldr filterRedundant' (S.empty, [])
+  where
+    filterRedundant' (l, xs) (known, zs)
+        | S.null xs' = (known', zs)
+        | otherwise  = (known', (l, S.toAscList xs') : zs)
+      where
+        fxs    = filter (not . isRedundant') xs
+        xs'    = S.fromList fxs `S.difference` known
+        known' = xs' `S.union` known
 
 
 --------------------------------------------------------------------------------
@@ -73,15 +88,17 @@ step' columns style removeRedundant ls (module', _)
     | null pragmas' = ls
     | otherwise     = applyChanges changes ls
   where
-    filterRedundant
-        | removeRedundant = filter (not . isRedundant module')
-        | otherwise       = id
+    isRedundant'
+        | removeRedundant = isRedundant module'
+        | otherwise       = const False
 
     pragmas' = pragmas $ fmap linesFromSrcSpan module'
-    uniques  = filterRedundant $ nub $ sort $ snd =<< pragmas'
-    loc      = firstLocation pragmas'
-    deletes  = map (delete . fst) pragmas'
-    changes  = insert loc (prettyPragmas columns style uniques) : deletes
+    longest  = maximum $ map length $ snd =<< pragmas'
+    groups   = [(b, concat pgs) | (b, pgs) <- groupAdjacent pragmas']
+    changes  =
+        [ change b (const $ prettyPragmas columns longest style pg)
+        | (b, pg) <- filterRedundant isRedundant' groups
+        ]
 
 
 --------------------------------------------------------------------------------
