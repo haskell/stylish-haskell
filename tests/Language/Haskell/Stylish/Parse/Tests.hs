@@ -19,6 +19,7 @@ tests :: Test
 tests = testGroup "Language.Haskell.Stylish.Parse"
     [ testCase "UTF-8 Byte Order Mark" testBom
     , testCase "Extra extensions"      testExtraExtensions
+    , testCase "Multiline CPP"         testMultilineCpp
     ]
 
 
@@ -36,6 +37,15 @@ testBom = assert $ isRight $ parseModule [] Nothing input
 testExtraExtensions :: Assertion
 testExtraExtensions = assert $ isRight $
     parseModule ["TemplateHaskell"] Nothing "$(foo)"
+
+
+--------------------------------------------------------------------------------
+testMultilineCpp :: Assertion
+testMultilineCpp = assert $ isRight $ parseModule [] Nothing $ unlines
+    [ "{-# LANGUAGE CPP #-}"
+    , "#define foo bar \\"
+    , "             qux"
+    ]
 
 
 --------------------------------------------------------------------------------
