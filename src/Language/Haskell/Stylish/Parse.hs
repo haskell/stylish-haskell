@@ -6,7 +6,7 @@ module Language.Haskell.Stylish.Parse
 
 --------------------------------------------------------------------------------
 import           Control.Monad.Error             (throwError)
-import           Data.Maybe                      (fromMaybe)
+import           Data.Maybe                      (fromMaybe, listToMaybe)
 import qualified Language.Haskell.Exts.Annotated as H
 
 
@@ -18,10 +18,13 @@ import           Language.Haskell.Stylish.Step
 --------------------------------------------------------------------------------
 -- | Filter out lines which use CPP macros
 unCpp :: String -> String
-unCpp = unlines . map unCpp' . lines
+unCpp = unlines . go False . lines
   where
-    unCpp' ('#' : _) = ""
-    unCpp' xs        = xs
+    go _           []       = []
+    go isMultiline (x : xs) =
+        let isCpp         = isMultiline || listToMaybe x == Just '#'
+            nextMultiline = isCpp && not (null x) && last x == '\\'
+        in (if isCpp then "" else x) : go nextMultiline xs
 
 
 --------------------------------------------------------------------------------
