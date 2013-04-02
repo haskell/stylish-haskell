@@ -10,6 +10,7 @@ module Language.Haskell.Stylish.Block
     , adjacent
     , merge
     , overlapping
+    , groupAdjacent
     ) where
 
 
@@ -76,3 +77,15 @@ overlapping blocks =
     any (uncurry overlapping') $ zip blocks (drop 1 blocks)
   where
     overlapping' (Block _ e1) (Block s2 _) = e1 >= s2
+
+
+--------------------------------------------------------------------------------
+-- | Groups adjacent blocks into larger blocks
+groupAdjacent :: [(Block a, b)]
+              -> [(Block a, [b])]
+groupAdjacent = foldr go []
+  where
+    -- This code is ugly and not optimal, and no fucks were given.
+    go (b1, x) gs = case break (adjacent b1 . fst) gs of
+        (_, [])               -> (b1, [x]) : gs
+        (ys, ((b2, xs) : zs)) -> (merge b1 b2, x : xs) : (ys ++ zs)

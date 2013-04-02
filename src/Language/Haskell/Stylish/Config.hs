@@ -11,17 +11,18 @@ module Language.Haskell.Stylish.Config
 
 --------------------------------------------------------------------------------
 import           Control.Applicative                    (pure, (<$>), (<*>))
-import           Control.Monad                          (forM, msum, mzero)
+import           Control.Monad                          (forM, mzero)
 import           Data.Aeson                             (FromJSON (..))
 import qualified Data.Aeson                             as A
 import qualified Data.Aeson.Types                       as A
 import qualified Data.ByteString                        as B
-import           Data.List                              (intercalate)
+import           Data.List                              (inits, intercalate)
 import           Data.Map                               (Map)
 import qualified Data.Map                               as M
 import           Data.Yaml                              (decodeEither)
 import           System.Directory
-import           System.FilePath                        ((</>))
+import           System.FilePath                        (joinPath, splitPath,
+                                                         (</>))
 
 
 --------------------------------------------------------------------------------
@@ -70,22 +71,26 @@ defaultConfigFilePath = getDataFileName "data/stylish-haskell.yaml"
 
 --------------------------------------------------------------------------------
 configFilePath :: Verbose -> Maybe FilePath -> IO (Maybe FilePath)
-configFilePath verbose userSpecified = do
-    (current, currentE) <- check $ (</> configFileName) <$> getCurrentDirectory
-    (home, homeE)       <- check $ (</> configFileName) <$> getHomeDirectory
-    (def, defE)         <- check defaultConfigFilePath
-    return $ msum
-        [ userSpecified
-        , if currentE then Just current else Nothing
-        , if homeE then Just home else Nothing
-        , if defE then Just def else Nothing
-        ]
+configFilePath _       (Just userSpecified) = return $ Just userSpecified
+configFilePath verbose Nothing              = do
+    current <- getCurrentDirectory
+    home    <- getHomeDirectory
+    def     <- defaultConfigFilePath
+    search $
+        [d </> configFileName | d <- ancestors current] ++
+        [home </> configFileName, def]
   where
-    check fp = do
-        fp' <- fp
-        ex  <- doesFileExist fp'
-        verbose $ fp' ++ if ex then " exists" else " does not exist"
-        return (fp', ex)
+    -- All ancestors of a dir (including that dir)
+    ancestors :: FilePath -> [FilePath]
+    ancestors = init . map joinPath . reverse . inits . splitPath
+
+    search :: [FilePath] -> IO (Maybe FilePath)
+    search []       = return Nothing
+    search (f : fs) = do
+        -- TODO Maybe catch an error here, dir might be unreadable
+        exists <- doesFileExist f
+        verbose $ f ++ if exists then " exists" else " does not exist"
+        if exists then return (Just f) else search fs
 
 
 --------------------------------------------------------------------------------
@@ -159,6 +164,7 @@ parseImports config o = Imports.step
   where
     aligns =
         [ ("global", Imports.Global)
+        , ("file",   Imports.File)
         , ("group",  Imports.Group)
         , ("none",   Imports.None)
         ]

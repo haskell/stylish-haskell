@@ -6,7 +6,7 @@ module Language.Haskell.Stylish.Parse
 
 --------------------------------------------------------------------------------
 import           Control.Monad.Error             (throwError)
-import           Data.Maybe                      (fromMaybe)
+import           Data.Maybe                      (fromMaybe, listToMaybe)
 import qualified Language.Haskell.Exts.Annotated as H
 
 
@@ -18,10 +18,13 @@ import           Language.Haskell.Stylish.Step
 --------------------------------------------------------------------------------
 -- | Filter out lines which use CPP macros
 unCpp :: String -> String
-unCpp = unlines . map unCpp' . lines
+unCpp = unlines . go False . lines
   where
-    unCpp' ('#' : _) = ""
-    unCpp' xs        = xs
+    go _           []       = []
+    go isMultiline (x : xs) =
+        let isCpp         = isMultiline || listToMaybe x == Just '#'
+            nextMultiline = isCpp && not (null x) && last x == '\\'
+        in (if isCpp then "" else x) : go nextMultiline xs
 
 
 --------------------------------------------------------------------------------
@@ -33,21 +36,13 @@ dropBom str              = str
 
 
 --------------------------------------------------------------------------------
--- | Read an extension name from a string
-parseExtension :: String -> Either String H.Extension
-parseExtension str = case reads str of
-    [(x, "")] -> return x
-    _         -> throwError $ "Unknown extension: " ++ str
-
-
---------------------------------------------------------------------------------
 -- | Abstraction over HSE's parsing
 parseModule :: Extensions -> Maybe FilePath -> String -> Either String Module
 parseModule extraExts mfp string = do
-    -- Determine the extensions: those specified in the file and the extra ones 
-    extraExts' <- mapM parseExtension extraExts
-    let fileExts = fromMaybe [] $ H.readExtensions string
-        exts     = fileExts ++ extraExts'
+    -- Determine the extensions: those specified in the file and the extra ones
+    let extraExts' = map H.classifyExtension extraExts
+        fileExts   = fromMaybe [] $ H.readExtensions string
+        exts       = fileExts ++ extraExts'
 
         -- Parsing options...
         fp       = fromMaybe "<unknown>" mfp

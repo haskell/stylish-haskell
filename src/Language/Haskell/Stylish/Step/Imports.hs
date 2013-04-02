@@ -24,6 +24,7 @@ import           Language.Haskell.Stylish.Util
 --------------------------------------------------------------------------------
 data Align
     = Global
+    | File
     | Group
     | None
     deriving (Eq, Show)
@@ -43,20 +44,6 @@ importName i = let (H.ModuleName _ n) = H.importModule i in n
 --------------------------------------------------------------------------------
 longestImport :: [H.ImportDecl l] -> Int
 longestImport = maximum . map (length . importName)
-
-
---------------------------------------------------------------------------------
--- | Groups adjacent imports into larger import blocks
-groupAdjacent :: [H.ImportDecl LineBlock]
-              -> [(LineBlock, [H.ImportDecl LineBlock])]
-groupAdjacent = foldr go []
-  where
-    -- This code is ugly and not optimal, and no fucks were given.
-    go imp is = case break (adjacent b1 . fst) is of
-        (_, [])                 -> (b1, [imp]) : is
-        (xs, ((b2, imps) : ys)) -> (merge b1 b2, imp : imps) : (xs ++ ys)
-      where
-        b1 = H.ann imp
 
 
 --------------------------------------------------------------------------------
@@ -108,28 +95,32 @@ prettyImportSpec x                      = H.prettyPrint x
 
 
 --------------------------------------------------------------------------------
-prettyImport :: Int -> Bool -> Bool -> Int -> H.ImportDecl l -> String
+prettyImport :: Int -> Bool -> Bool -> Int -> H.ImportDecl l -> [String]
 prettyImport columns padQualified padName longest imp =
-    intercalate "\n" $
     wrap columns base (length base + 2) $
     (if hiding then ("hiding" :) else id) $
-    withInit (++ ",") $
-    withHead ("(" ++) $
-    withLast (++ ")") $
-    map prettyImportSpec $
-    importSpecs
+    case importSpecs of
+        Nothing -> []     -- Import everything
+        Just [] -> ["()"] -- Instance only imports
+        Just is ->
+            withInit (++ ",") $
+            withHead ("(" ++) $
+            withLast (++ ")") $
+            map prettyImportSpec $
+            is
   where
     base = unwords $ concat
          [ ["import"]
          , qualified
+         , (fmap show $ maybeToList $ H.importPkg imp)
          , [(if hasExtras && padName then padRight longest else id)
             (importName imp)]
          , ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp]
          ]
 
     (hiding, importSpecs) = case H.importSpecs imp of
-        Just (H.ImportSpecList _ h l) -> (h, l)
-        _                             -> (False, [])
+        Just (H.ImportSpecList _ h l) -> (h, Just l)
+        _                             -> (False, Nothing)
 
     hasExtras = isJust (H.importAs imp) || isJust (H.importSpecs imp)
 
@@ -140,9 +131,10 @@ prettyImport columns padQualified padName longest imp =
 
 
 --------------------------------------------------------------------------------
-prettyImportGroup :: Int -> Align -> Int -> [H.ImportDecl LineBlock] -> Lines
-prettyImportGroup columns align longest imps =
-    map (prettyImport columns padQual padName longest') $
+prettyImportGroup :: Int -> Align -> Bool -> Int -> [H.ImportDecl LineBlock]
+                  -> Lines
+prettyImportGroup columns align fileAlign longest imps =
+    concatMap (prettyImport columns padQual padName longest') $
     sortBy compareImports imps
   where
     longest' = case align of
@@ -153,6 +145,7 @@ prettyImportGroup columns align longest imps =
 
     padQual = case align of
         Global -> True
+        File   -> fileAlign
         Group  -> any H.importQualified imps
         None   -> False
 
@@ -165,10 +158,15 @@ step columns = makeStep "Imports" . step' columns
 --------------------------------------------------------------------------------
 step' :: Int -> Align -> Lines -> Module -> Lines
 step' columns align ls (module', _) = flip applyChanges ls
-    [ change block (const $ prettyImportGroup columns align longest importGroup)
+    [ change block $ const $
+        prettyImportGroup columns align fileAlign longest importGroup
     | (block, importGroup) <- groups
     ]
   where
     imps    = map sortImportSpecs $ imports $ fmap linesFromSrcSpan module'
     longest = longestImport imps
-    groups  = groupAdjacent imps
+    groups  = groupAdjacent [(H.ann i, i) | i <- imps]
+
+    fileAlign = case align of
+        File -> any H.importQualified imps
+        _    -> False

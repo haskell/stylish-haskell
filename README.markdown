@@ -78,11 +78,13 @@ The tool is customizable to some extent. It tries to find a config file in the
 following order:
 
 1. A file passed to the tool using the `-c/--config` argument
-2. `.stylish-haskell.yaml` in the current directory (useful for per-project
+2. `.stylish-haskell.yaml` in the current directory (useful for per-directory
    settings)
-3. `.stylish-haskell.yaml` in your home directory (useful for user-wide
+3. `.stylish-haskell.yaml` in the nearest ancestor directory (useful for
+   per-project settings)
+4. `.stylish-haskell.yaml` in your home directory (useful for user-wide
    settings)
-4. The default settings.
+5. The default settings.
 
 Use `stylish-haskell --defaults > .stylish-haskell.yaml` to dump a
 well-documented default configuration to a file, this way you can get started
@@ -104,6 +106,17 @@ Emacs integration
 [haskell-mode] for Emacs supports `stylish-haskell`. For configuration, see
 [Emacs/Formatting] on the HaskellWiki.
 
-
 [haskell-mode]: https://github.com/haskell/haskell-mode
 [Emacs/Formatting]: http://www.haskell.org/haskellwiki/Emacs/Formatting
+
+Credits
+-------
+
+Written and maintained by Jasper Van der Jeugt.
+
+Contributors:
+
+- Chris Done
+- Leonid Onokhov
+- Michael Snoyman
+- Mikhail Glushenkov
