@@ -41,6 +41,7 @@ steps:
       #
       # - compact: A more compact style.
       #
+      # - compact_line: Similar to compact, but wrap each line by `{-#LANGUAGE #-}'.
       # Default: vertical.
       style: vertical
 

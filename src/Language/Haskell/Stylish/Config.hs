@@ -178,9 +178,9 @@ parseLanguagePragmas config o = LanguagePragmas.step
     <*> o A..:? "remove_redundant" A..!= True
   where
     styles =
-        [ ("vertical", LanguagePragmas.Vertical)
-        , ("compact",  LanguagePragmas.Compact)
-        , ("line",     LanguagePragmas.Line)]
+        [ ("vertical",     LanguagePragmas.Vertical)
+        , ("compact",      LanguagePragmas.Compact)
+        , ("compact_line", LanguagePragmas.CompactLine)]
 
 
 --------------------------------------------------------------------------------

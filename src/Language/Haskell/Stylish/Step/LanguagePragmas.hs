@@ -24,7 +24,7 @@ import Language.Haskell.Stylish.Util
 data Style
     = Vertical
     | Compact
-    | Line
+    | CompactLine
     deriving (Eq, Show)
 
 
@@ -56,27 +56,27 @@ compactPragmas columns pragmas' = wrap columns "{-# LANGUAGE" 13 $
 
 
 --------------------------------------------------------------------------------
-linePragmas :: Int -> [String] -> Lines
-linePragmas _ [] = []
-linePragmas columns (p:pragmas') =
-  let (ls, curr, _) = foldl stp ([], p, length p) pragmas'
-      ps = ls ++ [curr]
-      longest = maximum $ map length ps
-  in map (wrapLANGUAGE . padRight longest) ps
+compactLinePragmas :: Int -> [String] -> Lines
+compactLinePragmas _ [] = []
+compactLinePragmas columns pragmas' =
+  let maxWidth = columns - 14
+      prags = map truncateComma $ wrap maxWidth "" 1 $
+                map (++ ",") (init pragmas') ++ [last pragmas']
+      longest = maximum $ map length prags
+  in map (wrapLANGUAGE . padRight longest) prags
   where
-    maxWidth = columns - 17
-    stp (ls, curr, width) str
-      | width' > maxWidth = (ls ++ [curr], str, len)
-      | otherwise         = (ls, curr ++ ", " ++ str, width')
-      where
-        len = length str
-        width' = width + 2 + len
-    wrapLANGUAGE ps = "{-# LANGUAGE " ++ ps ++  " #-}"
+    wrapLANGUAGE ps = "{-# LANGUAGE" ++ ps ++  " #-}"
+
+truncateComma :: String -> String
+truncateComma "" = ""
+truncateComma xs
+    | last xs == ',' = init xs
+    | otherwise      = xs
 
 prettyPragmas :: Int -> Int -> Style -> [String] -> Lines
 prettyPragmas _       longest Vertical = verticalPragmas longest
 prettyPragmas columns _       Compact  = compactPragmas columns
-prettyPragmas columns _       Line     = linePragmas columns
+prettyPragmas columns _       CompactLine = compactLinePragmas columns
 
 --------------------------------------------------------------------------------
 -- | Filter redundant (and duplicate) pragmas out of the groups. As a side

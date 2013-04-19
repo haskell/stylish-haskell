@@ -5,14 +5,14 @@ module Language.Haskell.Stylish.Step.LanguagePragmas.Tests
 
 
 --------------------------------------------------------------------------------
-import           Test.Framework                      (Test, testGroup)
-import           Test.Framework.Providers.HUnit      (testCase)
-import           Test.HUnit                          (Assertion, (@=?))
+import Test.Framework                 (Test, testGroup)
+import Test.Framework.Providers.HUnit (testCase)
+import Test.HUnit                     (Assertion, (@=?))
 
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Step.LanguagePragmas
-import           Language.Haskell.Stylish.Tests.Util
+import Language.Haskell.Stylish.Step.LanguagePragmas
+import Language.Haskell.Stylish.Tests.Util
 
 
 --------------------------------------------------------------------------------
@@ -112,4 +112,18 @@ case05 = expected @=? testStep (step 80 Vertical False) input
         , "#if __GLASGOW_HASKELL__ >= 702"
         , "{-# LANGUAGE Trustworthy #-}"
         , "#endif"
+        ]
+
+case06 :: Assertion
+case06 = expected @=? testStep (step 80 CompactLine True) input
+  where
+    input = unlines
+        [ "{-# LANGUAGE TypeOperators, StandaloneDeriving, DeriveDataTypeable,"
+        , "    TemplateHaskell #-}"
+        , "{-# LANGUAGE TemplateHaskell, ViewPatterns #-}"
+        ]
+    expected = unlines
+        [ "{-# LANGUAGE DeriveDataTypeable, StandaloneDeriving, " ++
+          "TemplateHaskell #-}"
+        , "{-# LANGUAGE TypeOperators, ViewPatterns                             #-}"
         ]
