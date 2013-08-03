@@ -40,8 +40,9 @@ dropBom str              = str
 parseModule :: Extensions -> Maybe FilePath -> String -> Either String Module
 parseModule extraExts mfp string = do
     -- Determine the extensions: those specified in the file and the extra ones
-    let extraExts' = map H.classifyExtension extraExts
-        fileExts   = fromMaybe [] $ H.readExtensions string
+    let noBom      = dropBom string
+        extraExts' = map H.classifyExtension extraExts
+        fileExts   = fromMaybe [] $ H.readExtensions noBom
         exts       = fileExts ++ extraExts'
 
         -- Parsing options...
@@ -50,9 +51,9 @@ parseModule extraExts mfp string = do
             {H.extensions = exts, H.fixities = Nothing}
 
         -- Preprocessing
-        string'  = dropBom $ (if H.CPP `elem` exts then unCpp else id) $ string
+        noCpp    = if H.CPP `elem` exts then unCpp noBom else noBom
 
-    case H.parseModuleWithComments mode string' of
+    case H.parseModuleWithComments mode noCpp of
         H.ParseOk md -> return md
         err          -> throwError $
             "Language.Haskell.Stylish.Parse.parseModule: could not parse " ++
