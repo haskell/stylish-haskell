@@ -36,6 +36,27 @@ dropBom str              = str
 
 
 --------------------------------------------------------------------------------
+-- | If
+--
+-- > {-# LANGUAGE Haskell2010 #-}
+--
+-- is specified, we need to add a number of extra extensions
+addHaskell2010Extensions :: [H.Extension] -> [H.Extension]
+addHaskell2010Extensions exts
+    -- For some reason Haskell2010 is not supported yet in haskell-src-exts
+    | H.UnknownExtension "Haskell2010" `elem` exts = exts ++ extra
+    | otherwise                                    = exts
+  where
+    extra =
+        [ H.PatternGuards
+        , H.RelaxedPolyRec
+        , H.EmptyDataDecls
+        , H.ForeignFunctionInterface
+        , H.UnknownExtension "NoNPlusKPatterns"  -- Not supported yet in HSE
+        ]
+
+
+--------------------------------------------------------------------------------
 -- | Abstraction over HSE's parsing
 parseModule :: Extensions -> Maybe FilePath -> String -> Either String Module
 parseModule extraExts mfp string = do
@@ -43,7 +64,7 @@ parseModule extraExts mfp string = do
     let noBom      = dropBom string
         extraExts' = map H.classifyExtension extraExts
         fileExts   = fromMaybe [] $ H.readExtensions noBom
-        exts       = fileExts ++ extraExts'
+        exts       = addHaskell2010Extensions $ fileExts ++ extraExts'
 
         -- Parsing options...
         fp       = fromMaybe "<unknown>" mfp
