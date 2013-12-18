@@ -59,24 +59,29 @@ compactPragmas columns pragmas' = wrap columns "{-# LANGUAGE" 13 $
 compactLinePragmas :: Int -> [String] -> Lines
 compactLinePragmas _ [] = []
 compactLinePragmas columns pragmas' =
-  let maxWidth = columns - 14
-      prags = map truncateComma $ wrap maxWidth "" 1 $
-                map (++ ",") (init pragmas') ++ [last pragmas']
-      longest = maximum $ map length prags
-  in map (wrapLANGUAGE . padRight longest) prags
+  let maxWidth = columns - 16
+      longest  = maximum $ map length prags
+      prags    = map truncateComma $ wrap maxWidth "" 1 $
+                    map (++ ",") (init pragmas') ++ [last pragmas']
+  in map (wrapLanguage . padRight longest) prags
   where
-    wrapLANGUAGE ps = "{-# LANGUAGE" ++ ps ++  " #-}"
+    wrapLanguage ps = "{-# LANGUAGE" ++ ps ++  " #-}"
 
+
+--------------------------------------------------------------------------------
 truncateComma :: String -> String
-truncateComma "" = ""
+truncateComma ""     = ""
 truncateComma xs
     | last xs == ',' = init xs
     | otherwise      = xs
 
+
+--------------------------------------------------------------------------------
 prettyPragmas :: Int -> Int -> Style -> [String] -> Lines
-prettyPragmas _       longest Vertical = verticalPragmas longest
-prettyPragmas columns _       Compact  = compactPragmas columns
+prettyPragmas _       longest Vertical    = verticalPragmas longest
+prettyPragmas columns _       Compact     = compactPragmas columns
 prettyPragmas columns _       CompactLine = compactLinePragmas columns
+
 
 --------------------------------------------------------------------------------
 -- | Filter redundant (and duplicate) pragmas out of the groups. As a side
