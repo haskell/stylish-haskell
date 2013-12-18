@@ -117,6 +117,13 @@ Written and maintained by Jasper Van der Jeugt.
 Contributors:
 
 - Chris Done
+- Hiromi Ishii
 - Leonid Onokhov
 - Michael Snoyman
 - Mikhail Glushenkov
+
+Changelog
+---------
+
+- `0.5.9.0`
+    * Add `compact_line` setting for Language Pragma styling
