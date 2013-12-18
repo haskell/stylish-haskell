@@ -14,16 +14,17 @@ import qualified Language.Haskell.Exts.Annotated as H
 
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Block
-import           Language.Haskell.Stylish.Editor
-import           Language.Haskell.Stylish.Step
-import           Language.Haskell.Stylish.Util
+import Language.Haskell.Stylish.Block
+import Language.Haskell.Stylish.Editor
+import Language.Haskell.Stylish.Step
+import Language.Haskell.Stylish.Util
 
 
 --------------------------------------------------------------------------------
 data Style
     = Vertical
     | Compact
+    | CompactLine
     deriving (Eq, Show)
 
 
@@ -55,10 +56,27 @@ compactPragmas columns pragmas' = wrap columns "{-# LANGUAGE" 13 $
 
 
 --------------------------------------------------------------------------------
+compactLinePragmas :: Int -> [String] -> Lines
+compactLinePragmas _ [] = []
+compactLinePragmas columns pragmas' =
+  let maxWidth = columns - 14
+      prags = map truncateComma $ wrap maxWidth "" 1 $
+                map (++ ",") (init pragmas') ++ [last pragmas']
+      longest = maximum $ map length prags
+  in map (wrapLANGUAGE . padRight longest) prags
+  where
+    wrapLANGUAGE ps = "{-# LANGUAGE" ++ ps ++  " #-}"
+
+truncateComma :: String -> String
+truncateComma "" = ""
+truncateComma xs
+    | last xs == ',' = init xs
+    | otherwise      = xs
+
 prettyPragmas :: Int -> Int -> Style -> [String] -> Lines
 prettyPragmas _       longest Vertical = verticalPragmas longest
 prettyPragmas columns _       Compact  = compactPragmas columns
-
+prettyPragmas columns _       CompactLine = compactLinePragmas columns
 
 --------------------------------------------------------------------------------
 -- | Filter redundant (and duplicate) pragmas out of the groups. As a side
@@ -75,7 +93,6 @@ filterRedundant isRedundant' = snd . foldr filterRedundant' (S.empty, [])
         fxs    = filter (not . isRedundant') xs
         xs'    = S.fromList fxs `S.difference` known
         known' = xs' `S.union` known
-
 
 --------------------------------------------------------------------------------
 step :: Int -> Style -> Bool -> Step
