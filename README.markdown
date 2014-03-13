@@ -109,7 +109,6 @@ To run stylish-haskell each time you save a .hs file, add this to your .vimrc:
 
     function! s:StylishHaskell()
       let cursor_position = getpos('.')
-      undojoin
       %!stylish-haskell
       call setpos('.', cursor_position)
     endfunction
