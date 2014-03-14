@@ -100,6 +100,20 @@ Just call
 
 or add a keybinding for it.
 
+To run stylish-haskell each time you save a .hs file, add this to your .vimrc:
+
+    augroup stylish-haskell
+      autocmd!
+      autocmd BufWritePost *.hs call s:StylishHaskell()
+    augroup END
+
+    function! s:StylishHaskell()
+      let cursor_position = getpos('.')
+      %!stylish-haskell
+      call setpos('.', cursor_position)
+    endfunction
+
+
 Emacs integration
 -----------------
 
