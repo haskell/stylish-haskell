@@ -104,7 +104,7 @@ To run stylish-haskell each time you save a .hs file, add this to your .vimrc:
 
     augroup stylish-haskell
       autocmd!
-      autocmd BufWritePost *.hs call s:StylishHaskell()
+      autocmd BufWrite *.hs call s:StylishHaskell()
     augroup END
 
     function! s:StylishHaskell()
