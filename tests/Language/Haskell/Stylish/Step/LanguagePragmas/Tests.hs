@@ -116,7 +116,7 @@ case05 = expected @=? testStep (step 80 Vertical False) input
         ]
 
 case06 :: Assertion
-case06 = expected @=? testStep (step 80 CompactLine True) input
+case06 = expected @=? testStep (step 80 CompactLine False) input
   where
     input = unlines
         [ "{-# LANGUAGE TypeOperators, StandaloneDeriving, DeriveDataTypeable,"
