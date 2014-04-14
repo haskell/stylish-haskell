@@ -9,10 +9,9 @@ module Main
 import           Control.Monad          (forM_)
 import           Data.List              (intercalate)
 import           Data.Version           (Version(..))
-import           Prelude                hiding (readFile)
 import           System.Console.CmdArgs
-import           System.IO              (hPutStrLn, stderr)
-import           System.IO.Strict       (readFile)
+import           System.IO              (hPutStrLn, stderr, withFile, hSetEncoding, IOMode(ReadMode), utf8)
+import           System.IO.Strict       (hGetContents)
 
 
 --------------------------------------------------------------------------------
@@ -53,7 +52,7 @@ stylishHaskell sa
     | defaults sa = do
         fileName <- defaultConfigFilePath
         verbose' $ "Dumping config from " ++ fileName
-        readFile fileName >>= putStr
+        readUTF8File fileName >>= putStr
     | otherwise   = do
         conf <- loadConfig verbose' (config sa)
         let steps = configSteps conf
@@ -70,12 +69,22 @@ stylishHaskell sa
 -- | Processes a single file, or stdin if no filepath is given
 file :: StylishArgs -> Config -> Maybe FilePath -> IO ()
 file sa conf mfp = do
-    contents <- maybe getContents readFile mfp
+    contents <- maybe getContents readUTF8File mfp
     let result = runSteps (configLanguageExtensions conf)
             mfp (configSteps conf) $ lines contents
-
     case result of
-        Left  err -> hPutStrLn stderr err >> write contents
-        Right ok  -> write $ unlines ok
+        Left  err -> hPutStrLn stderr err >> write contents contents
+        Right ok  -> write contents $ unlines ok
   where
-    write = maybe putStr (if inPlace sa then writeFile else const putStr) mfp
+    write old new = case mfp of
+                Nothing -> putStr new
+                Just _    | not (inPlace sa) -> putStr new
+                Just path | length new /= 0 && old /= new  -> writeFile path new
+                _ -> return ()
+
+readUTF8File :: FilePath -> IO String
+readUTF8File fp =
+     withFile fp ReadMode $ \h -> do
+        hSetEncoding h utf8
+        content <- hGetContents h
+        return content
