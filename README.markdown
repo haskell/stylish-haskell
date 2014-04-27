@@ -1,7 +1,7 @@
 stylish-haskell
 ===============
 
-[![Build Status](https://secure.travis-ci.org/jaspervdj/stylish-haskell.png?branch=master)](http://travis-ci.org/jaspervdj/stylish-haskell)
+[![Build Status](https://secure.travis-ci.org/jaspervdj/stylish-haskell.svg?branch=master)](http://travis-ci.org/jaspervdj/stylish-haskell)
 
 Introduction
 ------------
