@@ -1,3 +1,6 @@
+- 0.5.10.2
+    * Bump `mtl` dependency to 2.2
+
 - 0.5.10.1
     * Bump `aeson` dependency to 0.8
 
