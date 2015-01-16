@@ -120,8 +120,9 @@ parseConfig (A.Object o) = do
         <*> (o A..:? "language_extensions" A..!= [])
 
     -- Then fill in the steps based on the partial config we already have
-    steps <- (o A..:  "steps" >>= fmap concat . mapM (parseSteps config))
-    return config {configSteps = steps}
+    stepValues <- o A..: "steps" :: A.Parser [A.Value]
+    steps      <- mapM (parseSteps config) stepValues
+    return config {configSteps = concat steps}
 parseConfig _            = mzero
 
 
