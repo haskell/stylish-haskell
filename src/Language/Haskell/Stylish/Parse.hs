@@ -5,7 +5,6 @@ module Language.Haskell.Stylish.Parse
 
 
 --------------------------------------------------------------------------------
-import           Control.Monad.Error             (throwError)
 import           Data.Maybe                      (fromMaybe, listToMaybe)
 import qualified Language.Haskell.Exts.Annotated as H
 
@@ -61,6 +60,6 @@ parseModule extraExts mfp string = do
 
     case H.parseModuleWithComments mode noCpp of
         H.ParseOk md -> return md
-        err          -> throwError $
+        err          -> Left $
             "Language.Haskell.Stylish.Parse.parseModule: could not parse " ++
             fp ++ ": " ++ show err
