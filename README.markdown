@@ -12,6 +12,9 @@ manually cleaning up import statements etc. gets tedious very quickly.
 
 This tool tries to help where necessary without getting in the way.
 
+Installation
+------------
+
 You can install it using `cabal install stylish-haskell`.
 
 Features
