@@ -115,7 +115,7 @@ Emacs integration
 [Emacs/Formatting] on the HaskellWiki.
 
 [haskell-mode]: https://github.com/haskell/haskell-mode
-[Emacs/Formatting]: http://www.haskell.org/haskellwiki/Emacs/Formatting
+[Emacs/Formatting]: http://wiki.haskell.org/Emacs/Formatting
 
 Credits
 -------
