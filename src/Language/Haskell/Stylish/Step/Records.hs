@@ -17,9 +17,9 @@ import           Language.Haskell.Stylish.Util
 
 
 --------------------------------------------------------------------------------
-records :: H.Module l -> [[H.FieldDecl l]]
+records :: H.Module l -> [[Alignable l]]
 records modu =
-    [ fields
+    [ map fieldDeclToAlignable fields
     | H.Module _ _ _ _ decls                     <- [modu]
     , H.DataDecl _ _ _ _ cons _                  <- decls
     , H.QualConDecl _ _ _ (H.RecDecl _ _ fields) <- cons
@@ -27,14 +27,32 @@ records modu =
 
 
 --------------------------------------------------------------------------------
+data Alignable a = Alignable
+    { aContainer :: !a
+    , aLeft      :: !a
+    , aRight     :: !a
+    } deriving (Show)
+
+
+--------------------------------------------------------------------------------
+fieldDeclToAlignable :: H.FieldDecl a -> Alignable a
+fieldDeclToAlignable (H.FieldDecl ann names ty) = Alignable
+    { aContainer = ann
+    , aLeft      = H.ann (last names)
+    , aRight     = H.ann ty
+    }
+
+
+--------------------------------------------------------------------------------
 -- | Align the type of a field
-align :: [(Int, Int)] -> [Change String]
+align :: [Alignable H.SrcSpan] -> [Change String]
 align alignment = map align' alignment
   where
-    longest = maximum $ map snd alignment
+    longest = maximum $ map (H.srcSpanEndColumn . aLeft) alignment
 
-    align' (line, column) = changeLine line $ \str ->
-        let (pre, post) = splitAt column str
+    align' a = changeLine (H.srcSpanStartLine $ aContainer a) $ \str ->
+        let column      = H.srcSpanEndColumn $ aLeft a
+            (pre, post) = splitAt column str
         in [padRight longest (trimRight pre) ++ trimLeft post]
 
     trimLeft  = dropWhile isSpace
@@ -42,23 +60,13 @@ align alignment = map align' alignment
 
 
 --------------------------------------------------------------------------------
--- | Determine alignment of fields
-fieldAlignment :: [H.FieldDecl H.SrcSpan] -> [(Int, Int)]
-fieldAlignment fields =
-    [ (H.srcSpanStartLine ann, H.srcSpanEndColumn ann)
-    | H.FieldDecl _ names _ <- fields
-    , let ann = H.ann (last names)
-    ]
-
-
---------------------------------------------------------------------------------
 -- | Checks that all no field of the record appears on more than one line,
 -- amonst other things
-fixable :: [H.FieldDecl H.SrcSpan] -> Bool
+fixable :: [Alignable H.SrcSpan] -> Bool
 fixable []     = False
-fixable fields = all singleLine srcSpans && nonOverlapping srcSpans
+fixable fields = all singleLine containers && nonOverlapping containers
   where
-    srcSpans          = map H.ann fields
+    containers        = map aContainer fields
     singleLine s      = H.srcSpanStartLine s == H.srcSpanEndLine s
     nonOverlapping ss = length ss == length (nub $ map H.srcSpanStartLine ss)
 
@@ -68,4 +76,4 @@ step :: Step
 step = makeStep "Records" $ \ls (module', _) ->
     let module''       = fmap H.srcInfoSpan module'
         fixableRecords = filter fixable $ records module''
-    in applyChanges (fixableRecords >>= align . fieldAlignment) ls
+    in applyChanges (fixableRecords >>= align) ls
