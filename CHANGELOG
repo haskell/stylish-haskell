@@ -1,3 +1,6 @@
+- 0.5.12.0
+    * Add support for shebang at start of file
+
 - 0.5.11.2
     * Bump `filepath` dependency to 1.5
 
