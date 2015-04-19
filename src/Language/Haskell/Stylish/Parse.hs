@@ -7,6 +7,7 @@ module Language.Haskell.Stylish.Parse
 --------------------------------------------------------------------------------
 import           Data.Maybe                      (fromMaybe, listToMaybe)
 import qualified Language.Haskell.Exts.Annotated as H
+import Data.List (isPrefixOf)
 
 
 --------------------------------------------------------------------------------
@@ -24,6 +25,14 @@ unCpp = unlines . go False . lines
         let isCpp         = isMultiline || listToMaybe x == Just '#'
             nextMultiline = isCpp && not (null x) && last x == '\\'
         in (if isCpp then "" else x) : go nextMultiline xs
+
+
+--------------------------------------------------------------------------------
+-- | Remove shebang from the first line
+unShebang :: String -> String
+unShebang str
+    | "#!" `isPrefixOf` str = unlines $ drop 1 $ lines str
+    | otherwise             = str
 
 
 --------------------------------------------------------------------------------
@@ -55,10 +64,10 @@ parseModule extraExts mfp string = do
             }
 
         -- Preprocessing
-        noCpp    =
+        processed = unShebang $
             if H.EnableExtension H.CPP `elem` exts then unCpp noBom else noBom
 
-    case H.parseModuleWithComments mode noCpp of
+    case H.parseModuleWithComments mode processed of
         H.ParseOk md -> return md
         err          -> Left $
             "Language.Haskell.Stylish.Parse.parseModule: could not parse " ++

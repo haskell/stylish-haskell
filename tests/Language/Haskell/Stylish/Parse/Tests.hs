@@ -21,6 +21,7 @@ tests = testGroup "Language.Haskell.Stylish.Parse"
     , testCase "Extra extensions"      testExtraExtensions
     , testCase "Multiline CPP"         testMultilineCpp
     , testCase "Haskell2010 extension" testHaskell2010
+    , testCase "Shebang"               testShebang
     ]
 
 
@@ -55,6 +56,15 @@ testHaskell2010 = assert $ isRight $ parseModule [] Nothing $ unlines
     [ "{-# LANGUAGE Haskell2010 #-}"
     , "module X where"
     , "foo x | Just y <- x = y"
+    ]
+
+
+--------------------------------------------------------------------------------
+testShebang :: Assertion
+testShebang = assert $ isRight $ parseModule [] Nothing $ unlines
+    [ "#!runhaskell"
+    , "module Main where"
+    , "main = return ()"
     ]
 
 
