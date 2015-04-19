@@ -31,7 +31,7 @@ unCpp = unlines . go False . lines
 -- | Remove shebang from the first line
 unShebang :: String -> String
 unShebang str
-    | "#!" `isPrefixOf` str = unlines $ drop 1 $ lines str
+    | "#!" `isPrefixOf` str = unlines $ ("" :) $ drop 1 $ lines str
     | otherwise             = str
 
 
