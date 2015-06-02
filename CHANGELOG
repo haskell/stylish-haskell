@@ -1,3 +1,7 @@
+- 0.5.14.0
+    * Bump `syb` to 0.5
+    * Slight refactoring in align code
+
 - 0.5.13.0
     * Fix issue with shebang code
 

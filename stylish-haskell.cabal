@@ -1,5 +1,5 @@
 Name:          stylish-haskell
-Version:       0.5.13.0
+Version:       0.5.14.0
 Synopsis:      Haskell code prettifier
 Homepage:      https://github.com/jaspervdj/stylish-haskell
 License:       BSD3
@@ -54,7 +54,7 @@ Library
     filepath         >= 1.1  && < 1.5,
     haskell-src-exts >= 1.16 && < 1.17,
     mtl              >= 2.0  && < 2.3,
-    syb              >= 0.3  && < 0.5,
+    syb              >= 0.3  && < 0.6,
     yaml             >= 0.7  && < 0.9
 
 Executable stylish-haskell
@@ -75,7 +75,7 @@ Executable stylish-haskell
     filepath         >= 1.1  && < 1.5,
     haskell-src-exts >= 1.16 && < 1.17,
     mtl              >= 2.0  && < 2.3,
-    syb              >= 0.3  && < 0.5,
+    syb              >= 0.3  && < 0.6,
     yaml             >= 0.7  && < 0.9
 
 Test-suite stylish-haskell-tests
@@ -108,7 +108,7 @@ Test-suite stylish-haskell-tests
     filepath         >= 1.1  && < 1.5,
     haskell-src-exts >= 1.16 && < 1.17,
     mtl              >= 2.0  && < 2.3,
-    syb              >= 0.3  && < 0.5,
+    syb              >= 0.3  && < 0.6,
     yaml             >= 0.7  && < 0.9
 
 Source-repository head
