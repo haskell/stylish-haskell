@@ -1,3 +1,6 @@
+- 0.5.14.1
+    * Bump `aeson` to 0.9
+
 - 0.5.14.0
     * Bump `syb` to 0.5
     * Slight refactoring in align code
