@@ -1,6 +1,10 @@
+{-# LANGUAGE RecordWildCards #-}
 --------------------------------------------------------------------------------
 module Language.Haskell.Stylish.Step.Imports
     ( Align (..)
+    , ImportAlign (..)
+    , ListAlign (..)
+    , LongListAlign (..)
     , step
     ) where
 
@@ -22,13 +26,29 @@ import           Language.Haskell.Stylish.Util
 
 
 --------------------------------------------------------------------------------
-data Align
+data Align = Align
+    { importAlign   :: ImportAlign
+    , listAlign     :: ListAlign
+    , longListAlign :: LongListAlign
+    }
+    deriving (Eq, Show)
+
+data ImportAlign
     = Global
     | File
     | Group
     | None
     deriving (Eq, Show)
 
+data ListAlign
+    = SameLine
+    | NewLine
+    deriving (Eq, Show)
+
+data LongListAlign
+    = Inline
+    | Multiline
+    deriving (Eq, Show)
 
 --------------------------------------------------------------------------------
 imports :: H.Module l -> [H.ImportDecl l]
@@ -95,28 +115,52 @@ prettyImportSpec x                      = H.prettyPrint x
 
 
 --------------------------------------------------------------------------------
-prettyImport :: Int -> Bool -> Bool -> Int -> H.ImportDecl l -> [String]
-prettyImport columns padQualified padName longest imp =
-    wrap columns base (length base + 2) $
-    (if hiding then ("hiding" :) else id) $
-    case importSpecs of
-        Nothing -> []     -- Import everything
-        Just [] -> ["()"] -- Instance only imports
-        Just is ->
-            withInit (++ ",") $
-            withHead ("(" ++) $
-            withLast (++ ")") $
-            map prettyImportSpec $
-            is
+prettyImport :: Int -> Align -> Bool -> Bool -> Int -> H.ImportDecl l
+             -> [String]
+prettyImport columns Align{..} padQualified padName longest imp =
+    case longListAlign of
+        Inline -> inlineWrap
+        Multiline -> if listAlign == NewLine || length inlineWrap > 1
+            then multilineWrap
+            else inlineWrap
   where
-    base = unwords $ concat
-         [ ["import"]
-         , qualified
-         , (fmap show $ maybeToList $ H.importPkg imp)
-         , [(if hasExtras && padName then padRight longest else id)
-            (importName imp)]
-         , ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp]
-         ]
+    inlineWrap = inlineWrapper
+        $ withInit (++ ",")
+        $ withHead ("(" ++)
+        $ withLast (++ ")")
+        $ specs
+
+    inlineWrapper = case listAlign of
+        SameLine -> wrap columns inlineBase (inlineBaseLength + 1)
+        NewLine  -> (inlineBase :) . wrapRest columns 4
+
+    multilineWrap = multilineBase : (wrapRest 0 4
+        $ (withHead ("( " ++)
+        $ withTail (", " ++)
+        $ specs) ++ [")"])
+
+    inlineBase = base $ padImport $ importName imp
+
+    multilineBase = base $ importName imp
+
+    padImport = if hasExtras && padName
+        then padRight longest
+        else id
+
+    base' baseName importAs hiding' = unwords $ concat $ filter (not . null)
+        [ ["import"]
+        , qualified
+        , (fmap show $ maybeToList $ H.importPkg imp)
+        , [baseName]
+        , importAs
+        , hiding'
+        ]
+
+    base baseName = base' baseName
+        ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp]
+        (if hiding then (["hiding"]) else [])
+
+    inlineBaseLength = length $ base' (padImport $ importName imp) [] []
 
     (hiding, importSpecs) = case H.importSpecs imp of
         Just (H.ImportSpecList _ h l) -> (h, Just l)
@@ -129,21 +173,29 @@ prettyImport columns padQualified padName longest imp =
         | padQualified          = ["         "]
         | otherwise             = []
 
+    specs = case importSpecs of
+        Nothing -> []     -- Import everything
+        Just [] -> ["()"] -- Instance only imports
+        Just is -> map prettyImportSpec is
+
 
 --------------------------------------------------------------------------------
-prettyImportGroup :: Int -> Align -> Bool -> Int -> [H.ImportDecl LineBlock]
+prettyImportGroup :: Int -> Align -> Bool -> Int
+                  -> [H.ImportDecl LineBlock]
                   -> Lines
 prettyImportGroup columns align fileAlign longest imps =
-    concatMap (prettyImport columns padQual padName longest') $
+    concatMap (prettyImport columns align padQual padName longest') $
     sortBy compareImports imps
   where
-    longest' = case align of
+    align' = importAlign align
+
+    longest' = case align' of
         Group -> longestImport imps
         _     -> longest
 
-    padName = align /= None
+    padName = align' /= None
 
-    padQual = case align of
+    padQual = case align' of
         Global -> True
         File   -> fileAlign
         Group  -> any H.importQualified imps
@@ -167,6 +219,6 @@ step' columns align ls (module', _) = flip applyChanges ls
     longest = longestImport imps
     groups  = groupAdjacent [(H.ann i, i) | i <- imps]
 
-    fileAlign = case align of
+    fileAlign = case importAlign align of
         File -> any H.importQualified imps
         _    -> False

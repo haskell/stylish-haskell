@@ -10,23 +10,25 @@ module Language.Haskell.Stylish.Config
 
 
 --------------------------------------------------------------------------------
-import           Control.Applicative                    (pure, (<$>), (<*>))
-import           Control.Monad                          (forM, mzero)
-import           Data.Aeson                             (FromJSON (..))
-import qualified Data.Aeson                             as A
-import qualified Data.Aeson.Types                       as A
-import qualified Data.ByteString                        as B
-import           Data.List                              (inits, intercalate)
-import           Data.Map                               (Map)
-import qualified Data.Map                               as M
-import           Data.Yaml                              (decodeEither)
+import           Control.Applicative                              (pure, (<$>),
+                                                                   (<*>))
+import           Control.Monad                                    (forM, mzero)
+import           Data.Aeson                                       (FromJSON (..))
+import qualified Data.Aeson                                       as A
+import qualified Data.Aeson.Types                                 as A
+import qualified Data.ByteString                                  as B
+import           Data.List                                        (inits,
+                                                                   intercalate)
+import           Data.Map                                         (Map)
+import qualified Data.Map                                         as M
+import           Data.Yaml                                        (decodeEither)
 import           System.Directory
-import           System.FilePath                        (joinPath, splitPath,
-                                                         (</>))
+import           System.FilePath                                  (joinPath,
+                                                                   splitPath,
+                                                                   (</>))
 
 
 --------------------------------------------------------------------------------
-import           Paths_stylish_haskell                  (getDataFileName)
 import           Language.Haskell.Stylish.Step
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
@@ -35,6 +37,7 @@ import qualified Language.Haskell.Stylish.Step.Tabs               as Tabs
 import qualified Language.Haskell.Stylish.Step.TrailingWhitespace as TrailingWhitespace
 import qualified Language.Haskell.Stylish.Step.UnicodeSyntax      as UnicodeSyntax
 import           Language.Haskell.Stylish.Verbose
+import           Paths_stylish_haskell                            (getDataFileName)
 
 
 --------------------------------------------------------------------------------
@@ -161,13 +164,27 @@ parseEnum strs _   (Just k) = case lookup k strs of
 parseImports :: Config -> A.Object -> A.Parser Step
 parseImports config o = Imports.step
     <$> pure (configColumns config)
-    <*> (o A..:? "align" >>= parseEnum aligns Imports.Global)
+    <*> (Imports.Align
+        <$> (o A..:? "align" >>= parseEnum aligns Imports.Global)
+        <*> (o A..:? "list_align" >>= parseEnum listAligns Imports.SameLine)
+        <*> (o A..:? "long_list_align"
+            >>= parseEnum longListAligns Imports.Inline))
   where
     aligns =
         [ ("global", Imports.Global)
         , ("file",   Imports.File)
         , ("group",  Imports.Group)
         , ("none",   Imports.None)
+        ]
+
+    listAligns =
+        [ ("new line",  Imports.NewLine)
+        , ("same line", Imports.SameLine)
+        ]
+
+    longListAligns =
+        [ ("inline",    Imports.Inline)
+        , ("multiline", Imports.Multiline)
         ]
 
 
@@ -181,7 +198,8 @@ parseLanguagePragmas config o = LanguagePragmas.step
     styles =
         [ ("vertical",     LanguagePragmas.Vertical)
         , ("compact",      LanguagePragmas.Compact)
-        , ("compact_line", LanguagePragmas.CompactLine)]
+        , ("compact_line", LanguagePragmas.CompactLine)
+        ]
 
 
 --------------------------------------------------------------------------------
