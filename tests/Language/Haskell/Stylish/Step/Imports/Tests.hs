@@ -39,6 +39,8 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 10" case10
     , testCase "case 11" case11
     , testCase "case 12" case12
+    , testCase "case 13" case13
+    , testCase "case 14" case14
     ]
 
 
@@ -306,4 +308,31 @@ case12 = expected @=? testStep (step 80 $ Align Group NewLine Inline 2) input'
     expected = unlines
         [ "import Data.List"
         , "  (map)"
+        ]
+
+
+--------------------------------------------------------------------------------
+case13 :: Assertion
+case13 = expected
+    @=? testStep (step 80 $ Align None WithAlias InlineWithBreak 4) input'
+  where
+    input' = unlines
+        [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
+        , "    last, length, map, null, reverse, tail, (++))"
+        ]
+
+    expected = unlines
+        [ "import qualified Data.List as List"
+        , "    (concat, foldl, foldr, head, init, last, length, map, null, reverse, tail,"
+        , "    (++))"
+        ]
+
+
+--------------------------------------------------------------------------------
+case14 :: Assertion
+case14 = expected
+    @=? testStep (step 80 $ Align None WithAlias InlineWithBreak 10) expected
+  where
+    expected = unlines
+        [ "import qualified Data.List as List (concat, map, null, reverse, tail, (++))"
         ]
