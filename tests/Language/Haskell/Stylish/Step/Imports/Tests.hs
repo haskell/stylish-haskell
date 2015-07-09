@@ -16,6 +16,15 @@ import           Language.Haskell.Stylish.Tests.Util
 
 
 --------------------------------------------------------------------------------
+defaultAlign :: Align
+defaultAlign = Align Global AfterAlias Inline 4
+
+
+--------------------------------------------------------------------------------
+fromImportAlign :: ImportAlign -> Align
+fromImportAlign align = defaultAlign { importAlign = align }
+
+--------------------------------------------------------------------------------
 tests :: Test
 tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     [ testCase "case 01" case01
@@ -47,7 +56,7 @@ input = unlines
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testStep (step 80 Global) input
+case01 = expected @=? testStep (step 80 $ fromImportAlign Global) input
   where
     expected = unlines
         [ "module Herp where"
@@ -66,7 +75,7 @@ case01 = expected @=? testStep (step 80 Global) input
 
 --------------------------------------------------------------------------------
 case02 :: Assertion
-case02 = expected @=? testStep (step 80 Group) input
+case02 = expected @=? testStep (step 80 $ fromImportAlign Group) input
   where
     expected = unlines
         [ "module Herp where"
@@ -85,7 +94,7 @@ case02 = expected @=? testStep (step 80 Group) input
 
 --------------------------------------------------------------------------------
 case03 :: Assertion
-case03 = expected @=? testStep (step 80 None) input
+case03 = expected @=? testStep (step 80 $ fromImportAlign None) input
   where
     expected = unlines
         [ "module Herp where"
@@ -104,7 +113,7 @@ case03 = expected @=? testStep (step 80 None) input
 
 --------------------------------------------------------------------------------
 case04 :: Assertion
-case04 = expected @=? testStep (step 80 Global) input'
+case04 = expected @=? testStep (step 80 $ fromImportAlign Global) input'
   where
     input' =
         "import Data.Aeson.Types (object, typeMismatch, FromJSON(..)," ++
@@ -119,7 +128,7 @@ case04 = expected @=? testStep (step 80 Global) input'
 
 --------------------------------------------------------------------------------
 case05 :: Assertion
-case05 = input' @=? testStep (step 80 Group) input'
+case05 = input' @=? testStep (step 80 $ fromImportAlign Group) input'
   where
     input' = "import Distribution.PackageDescription.Configuration " ++
         "(finalizePackageDescription)\n"
@@ -127,7 +136,7 @@ case05 = input' @=? testStep (step 80 Group) input'
 
 --------------------------------------------------------------------------------
 case06 :: Assertion
-case06 = input' @=? testStep (step 80 File) input'
+case06 = input' @=? testStep (step 80 $ fromImportAlign File) input'
   where
     input' = unlines
         [ "import Bar.Qux"
@@ -137,7 +146,7 @@ case06 = input' @=? testStep (step 80 File) input'
 
 --------------------------------------------------------------------------------
 case07 :: Assertion
-case07 = expected @=? testStep (step 80 File) input'
+case07 = expected @=? testStep (step 80 $ fromImportAlign File) input'
   where
     input' = unlines
         [ "import Bar.Qux"
