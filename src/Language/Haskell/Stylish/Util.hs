@@ -73,9 +73,8 @@ wrap maxWidth leading ind strs' = wrap' leading strs'
             ss : wrapRest maxWidth ind (str:strs)
         | otherwise = wrap' (ss ++ " " ++ str) strs
 
-    overflows ss str = (length ss + length str) >= maxWidth
-        && ind + length str  <= maxWidth
-
+    overflows ss str = length ss > maxWidth ||
+        ((length ss + length str) >= maxWidth && ind + length str  <= maxWidth)
 
 
 --------------------------------------------------------------------------------
