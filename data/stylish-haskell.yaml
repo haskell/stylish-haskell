@@ -32,6 +32,50 @@ steps:
       #
       # Default: global.
       align: global
+      # Folowing options affect only import list alignment.
+      #
+      # List align has following options:
+      #
+      # - after alias: Import list is aligned with end of import including
+      #   'as' and 'hiding' keywords.
+      #
+      #   > import qualified Data.List      as List (concat, foldl, foldr, head,
+      #   >                                          init, last, length)
+      #
+      # - with alias: Import list is aligned with start of alias or hiding.
+      #
+      #   > import qualified Data.List      as List (concat, foldl, foldr, head,
+      #   >                                 init, last, length)
+      #
+      # - new line: Import list starts always on new line.
+      #
+      #   > import qualified Data.List      as List
+      #   >     (concat, foldl, foldr, head, init, last, length)
+      #
+      # Default: after alias
+      list_align: after alias
+      # Long list align style takes effect when import is too long. This is
+      # determined by 'columns' setting.
+      #
+      # - inline: This option will put as much specs on same line as possible.
+      #
+      # - new line: Import list will start on new line.
+      #
+      # - multiline: One line per import list entry.
+      #   Type with contructor list acts like single import.
+      #
+      #   > import qualified Data.Map as M
+      #   >     ( empty
+      #   >     , singleton
+      #   >     , ...
+      #   >     , delete
+      #   >     )
+      #
+      # Default: inline
+      long_list_align: inline
+      # List padding determines indentation of import list on lines after import.
+      # This option affects 'list_align' and 'long_list_align'.
+      list_padding: 4
 
   # Language pragmas
   - language_pragmas:
