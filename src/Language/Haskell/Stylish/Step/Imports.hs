@@ -133,45 +133,49 @@ prettyImport columns Align{..} padQualified padName longest imp =
         . withLast (++ ")")
 
     inlineWrapper = case listAlign of
-        NewLine    -> (inlineBase :) . wrapRest columns listPadding
-        WithAlias  -> wrap columns inlineBase (inlineBaseLength + 1)
+        NewLine    -> (paddedNoSpecBase :) . wrapRest columns listPadding
+        WithAlias  -> wrap columns paddedBase (inlineBaseLength + 1)
         -- Add 1 extra space to ensure same padding as in original code.
         AfterAlias -> withTail (' ' :)
-            . wrap columns inlineBase (afterAliasBaseLength + 1)
+            . wrap columns paddedBase (afterAliasBaseLength + 1)
 
-    multilineWrap = multilineBase : (wrapRest 0 listPadding
+    multilineWrap = paddedNoSpecBase : (wrapRest 0 listPadding
         $ (mapSpecs
           $ withHead ("( " ++)
           . withTail (", " ++))
         ++ [")"])
 
-    inlineBase = base $ padImport $ importName imp
+    paddedBase = base $ padImport $ importName imp
 
-    multilineBase = base $ importName imp
+    paddedNoSpecBase = base $ padImportNoSpec $ importName imp
 
     padImport = if hasExtras && padName
         then padRight longest
         else id
 
-    base' baseName importAs hiding' = unwords $ concat $ filter (not . null)
+    padImportNoSpec = if isJust (H.importAs imp) || hasHiding
+        then padRight longest
+        else id
+
+    base' baseName importAs hasHiding' = unwords $ concat $ filter (not . null)
         [ ["import"]
         , qualified
         , (fmap show $ maybeToList $ H.importPkg imp)
         , [baseName]
         , importAs
-        , hiding'
+        , hasHiding'
         ]
 
     base baseName = base' baseName
         ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp]
-        (if hiding then (["hiding"]) else [])
+        (if hasHiding then (["hiding"]) else [])
 
     inlineBaseLength = length $ base' (padImport $ importName imp) [] []
 
     afterAliasBaseLength = length $ base' (padImport $ importName imp)
         ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp] []
 
-    (hiding, importSpecs) = case H.importSpecs imp of
+    (hasHiding, importSpecs) = case H.importSpecs imp of
         Just (H.ImportSpecList _ h l) -> (h, Just l)
         _                             -> (False, Nothing)
 
