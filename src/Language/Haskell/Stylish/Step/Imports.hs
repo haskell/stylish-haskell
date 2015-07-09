@@ -127,10 +127,10 @@ prettyImport columns Align{..} padQualified padName longest imp =
             else inlineWrap
   where
     inlineWrap = inlineWrapper
+        $ mapSpecs
         $ withInit (++ ",")
-        $ withHead ("(" ++)
-        $ withLast (++ ")")
-        $ specs
+        . withHead ("(" ++)
+        . withLast (++ ")")
 
     inlineWrapper = case listAlign of
         NewLine    -> (inlineBase :) . wrapRest columns listPadding
@@ -140,9 +140,10 @@ prettyImport columns Align{..} padQualified padName longest imp =
             . wrap columns inlineBase (afterAliasBaseLength + 1)
 
     multilineWrap = multilineBase : (wrapRest 0 listPadding
-        $ (withHead ("( " ++)
-        $ withTail (", " ++)
-        $ specs) ++ [")"])
+        $ (mapSpecs
+          $ withHead ("( " ++)
+          . withTail (", " ++))
+        ++ [")"])
 
     inlineBase = base $ padImport $ importName imp
 
@@ -181,10 +182,10 @@ prettyImport columns Align{..} padQualified padName longest imp =
         | padQualified          = ["         "]
         | otherwise             = []
 
-    specs = case importSpecs of
+    mapSpecs f = case importSpecs of
         Nothing -> []     -- Import everything
         Just [] -> ["()"] -- Instance only imports
-        Just is -> map prettyImportSpec is
+        Just is -> f $ map prettyImportSpec is
 
 
 --------------------------------------------------------------------------------
