@@ -42,8 +42,9 @@ data ImportAlign
     deriving (Eq, Show)
 
 data ListAlign
-    = SameLine
-    | NewLine
+    = NewLine
+    | WithAlias
+    | AfterAlias
     deriving (Eq, Show)
 
 data LongListAlign
@@ -132,8 +133,11 @@ prettyImport columns Align{..} padQualified padName longest imp =
         $ specs
 
     inlineWrapper = case listAlign of
-        SameLine -> wrap columns inlineBase (inlineBaseLength + 1)
-        NewLine  -> (inlineBase :) . wrapRest columns listPadding
+        NewLine    -> (inlineBase :) . wrapRest columns listPadding
+        WithAlias  -> wrap columns inlineBase (inlineBaseLength + 1)
+        -- Add 1 extra space to ensure same padding as in original code.
+        AfterAlias -> withTail (' ' :)
+            . wrap columns inlineBase (afterAliasBaseLength + 1)
 
     multilineWrap = multilineBase : (wrapRest 0 listPadding
         $ (withHead ("( " ++)
@@ -162,6 +166,9 @@ prettyImport columns Align{..} padQualified padName longest imp =
         (if hiding then (["hiding"]) else [])
 
     inlineBaseLength = length $ base' (padImport $ importName imp) [] []
+
+    afterAliasBaseLength = length $ base' (padImport $ importName imp)
+        ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp] []
 
     (hiding, importSpecs) = case H.importSpecs imp of
         Just (H.ImportSpecList _ h l) -> (h, Just l)

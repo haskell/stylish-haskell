@@ -166,7 +166,7 @@ parseImports config o = Imports.step
     <$> pure (configColumns config)
     <*> (Imports.Align
         <$> (o A..:? "align" >>= parseEnum aligns Imports.Global)
-        <*> (o A..:? "list_align" >>= parseEnum listAligns Imports.SameLine)
+        <*> (o A..:? "list_align" >>= parseEnum listAligns Imports.AfterAlias)
         <*> (o A..:? "long_list_align"
             >>= parseEnum longListAligns Imports.Inline)
         <*> (o A..:? "list_padding"
@@ -180,8 +180,9 @@ parseImports config o = Imports.step
         ]
 
     listAligns =
-        [ ("new line",  Imports.NewLine)
-        , ("same line", Imports.SameLine)
+        [ ("new line",    Imports.NewLine)
+        , ("with alias",  Imports.WithAlias)
+        , ("after alias", Imports.AfterAlias)
         ]
 
     longListAligns =

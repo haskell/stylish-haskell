@@ -74,7 +74,29 @@ wrap maxWidth leading ind strs' = wrap' leading strs'
         | otherwise = wrap' (ss ++ " " ++ str) strs
 
     overflows ss str = (length ss + length str) >= maxWidth
+        && ind + length str  <= maxWidth
 
+
+-- wrap :: Int       -- ^ Maximum line width
+--      -> String    -- ^ Leading string
+--      -> Int       -- ^ Indentation
+--      -> [String]  -- ^ Strings to add/wrap
+--      -> Lines     -- ^ Resulting lines
+-- wrap maxWidth leading ind strs =
+--     let (ls, curr, _) = foldl step ([], leading, length leading) strs
+--     in ls ++ [curr]
+--   where
+--     -- TODO: In order to optimize this, use a difference list instead of a
+--     -- regular list for 'ls'.
+--     step (ls, curr, width) str
+--         | nextLine  = (ls ++ [curr], indent ind str, ind + len)
+--         | otherwise = (ls, curr ++ " " ++ str, width')
+--       where
+--         -- Put it on the next line if it would make the current line too long,
+--         -- AND if it doesn't make the next line too long.
+--         nextLine = width' > maxWidth && ind + len <= maxWidth
+--         len      = length str
+--         width'   = width + 1 + len
 
 --------------------------------------------------------------------------------
 wrapRest :: Int
@@ -87,11 +109,11 @@ wrapRest maxWidth ind = reverse . wrapRest' [] ""
         | null ss = ls
         | otherwise = ss:ls
     wrapRest' ls ss (str:strs)
-        | overflows ss str = wrapRest' (ss:ls) "" (str:strs)
         | null ss = wrapRest' ls (indent ind str) strs
+        | overflows ss str = wrapRest' (ss:ls) "" (str:strs)
         | otherwise = wrapRest' ls (ss ++ " " ++ str) strs
 
-    overflows ss str = (length ss + length str) >= maxWidth && length ss > ind
+    overflows ss str = (length ss + length str + 1) >= maxWidth
 
 
 --------------------------------------------------------------------------------
