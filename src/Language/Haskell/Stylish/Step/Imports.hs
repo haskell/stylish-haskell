@@ -30,6 +30,7 @@ data Align = Align
     { importAlign   :: ImportAlign
     , listAlign     :: ListAlign
     , longListAlign :: LongListAlign
+    , listPadding   :: Int
     }
     deriving (Eq, Show)
 
@@ -132,9 +133,9 @@ prettyImport columns Align{..} padQualified padName longest imp =
 
     inlineWrapper = case listAlign of
         SameLine -> wrap columns inlineBase (inlineBaseLength + 1)
-        NewLine  -> (inlineBase :) . wrapRest columns 4
+        NewLine  -> (inlineBase :) . wrapRest columns listPadding
 
-    multilineWrap = multilineBase : (wrapRest 0 4
+    multilineWrap = multilineBase : (wrapRest 0 listPadding
         $ (withHead ("( " ++)
         $ withTail (", " ++)
         $ specs) ++ [")"])

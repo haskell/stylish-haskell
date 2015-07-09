@@ -168,7 +168,9 @@ parseImports config o = Imports.step
         <$> (o A..:? "align" >>= parseEnum aligns Imports.Global)
         <*> (o A..:? "list_align" >>= parseEnum listAligns Imports.SameLine)
         <*> (o A..:? "long_list_align"
-            >>= parseEnum longListAligns Imports.Inline))
+            >>= parseEnum longListAligns Imports.Inline)
+        <*> (o A..:? "list_padding"
+            >>= (return . maybe 4 (max 1)))) -- Padding have to be at least 1.
   where
     aligns =
         [ ("global", Imports.Global)
