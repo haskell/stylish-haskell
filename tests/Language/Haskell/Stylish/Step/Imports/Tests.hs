@@ -41,6 +41,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 12" case12
     , testCase "case 13" case13
     , testCase "case 14" case14
+    , testCase "case 15" case15
     ]
 
 
@@ -335,4 +336,29 @@ case14 = expected
   where
     expected = unlines
         [ "import qualified Data.List as List (concat, map, null, reverse, tail, (++))"
+        ]
+
+--------------------------------------------------------------------------------
+case15 :: Assertion
+case15 = expected
+    @=? testStep (step 80 $ Align None AfterAlias Multiline 4) input'
+  where
+    expected = unlines
+        [ "import Data.Acid (AcidState)"
+        , "import qualified Data.Acid as Acid"
+        , "    ( closeAcidState"
+        , "    , createCheckpoint"
+        , "    , openLocalStateFrom"
+        , "    )"
+        , "import Data.Default.Class (Default (def))"
+        , ""
+        , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (bar, foo)"
+        ]
+
+    input' = unlines
+        [ "import Data.Acid (AcidState)"
+        , "import qualified Data.Acid as Acid (closeAcidState, createCheckpoint, openLocalStateFrom)"
+        , "import Data.Default.Class (Default (def))"
+        , ""
+        , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (foo, bar)"
         ]

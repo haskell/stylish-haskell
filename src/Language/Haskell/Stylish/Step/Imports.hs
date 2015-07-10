@@ -165,7 +165,7 @@ prettyImport columns Align{..} padQualified padName longest imp =
         then padRight longest
         else id
 
-    padImportNoSpec = if isJust (H.importAs imp) || hasHiding
+    padImportNoSpec = if (isJust (H.importAs imp) || hasHiding) && padName
         then padRight longest
         else id
 
