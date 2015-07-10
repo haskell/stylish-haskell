@@ -32,6 +32,7 @@ steps:
       #
       # Default: global.
       align: global
+
       # Folowing options affect only import list alignment.
       #
       # List align has following options:
@@ -54,6 +55,7 @@ steps:
       #
       # Default: after alias
       list_align: after alias
+
       # Long list align style takes effect when import is too long. This is
       # determined by 'columns' setting.
       #
@@ -73,6 +75,7 @@ steps:
       #
       # Default: inline
       long_list_align: inline
+
       # List padding determines indentation of import list on lines after import.
       # This option affects 'list_align' and 'long_list_align'.
       list_padding: 4
