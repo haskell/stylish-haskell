@@ -126,10 +126,12 @@ prettyImport columns Align{..} padQualified padName longest imp =
         InlineWithBreak -> longListWrapper inlineWrap inlineWithBreakWrap
         Multiline -> longListWrapper inlineWrap multilineWrap
   where
-    longListWrapper shortWrap longWrap =
-        if listAlign == NewLine || length shortWrap > 1
-            then longWrap
-            else shortWrap
+    longListWrapper shortWrap longWrap
+        | listAlign == NewLine
+        || length shortWrap > 1
+        || length (head shortWrap) > columns
+            = longWrap
+        | otherwise = shortWrap
 
     inlineWrap = inlineWrapper
         $ mapSpecs
