@@ -17,7 +17,7 @@ import           Language.Haskell.Stylish.Tests.Util
 
 --------------------------------------------------------------------------------
 defaultAlign :: Align
-defaultAlign = Align Global AfterAlias Inline 4
+defaultAlign = Align Global AfterAlias Inline 4 True
 
 
 --------------------------------------------------------------------------------
@@ -42,6 +42,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 13" case13
     , testCase "case 14" case14
     , testCase "case 15" case15
+    , testCase "case 16" case16
     ]
 
 
@@ -180,7 +181,8 @@ case07 = expected @=? testStep (step 80 $ fromImportAlign File) input'
 
 --------------------------------------------------------------------------------
 case08 :: Assertion
-case08 = expected @=? testStep (step 80 $ Align Global WithAlias Inline 4) input
+case08 = expected
+    @=? testStep (step 80 $ Align Global WithAlias Inline 4 True) input
   where
     expected = unlines
         [ "module Herp where"
@@ -202,7 +204,8 @@ case08 = expected @=? testStep (step 80 $ Align Global WithAlias Inline 4) input
 
 --------------------------------------------------------------------------------
 case09 :: Assertion
-case09 = expected @=? testStep (step 80 $ Align Global WithAlias Multiline 4) input
+case09 = expected
+    @=? testStep (step 80 $ Align Global WithAlias Multiline 4 True) input
   where
     expected = unlines
         [ "module Herp where"
@@ -235,7 +238,8 @@ case09 = expected @=? testStep (step 80 $ Align Global WithAlias Multiline 4) in
 
 --------------------------------------------------------------------------------
 case10 :: Assertion
-case10 = expected @=? testStep (step 40 $ Align Group WithAlias Multiline 4) input
+case10 = expected
+    @=? testStep (step 40 $ Align Group WithAlias Multiline 4 True) input
   where
     expected = unlines
         [ "module Herp where"
@@ -273,7 +277,8 @@ case10 = expected @=? testStep (step 40 $ Align Group WithAlias Multiline 4) inp
 
 --------------------------------------------------------------------------------
 case11 :: Assertion
-case11 = expected @=? testStep (step 80 $ Align Group NewLine Inline 4) input
+case11 = expected
+    @=? testStep (step 80 $ Align Group NewLine Inline 4 True) input
   where
     expected = unlines
         [ "module Herp where"
@@ -300,7 +305,8 @@ case11 = expected @=? testStep (step 80 $ Align Group NewLine Inline 4) input
 
 --------------------------------------------------------------------------------
 case12 :: Assertion
-case12 = expected @=? testStep (step 80 $ Align Group NewLine Inline 2) input'
+case12 = expected
+    @=? testStep (step 80 $ Align Group NewLine Inline 2 True) input'
   where
     input' = unlines
         [ "import Data.List (map)"
@@ -315,7 +321,7 @@ case12 = expected @=? testStep (step 80 $ Align Group NewLine Inline 2) input'
 --------------------------------------------------------------------------------
 case13 :: Assertion
 case13 = expected
-    @=? testStep (step 80 $ Align None WithAlias InlineWithBreak 4) input'
+    @=? testStep (step 80 $ Align None WithAlias InlineWithBreak 4 True) input'
   where
     input' = unlines
         [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
@@ -332,7 +338,8 @@ case13 = expected
 --------------------------------------------------------------------------------
 case14 :: Assertion
 case14 = expected
-    @=? testStep (step 80 $ Align None WithAlias InlineWithBreak 10) expected
+    @=? testStep
+      (step 80 $ Align None WithAlias InlineWithBreak 10 True) expected
   where
     expected = unlines
         [ "import qualified Data.List as List (concat, map, null, reverse, tail, (++))"
@@ -341,7 +348,7 @@ case14 = expected
 --------------------------------------------------------------------------------
 case15 :: Assertion
 case15 = expected
-    @=? testStep (step 80 $ Align None AfterAlias Multiline 4) input'
+    @=? testStep (step 80 $ Align None AfterAlias Multiline 4 True) input'
   where
     expected = unlines
         [ "import Data.Acid (AcidState)"
@@ -361,4 +368,28 @@ case15 = expected
         , "import Data.Default.Class (Default (def))"
         , ""
         , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (foo, bar)"
+        ]
+
+
+--------------------------------------------------------------------------------
+case16 :: Assertion
+case16 = expected
+    @=? testStep (step 80 $ Align None AfterAlias Multiline 4 False) input'
+  where
+    expected = unlines
+        [ "import Data.Acid (AcidState)"
+        , "import Data.Default.Class (Default(def))"
+        , ""
+        , "import Data.Maybe (Maybe(Just, Nothing))"
+        , ""
+        , "import Data.Foo (Foo(Foo, Bar), Goo(Goo))"
+        ]
+
+    input' = unlines
+        [ "import Data.Acid (AcidState)"
+        , "import Data.Default.Class (Default(def))"
+        , ""
+        , "import Data.Maybe (Maybe   (Just, Nothing))"
+        , ""
+        , "import Data.Foo (Foo (Foo,Bar), Goo(Goo))"
         ]

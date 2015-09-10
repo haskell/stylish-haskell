@@ -80,6 +80,23 @@ steps:
       # This option affects 'list_align' and 'long_list_align'.
       list_padding: 4
 
+      # Separate lists option affects formating of import list for type
+      # or class. The only difference is single space between type and list
+      # of constructors, selectors and class functions.
+      #
+      # - true: There is single space between Foldable type and list of it's
+      #   functions.
+      #
+      #   > import Data.Foldable (Foldable (fold, foldl, foldMap))
+      #
+      # - false: There is no space between Foldable type and list of it's
+      #   functions.
+      #
+      #   > import Data.Foldable (Foldable(fold, foldl, foldMap))
+      #
+      # Default: true
+      separate_lists: true
+
   # Language pragmas
   - language_pragmas:
       # We can generate different styles of language pragma lists.

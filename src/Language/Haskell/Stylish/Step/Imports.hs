@@ -31,6 +31,7 @@ data Align = Align
     , listAlign     :: ListAlign
     , longListAlign :: LongListAlign
     , listPadding   :: Int
+    , separateLists :: Bool
     }
     deriving (Eq, Show)
 
@@ -203,7 +204,11 @@ prettyImport columns Align{..} padQualified padName longest imp =
     mapSpecs f = case importSpecs of
         Nothing -> []     -- Import everything
         Just [] -> ["()"] -- Instance only imports
-        Just is -> f $ map prettyImportSpec is
+        Just is -> f $ map format is
+      where
+        format
+          | separateLists = prettyImportSpec
+          | otherwise = H.prettyPrint
 
 
 --------------------------------------------------------------------------------
