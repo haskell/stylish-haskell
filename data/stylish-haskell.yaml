@@ -94,6 +94,16 @@ steps:
       # Default: vertical.
       style: vertical
 
+      # Align affects alignment of closing pragma brackets.
+      #
+      # - true: Brackets are aligned in same collumn.
+      #
+      # - false: Brackets are not aligned together. There is only one space
+      #   between actual import and closing bracket.
+      #
+      # Default: true
+      align: true
+
       # stylish-haskell can detect redundancy of some language pragmas. If this
       # is set to true, it will remove those redundant pragmas. Default: true.
       remove_redundant: true

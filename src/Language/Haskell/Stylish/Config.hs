@@ -197,6 +197,7 @@ parseLanguagePragmas :: Config -> A.Object -> A.Parser Step
 parseLanguagePragmas config o = LanguagePragmas.step
     <$> pure (configColumns config)
     <*> (o A..:? "style" >>= parseEnum styles LanguagePragmas.Vertical)
+    <*> o A..:? "align" A..!= True
     <*> o A..:? "remove_redundant" A..!= True
   where
     styles =

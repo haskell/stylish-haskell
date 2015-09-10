@@ -24,12 +24,14 @@ tests = testGroup "Language.Haskell.Stylish.Step.LanguagePragmas.Tests"
     , testCase "case 04" case04
     , testCase "case 05" case05
     , testCase "case 06" case06
+    , testCase "case 07" case07
+    , testCase "case 08" case08
     ]
 
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testStep (step 80 Vertical False) input
+case01 = expected @=? testStep (step 80 Vertical True False) input
   where
     input = unlines
         [ "{-# LANGUAGE ViewPatterns #-}"
@@ -48,7 +50,7 @@ case01 = expected @=? testStep (step 80 Vertical False) input
 
 --------------------------------------------------------------------------------
 case02 :: Assertion
-case02 = expected @=? testStep (step 80 Vertical True) input
+case02 = expected @=? testStep (step 80 Vertical True True) input
   where
     input = unlines
         [ "{-# LANGUAGE BangPatterns #-}"
@@ -64,7 +66,7 @@ case02 = expected @=? testStep (step 80 Vertical True) input
 
 --------------------------------------------------------------------------------
 case03 :: Assertion
-case03 = expected @=? testStep (step 80 Vertical True) input
+case03 = expected @=? testStep (step 80 Vertical True True) input
   where
     input = unlines
         [ "{-# LANGUAGE BangPatterns #-}"
@@ -80,7 +82,7 @@ case03 = expected @=? testStep (step 80 Vertical True) input
 
 --------------------------------------------------------------------------------
 case04 :: Assertion
-case04 = expected @=? testStep (step 80 Compact False) input
+case04 = expected @=? testStep (step 80 Compact True False) input
   where
     input = unlines
         [ "{-# LANGUAGE TypeOperators, StandaloneDeriving, DeriveDataTypeable,"
@@ -97,7 +99,7 @@ case04 = expected @=? testStep (step 80 Compact False) input
 
 --------------------------------------------------------------------------------
 case05 :: Assertion
-case05 = expected @=? testStep (step 80 Vertical False) input
+case05 = expected @=? testStep (step 80 Vertical True False) input
   where
     input = unlines
         [ "{-# LANGUAGE CPP #-}"
@@ -115,8 +117,10 @@ case05 = expected @=? testStep (step 80 Vertical False) input
         , "#endif"
         ]
 
+
+--------------------------------------------------------------------------------
 case06 :: Assertion
-case06 = expected @=? testStep (step 80 CompactLine False) input
+case06 = expected @=? testStep (step 80 CompactLine True False) input
   where
     input = unlines
         [ "{-# LANGUAGE TypeOperators, StandaloneDeriving, DeriveDataTypeable,"
@@ -127,4 +131,39 @@ case06 = expected @=? testStep (step 80 CompactLine False) input
         [ "{-# LANGUAGE DeriveDataTypeable, StandaloneDeriving, " ++
           "TemplateHaskell #-}"
         , "{-# LANGUAGE TypeOperators, ViewPatterns                             #-}"
+        ]
+
+--------------------------------------------------------------------------------
+case07 :: Assertion
+case07 = expected @=? testStep (step 80 Vertical False False) input
+  where
+    input = unlines
+        [ "{-# LANGUAGE ViewPatterns #-}"
+        , "{-# LANGUAGE TemplateHaskell, ViewPatterns #-}"
+        , "{-# LANGUAGE ScopedTypeVariables, NoImplicitPrelude #-}"
+        , "module Main where"
+        ]
+
+    expected = unlines
+        [ "{-# LANGUAGE NoImplicitPrelude #-}"
+        , "{-# LANGUAGE ScopedTypeVariables #-}"
+        , "{-# LANGUAGE TemplateHaskell #-}"
+        , "{-# LANGUAGE ViewPatterns #-}"
+        , "module Main where"
+        ]
+
+
+--------------------------------------------------------------------------------
+case08 :: Assertion
+case08 = expected @=? testStep (step 80 CompactLine False False) input
+  where
+    input = unlines
+        [ "{-# LANGUAGE TypeOperators, StandaloneDeriving, DeriveDataTypeable,"
+        , "    TemplateHaskell #-}"
+        , "{-# LANGUAGE TemplateHaskell, ViewPatterns #-}"
+        ]
+    expected = unlines
+        [ "{-# LANGUAGE DeriveDataTypeable, StandaloneDeriving, " ++
+          "TemplateHaskell #-}"
+        , "{-# LANGUAGE TypeOperators, ViewPatterns #-}"
         ]

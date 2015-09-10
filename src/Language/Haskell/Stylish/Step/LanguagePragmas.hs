@@ -42,11 +42,15 @@ firstLocation = minimum . map (blockStart . fst)
 
 
 --------------------------------------------------------------------------------
-verticalPragmas :: Int -> [String] -> Lines
-verticalPragmas longest pragmas' =
-    [ "{-# LANGUAGE " ++ padRight longest pragma ++ " #-}"
+verticalPragmas :: Int -> Bool -> [String] -> Lines
+verticalPragmas longest align pragmas' =
+    [ "{-# LANGUAGE " ++ pad pragma ++ " #-}"
     | pragma <- pragmas'
     ]
+  where
+    pad
+      | align = padRight longest
+      | otherwise = id
 
 
 --------------------------------------------------------------------------------
@@ -56,16 +60,22 @@ compactPragmas columns pragmas' = wrap columns "{-# LANGUAGE" 13 $
 
 
 --------------------------------------------------------------------------------
-compactLinePragmas :: Int -> [String] -> Lines
-compactLinePragmas _ [] = []
-compactLinePragmas columns pragmas' =
-  let maxWidth = columns - 16
-      longest  = maximum $ map length prags
-      prags    = map truncateComma $ wrap maxWidth "" 1 $
-                    map (++ ",") (init pragmas') ++ [last pragmas']
-  in map (wrapLanguage . padRight longest) prags
+compactLinePragmas :: Int -> Bool -> [String] -> Lines
+compactLinePragmas _ _ [] = []
+compactLinePragmas columns align pragmas' = map (wrapLanguage . pad) prags
   where
     wrapLanguage ps = "{-# LANGUAGE" ++ ps ++  " #-}"
+
+    maxWidth = columns - 16
+
+    longest  = maximum $ map length prags
+
+    pad
+      | align = padRight longest
+      | otherwise = id
+
+    prags = map truncateComma $ wrap maxWidth "" 1 $
+      map (++ ",") (init pragmas') ++ [last pragmas']
 
 
 --------------------------------------------------------------------------------
@@ -77,10 +87,10 @@ truncateComma xs
 
 
 --------------------------------------------------------------------------------
-prettyPragmas :: Int -> Int -> Style -> [String] -> Lines
-prettyPragmas _       longest Vertical    = verticalPragmas longest
-prettyPragmas columns _       Compact     = compactPragmas columns
-prettyPragmas columns _       CompactLine = compactLinePragmas columns
+prettyPragmas :: Int -> Int -> Bool -> Style -> [String] -> Lines
+prettyPragmas _    longest align Vertical    = verticalPragmas longest align
+prettyPragmas cols _       _     Compact     = compactPragmas cols
+prettyPragmas cols _       align CompactLine = compactLinePragmas cols align
 
 
 --------------------------------------------------------------------------------
@@ -100,13 +110,13 @@ filterRedundant isRedundant' = snd . foldr filterRedundant' (S.empty, [])
         known' = xs' `S.union` known
 
 --------------------------------------------------------------------------------
-step :: Int -> Style -> Bool -> Step
-step columns style = makeStep "LanguagePragmas" . step' columns style
+step :: Int -> Style -> Bool -> Bool -> Step
+step = (((makeStep "LanguagePragmas" .) .) .) . step'
 
 
 --------------------------------------------------------------------------------
-step' :: Int -> Style -> Bool -> Lines -> Module -> Lines
-step' columns style removeRedundant ls (module', _)
+step' :: Int -> Style -> Bool -> Bool -> Lines -> Module -> Lines
+step' columns style align removeRedundant ls (module', _)
     | null pragmas' = ls
     | otherwise     = applyChanges changes ls
   where
@@ -118,7 +128,7 @@ step' columns style removeRedundant ls (module', _)
     longest  = maximum $ map length $ snd =<< pragmas'
     groups   = [(b, concat pgs) | (b, pgs) <- groupAdjacent pragmas']
     changes  =
-        [ change b (const $ prettyPragmas columns longest style pg)
+        [ change b (const $ prettyPragmas columns longest align style pg)
         | (b, pg) <- filterRedundant isRedundant' groups
         ]
 

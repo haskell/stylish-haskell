@@ -53,6 +53,7 @@ imports = Imports.step
 --------------------------------------------------------------------------------
 languagePragmas :: Int -- ^ columns
                 -> LanguagePragmas.Style
+                -> Bool -- ^ Pad to same length in vertical mode?
                 -> Bool -- ^ remove redundant?
                 -> Step
 languagePragmas = LanguagePragmas.step
