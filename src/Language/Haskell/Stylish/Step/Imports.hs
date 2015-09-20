@@ -10,8 +10,10 @@ module Language.Haskell.Stylish.Step.Imports
 
 
 --------------------------------------------------------------------------------
+
 import           Control.Arrow                   ((&&&))
 import           Data.Char                       (toLower)
+import           Data.Functor                    ((<$>))
 import           Data.List                       (intercalate, sortBy)
 import           Data.Maybe                      (isJust, maybeToList)
 import           Data.Ord                        (comparing)
@@ -91,7 +93,7 @@ compareImportSpecs = comparing key
 --------------------------------------------------------------------------------
 -- | Sort the input spec list inside an 'H.ImportDecl'
 sortImportSpecs :: H.ImportDecl l -> H.ImportDecl l
-sortImportSpecs imp = imp {H.importSpecs = fmap sort' $ H.importSpecs imp}
+sortImportSpecs imp = imp {H.importSpecs = sort' <$> H.importSpecs imp}
   where
     sort' (H.ImportSpecList l h specs) = H.ImportSpecList l h $
         sortBy compareImportSpecs specs
@@ -161,16 +163,16 @@ prettyImport columns Align{..} padQualified padName longest imp =
         AfterAlias -> withTail (' ' :)
             . wrap columns paddedBase (afterAliasBaseLength + 1)
 
-    inlineWithBreakWrap = paddedNoSpecBase : (wrapRest columns listPadding
-        $ mapSpecs
+    inlineWithBreakWrap = paddedNoSpecBase : wrapRest columns listPadding
+        ( mapSpecs
         $ withInit (++ ",")
         . withHead ("(" ++)
         . withLast (++ ")"))
 
     -- 'wrapRest 0' ensures that every item of spec list is on new line.
-    multilineWrap = paddedNoSpecBase : (wrapRest 0 listPadding
-        $ (mapSpecs
-          $ withHead ("( " ++)
+    multilineWrap = paddedNoSpecBase : wrapRest 0 listPadding
+        ( mapSpecs
+          ( withHead ("( " ++)
           . withTail (", " ++))
         ++ [")"])
 
@@ -189,7 +191,7 @@ prettyImport columns Align{..} padQualified padName longest imp =
     base' baseName importAs hasHiding' = unwords $ concat $ filter (not . null)
         [ ["import"]
         , qualified
-        , (fmap show $ maybeToList $ H.importPkg imp)
+        , show <$> maybeToList (H.importPkg imp)
         , [baseName]
         , importAs
         , hasHiding'
@@ -197,7 +199,7 @@ prettyImport columns Align{..} padQualified padName longest imp =
 
     base baseName = base' baseName
         ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp]
-        (if hasHiding then (["hiding"]) else [])
+        ["hiding" | hasHiding]
 
     inlineBaseLength = length $ base' (padImport $ importName imp) [] []
 
@@ -251,11 +253,12 @@ step columns = makeStep "Imports" . step' columns
 
 --------------------------------------------------------------------------------
 step' :: Int -> Align -> Lines -> Module -> Lines
-step' columns align ls (module', _) = flip applyChanges ls
+step' columns align ls (module', _) = applyChanges
     [ change block $ const $
         prettyImportGroup columns align fileAlign longest importGroup
     | (block, importGroup) <- groups
     ]
+    ls
   where
     imps    = map sortImportSpecs $ imports $ fmap linesFromSrcSpan module'
     longest = longestImport imps

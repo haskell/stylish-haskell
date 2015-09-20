@@ -73,7 +73,7 @@ wrap :: Int       -- ^ Maximum line width
      -> Int       -- ^ Indentation
      -> [String]  -- ^ Strings to add/wrap
      -> Lines     -- ^ Resulting lines
-wrap maxWidth leading ind strs' = wrap' leading strs'
+wrap maxWidth leading ind = wrap' leading
   where
     wrap' ss [] = [ss]
     wrap' ss (str:strs)
@@ -112,14 +112,14 @@ withHead f (x : xs) = f x : xs
 --------------------------------------------------------------------------------
 withLast :: (a -> a) -> [a] -> [a]
 withLast _ []       = []
-withLast f (x : []) = [f x]
+withLast f [x] = [f x]
 withLast f (x : xs) = x : withLast f xs
 
 
 --------------------------------------------------------------------------------
 withInit :: (a -> a) -> [a] -> [a]
 withInit _ []       = []
-withInit _ (x : []) = [x]
+withInit _ [x] = [x]
 withInit f (x : xs) = f x : withInit f xs
 
 --------------------------------------------------------------------------------
