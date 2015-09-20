@@ -52,6 +52,7 @@ data ListAlign
 data LongListAlign
     = Inline
     | InlineWithBreak
+    | InlineToMultiline
     | Multiline
     deriving (Eq, Show)
 
@@ -141,6 +142,7 @@ prettyImport columns Align{..} padQualified padName longest imp =
     case longListAlign of
         Inline -> inlineWrap
         InlineWithBreak -> longListWrapper inlineWrap inlineWithBreakWrap
+        InlineToMultiline -> longListWrapper inlineWrap inlineToMultilineWrap
         Multiline -> longListWrapper inlineWrap multilineWrap
   where
     longListWrapper shortWrap longWrap
@@ -168,6 +170,12 @@ prettyImport columns Align{..} padQualified padName longest imp =
         $ withInit (++ ",")
         . withHead ("(" ++)
         . withLast (++ ")"))
+
+    inlineToMultilineWrap
+        | length inlineWithBreakWrap > 2
+        || any ((> columns) . length) (tail inlineWithBreakWrap)
+            = multilineWrap
+        | otherwise = inlineWithBreakWrap
 
     -- 'wrapRest 0' ensures that every item of spec list is on new line.
     multilineWrap = paddedNoSpecBase : wrapRest 0 listPadding

@@ -44,6 +44,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 15" case15
     , testCase "case 16" case16
     , testCase "case 17" case17
+    , testCase "case 18" case18
     ]
 
 
@@ -346,6 +347,7 @@ case14 = expected
         [ "import qualified Data.List as List (concat, map, null, reverse, tail, (++))"
         ]
 
+
 --------------------------------------------------------------------------------
 case15 :: Assertion
 case15 = expected
@@ -395,6 +397,7 @@ case16 = expected
         , "import Data.Foo (Foo (Foo,Bar), Goo(Goo))"
         ]
 
+
 --------------------------------------------------------------------------------
 case17 :: Assertion
 case17 = expected
@@ -410,4 +413,32 @@ case17 = expected
         [ "import Control.Applicative (Applicative ((<*>),pure))"
         , ""
         , "import Data.Identity (Identity (runIdentity,Identity))"
+        ]
+
+
+--------------------------------------------------------------------------------
+case18 :: Assertion
+case18 = expected @=? testStep
+    (step 40 $ Align None AfterAlias InlineToMultiline 4 True) input'
+  where
+    expected = unlines
+           ----------------------------------------
+        [ "import Data.Foo as Foo (Bar, Baz, Foo)"
+        , ""
+        , "import Data.Identity"
+        , "    (Identity (Identity, runIdentity))"
+        , ""
+        , "import Data.Acid as Acid"
+        , "    ( closeAcidState"
+        , "    , createCheckpoint"
+        , "    , openLocalStateFrom"
+        , "    )"
+        ]
+
+    input' = unlines
+        [ "import Data.Foo as Foo (Bar, Baz, Foo)"
+        , ""
+        , "import Data.Identity (Identity (Identity, runIdentity))"
+        , ""
+        , "import Data.Acid as Acid (closeAcidState, createCheckpoint, openLocalStateFrom)"
         ]

@@ -63,6 +63,9 @@ steps:
       #
       # - new line: Import list will start on new line.
       #
+      # - new line-multiline: Import list will start on new line when it's
+      #   short enough to fit to single line. Otherwise it'll be multiline.
+      #
       # - multiline: One line per import list entry.
       #   Type with contructor list acts like single import.
       #
