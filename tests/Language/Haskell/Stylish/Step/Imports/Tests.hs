@@ -43,6 +43,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 14" case14
     , testCase "case 15" case15
     , testCase "case 16" case16
+    , testCase "case 17" case17
     ]
 
 
@@ -382,7 +383,7 @@ case16 = expected
         , ""
         , "import Data.Maybe (Maybe(Just, Nothing))"
         , ""
-        , "import Data.Foo (Foo(Foo, Bar), Goo(Goo))"
+        , "import Data.Foo (Foo(Bar, Foo), Goo(Goo))"
         ]
 
     input' = unlines
@@ -392,4 +393,21 @@ case16 = expected
         , "import Data.Maybe (Maybe   (Just, Nothing))"
         , ""
         , "import Data.Foo (Foo (Foo,Bar), Goo(Goo))"
+        ]
+
+--------------------------------------------------------------------------------
+case17 :: Assertion
+case17 = expected
+    @=? testStep (step 80 $ Align None AfterAlias Multiline 4 True) input'
+  where
+    expected = unlines
+        [ "import Control.Applicative (Applicative (pure, (<*>)))"
+        , ""
+        , "import Data.Identity (Identity (Identity, runIdentity))"
+        ]
+
+    input' = unlines
+        [ "import Control.Applicative (Applicative ((<*>),pure))"
+        , ""
+        , "import Data.Identity (Identity (runIdentity,Identity))"
         ]

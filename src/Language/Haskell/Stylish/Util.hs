@@ -1,6 +1,7 @@
 --------------------------------------------------------------------------------
 module Language.Haskell.Stylish.Util
     ( nameToString
+    , isOperator
     , indent
     , padRight
     , everything
@@ -17,9 +18,10 @@ module Language.Haskell.Stylish.Util
 
 --------------------------------------------------------------------------------
 import           Control.Arrow                   ((&&&), (>>>))
+import           Data.Char                       (isAlpha)
 import           Data.Data                       (Data)
 import qualified Data.Generics                   as G
-import           Data.Maybe                      (maybeToList)
+import           Data.Maybe                      (fromMaybe, listToMaybe, maybeToList)
 import           Data.Typeable                   (cast)
 import qualified Language.Haskell.Exts.Annotated as H
 
@@ -33,6 +35,12 @@ nameToString :: H.Name l -> String
 nameToString (H.Ident _ str)  = str
 nameToString (H.Symbol _ str) = str
 
+
+--------------------------------------------------------------------------------
+isOperator :: H.Name l -> Bool
+isOperator = fromMaybe False
+    . (fmap (not . isAlpha) . listToMaybe)
+    . nameToString
 
 --------------------------------------------------------------------------------
 indent :: Int -> String -> String
