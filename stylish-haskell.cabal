@@ -1,5 +1,5 @@
 Name:          stylish-haskell
-Version:       0.5.14.1
+Version:       0.5.14.2
 Synopsis:      Haskell code prettifier
 Homepage:      https://github.com/jaspervdj/stylish-haskell
 License:       BSD3
@@ -46,7 +46,7 @@ Library
     Paths_stylish_haskell
 
   Build-depends:
-    aeson            >= 0.6  && < 0.10,
+    aeson            >= 0.6  && < 0.11,
     base             >= 4    && < 5,
     bytestring       >= 0.9  && < 0.11,
     containers       >= 0.3  && < 0.6,
@@ -54,7 +54,7 @@ Library
     filepath         >= 1.1  && < 1.5,
     haskell-src-exts >= 1.16 && < 1.17,
     mtl              >= 2.0  && < 2.3,
-    syb              >= 0.3  && < 0.6,
+    syb              >= 0.3  && < 0.7,
     yaml             >= 0.7  && < 0.9
 
 Executable stylish-haskell
@@ -67,7 +67,7 @@ Executable stylish-haskell
     strict           >= 0.3  && < 0.4,
     cmdargs          >= 0.9  && < 0.11,
     -- Copied from regular dependencies...
-    aeson            >= 0.6  && < 0.10,
+    aeson            >= 0.6  && < 0.11,
     base             >= 4    && < 5,
     bytestring       >= 0.9  && < 0.11,
     containers       >= 0.3  && < 0.6,
@@ -75,7 +75,7 @@ Executable stylish-haskell
     filepath         >= 1.1  && < 1.5,
     haskell-src-exts >= 1.16 && < 1.17,
     mtl              >= 2.0  && < 2.3,
-    syb              >= 0.3  && < 0.6,
+    syb              >= 0.3  && < 0.7,
     yaml             >= 0.7  && < 0.9
 
 Test-suite stylish-haskell-tests
@@ -99,7 +99,7 @@ Test-suite stylish-haskell-tests
     test-framework       >= 0.4 && < 0.9,
     test-framework-hunit >= 0.2 && < 0.4,
     -- Copied from regular dependencies...
-    aeson            >= 0.6  && < 0.10,
+    aeson            >= 0.6  && < 0.11,
     base             >= 4    && < 5,
     bytestring       >= 0.9  && < 0.11,
     cmdargs          >= 0.9  && < 0.11,
@@ -108,7 +108,7 @@ Test-suite stylish-haskell-tests
     filepath         >= 1.1  && < 1.5,
     haskell-src-exts >= 1.16 && < 1.17,
     mtl              >= 2.0  && < 2.3,
-    syb              >= 0.3  && < 0.6,
+    syb              >= 0.3  && < 0.7,
     yaml             >= 0.7  && < 0.9
 
 Source-repository head
