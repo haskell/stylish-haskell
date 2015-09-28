@@ -1,5 +1,5 @@
 Name:          stylish-haskell
-Version:       0.5.14.2
+Version:       0.5.14.3
 Synopsis:      Haskell code prettifier
 Homepage:      https://github.com/jaspervdj/stylish-haskell
 License:       BSD3
@@ -95,7 +95,7 @@ Test-suite stylish-haskell-tests
     Language.Haskell.Stylish.Tests.Util
 
   Build-depends:
-    HUnit                >= 1.2 && < 1.3,
+    HUnit                >= 1.2 && < 1.4,
     test-framework       >= 0.4 && < 0.9,
     test-framework-hunit >= 0.2 && < 0.4,
     -- Copied from regular dependencies...

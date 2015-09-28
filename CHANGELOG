@@ -1,3 +1,6 @@
+- 0.5.14.3
+    * Bump `HUnit` to 1.13
+
 - 0.5.14.2
     * Bump `aeson` to 0.10
     * Bump `syb` to 0.6
