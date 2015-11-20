@@ -59,8 +59,8 @@ compareImportSpecs :: H.ImportSpec l -> H.ImportSpec l -> Ordering
 compareImportSpecs = comparing key
   where
     key :: H.ImportSpec l -> (Int, Int, String)
-    key (H.IVar _ _ x)       = let n = nameToString x in (1, operator n, n)
-    key (H.IAbs _ x)         = (0, 0, nameToString x)
+    key (H.IVar _ x)         = let n = nameToString x in (1, operator n, n)
+    key (H.IAbs _ _ x)       = (0, 0, nameToString x)
     key (H.IThingAll _ x)    = (0, 0, nameToString x)
     key (H.IThingWith _ x _) = (0, 0, nameToString x)
 
