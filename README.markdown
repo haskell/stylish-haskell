@@ -117,6 +117,13 @@ Emacs integration
 [haskell-mode]: https://github.com/haskell/haskell-mode
 [Emacs/Formatting]: http://wiki.haskell.org/Emacs/Formatting
 
+Atom integration
+----------------
+
+[ide-haskell] for Atom supports `stylish-haskell`.
+
+[ide-haskell]: https://atom.io/packages/ide-haskell
+
 Credits
 -------
 
