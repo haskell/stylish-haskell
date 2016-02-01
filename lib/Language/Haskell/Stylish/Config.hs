@@ -10,8 +10,6 @@ module Language.Haskell.Stylish.Config
 
 
 --------------------------------------------------------------------------------
-import           Control.Applicative                              (pure, (<$>),
-                                                                   (<*>))
 import           Control.Monad                                    (forM, mzero)
 import           Data.Aeson                                       (FromJSON (..))
 import qualified Data.Aeson                                       as A

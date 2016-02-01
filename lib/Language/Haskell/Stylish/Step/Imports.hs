@@ -10,10 +10,8 @@ module Language.Haskell.Stylish.Step.Imports
 
 
 --------------------------------------------------------------------------------
-
 import           Control.Arrow                   ((&&&))
 import           Data.Char                       (toLower)
-import           Data.Functor                    ((<$>))
 import           Data.List                       (intercalate, sortBy)
 import           Data.Maybe                      (isJust, maybeToList)
 import           Data.Ord                        (comparing)
