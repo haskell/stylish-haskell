@@ -181,15 +181,15 @@ parseImports config o = Imports.step
         ]
 
     listAligns =
-        [ ("new line",    Imports.NewLine)
-        , ("with alias",  Imports.WithAlias)
-        , ("after alias", Imports.AfterAlias)
+        [ ("new_line",    Imports.NewLine)
+        , ("with_alias",  Imports.WithAlias)
+        , ("after_alias", Imports.AfterAlias)
         ]
 
     longListAligns =
         [ ("inline",             Imports.Inline)
-        , ("new line",           Imports.InlineWithBreak)
-        , ("new line-multiline", Imports.InlineToMultiline)
+        , ("new_line",           Imports.InlineWithBreak)
+        , ("new_line_multiline", Imports.InlineToMultiline)
         , ("multiline",          Imports.Multiline)
         ]
 
