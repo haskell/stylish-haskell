@@ -1,23 +1,27 @@
 --------------------------------------------------------------------------------
 module Language.Haskell.Stylish.Util
     ( nameToString
+    , isOperator
     , indent
     , padRight
     , everything
     , infoPoints
     , wrap
+    , wrapRest
 
     , withHead
-    , withLast
     , withInit
+    , withTail
+    , withLast
     ) where
 
 
 --------------------------------------------------------------------------------
 import           Control.Arrow                   ((&&&), (>>>))
+import           Data.Char                       (isAlpha)
 import           Data.Data                       (Data)
 import qualified Data.Generics                   as G
-import           Data.Maybe                      (maybeToList)
+import           Data.Maybe                      (fromMaybe, listToMaybe, maybeToList)
 import           Data.Typeable                   (cast)
 import qualified Language.Haskell.Exts.Annotated as H
 
@@ -33,8 +37,19 @@ nameToString (H.Symbol _ str) = str
 
 
 --------------------------------------------------------------------------------
+isOperator :: H.Name l -> Bool
+isOperator = fromMaybe False
+    . (fmap (not . isAlpha) . listToMaybe)
+    . nameToString
+
+--------------------------------------------------------------------------------
 indent :: Int -> String -> String
-indent len str = replicate len ' ' ++ str
+indent len = (indentPrefix len ++)
+
+
+--------------------------------------------------------------------------------
+indentPrefix :: Int -> String
+indentPrefix = (`replicate` ' ')
 
 
 --------------------------------------------------------------------------------
@@ -58,21 +73,34 @@ wrap :: Int       -- ^ Maximum line width
      -> Int       -- ^ Indentation
      -> [String]  -- ^ Strings to add/wrap
      -> Lines     -- ^ Resulting lines
-wrap maxWidth leading ind strs =
-    let (ls, curr, _) = foldl step ([], leading, length leading) strs
-    in ls ++ [curr]
+wrap maxWidth leading ind = wrap' leading
   where
-    -- TODO: In order to optimize this, use a difference list instead of a
-    -- regular list for 'ls'.
-    step (ls, curr, width) str
-        | nextLine  = (ls ++ [curr], indent ind str, ind + len)
-        | otherwise = (ls, curr ++ " " ++ str, width')
-      where
-        -- Put it on the next line if it would make the current line too long,
-        -- AND if it doesn't make the next line too long.
-        nextLine = width' > maxWidth && ind + len <= maxWidth
-        len      = length str
-        width'   = width + 1 + len
+    wrap' ss [] = [ss]
+    wrap' ss (str:strs)
+        | overflows ss str =
+            ss : wrapRest maxWidth ind (str:strs)
+        | otherwise = wrap' (ss ++ " " ++ str) strs
+
+    overflows ss str = length ss > maxWidth ||
+        ((length ss + length str) >= maxWidth && ind + length str  <= maxWidth)
+
+
+--------------------------------------------------------------------------------
+wrapRest :: Int
+         -> Int
+         -> [String]
+         -> Lines
+wrapRest maxWidth ind = reverse . wrapRest' [] ""
+  where
+    wrapRest' ls ss []
+        | null ss = ls
+        | otherwise = ss:ls
+    wrapRest' ls ss (str:strs)
+        | null ss = wrapRest' ls (indent ind str) strs
+        | overflows ss str = wrapRest' (ss:ls) "" (str:strs)
+        | otherwise = wrapRest' ls (ss ++ " " ++ str) strs
+
+    overflows ss str = (length ss + length str + 1) >= maxWidth
 
 
 --------------------------------------------------------------------------------
@@ -84,12 +112,17 @@ withHead f (x : xs) = f x : xs
 --------------------------------------------------------------------------------
 withLast :: (a -> a) -> [a] -> [a]
 withLast _ []       = []
-withLast f (x : []) = [f x]
+withLast f [x] = [f x]
 withLast f (x : xs) = x : withLast f xs
 
 
 --------------------------------------------------------------------------------
 withInit :: (a -> a) -> [a] -> [a]
 withInit _ []       = []
-withInit _ (x : []) = [x]
+withInit _ [x] = [x]
 withInit f (x : xs) = f x : withInit f xs
+
+--------------------------------------------------------------------------------
+withTail :: (a -> a) -> [a] -> [a]
+withTail _ [] = []
+withTail f (x : xs) = x : map f xs

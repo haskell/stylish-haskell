@@ -16,6 +16,15 @@ import           Language.Haskell.Stylish.Tests.Util
 
 
 --------------------------------------------------------------------------------
+defaultAlign :: Align
+defaultAlign = Align Global AfterAlias Inline 4 True
+
+
+--------------------------------------------------------------------------------
+fromImportAlign :: ImportAlign -> Align
+fromImportAlign align = defaultAlign { importAlign = align }
+
+--------------------------------------------------------------------------------
 tests :: Test
 tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     [ testCase "case 01" case01
@@ -25,6 +34,17 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 05" case05
     , testCase "case 06" case06
     , testCase "case 07" case07
+    , testCase "case 08" case08
+    , testCase "case 09" case09
+    , testCase "case 10" case10
+    , testCase "case 11" case11
+    , testCase "case 12" case12
+    , testCase "case 13" case13
+    , testCase "case 14" case14
+    , testCase "case 15" case15
+    , testCase "case 16" case16
+    , testCase "case 17" case17
+    , testCase "case 18" case18
     ]
 
 
@@ -37,6 +57,8 @@ input = unlines
     , "import Control.Monad"
     , "import  Only.Instances()"
     , "import       Data.Map     (lookup, (!), insert, Map)"
+    , "import Data.List as List (concat, foldl, foldr, head, init, last,\
+     \ length, map, null, reverse, tail, (++))"
     , ""
     , "import Herp.Derp.Internals hiding (foo)"
     , "import  Foo (Bar (..))"
@@ -47,12 +69,15 @@ input = unlines
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testStep (step 80 Global) input
+case01 = expected @=? testStep (step 80 $ fromImportAlign Global) input
   where
     expected = unlines
         [ "module Herp where"
         , ""
         , "import           Control.Monad"
+        , "import           Data.List           as List (concat, foldl, foldr, head, init,"
+        , "                                              last, length, map, null, reverse,"
+        , "                                              tail, (++))"
         , "import           Data.Map            (Map, insert, lookup, (!))"
         , "import qualified Data.Map            as M"
         , "import           Only.Instances      ()"
@@ -66,12 +91,14 @@ case01 = expected @=? testStep (step 80 Global) input
 
 --------------------------------------------------------------------------------
 case02 :: Assertion
-case02 = expected @=? testStep (step 80 Group) input
+case02 = expected @=? testStep (step 80 $ fromImportAlign Group) input
   where
     expected = unlines
         [ "module Herp where"
         , ""
         , "import           Control.Monad"
+        , "import           Data.List      as List (concat, foldl, foldr, head, init, last,"
+        , "                                         length, map, null, reverse, tail, (++))"
         , "import           Data.Map       (Map, insert, lookup, (!))"
         , "import qualified Data.Map       as M"
         , "import           Only.Instances ()"
@@ -85,12 +112,14 @@ case02 = expected @=? testStep (step 80 Group) input
 
 --------------------------------------------------------------------------------
 case03 :: Assertion
-case03 = expected @=? testStep (step 80 None) input
+case03 = expected @=? testStep (step 80 $ fromImportAlign None) input
   where
     expected = unlines
         [ "module Herp where"
         , ""
         , "import Control.Monad"
+        , "import Data.List as List (concat, foldl, foldr, head, init, last, length, map,"
+        , "                          null, reverse, tail, (++))"
         , "import Data.Map (Map, insert, lookup, (!))"
         , "import qualified Data.Map as M"
         , "import Only.Instances ()"
@@ -104,7 +133,7 @@ case03 = expected @=? testStep (step 80 None) input
 
 --------------------------------------------------------------------------------
 case04 :: Assertion
-case04 = expected @=? testStep (step 80 Global) input'
+case04 = expected @=? testStep (step 80 $ fromImportAlign Global) input'
   where
     input' =
         "import Data.Aeson.Types (object, typeMismatch, FromJSON(..)," ++
@@ -119,7 +148,7 @@ case04 = expected @=? testStep (step 80 Global) input'
 
 --------------------------------------------------------------------------------
 case05 :: Assertion
-case05 = input' @=? testStep (step 80 Group) input'
+case05 = input' @=? testStep (step 80 $ fromImportAlign Group) input'
   where
     input' = "import Distribution.PackageDescription.Configuration " ++
         "(finalizePackageDescription)\n"
@@ -127,7 +156,7 @@ case05 = input' @=? testStep (step 80 Group) input'
 
 --------------------------------------------------------------------------------
 case06 :: Assertion
-case06 = input' @=? testStep (step 80 File) input'
+case06 = input' @=? testStep (step 80 $ fromImportAlign File) input'
   where
     input' = unlines
         [ "import Bar.Qux"
@@ -137,7 +166,7 @@ case06 = input' @=? testStep (step 80 File) input'
 
 --------------------------------------------------------------------------------
 case07 :: Assertion
-case07 = expected @=? testStep (step 80 File) input'
+case07 = expected @=? testStep (step 80 $ fromImportAlign File) input'
   where
     input' = unlines
         [ "import Bar.Qux"
@@ -149,4 +178,267 @@ case07 = expected @=? testStep (step 80 File) input'
         [ "import           Bar.Qux"
         , ""
         , "import qualified Foo.Bar"
+        ]
+
+
+--------------------------------------------------------------------------------
+case08 :: Assertion
+case08 = expected
+    @=? testStep (step 80 $ Align Global WithAlias Inline 4 True) input
+  where
+    expected = unlines
+        [ "module Herp where"
+        , ""
+        , "import           Control.Monad"
+        , "import           Data.List           as List (concat, foldl, foldr, head, init,"
+        , "                                     last, length, map, null, reverse, tail,"
+        , "                                     (++))"
+        , "import           Data.Map            (Map, insert, lookup, (!))"
+        , "import qualified Data.Map            as M"
+        , "import           Only.Instances      ()"
+        , ""
+        , "import           Foo                 (Bar (..))"
+        , "import           Herp.Derp.Internals hiding (foo)"
+        , ""
+        , "herp = putStrLn \"import Hello world\""
+        ]
+
+
+--------------------------------------------------------------------------------
+case09 :: Assertion
+case09 = expected
+    @=? testStep (step 80 $ Align Global WithAlias Multiline 4 True) input
+  where
+    expected = unlines
+        [ "module Herp where"
+        , ""
+        , "import           Control.Monad"
+        , "import           Data.List           as List"
+        , "    ( concat"
+        , "    , foldl"
+        , "    , foldr"
+        , "    , head"
+        , "    , init"
+        , "    , last"
+        , "    , length"
+        , "    , map"
+        , "    , null"
+        , "    , reverse"
+        , "    , tail"
+        , "    , (++)"
+        , "    )"
+        , "import           Data.Map            (Map, insert, lookup, (!))"
+        , "import qualified Data.Map            as M"
+        , "import           Only.Instances      ()"
+        , ""
+        , "import           Foo                 (Bar (..))"
+        , "import           Herp.Derp.Internals hiding (foo)"
+        , ""
+        , "herp = putStrLn \"import Hello world\""
+        ]
+
+
+--------------------------------------------------------------------------------
+case10 :: Assertion
+case10 = expected
+    @=? testStep (step 40 $ Align Group WithAlias Multiline 4 True) input
+  where
+    expected = unlines
+        [ "module Herp where"
+        , ""
+        , "import           Control.Monad"
+        , "import           Data.List      as List"
+        , "    ( concat"
+        , "    , foldl"
+        , "    , foldr"
+        , "    , head"
+        , "    , init"
+        , "    , last"
+        , "    , length"
+        , "    , map"
+        , "    , null"
+        , "    , reverse"
+        , "    , tail"
+        , "    , (++)"
+        , "    )"
+        , "import           Data.Map"
+        , "    ( Map"
+        , "    , insert"
+        , "    , lookup"
+        , "    , (!)"
+        , "    )"
+        , "import qualified Data.Map       as M"
+        , "import           Only.Instances ()"
+        , ""
+        , "import Foo                 (Bar (..))"
+        , "import Herp.Derp.Internals hiding (foo)"
+        , ""
+        , "herp = putStrLn \"import Hello world\""
+        ]
+
+
+--------------------------------------------------------------------------------
+case11 :: Assertion
+case11 = expected
+    @=? testStep (step 80 $ Align Group NewLine Inline 4 True) input
+  where
+    expected = unlines
+        [ "module Herp where"
+        , ""
+        , "import           Control.Monad"
+        , "import           Data.List      as List"
+        , "    (concat, foldl, foldr, head, init, last, length, map, null, reverse, tail,"
+        , "    (++))"
+        , "import           Data.Map"
+        , "    (Map, insert, lookup, (!))"
+        , "import qualified Data.Map       as M"
+        , "import           Only.Instances"
+        , "    ()"
+        , ""
+        , "import Foo"
+        , "    (Bar (..))"
+        , "import Herp.Derp.Internals hiding"
+        , "    (foo)"
+
+        , ""
+        , "herp = putStrLn \"import Hello world\""
+        ]
+
+
+--------------------------------------------------------------------------------
+case12 :: Assertion
+case12 = expected
+    @=? testStep (step 80 $ Align Group NewLine Inline 2 True) input'
+  where
+    input' = unlines
+        [ "import Data.List (map)"
+        ]
+
+    expected = unlines
+        [ "import Data.List"
+        , "  (map)"
+        ]
+
+
+--------------------------------------------------------------------------------
+case13 :: Assertion
+case13 = expected
+    @=? testStep (step 80 $ Align None WithAlias InlineWithBreak 4 True) input'
+  where
+    input' = unlines
+        [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
+        , "    last, length, map, null, reverse, tail, (++))"
+        ]
+
+    expected = unlines
+        [ "import qualified Data.List as List"
+        , "    (concat, foldl, foldr, head, init, last, length, map, null, reverse, tail,"
+        , "    (++))"
+        ]
+
+
+--------------------------------------------------------------------------------
+case14 :: Assertion
+case14 = expected
+    @=? testStep
+      (step 80 $ Align None WithAlias InlineWithBreak 10 True) expected
+  where
+    expected = unlines
+        [ "import qualified Data.List as List (concat, map, null, reverse, tail, (++))"
+        ]
+
+
+--------------------------------------------------------------------------------
+case15 :: Assertion
+case15 = expected
+    @=? testStep (step 80 $ Align None AfterAlias Multiline 4 True) input'
+  where
+    expected = unlines
+        [ "import Data.Acid (AcidState)"
+        , "import qualified Data.Acid as Acid"
+        , "    ( closeAcidState"
+        , "    , createCheckpoint"
+        , "    , openLocalStateFrom"
+        , "    )"
+        , "import Data.Default.Class (Default (def))"
+        , ""
+        , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (bar, foo)"
+        ]
+
+    input' = unlines
+        [ "import Data.Acid (AcidState)"
+        , "import qualified Data.Acid as Acid (closeAcidState, createCheckpoint, openLocalStateFrom)"
+        , "import Data.Default.Class (Default (def))"
+        , ""
+        , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (foo, bar)"
+        ]
+
+
+--------------------------------------------------------------------------------
+case16 :: Assertion
+case16 = expected
+    @=? testStep (step 80 $ Align None AfterAlias Multiline 4 False) input'
+  where
+    expected = unlines
+        [ "import Data.Acid (AcidState)"
+        , "import Data.Default.Class (Default(def))"
+        , ""
+        , "import Data.Maybe (Maybe(Just, Nothing))"
+        , ""
+        , "import Data.Foo (Foo(Bar, Foo), Goo(Goo))"
+        ]
+
+    input' = unlines
+        [ "import Data.Acid (AcidState)"
+        , "import Data.Default.Class (Default(def))"
+        , ""
+        , "import Data.Maybe (Maybe   (Just, Nothing))"
+        , ""
+        , "import Data.Foo (Foo (Foo,Bar), Goo(Goo))"
+        ]
+
+
+--------------------------------------------------------------------------------
+case17 :: Assertion
+case17 = expected
+    @=? testStep (step 80 $ Align None AfterAlias Multiline 4 True) input'
+  where
+    expected = unlines
+        [ "import Control.Applicative (Applicative (pure, (<*>)))"
+        , ""
+        , "import Data.Identity (Identity (Identity, runIdentity))"
+        ]
+
+    input' = unlines
+        [ "import Control.Applicative (Applicative ((<*>),pure))"
+        , ""
+        , "import Data.Identity (Identity (runIdentity,Identity))"
+        ]
+
+
+--------------------------------------------------------------------------------
+case18 :: Assertion
+case18 = expected @=? testStep
+    (step 40 $ Align None AfterAlias InlineToMultiline 4 True) input'
+  where
+    expected = unlines
+           ----------------------------------------
+        [ "import Data.Foo as Foo (Bar, Baz, Foo)"
+        , ""
+        , "import Data.Identity"
+        , "    (Identity (Identity, runIdentity))"
+        , ""
+        , "import Data.Acid as Acid"
+        , "    ( closeAcidState"
+        , "    , createCheckpoint"
+        , "    , openLocalStateFrom"
+        , "    )"
+        ]
+
+    input' = unlines
+        [ "import Data.Foo as Foo (Bar, Baz, Foo)"
+        , ""
+        , "import Data.Identity (Identity (Identity, runIdentity))"
+        , ""
+        , "import Data.Acid as Acid (closeAcidState, createCheckpoint, openLocalStateFrom)"
         ]
