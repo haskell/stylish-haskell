@@ -1,3 +1,6 @@
+- 0.5.15.0
+    * Add new options for import list alignment (by Ondřej Janošík)
+
 - 0.5.14.4
     * Bump `stylish-haskell` to 1.17.0
 
