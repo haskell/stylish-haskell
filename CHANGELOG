@@ -1,3 +1,6 @@
+- 0.5.15.1
+    * Fix error that caused haddock to bail on this package
+
 - 0.5.15.0
     * Add new options for import list alignment (by Ondřej Janošík)
 
