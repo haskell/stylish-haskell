@@ -1,3 +1,6 @@
+- 0.5.15.2
+    * Bump `aeson` to 0.11
+
 - 0.5.15.1
     * Fix error that caused haddock to bail on this package
 
