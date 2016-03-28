@@ -56,11 +56,6 @@ instance FromJSON Config where
 
 
 --------------------------------------------------------------------------------
-emptyConfig :: Config
-emptyConfig = Config [] 80 []
-
-
---------------------------------------------------------------------------------
 configFileName :: String
 configFileName = ".stylish-haskell.yaml"
 
@@ -71,15 +66,21 @@ defaultConfigFilePath = getDataFileName "data/stylish-haskell.yaml"
 
 
 --------------------------------------------------------------------------------
-configFilePath :: Verbose -> Maybe FilePath -> IO (Maybe FilePath)
-configFilePath _       (Just userSpecified) = return $ Just userSpecified
+configFilePath :: Verbose -> Maybe FilePath -> IO FilePath
+configFilePath _       (Just userSpecified) = return userSpecified
 configFilePath verbose Nothing              = do
-    current <- getCurrentDirectory
-    home    <- getHomeDirectory
-    def     <- defaultConfigFilePath
-    search $
+    current  <- getCurrentDirectory
+    home     <- getHomeDirectory
+    def      <- defaultConfigFilePath
+    mbConfig <- search $
         [d </> configFileName | d <- ancestors current] ++
         [home </> configFileName, def]
+
+    case mbConfig of
+        Just config -> return config
+        Nothing     -> fail $
+            "Language.Haskell.Stylish.Config.configFilePath: " ++
+            "could not load default configuration at: " ++ def
   where
     -- All ancestors of a dir (including that dir)
     ancestors :: FilePath -> [FilePath]
@@ -97,18 +98,13 @@ configFilePath verbose Nothing              = do
 --------------------------------------------------------------------------------
 loadConfig :: Verbose -> Maybe FilePath -> IO Config
 loadConfig verbose mfp = do
-    mfp' <- configFilePath verbose mfp
-    case mfp' of
-        Nothing -> do
-            verbose $ "Using empty configuration"
-            return emptyConfig
-        Just fp -> do
-            verbose $ "Loading configuration at " ++ fp
-            bs <- B.readFile fp
-            case decodeEither bs of
-                Left err     -> error $
-                    "Language.Haskell.Stylish.Config.loadConfig: " ++ err
-                Right config -> return config
+    fp <- configFilePath verbose mfp
+    verbose $ "Loading configuration at " ++ fp
+    bs <- B.readFile fp
+    case decodeEither bs of
+        Left err     -> error $
+            "Language.Haskell.Stylish.Config.loadConfig: " ++ err
+        Right config -> return config
 
 
 --------------------------------------------------------------------------------
