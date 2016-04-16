@@ -51,3 +51,6 @@
 - 0.5.10.0
     * Bump `haskell-src-exts` dependency to 1.15
     * Fix test which was not run before
+
+- `0.5.9.0`
+    * Add `compact_line` setting for Language Pragma styling

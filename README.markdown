@@ -136,9 +136,3 @@ Contributors:
 - Leonid Onokhov
 - Michael Snoyman
 - Mikhail Glushenkov
-
-Changelog
----------
-
-- `0.5.9.0`
-    * Add `compact_line` setting for Language Pragma styling
