@@ -53,7 +53,7 @@ steps:
       #   > import qualified Data.List      as List
       #   >     (concat, foldl, foldr, head, init, last, length)
       #
-      # Default: after alias
+      # Default: after_alias
       list_align: after_alias
 
       # Long list align style takes effect when import is too long. This is
