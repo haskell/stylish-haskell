@@ -9,7 +9,6 @@ import           Data.Maybe                      (fromMaybe, listToMaybe)
 import qualified Language.Haskell.Exts.Annotated as H
 import Data.List (isPrefixOf)
 
-
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Config
 import           Language.Haskell.Stylish.Step
@@ -48,9 +47,9 @@ dropBom str              = str
 parseModule :: Extensions -> Maybe FilePath -> String -> Either String Module
 parseModule extraExts mfp string = do
     -- Determine the extensions: those specified in the file and the extra ones
-    let noBom            = dropBom string
+    let noPrefixes       = unShebang . dropBom $ string
         extraExts'       = map H.classifyExtension extraExts
-        (lang, fileExts) = fromMaybe (Nothing, []) $ H.readExtensions noBom
+        (lang, fileExts) = fromMaybe (Nothing, []) $ H.readExtensions noPrefixes
         exts             = fileExts ++ extraExts'
 
         -- Parsing options...
@@ -64,8 +63,9 @@ parseModule extraExts mfp string = do
             }
 
         -- Preprocessing
-        processed = unShebang $
-            if H.EnableExtension H.CPP `elem` exts then unCpp noBom else noBom
+        processed = if H.EnableExtension H.CPP `elem` exts
+                       then unCpp noPrefixes
+                       else noPrefixes
 
     case H.parseModuleWithComments mode processed of
         H.ParseOk md -> return md

@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 module Language.Haskell.Stylish.Parse.Tests
     ( tests
     ) where
@@ -22,8 +21,19 @@ tests = testGroup "Language.Haskell.Stylish.Parse"
     , testCase "Multiline CPP"         testMultilineCpp
     , testCase "Haskell2010 extension" testHaskell2010
     , testCase "Shebang"               testShebang
+    , testCase "ShebangExt"            testShebangExt
     ]
 
+--------------------------------------------------------------------------------
+testShebangExt :: Assertion
+testShebangExt = assert $ isRight $ parseModule [] Nothing input
+                         where
+                           input = unlines
+                               [ "#!env runghc"
+                               , "{-# LANGUAGE CPP #-}"
+                               , "#define foo bar \\"
+                               , "             qux"
+                               ]
 
 --------------------------------------------------------------------------------
 testBom :: Assertion
