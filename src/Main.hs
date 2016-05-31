@@ -1,17 +1,21 @@
 --------------------------------------------------------------------------------
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE OverloadedStrings  #-}
 module Main
     ( main
     ) where
 
 
 --------------------------------------------------------------------------------
-import           Control.Monad          (forM_)
-import           Data.List              (intercalate)
-import           Data.Version           (Version(..))
+import           Control.Monad              (forM_)
+import qualified Data.ByteString.Lazy.Char8 as B
+import           Data.List                  (intercalate)
+import qualified Data.Text.Lazy             as T
+import           Data.Text.Lazy.Encoding    (decodeUtf8)
+import           Data.Version               (Version (..))
 import           System.Console.CmdArgs
-import           System.IO              (hPutStrLn, stderr, withFile, hSetEncoding, IOMode(ReadMode), utf8)
-import           System.IO.Strict       (hGetContents)
+import           System.IO                  (hPutStrLn, hSetEncoding, stderr,
+                                             stdin, stdout, utf8)
 
 
 --------------------------------------------------------------------------------
@@ -43,7 +47,9 @@ stylishArgs = StylishArgs
 
 --------------------------------------------------------------------------------
 main :: IO ()
-main = cmdArgs stylishArgs >>= stylishHaskell
+main = do
+  mapM_ (`hSetEncoding` utf8) [stdin, stdout]
+  cmdArgs stylishArgs >>= stylishHaskell
 
 
 --------------------------------------------------------------------------------
@@ -83,8 +89,7 @@ file sa conf mfp = do
                 _ -> return ()
 
 readUTF8File :: FilePath -> IO String
-readUTF8File fp =
-     withFile fp ReadMode $ \h -> do
-        hSetEncoding h utf8
-        content <- hGetContents h
-        return content
+readUTF8File fp = do
+    content <- B.readFile fp
+    let utf = decodeUtf8 content
+    return (T.unpack utf)
