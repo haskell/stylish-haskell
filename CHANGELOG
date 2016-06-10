@@ -1,3 +1,7 @@
+- 0.5.17.0
+    * Remove shebang from input before attempting to extract pragmas
+    * Set stdin and stdout encoding to UTF-8 by default
+
 - 0.5.16.0
     * Fail if the default configuration file is not found.
 
