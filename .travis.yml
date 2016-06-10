@@ -1,5 +1,5 @@
 sudo: false
-language: haskell
+language: c  # Choose a lightweight base image
 
 cache:
   directories:
