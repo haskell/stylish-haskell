@@ -17,6 +17,8 @@ Installation
 
 You can install it using `cabal install stylish-haskell`.
 
+Alternatively, on Debian 9 or later or Ubuntu 16.10 or later, `apt-get install stylish-haskell`.
+
 Features
 --------
 
