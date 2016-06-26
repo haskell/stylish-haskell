@@ -1,5 +1,4 @@
 --------------------------------------------------------------------------------
-{-# LANGUAGE DeriveDataTypeable #-}
 module Main
     ( main
     ) where
@@ -21,7 +20,8 @@ import           Language.Haskell.Stylish
 
 --------------------------------------------------------------------------------
 data StylishArgs = StylishArgs
-    { saConfig   :: Maybe FilePath
+    { saVersion  :: Bool
+    , saConfig   :: Maybe FilePath
     , saVerbose  :: Bool
     , saDefaults :: Bool
     , saInPlace  :: Bool
@@ -33,7 +33,11 @@ data StylishArgs = StylishArgs
 --------------------------------------------------------------------------------
 parseStylishArgs :: OA.Parser StylishArgs
 parseStylishArgs = StylishArgs
-    <$> OA.optional (OA.strOption $
+    <$> OA.switch (
+            OA.help  "Show version information" <>
+            OA.long  "version"                  <>
+            OA.hidden)
+    <*> OA.optional (OA.strOption $
             OA.metavar "CONFIG"              <>
             OA.help    "Configuration file"  <>
             OA.long    "config"              <>
@@ -64,10 +68,15 @@ parseStylishArgs = StylishArgs
 
 
 --------------------------------------------------------------------------------
+stylishHaskellVersion :: String
+stylishHaskellVersion = "stylish-haskell " <> showVersion Paths_stylish_haskell.version
+
+
+--------------------------------------------------------------------------------
 parserInfo :: OA.ParserInfo StylishArgs
 parserInfo = OA.info (OA.helper <*> parseStylishArgs) $
     OA.fullDesc <>
-    OA.header ("stylish-haskell v" <> showVersion Paths_stylish_haskell.version)
+    OA.header stylishHaskellVersion
 
 
 --------------------------------------------------------------------------------
@@ -80,12 +89,15 @@ stylishHaskell :: StylishArgs -> IO ()
 stylishHaskell sa = do
     unless (saNoUtf8 sa) $
         mapM_ (`IO.hSetEncoding` IO.utf8) [IO.stdin, IO.stdout]
-    case saDefaults sa of
-        True -> do
+    if saVersion sa then
+        putStrLn stylishHaskellVersion
+
+        else if saDefaults sa then do
             fileName <- defaultConfigFilePath
             verbose' $ "Dumping config from " ++ fileName
             readUTF8File fileName >>= putStr
-        False -> do
+
+        else do
             conf <- loadConfig verbose' (saConfig sa)
             let steps = configSteps conf
             forM_ steps $ \s -> verbose' $ "Enabled " ++ stepName s ++ " step"
@@ -111,12 +123,11 @@ file sa conf mfp = do
     write old new = case mfp of
                 Nothing -> putStr new
                 Just _    | not (saInPlace sa) -> putStr new
-                Just path | length new /= 0 && old /= new  -> writeFile path new
+                Just path | not (null new) && old /= new  -> writeFile path new
                 _ -> return ()
 
 readUTF8File :: FilePath -> IO String
 readUTF8File fp =
      IO.withFile fp IO.ReadMode $ \h -> do
         IO.hSetEncoding h IO.utf8
-        content <- IO.Strict.hGetContents h
-        return content
+        IO.Strict.hGetContents h
