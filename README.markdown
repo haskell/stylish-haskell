@@ -17,7 +17,10 @@ Installation
 
 You can install it using `cabal install stylish-haskell`.
 
-Alternatively, on Debian 9 or later or Ubuntu 16.10 or later, `apt-get install stylish-haskell`.
+You can also install it using your package manager:
+ * Debian 9 or later: `apt-get install stylish-haskell`
+ * Ubuntu 16.10 or later: `apt-get install stylish-haskell`
+ * Arch Linux: `pacman -S stylish-haskell`
 
 Features
 --------
@@ -50,7 +53,7 @@ Turns:
     import System.Directory (doesFileExist)
 
     import qualified Data.Map as M
-    import      Data.Map    ((!), keys, Map)   
+    import      Data.Map    ((!), keys, Map)
 
     data Point = Point
         { pointX, pointY :: Double
