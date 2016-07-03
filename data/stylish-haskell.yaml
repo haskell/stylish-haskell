@@ -15,6 +15,11 @@ steps:
   #     # true.
   #     add_language_pragma: true
 
+  # Align the right hand side of case statements.  This is quite conservative
+  # and only applies to case statements where each alternative occupies a single
+  # line.
+  - cases: {}
+
   # Import cleanup
   - imports:
       # There are different ways we can align names and lists.

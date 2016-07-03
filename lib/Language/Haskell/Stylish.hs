@@ -3,6 +3,7 @@ module Language.Haskell.Stylish
     ( -- * Run
       runSteps
       -- * Steps
+    , cases
     , imports
     , languagePragmas
     , records
@@ -32,6 +33,7 @@ import           Control.Monad                                    (foldM)
 import           Language.Haskell.Stylish.Config
 import           Language.Haskell.Stylish.Parse
 import           Language.Haskell.Stylish.Step
+import qualified Language.Haskell.Stylish.Step.Cases              as Cases
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
 import qualified Language.Haskell.Stylish.Step.Records            as Records
@@ -40,6 +42,12 @@ import qualified Language.Haskell.Stylish.Step.TrailingWhitespace as TrailingWhi
 import qualified Language.Haskell.Stylish.Step.UnicodeSyntax      as UnicodeSyntax
 import           Language.Haskell.Stylish.Verbose
 import           Paths_stylish_haskell                            (version)
+
+
+--------------------------------------------------------------------------------
+cases :: Int  -- ^ Columns
+      -> Step
+cases = Cases.step
 
 
 --------------------------------------------------------------------------------

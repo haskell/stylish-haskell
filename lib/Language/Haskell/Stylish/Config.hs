@@ -28,6 +28,7 @@ import           System.FilePath                                  (joinPath,
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Step
+import qualified Language.Haskell.Stylish.Step.Cases              as Cases
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
 import qualified Language.Haskell.Stylish.Step.Records            as Records
@@ -126,7 +127,8 @@ parseConfig _            = mzero
 --------------------------------------------------------------------------------
 catalog :: Map String (Config -> A.Object -> A.Parser Step)
 catalog = M.fromList
-    [ ("imports",             parseImports)
+    [ ("cases",               parseCases)
+    , ("imports",             parseImports)
     , ("language_pragmas",    parseLanguagePragmas)
     , ("records",             parseRecords)
     , ("tabs",                parseTabs)
@@ -152,6 +154,11 @@ parseEnum strs _   (Just k) = case lookup k strs of
     Just v  -> return v
     Nothing -> fail $ "Unknown option: " ++ k ++ ", should be one of: " ++
         intercalate ", " (map fst strs)
+
+
+--------------------------------------------------------------------------------
+parseCases :: Config -> A.Object -> A.Parser Step
+parseCases c _ = return (Cases.step $ configColumns c)
 
 
 --------------------------------------------------------------------------------
