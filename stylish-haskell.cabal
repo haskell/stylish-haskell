@@ -30,6 +30,7 @@ Library
   Ghc-options:    -Wall
 
   Other-modules:
+    Language.Haskell.Stylish.Align
     Language.Haskell.Stylish.Block
     Language.Haskell.Stylish.Config
     Language.Haskell.Stylish.Editor
@@ -85,6 +86,7 @@ Test-suite stylish-haskell-tests
   Type:           exitcode-stdio-1.0
 
   Other-modules:
+    Language.Haskell.Stylish.Align
     Language.Haskell.Stylish.Block
     Language.Haskell.Stylish.Config
     Language.Haskell.Stylish.Editor
