@@ -19,6 +19,8 @@ import           Language.Haskell.Stylish.Tests.Util
 tests :: Test
 tests = testGroup "Language.Haskell.Stylish.Step.Records.Tests"
     [ testCase "case 01" case01
+    , testCase "case 02" case02
+    , testCase "case 03" case03
     ]
 
 
@@ -36,4 +38,34 @@ case01 = expected @=? testStep (step 80) input
         [ "eitherToMaybe e = case e of"
         , "    Left _  -> Nothing"
         , "    Right x -> Just x"
+        ]
+
+
+--------------------------------------------------------------------------------
+case02 :: Assertion
+case02 = expected @=? testStep (step 80) input
+  where
+    input = unlines
+        [ "eitherToMaybe (Left _) = Nothing"
+        , "eitherToMaybe (Right x) = Just x"
+        ]
+
+    expected = unlines
+        [ "eitherToMaybe (Left _)  = Nothing"
+        , "eitherToMaybe (Right x) = Just x"
+        ]
+
+
+--------------------------------------------------------------------------------
+case03 :: Assertion
+case03 = expected @=? testStep (step 80) input
+  where
+    input = unlines
+        [ "heady def [] = def"
+        , "heady _ (x : _) = x"
+        ]
+
+    expected = unlines
+        [ "heady def []    = def"
+        , "heady _ (x : _) = x"
         ]

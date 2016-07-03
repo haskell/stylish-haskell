@@ -34,13 +34,34 @@ altToAlignable (H.Alt ann pat rhs Nothing)  = Just $ Alignable
 
 
 --------------------------------------------------------------------------------
+tlpats :: Data l => H.Module l -> [[H.Match l]]
+tlpats modu = [matches | H.FunBind _ matches <- everything modu]
+
+
+--------------------------------------------------------------------------------
+matchToAlignable :: H.Match l -> Maybe (Alignable l)
+matchToAlignable (H.InfixMatch _ _ _ _ _ _)           = Nothing
+matchToAlignable (H.Match _   _    []   _   _)        = Nothing
+matchToAlignable (H.Match _   _    _    _   (Just _)) = Nothing
+matchToAlignable (H.Match ann name pats rhs Nothing)  = Just $ Alignable
+    { aContainer = ann
+    , aLeft      = last (H.ann name : map H.ann pats)
+    , aRight     = H.ann rhs
+    , aRightLead = length "= "
+    }
+
+
+--------------------------------------------------------------------------------
 step :: Int -> Step
 step maxColumns = makeStep "Cases" $ \ls (module', _) ->
-    let module'' = fmap H.srcInfoSpan module' in
+    let module''               = fmap H.srcInfoSpan module'
+        changes search toAlign =
+            [ change_
+            | case_   <- search module''
+            , aligns  <- maybeToList (mapM toAlign case_)
+            , change_ <- align maxColumns aligns
+            ] in
+
     applyChanges
-        [ change_
-        | case_   <- cases module''
-        , aligns  <- maybeToList (mapM altToAlignable case_)
-        , change_ <- align maxColumns aligns
-        ]
+        (changes cases altToAlignable ++ changes tlpats matchToAlignable)
         ls
