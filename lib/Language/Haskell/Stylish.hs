@@ -59,7 +59,8 @@ languagePragmas = LanguagePragmas.step
 
 
 --------------------------------------------------------------------------------
-records :: Step
+records :: Int   -- ^ columns
+        -> Step
 records = Records.step
 
 

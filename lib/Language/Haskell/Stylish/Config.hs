@@ -205,7 +205,7 @@ parseLanguagePragmas config o = LanguagePragmas.step
 
 --------------------------------------------------------------------------------
 parseRecords :: Config -> A.Object -> A.Parser Step
-parseRecords _ _ = return Records.step
+parseRecords c _ = return (Records.step $ configColumns c)
 
 
 --------------------------------------------------------------------------------

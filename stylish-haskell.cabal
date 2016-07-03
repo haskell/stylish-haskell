@@ -85,14 +85,27 @@ Test-suite stylish-haskell-tests
   Type:           exitcode-stdio-1.0
 
   Other-modules:
+    Language.Haskell.Stylish.Block
+    Language.Haskell.Stylish.Config
+    Language.Haskell.Stylish.Editor
+    Language.Haskell.Stylish.Parse
     Language.Haskell.Stylish.Parse.Tests
+    Language.Haskell.Stylish.Step
+    Language.Haskell.Stylish.Step.Imports
     Language.Haskell.Stylish.Step.Imports.Tests
+    Language.Haskell.Stylish.Step.LanguagePragmas
     Language.Haskell.Stylish.Step.LanguagePragmas.Tests
+    Language.Haskell.Stylish.Step.Records
     Language.Haskell.Stylish.Step.Records.Tests
+    Language.Haskell.Stylish.Step.Tabs
     Language.Haskell.Stylish.Step.Tabs.Tests
+    Language.Haskell.Stylish.Step.TrailingWhitespace
     Language.Haskell.Stylish.Step.TrailingWhitespace.Tests
+    Language.Haskell.Stylish.Step.UnicodeSyntax
     Language.Haskell.Stylish.Step.UnicodeSyntax.Tests
     Language.Haskell.Stylish.Tests.Util
+    Language.Haskell.Stylish.Util
+    Language.Haskell.Stylish.Verbose
 
   Build-depends:
     HUnit                >= 1.2 && < 1.4,
