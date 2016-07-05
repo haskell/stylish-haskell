@@ -16,6 +16,7 @@ module Language.Haskell.Stylish.Block
 
 --------------------------------------------------------------------------------
 import           Control.Arrow                   (arr, (&&&), (>>>))
+import qualified Data.IntSet                     as IS
 import qualified Language.Haskell.Exts.Annotated as H
 
 
@@ -73,10 +74,14 @@ merge (Block s1 e1) (Block s2 e2) = Block (min s1 s2) (max e1 e2)
 
 --------------------------------------------------------------------------------
 overlapping :: [Block a] -> Bool
-overlapping blocks =
-    any (uncurry overlapping') $ zip blocks (drop 1 blocks)
+overlapping = go IS.empty
   where
-    overlapping' (Block _ e1) (Block s2 _) = e1 >= s2
+    go _   []       = False
+    go acc (b : bs) =
+        let ints = [blockStart b .. blockEnd b] in
+        if any (`IS.member` acc) ints
+            then True
+            else go (IS.union acc $ IS.fromList ints) bs
 
 
 --------------------------------------------------------------------------------

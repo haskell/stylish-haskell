@@ -19,6 +19,10 @@ module Language.Haskell.Stylish.Editor
 
 
 --------------------------------------------------------------------------------
+import           Data.List                      (intercalate)
+
+
+--------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Block
 
 
@@ -40,10 +44,13 @@ applyChanges :: [Change a] -> [a] -> [a]
 applyChanges changes
     | overlapping blocks = error $
         "Language.Haskell.Stylish.Editor.applyChanges: " ++
-        "refusing to make overlapping changes"
+        "refusing to make overlapping changes on lines " ++
+        intercalate ", " (map printBlock blocks)
     | otherwise          = go 1 changes
   where
     blocks = map changeBlock changes
+
+    printBlock b = show (blockStart b) ++ "-" ++ show (blockEnd b)
 
     go _ []                ls = ls
     go n (ch : chs) ls =
