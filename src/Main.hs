@@ -123,7 +123,12 @@ file sa conf mfp = do
     write old new = case mfp of
                 Nothing -> putStr new
                 Just _    | not (saInPlace sa) -> putStr new
-                Just path | not (null new) && old /= new  -> writeFile path new
+                Just path | not (null new) && old /= new  ->
+                    IO.withFile path IO.WriteMode $ \h -> do
+                        let nl = configNewline conf
+                        let mode = IO.NewlineMode nl nl
+                        IO.hSetNewlineMode h mode
+                        IO.hPutStr h new
                 _ -> return ()
 
 readUTF8File :: FilePath -> IO String
