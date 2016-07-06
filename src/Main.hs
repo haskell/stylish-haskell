@@ -126,7 +126,7 @@ file sa conf mfp = do
                 Just path | not (null new) && old /= new  ->
                     IO.withFile path IO.WriteMode $ \h -> do
                         let nl = configNewline conf
-                        let mode = IO.NewlineMode nl nl
+                        let mode = IO.NewlineMode IO.nativeNewline nl
                         IO.hSetNewlineMode h mode
                         IO.hPutStr h new
                 _ -> return ()
