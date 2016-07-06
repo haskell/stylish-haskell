@@ -144,7 +144,16 @@ steps:
 # to. Different steps take this into account. Default: 80.
 columns: 80
 
-# Newline format for output files
+# By default, line endings are converted according to the OS. You can override
+# preferred format here.
+#
+# - native: Native newline format. CRLF on Windows, LF on other OSes.
+#
+# - lf: Convert to LF ("\n").
+#
+# - crlf: Convert to CRLF ("\r\n").
+#
+# Default: native.
 newline: native
 
 # Sometimes, language extensions are specified in a cabal file or from the
