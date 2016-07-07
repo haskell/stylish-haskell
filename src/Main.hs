@@ -121,10 +121,18 @@ file sa conf mfp = do
         Right ok  -> write contents $ unlines ok
   where
     write old new = case mfp of
-                Nothing -> putStr new
-                Just _    | not (saInPlace sa) -> putStr new
-                Just path | not (null new) && old /= new  -> writeFile path new
+                Nothing -> putStrNewline new
+                Just _    | not (saInPlace sa) -> putStrNewline new
+                Just path | not (null new) && old /= new  ->
+                    IO.withFile path IO.WriteMode $ \h -> do
+                        setNewlineMode h
+                        IO.hPutStr h new
                 _ -> return ()
+    setNewlineMode h = do
+      let nl = configNewline conf
+      let mode = IO.NewlineMode IO.nativeNewline nl
+      IO.hSetNewlineMode h mode
+    putStrNewline txt = setNewlineMode IO.stdout >> putStr txt
 
 readUTF8File :: FilePath -> IO String
 readUTF8File fp =

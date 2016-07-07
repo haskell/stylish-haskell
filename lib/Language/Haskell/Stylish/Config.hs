@@ -24,6 +24,8 @@ import           System.Directory
 import           System.FilePath                                  (joinPath,
                                                                    splitPath,
                                                                    (</>))
+import qualified System.IO                                        as IO (Newline (..),
+                                                                         nativeNewline)
 
 
 --------------------------------------------------------------------------------
@@ -48,6 +50,7 @@ data Config = Config
     { configSteps              :: [Step]
     , configColumns            :: Int
     , configLanguageExtensions :: [String]
+    , configNewline            :: IO.Newline
     }
 
 
@@ -116,11 +119,18 @@ parseConfig (A.Object o) = do
         <$> pure []
         <*> (o A..:? "columns"             A..!= 80)
         <*> (o A..:? "language_extensions" A..!= [])
+        <*> (o A..:? "newline"             >>= parseEnum newlines IO.nativeNewline)
 
     -- Then fill in the steps based on the partial config we already have
     stepValues <- o A..: "steps" :: A.Parser [A.Value]
     steps      <- mapM (parseSteps config) stepValues
     return config {configSteps = concat steps}
+  where
+    newlines =
+        [ ("native", IO.nativeNewline)
+        , ("lf",     IO.LF)
+        , ("crlf",   IO.CRLF)
+        ]
 parseConfig _            = mzero
 
 
