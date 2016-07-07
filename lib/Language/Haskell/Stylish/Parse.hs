@@ -7,11 +7,28 @@ module Language.Haskell.Stylish.Parse
 --------------------------------------------------------------------------------
 import           Data.Maybe                      (fromMaybe, listToMaybe)
 import qualified Language.Haskell.Exts.Annotated as H
-import Data.List (isPrefixOf)
+import Data.List (isPrefixOf, nub)
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Config
 import           Language.Haskell.Stylish.Step
+
+--------------------------------------------------------------------------------
+-- | Syntax-related language extensions are always enabled for parsing. Since we
+-- can't authoritatively know which extensions are enabled at compile-time, we
+-- should try not to throw errors when parsing any GHC-accepted code.
+defaultExtensions :: [H.Extension]
+defaultExtensions = map H.EnableExtension
+  [ H.GADTs
+  , H.HereDocuments
+  , H.KindSignatures
+  , H.MagicHash
+  , H.NewQualifiedOperators
+  , H.PatternGuards
+  , H.StandaloneDeriving
+  , H.UnicodeSyntax
+  , H.XmlSyntax
+  ]
 
 
 --------------------------------------------------------------------------------
@@ -50,7 +67,7 @@ parseModule extraExts mfp string = do
     let noPrefixes       = unShebang . dropBom $ string
         extraExts'       = map H.classifyExtension extraExts
         (lang, fileExts) = fromMaybe (Nothing, []) $ H.readExtensions noPrefixes
-        exts             = fileExts ++ extraExts'
+        exts             = nub $ fileExts ++ extraExts' ++ defaultExtensions
 
         -- Parsing options...
         fp       = fromMaybe "<unknown>" mfp
