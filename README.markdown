@@ -127,7 +127,10 @@ Atom integration
 
 [ide-haskell] for Atom supports `stylish-haskell`.
 
+[atom-beautify] for Atom supports Haskell using `stylish-haskell`.
+
 [ide-haskell]: https://atom.io/packages/ide-haskell
+[atom-beautify]: Https://atom.io/packages/atom-beautify
 
 Credits
 -------
