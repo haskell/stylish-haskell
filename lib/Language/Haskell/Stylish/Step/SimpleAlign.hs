@@ -1,12 +1,14 @@
 --------------------------------------------------------------------------------
-module Language.Haskell.Stylish.Step.Cases
-    ( step
+module Language.Haskell.Stylish.Step.SimpleAlign
+    ( Config (..)
+    , defaultConfig
+    , step
     ) where
 
 
 --------------------------------------------------------------------------------
 import           Data.Data                       (Data)
-import           Data.Maybe                       (maybeToList)
+import           Data.Maybe                      (maybeToList)
 import qualified Language.Haskell.Exts.Annotated as H
 
 
@@ -15,6 +17,21 @@ import           Language.Haskell.Stylish.Align
 import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
+
+
+--------------------------------------------------------------------------------
+data Config = Config
+    { cCases            :: !Bool
+    , cTopLevelPatterns :: !Bool
+    } deriving (Show)
+
+
+--------------------------------------------------------------------------------
+defaultConfig :: Config
+defaultConfig = Config
+    { cCases            = True
+    , cTopLevelPatterns = True
+    }
 
 
 --------------------------------------------------------------------------------
@@ -52,16 +69,18 @@ matchToAlignable (H.Match ann name pats rhs Nothing)  = Just $ Alignable
 
 
 --------------------------------------------------------------------------------
-step :: Int -> Step
-step maxColumns = makeStep "Cases" $ \ls (module', _) ->
+step :: Int -> Config -> Step
+step maxColumns config = makeStep "Cases" $ \ls (module', _) ->
     let module''               = fmap H.srcInfoSpan module'
         changes search toAlign =
             [ change_
             | case_   <- search module''
             , aligns  <- maybeToList (mapM toAlign case_)
             , change_ <- align maxColumns aligns
-            ] in
+            ]
 
-    applyChanges
-        (changes cases altToAlignable ++ changes tlpats matchToAlignable)
-        ls
+        configured             = concat $
+            [changes cases altToAlignable    | cCases config] ++
+            [changes tlpats matchToAlignable | cTopLevelPatterns config]
+
+    in applyChanges configured ls

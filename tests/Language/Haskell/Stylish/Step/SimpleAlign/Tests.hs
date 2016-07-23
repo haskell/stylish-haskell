@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
-module Language.Haskell.Stylish.Step.Cases.Tests
+module Language.Haskell.Stylish.Step.SimpleAlign.Tests
     ( tests
     ) where
 
@@ -11,13 +11,13 @@ import           Test.HUnit                            (Assertion, (@=?))
 
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Step.Cases
+import           Language.Haskell.Stylish.Step.SimpleAlign
 import           Language.Haskell.Stylish.Tests.Util
 
 
 --------------------------------------------------------------------------------
 tests :: Test
-tests = testGroup "Language.Haskell.Stylish.Step.Records.Tests"
+tests = testGroup "Language.Haskell.Stylish.Step.SimpleAlign.Tests"
     [ testCase "case 01" case01
     , testCase "case 02" case02
     , testCase "case 03" case03
@@ -26,7 +26,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Records.Tests"
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testStep (step 80) input
+case01 = expected @=? testStep (step 80 defaultConfig) input
   where
     input = unlines
         [ "eitherToMaybe e = case e of"
@@ -43,7 +43,7 @@ case01 = expected @=? testStep (step 80) input
 
 --------------------------------------------------------------------------------
 case02 :: Assertion
-case02 = expected @=? testStep (step 80) input
+case02 = expected @=? testStep (step 80 defaultConfig) input
   where
     input = unlines
         [ "eitherToMaybe (Left _) = Nothing"
@@ -58,7 +58,7 @@ case02 = expected @=? testStep (step 80) input
 
 --------------------------------------------------------------------------------
 case03 :: Assertion
-case03 = expected @=? testStep (step 80) input
+case03 = expected @=? testStep (step 80 defaultConfig) input
   where
     input = unlines
         [ "heady def [] = def"

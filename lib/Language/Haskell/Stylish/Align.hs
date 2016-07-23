@@ -89,6 +89,7 @@ align maxColumns alignment
 -- not overlap.
 fixable :: [Alignable H.SrcSpan] -> Bool
 fixable []     = False
+fixable [_]    = False
 fixable fields = all singleLine containers && nonOverlapping containers
   where
     containers        = map aContainer fields

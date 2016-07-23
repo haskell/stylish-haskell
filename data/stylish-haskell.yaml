@@ -15,10 +15,12 @@ steps:
   #     # true.
   #     add_language_pragma: true
 
-  # Align the right hand side of case statements.  This is quite conservative
-  # and only applies to case statements where each alternative occupies a single
+  # Align the right hand side of some elements.  This is quite conservative
+  # and only applies to statements where each element occupies a single
   # line.
-  - cases: {}
+  - simple_align:
+      cases: true
+      top_level_patterns: true
 
   # Import cleanup
   - imports:

@@ -14,6 +14,7 @@ import           Control.Monad                                    (forM, mzero)
 import           Data.Aeson                                       (FromJSON (..))
 import qualified Data.Aeson                                       as A
 import qualified Data.Aeson.Types                                 as A
+import Data.Maybe (fromMaybe)
 import qualified Data.ByteString                                  as B
 import           Data.List                                        (inits,
                                                                    intercalate)
@@ -30,10 +31,10 @@ import qualified System.IO                                        as IO (Newline
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Step
-import qualified Language.Haskell.Stylish.Step.Cases              as Cases
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
 import qualified Language.Haskell.Stylish.Step.Records            as Records
+import qualified Language.Haskell.Stylish.Step.SimpleAlign        as SimpleAlign
 import qualified Language.Haskell.Stylish.Step.Tabs               as Tabs
 import qualified Language.Haskell.Stylish.Step.TrailingWhitespace as TrailingWhitespace
 import qualified Language.Haskell.Stylish.Step.UnicodeSyntax      as UnicodeSyntax
@@ -137,10 +138,10 @@ parseConfig _            = mzero
 --------------------------------------------------------------------------------
 catalog :: Map String (Config -> A.Object -> A.Parser Step)
 catalog = M.fromList
-    [ ("cases",               parseCases)
-    , ("imports",             parseImports)
+    [ ("imports",             parseImports)
     , ("language_pragmas",    parseLanguagePragmas)
     , ("records",             parseRecords)
+    , ("simple_align",        parseSimpleAlign)
     , ("tabs",                parseTabs)
     , ("trailing_whitespace", parseTrailingWhitespace)
     , ("unicode_syntax",      parseUnicodeSyntax)
@@ -167,8 +168,14 @@ parseEnum strs _   (Just k) = case lookup k strs of
 
 
 --------------------------------------------------------------------------------
-parseCases :: Config -> A.Object -> A.Parser Step
-parseCases c _ = return (Cases.step $ configColumns c)
+parseSimpleAlign :: Config -> A.Object -> A.Parser Step
+parseSimpleAlign c o = SimpleAlign.step
+    <$> pure (configColumns c)
+    <*> (SimpleAlign.Config
+        <$> withDef SimpleAlign.cCases            "cases"
+        <*> withDef SimpleAlign.cTopLevelPatterns "top_level_patterns")
+  where
+    withDef f k = fromMaybe (f SimpleAlign.defaultConfig) <$> (o A..:? k)
 
 
 --------------------------------------------------------------------------------

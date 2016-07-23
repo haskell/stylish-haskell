@@ -36,7 +36,7 @@ Library
     Language.Haskell.Stylish.Editor
     Language.Haskell.Stylish.Parse
     Language.Haskell.Stylish.Step
-    Language.Haskell.Stylish.Step.Cases
+    Language.Haskell.Stylish.Step.SimpleAlign
     Language.Haskell.Stylish.Step.Imports
     Language.Haskell.Stylish.Step.LanguagePragmas
     Language.Haskell.Stylish.Step.Records
@@ -94,7 +94,8 @@ Test-suite stylish-haskell-tests
     Language.Haskell.Stylish.Parse
     Language.Haskell.Stylish.Parse.Tests
     Language.Haskell.Stylish.Step
-    Language.Haskell.Stylish.Step.Cases
+    Language.Haskell.Stylish.Step.SimpleAlign
+    Language.Haskell.Stylish.Step.SimpleAlign.Tests
     Language.Haskell.Stylish.Step.Imports
     Language.Haskell.Stylish.Step.Imports.Tests
     Language.Haskell.Stylish.Step.LanguagePragmas

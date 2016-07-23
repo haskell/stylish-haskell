@@ -24,7 +24,7 @@ tests = testGroup "Language.Haskell.Stylish.Parse"
     , testCase "ShebangExt"                  testShebangExt
     , testCase "GADTs extension"             testGADTs
     , testCase "KindSignatures extension"    testKindSignatures
-    , testCase "StandalonDeriving extension" testKindSignatures
+    , testCase "StandalonDeriving extension" testStandaloneDeriving
     , testCase "UnicodeSyntax extension"     testUnicodeSyntax
     ]
 
