@@ -6,7 +6,6 @@ module Language.Haskell.Stylish
     , simpleAlign
     , imports
     , languagePragmas
-    , records
     , tabs
     , trailingWhitespace
     , unicodeSyntax
@@ -35,7 +34,6 @@ import           Language.Haskell.Stylish.Parse
 import           Language.Haskell.Stylish.Step
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
-import qualified Language.Haskell.Stylish.Step.Records            as Records
 import qualified Language.Haskell.Stylish.Step.SimpleAlign        as SimpleAlign
 import qualified Language.Haskell.Stylish.Step.Tabs               as Tabs
 import qualified Language.Haskell.Stylish.Step.TrailingWhitespace as TrailingWhitespace
@@ -65,12 +63,6 @@ languagePragmas :: Int -- ^ columns
                 -> Bool -- ^ remove redundant?
                 -> Step
 languagePragmas = LanguagePragmas.step
-
-
---------------------------------------------------------------------------------
-records :: Int   -- ^ columns
-        -> Step
-records = Records.step
 
 
 --------------------------------------------------------------------------------

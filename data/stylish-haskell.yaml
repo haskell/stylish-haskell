@@ -21,6 +21,7 @@ steps:
   - simple_align:
       cases: true
       top_level_patterns: true
+      records: true
 
   # Import cleanup
   - imports:
@@ -134,9 +135,6 @@ steps:
       # stylish-haskell can detect redundancy of some language pragmas. If this
       # is set to true, it will remove those redundant pragmas. Default: true.
       remove_redundant: true
-
-  # Align the types in record declarations
-  - records: {}
 
   # Replace tabs by spaces. This is disabled by default.
   # - tabs:

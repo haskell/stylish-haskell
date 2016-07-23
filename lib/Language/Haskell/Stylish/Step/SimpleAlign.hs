@@ -23,6 +23,7 @@ import           Language.Haskell.Stylish.Util
 data Config = Config
     { cCases            :: !Bool
     , cTopLevelPatterns :: !Bool
+    , cRecords          :: !Bool
     } deriving (Show)
 
 
@@ -31,6 +32,7 @@ defaultConfig :: Config
 defaultConfig = Config
     { cCases            = True
     , cTopLevelPatterns = True
+    , cRecords          = True
     }
 
 
@@ -69,6 +71,26 @@ matchToAlignable (H.Match ann name pats rhs Nothing)  = Just $ Alignable
 
 
 --------------------------------------------------------------------------------
+records :: H.Module l -> [[H.FieldDecl l]]
+records modu =
+    [ fields
+    | H.Module _ _ _ _ decls                     <- [modu]
+    , H.DataDecl _ _ _ _ cons _                  <- decls
+    , H.QualConDecl _ _ _ (H.RecDecl _ _ fields) <- cons
+    ]
+
+
+--------------------------------------------------------------------------------
+fieldDeclToAlignable :: H.FieldDecl a -> Maybe (Alignable a)
+fieldDeclToAlignable (H.FieldDecl ann names ty) = Just $ Alignable
+    { aContainer = ann
+    , aLeft      = H.ann (last names)
+    , aRight     = H.ann ty
+    , aRightLead = length ":: "
+    }
+
+
+--------------------------------------------------------------------------------
 step :: Int -> Config -> Step
 step maxColumns config = makeStep "Cases" $ \ls (module', _) ->
     let module''               = fmap H.srcInfoSpan module'
@@ -80,7 +102,8 @@ step maxColumns config = makeStep "Cases" $ \ls (module', _) ->
             ]
 
         configured             = concat $
-            [changes cases altToAlignable    | cCases config] ++
-            [changes tlpats matchToAlignable | cTopLevelPatterns config]
+            [changes cases   altToAlignable       | cCases config] ++
+            [changes tlpats  matchToAlignable     | cTopLevelPatterns config] ++
+            [changes records fieldDeclToAlignable | cRecords config]
 
     in applyChanges configured ls

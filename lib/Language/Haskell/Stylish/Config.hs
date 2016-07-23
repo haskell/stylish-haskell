@@ -33,7 +33,6 @@ import qualified System.IO                                        as IO (Newline
 import           Language.Haskell.Stylish.Step
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
-import qualified Language.Haskell.Stylish.Step.Records            as Records
 import qualified Language.Haskell.Stylish.Step.SimpleAlign        as SimpleAlign
 import qualified Language.Haskell.Stylish.Step.Tabs               as Tabs
 import qualified Language.Haskell.Stylish.Step.TrailingWhitespace as TrailingWhitespace
@@ -140,7 +139,6 @@ catalog :: Map String (Config -> A.Object -> A.Parser Step)
 catalog = M.fromList
     [ ("imports",             parseImports)
     , ("language_pragmas",    parseLanguagePragmas)
-    , ("records",             parseRecords)
     , ("simple_align",        parseSimpleAlign)
     , ("tabs",                parseTabs)
     , ("trailing_whitespace", parseTrailingWhitespace)
@@ -173,7 +171,8 @@ parseSimpleAlign c o = SimpleAlign.step
     <$> pure (configColumns c)
     <*> (SimpleAlign.Config
         <$> withDef SimpleAlign.cCases            "cases"
-        <*> withDef SimpleAlign.cTopLevelPatterns "top_level_patterns")
+        <*> withDef SimpleAlign.cTopLevelPatterns "top_level_patterns"
+        <*> withDef SimpleAlign.cRecords          "records")
   where
     withDef f k = fromMaybe (f SimpleAlign.defaultConfig) <$> (o A..:? k)
 
@@ -225,11 +224,6 @@ parseLanguagePragmas config o = LanguagePragmas.step
         , ("compact",      LanguagePragmas.Compact)
         , ("compact_line", LanguagePragmas.CompactLine)
         ]
-
-
---------------------------------------------------------------------------------
-parseRecords :: Config -> A.Object -> A.Parser Step
-parseRecords c _ = return (Records.step $ configColumns c)
 
 
 --------------------------------------------------------------------------------
