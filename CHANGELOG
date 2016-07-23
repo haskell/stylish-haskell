@@ -1,3 +1,13 @@
+# CHANGELOG
+
+- 0.6.0.0
+    * Add a `simple_align` step
+    * Move `records` step into `simple_align`
+    * Use a set of default language extensions for parsing (by Langston Barrett)
+    * Add a newline format option (by Svyatolslav Gryaznov)
+    * Add more symbols from UnicodeSyntax (by Langston Barrett)
+    * Add a `--version` option (by Ondra Pelech)
+
 - 0.5.17.0
     * Remove shebang from input before attempting to extract pragmas
     * Set stdin and stdout encoding to UTF-8 by default
