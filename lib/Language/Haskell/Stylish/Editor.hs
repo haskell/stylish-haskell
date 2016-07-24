@@ -19,7 +19,8 @@ module Language.Haskell.Stylish.Editor
 
 
 --------------------------------------------------------------------------------
-import           Data.List                      (intercalate)
+import           Data.List                      (intercalate, sortBy)
+import           Data.Ord                       (comparing)
 
 
 --------------------------------------------------------------------------------
@@ -41,14 +42,15 @@ moveChange offset (Change block ls) = Change (moveBlock offset block) ls
 
 --------------------------------------------------------------------------------
 applyChanges :: [Change a] -> [a] -> [a]
-applyChanges changes
+applyChanges changes0
     | overlapping blocks = error $
         "Language.Haskell.Stylish.Editor.applyChanges: " ++
         "refusing to make overlapping changes on lines " ++
         intercalate ", " (map printBlock blocks)
-    | otherwise          = go 1 changes
+    | otherwise          = go 1 changes1
   where
-    blocks = map changeBlock changes
+    changes1 = sortBy (comparing (blockStart . changeBlock)) changes0
+    blocks   = map changeBlock changes1
 
     printBlock b = show (blockStart b) ++ "-" ++ show (blockEnd b)
 
