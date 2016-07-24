@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- 0.6.1.0
+    * Fix line patching issue in Editor
+
 - 0.6.0.0
     * Add a `simple_align` step
     * Move `records` step into `simple_align`
