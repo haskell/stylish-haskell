@@ -10,14 +10,14 @@ module Language.Haskell.Stylish.Step.LanguagePragmas
 
 --------------------------------------------------------------------------------
 import qualified Data.Set                        as S
-import qualified Language.Haskell.Exts.Annotated as H
+import qualified Language.Haskell.Exts           as H
 
 
 --------------------------------------------------------------------------------
-import Language.Haskell.Stylish.Block
-import Language.Haskell.Stylish.Editor
-import Language.Haskell.Stylish.Step
-import Language.Haskell.Stylish.Util
+import           Language.Haskell.Stylish.Block
+import           Language.Haskell.Stylish.Editor
+import           Language.Haskell.Stylish.Step
+import           Language.Haskell.Stylish.Util
 
 
 --------------------------------------------------------------------------------

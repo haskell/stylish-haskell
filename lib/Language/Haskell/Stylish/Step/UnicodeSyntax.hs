@@ -9,7 +9,7 @@ import           Data.List                           (isPrefixOf, sort)
 import           Data.Map                            (Map)
 import qualified Data.Map                            as M
 import           Data.Maybe                          (maybeToList)
-import qualified Language.Haskell.Exts.Annotated     as H
+import qualified Language.Haskell.Exts               as H
 
 
 --------------------------------------------------------------------------------

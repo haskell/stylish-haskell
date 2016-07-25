@@ -1,5 +1,6 @@
 flags: {}
 packages:
 - '.'
-extra-deps: []
-resolver: lts-5.0
+extra-deps:
+- haskell-src-exts-1.18.0
+resolver: nightly-2016-07-19

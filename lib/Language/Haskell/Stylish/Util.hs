@@ -17,13 +17,14 @@ module Language.Haskell.Stylish.Util
 
 
 --------------------------------------------------------------------------------
-import           Control.Arrow                   ((&&&), (>>>))
-import           Data.Char                       (isAlpha)
-import           Data.Data                       (Data)
-import qualified Data.Generics                   as G
-import           Data.Maybe                      (fromMaybe, listToMaybe, maybeToList)
-import           Data.Typeable                   (cast)
-import qualified Language.Haskell.Exts.Annotated as H
+import           Control.Arrow                 ((&&&), (>>>))
+import           Data.Char                     (isAlpha)
+import           Data.Data                     (Data)
+import qualified Data.Generics                 as G
+import           Data.Maybe                    (fromMaybe, listToMaybe,
+                                                maybeToList)
+import           Data.Typeable                 (cast)
+import qualified Language.Haskell.Exts         as H
 
 
 --------------------------------------------------------------------------------

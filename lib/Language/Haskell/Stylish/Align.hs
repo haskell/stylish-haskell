@@ -9,7 +9,7 @@ module Language.Haskell.Stylish.Align
 --------------------------------------------------------------------------------
 import           Data.Char                       (isSpace)
 import           Data.List                       (nub)
-import qualified Language.Haskell.Exts.Annotated as H
+import qualified Language.Haskell.Exts           as H
 
 
 --------------------------------------------------------------------------------
