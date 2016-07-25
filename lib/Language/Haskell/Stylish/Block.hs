@@ -15,9 +15,9 @@ module Language.Haskell.Stylish.Block
 
 
 --------------------------------------------------------------------------------
-import           Control.Arrow                   (arr, (&&&), (>>>))
-import qualified Data.IntSet                     as IS
-import qualified Language.Haskell.Exts.Annotated as H
+import           Control.Arrow         (arr, (&&&), (>>>))
+import qualified Data.IntSet           as IS
+import qualified Language.Haskell.Exts as H
 
 
 --------------------------------------------------------------------------------

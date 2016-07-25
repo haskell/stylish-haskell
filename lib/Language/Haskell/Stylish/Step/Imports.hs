@@ -15,7 +15,7 @@ import           Data.Char                       (toLower)
 import           Data.List                       (intercalate, sortBy)
 import           Data.Maybe                      (isJust, maybeToList)
 import           Data.Ord                        (comparing)
-import qualified Language.Haskell.Exts.Annotated as H
+import qualified Language.Haskell.Exts           as H
 
 
 --------------------------------------------------------------------------------

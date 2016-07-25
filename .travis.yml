@@ -10,10 +10,10 @@ addons:
     sources:
     - hvr-ghc
     packages:
-    - ghc-7.10.3
+    - ghc-8.0.1
 
 before_install:
-- export PATH=/opt/ghc/7.10.3/bin:$PATH
+- export PATH=/opt/ghc/8.0.1/bin:$PATH
 - mkdir -p ~/.local/bin
 - export PATH=$HOME/.local/bin:$PATH
 - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'

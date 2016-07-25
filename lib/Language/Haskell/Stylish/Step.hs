@@ -8,7 +8,7 @@ module Language.Haskell.Stylish.Step
 
 
 --------------------------------------------------------------------------------
-import qualified Language.Haskell.Exts.Annotated as H
+import qualified Language.Haskell.Exts as H
 
 
 --------------------------------------------------------------------------------
