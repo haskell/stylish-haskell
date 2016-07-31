@@ -87,6 +87,19 @@ steps:
       # Default: inline
       long_list_align: inline
 
+      # Align empty list (importing instances)
+      #
+      # Empty list align has following options
+      #
+      # - inherit: inherit list_align setting
+      #
+      # - right_after: () is right after the module name:
+      #
+      #   > import Vector.Instances ()
+      #
+      # Default: inherit
+      empty_list_align: inherit
+
       # List padding determines indentation of import list on lines after import.
       # This option affects 'list_align' and 'long_list_align'.
       list_padding: 4
