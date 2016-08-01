@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- 0.6.2.0
+    * Bump `haskell-src-exts` to 1.18
+
 - 0.6.1.0
     * Fix line patching issue in Editor
 
