@@ -5,13 +5,15 @@ module Language.Haskell.Stylish.Parse
 
 
 --------------------------------------------------------------------------------
+import           Data.List                       (isPrefixOf, nub)
 import           Data.Maybe                      (fromMaybe, listToMaybe)
-import qualified Language.Haskell.Exts.Annotated as H
-import Data.List (isPrefixOf, nub)
+import qualified Language.Haskell.Exts           as H
+
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Config
 import           Language.Haskell.Stylish.Step
+
 
 --------------------------------------------------------------------------------
 -- | Syntax-related language extensions are always enabled for parsing. Since we

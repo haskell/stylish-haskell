@@ -15,7 +15,7 @@ import           Data.Char                       (toLower)
 import           Data.List                       (intercalate, sortBy)
 import           Data.Maybe                      (isJust, maybeToList)
 import           Data.Ord                        (comparing)
-import qualified Language.Haskell.Exts.Annotated as H
+import qualified Language.Haskell.Exts           as H
 
 
 --------------------------------------------------------------------------------
@@ -83,8 +83,8 @@ compareImportSpecs :: H.ImportSpec l -> H.ImportSpec l -> Ordering
 compareImportSpecs = comparing key
   where
     key :: H.ImportSpec l -> (Int, Bool, String)
-    key (H.IVar _ x)       = (1, isOperator x, nameToString x)
-    key (H.IAbs _ _ x)         = (0, False, nameToString x)
+    key (H.IVar _ x)         = (1, isOperator x, nameToString x)
+    key (H.IAbs _ _ x)       = (0, False, nameToString x)
     key (H.IThingAll _ x)    = (0, False, nameToString x)
     key (H.IThingWith _ x _) = (0, False, nameToString x)
 
@@ -138,10 +138,10 @@ prettyImport :: (Ord l, Show l) =>
     Int -> Align -> Bool -> Bool -> Int -> H.ImportDecl l -> [String]
 prettyImport columns Align{..} padQualified padName longest imp =
     case longListAlign of
-        Inline -> inlineWrap
-        InlineWithBreak -> longListWrapper inlineWrap inlineWithBreakWrap
+        Inline            -> inlineWrap
+        InlineWithBreak   -> longListWrapper inlineWrap inlineWithBreakWrap
         InlineToMultiline -> longListWrapper inlineWrap inlineToMultilineWrap
-        Multiline -> longListWrapper inlineWrap multilineWrap
+        Multiline         -> longListWrapper inlineWrap multilineWrap
   where
     longListWrapper shortWrap longWrap
         | listAlign == NewLine

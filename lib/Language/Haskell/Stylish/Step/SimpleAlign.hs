@@ -9,7 +9,7 @@ module Language.Haskell.Stylish.Step.SimpleAlign
 --------------------------------------------------------------------------------
 import           Data.Data                       (Data)
 import           Data.Maybe                      (maybeToList)
-import qualified Language.Haskell.Exts.Annotated as H
+import qualified Language.Haskell.Exts           as H
 
 
 --------------------------------------------------------------------------------

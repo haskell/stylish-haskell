@@ -17,13 +17,14 @@ module Language.Haskell.Stylish.Util
 
 
 --------------------------------------------------------------------------------
-import           Control.Arrow                   ((&&&), (>>>))
-import           Data.Char                       (isAlpha)
-import           Data.Data                       (Data)
-import qualified Data.Generics                   as G
-import           Data.Maybe                      (fromMaybe, listToMaybe, maybeToList)
-import           Data.Typeable                   (cast)
-import qualified Language.Haskell.Exts.Annotated as H
+import           Control.Arrow                 ((&&&), (>>>))
+import           Data.Char                     (isAlpha)
+import           Data.Data                     (Data)
+import qualified Data.Generics                 as G
+import           Data.Maybe                    (fromMaybe, listToMaybe,
+                                                maybeToList)
+import           Data.Typeable                 (cast)
+import qualified Language.Haskell.Exts         as H
 
 
 --------------------------------------------------------------------------------
@@ -112,17 +113,17 @@ withHead f (x : xs) = f x : xs
 --------------------------------------------------------------------------------
 withLast :: (a -> a) -> [a] -> [a]
 withLast _ []       = []
-withLast f [x] = [f x]
+withLast f [x]      = [f x]
 withLast f (x : xs) = x : withLast f xs
 
 
 --------------------------------------------------------------------------------
 withInit :: (a -> a) -> [a] -> [a]
 withInit _ []       = []
-withInit _ [x] = [x]
+withInit _ [x]      = [x]
 withInit f (x : xs) = f x : withInit f xs
 
 --------------------------------------------------------------------------------
 withTail :: (a -> a) -> [a] -> [a]
-withTail _ [] = []
+withTail _ []       = []
 withTail f (x : xs) = x : map f xs
