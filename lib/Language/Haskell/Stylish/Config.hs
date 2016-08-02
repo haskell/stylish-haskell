@@ -187,6 +187,8 @@ parseImports config o = Imports.step
         <*> (o A..:? "long_list_align"
             >>= parseEnum longListAligns Imports.Inline)
         -- Note that padding has to be at least 1. Default is 4.
+        <*> (o A..:? "empty_list_align"
+            >>= parseEnum emptyListAligns Imports.Inherit)
         <*> (maybe 4 (max 1) <$> o A..:? "list_padding")
         <*> o A..:? "separate_lists" A..!= True)
   where
@@ -208,6 +210,11 @@ parseImports config o = Imports.step
         , ("new_line",           Imports.InlineWithBreak)
         , ("new_line_multiline", Imports.InlineToMultiline)
         , ("multiline",          Imports.Multiline)
+        ]
+
+    emptyListAligns =
+        [ ("inherit", Imports.Inherit)
+        , ("right_after", Imports.RightAfter)
         ]
 
 

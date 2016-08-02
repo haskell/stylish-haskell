@@ -5,12 +5,14 @@ module Language.Haskell.Stylish.Step.Imports
     , ImportAlign (..)
     , ListAlign (..)
     , LongListAlign (..)
+    , EmptyListAlign (..)
     , step
     ) where
 
 
 --------------------------------------------------------------------------------
 import           Control.Arrow                   ((&&&))
+import           Control.Monad                   (void)
 import           Data.Char                       (toLower)
 import           Data.List                       (intercalate, sortBy)
 import           Data.Maybe                      (isJust, maybeToList)
@@ -26,11 +28,12 @@ import           Language.Haskell.Stylish.Util
 
 --------------------------------------------------------------------------------
 data Align = Align
-    { importAlign   :: ImportAlign
-    , listAlign     :: ListAlign
-    , longListAlign :: LongListAlign
-    , listPadding   :: Int
-    , separateLists :: Bool
+    { importAlign    :: ImportAlign
+    , listAlign      :: ListAlign
+    , longListAlign  :: LongListAlign
+    , emptyListAlign :: EmptyListAlign
+    , listPadding    :: Int
+    , separateLists  :: Bool
     }
     deriving (Eq, Show)
 
@@ -45,6 +48,11 @@ data ListAlign
     = NewLine
     | WithAlias
     | AfterAlias
+    deriving (Eq, Show)
+
+data EmptyListAlign
+    = Inherit
+    | RightAfter
     deriving (Eq, Show)
 
 data LongListAlign
@@ -136,19 +144,26 @@ prettyImportSpec separate = prettyImportSpec'
 --------------------------------------------------------------------------------
 prettyImport :: (Ord l, Show l) =>
     Int -> Align -> Bool -> Bool -> Int -> H.ImportDecl l -> [String]
-prettyImport columns Align{..} padQualified padName longest imp =
-    case longListAlign of
+prettyImport columns Align{..} padQualified padName longest imp
+    | (void `fmap` H.importSpecs imp) == emptyImportSpec = emptyWrap
+    | otherwise = case longListAlign of
         Inline            -> inlineWrap
         InlineWithBreak   -> longListWrapper inlineWrap inlineWithBreakWrap
         InlineToMultiline -> longListWrapper inlineWrap inlineToMultilineWrap
         Multiline         -> longListWrapper inlineWrap multilineWrap
   where
+    emptyImportSpec = Just (H.ImportSpecList () False [])
+
     longListWrapper shortWrap longWrap
         | listAlign == NewLine
         || length shortWrap > 1
         || length (head shortWrap) > columns
             = longWrap
         | otherwise = shortWrap
+
+    emptyWrap = case emptyListAlign of
+        Inherit -> inlineWrap
+        RightAfter -> [paddedNoSpecBase ++ " ()"]
 
     inlineWrap = inlineWrapper
         $ mapSpecs
