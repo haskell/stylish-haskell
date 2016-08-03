@@ -102,11 +102,18 @@ VIM integration
 ---------------
 
 Since it works as a filter it is pretty easy to integrate this with VIM.
-Just call
+
+You can call
 
     :%!stylish-haskell
 
-or add a keybinding for it.
+and add a keybinding for it.
+
+Or you can define `formatprg`
+
+    :set formatprg=stylish-haskell
+
+and then use `gq`.
 
 There is also the [vim-stylish-haskell] plugin, which runs stylish-haskell
 automatically when you save a Haskell file.
