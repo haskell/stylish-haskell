@@ -189,7 +189,7 @@ parseImports config o = Imports.step
         -- Note that padding has to be at least 1. Default is 4.
         <*> (o A..:? "empty_list_align"
             >>= parseEnum emptyListAligns Imports.Inherit)
-        <*> (maybe 4 (max 1) <$> o A..:? "list_padding")
+        <*> o A..:? "list_padding" A..!= Imports.LPConstant 4
         <*> o A..:? "separate_lists" A..!= True)
   where
     aligns =
@@ -216,7 +216,6 @@ parseImports config o = Imports.step
         [ ("inherit", Imports.Inherit)
         , ("right_after", Imports.RightAfter)
         ]
-
 
 --------------------------------------------------------------------------------
 parseLanguagePragmas :: Config -> A.Object -> A.Parser Step
