@@ -47,7 +47,7 @@ Library
     Paths_stylish_haskell
 
   Build-depends:
-    aeson            >= 0.6  && < 0.12,
+    aeson            >= 0.6  && < 1.1,
     base             >= 4.8  && < 5,
     bytestring       >= 0.9  && < 0.11,
     containers       >= 0.3  && < 0.6,
@@ -68,7 +68,7 @@ Executable stylish-haskell
     strict               >= 0.3  && < 0.4,
     optparse-applicative >= 0.12  && < 0.13,
     -- Copied from regular dependencies...
-    aeson            >= 0.6  && < 0.12,
+    aeson            >= 0.6  && < 1.1,
     base             >= 4.8  && < 5,
     bytestring       >= 0.9  && < 0.11,
     containers       >= 0.3  && < 0.6,
@@ -114,7 +114,7 @@ Test-suite stylish-haskell-tests
     test-framework       >= 0.4 && < 0.9,
     test-framework-hunit >= 0.2 && < 0.4,
     -- Copied from regular dependencies...
-    aeson            >= 0.6  && < 0.12,
+    aeson            >= 0.6  && < 1.1,
     base             >= 4.8  && < 5,
     bytestring       >= 0.9  && < 0.11,
     containers       >= 0.3  && < 0.6,
