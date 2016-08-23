@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings #-}
 --------------------------------------------------------------------------------
 module Language.Haskell.Stylish.Step.Imports
     ( Align (..)
@@ -6,6 +7,7 @@ module Language.Haskell.Stylish.Step.Imports
     , ListAlign (..)
     , LongListAlign (..)
     , EmptyListAlign (..)
+    , ListPadding (..)
     , step
     ) where
 
@@ -18,6 +20,8 @@ import           Data.List                       (intercalate, sortBy)
 import           Data.Maybe                      (isJust, maybeToList)
 import           Data.Ord                        (comparing)
 import qualified Language.Haskell.Exts           as H
+import qualified Data.Aeson                      as A
+import qualified Data.Aeson.Types                as A
 
 
 --------------------------------------------------------------------------------
@@ -32,9 +36,14 @@ data Align = Align
     , listAlign      :: ListAlign
     , longListAlign  :: LongListAlign
     , emptyListAlign :: EmptyListAlign
-    , listPadding    :: Int
+    , listPadding    :: ListPadding
     , separateLists  :: Bool
     }
+    deriving (Eq, Show)
+
+data ListPadding
+    = LPConstant Int
+    | LPModuleName
     deriving (Eq, Show)
 
 data ImportAlign
@@ -153,6 +162,11 @@ prettyImport columns Align{..} padQualified padName longest imp
         Multiline         -> longListWrapper inlineWrap multilineWrap
   where
     emptyImportSpec = Just (H.ImportSpecList () False [])
+    -- "import" + space + qualifiedLength has space in it.
+    listPadding' = listPaddingValue (6 + 1 + qualifiedLength) listPadding
+      where
+        qualifiedLength =
+            if null qualified then 0 else 1 + sum (map length qualified)
 
     longListWrapper shortWrap longWrap
         | listAlign == NewLine
@@ -172,13 +186,13 @@ prettyImport columns Align{..} padQualified padName longest imp
         . withLast (++ ")")
 
     inlineWrapper = case listAlign of
-        NewLine    -> (paddedNoSpecBase :) . wrapRest columns listPadding
+        NewLine    -> (paddedNoSpecBase :) . wrapRest columns listPadding'
         WithAlias  -> wrap columns paddedBase (inlineBaseLength + 1)
         -- Add 1 extra space to ensure same padding as in original code.
         AfterAlias -> withTail (' ' :)
             . wrap columns paddedBase (afterAliasBaseLength + 1)
 
-    inlineWithBreakWrap = paddedNoSpecBase : wrapRest columns listPadding
+    inlineWithBreakWrap = paddedNoSpecBase : wrapRest columns listPadding'
         ( mapSpecs
         $ withInit (++ ",")
         . withHead ("(" ++)
@@ -191,7 +205,7 @@ prettyImport columns Align{..} padQualified padName longest imp
         | otherwise = inlineWithBreakWrap
 
     -- 'wrapRest 0' ensures that every item of spec list is on new line.
-    multilineWrap = paddedNoSpecBase : wrapRest 0 listPadding
+    multilineWrap = paddedNoSpecBase : wrapRest 0 listPadding'
         ( mapSpecs
           ( withHead ("( " ++)
           . withTail (", " ++))
@@ -288,3 +302,17 @@ step' columns align ls (module', _) = applyChanges
     fileAlign = case importAlign align of
         File -> any H.importQualified imps
         _    -> False
+
+--------------------------------------------------------------------------------
+listPaddingValue :: Int -> ListPadding -> Int
+listPaddingValue _ (LPConstant n) = n
+listPaddingValue n LPModuleName   = n
+
+--------------------------------------------------------------------------------
+
+instance A.FromJSON ListPadding where
+    parseJSON (A.String "module_name") = return LPModuleName
+    parseJSON (A.Number n) | n' >= 1   = return $ LPConstant n'
+      where
+        n' = truncate n
+    parseJSON v                        = A.typeMismatch "'module_name' or >=1 number" v
