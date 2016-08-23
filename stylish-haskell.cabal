@@ -25,9 +25,17 @@ Extra-source-files:
   CHANGELOG
 
 Library
-  Exposed-modules: Language.Haskell.Stylish
   Hs-source-dirs: lib
   Ghc-options:    -Wall
+
+  Exposed-modules:
+    Language.Haskell.Stylish
+    Language.Haskell.Stylish.Step.Imports
+    Language.Haskell.Stylish.Step.LanguagePragmas
+    Language.Haskell.Stylish.Step.SimpleAlign
+    Language.Haskell.Stylish.Step.Tabs
+    Language.Haskell.Stylish.Step.TrailingWhitespace
+    Language.Haskell.Stylish.Step.UnicodeSyntax
 
   Other-modules:
     Language.Haskell.Stylish.Align
@@ -36,12 +44,6 @@ Library
     Language.Haskell.Stylish.Editor
     Language.Haskell.Stylish.Parse
     Language.Haskell.Stylish.Step
-    Language.Haskell.Stylish.Step.SimpleAlign
-    Language.Haskell.Stylish.Step.Imports
-    Language.Haskell.Stylish.Step.LanguagePragmas
-    Language.Haskell.Stylish.Step.Tabs
-    Language.Haskell.Stylish.Step.TrailingWhitespace
-    Language.Haskell.Stylish.Step.UnicodeSyntax
     Language.Haskell.Stylish.Util
     Language.Haskell.Stylish.Verbose
     Paths_stylish_haskell

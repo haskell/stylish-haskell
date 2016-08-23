@@ -9,9 +9,6 @@ module Language.Haskell.Stylish
     , tabs
     , trailingWhitespace
     , unicodeSyntax
-      -- ** Data types
-    , Imports.Align (..)
-    , LanguagePragmas.Style (..)
       -- ** Helpers
     , stepName
       -- * Config
@@ -51,7 +48,7 @@ simpleAlign = SimpleAlign.step
 
 --------------------------------------------------------------------------------
 imports :: Int -- ^ columns
-        -> Imports.Align
+        -> Imports.Options
         -> Step
 imports = Imports.step
 

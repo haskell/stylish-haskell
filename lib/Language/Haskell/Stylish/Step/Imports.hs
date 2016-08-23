@@ -2,7 +2,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 --------------------------------------------------------------------------------
 module Language.Haskell.Stylish.Step.Imports
-    ( Align (..)
+    ( Options (..)
+    , defaultOptions
     , ImportAlign (..)
     , ListAlign (..)
     , LongListAlign (..)
@@ -31,15 +32,24 @@ import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
 
 --------------------------------------------------------------------------------
-data Align = Align
+data Options = Options
     { importAlign    :: ImportAlign
     , listAlign      :: ListAlign
     , longListAlign  :: LongListAlign
     , emptyListAlign :: EmptyListAlign
     , listPadding    :: ListPadding
     , separateLists  :: Bool
+    } deriving (Eq, Show)
+
+defaultOptions :: Options
+defaultOptions = Options
+    { importAlign    = Global
+    , listAlign      = AfterAlias
+    , longListAlign  = Inline
+    , emptyListAlign = Inherit
+    , listPadding    = LPConstant 4
+    , separateLists  = True
     }
-    deriving (Eq, Show)
 
 data ListPadding
     = LPConstant Int
@@ -152,8 +162,8 @@ prettyImportSpec separate = prettyImportSpec'
 
 --------------------------------------------------------------------------------
 prettyImport :: (Ord l, Show l) =>
-    Int -> Align -> Bool -> Bool -> Int -> H.ImportDecl l -> [String]
-prettyImport columns Align{..} padQualified padName longest imp
+    Int -> Options -> Bool -> Bool -> Int -> H.ImportDecl l -> [String]
+prettyImport columns Options{..} padQualified padName longest imp
     | (void `fmap` H.importSpecs imp) == emptyImportSpec = emptyWrap
     | otherwise = case longListAlign of
         Inline            -> inlineWrap
@@ -259,7 +269,7 @@ prettyImport columns Align{..} padQualified padName longest imp
 
 
 --------------------------------------------------------------------------------
-prettyImportGroup :: Int -> Align -> Bool -> Int
+prettyImportGroup :: Int -> Options -> Bool -> Int
                   -> [H.ImportDecl LineBlock]
                   -> Lines
 prettyImportGroup columns align fileAlign longest imps =
@@ -282,12 +292,12 @@ prettyImportGroup columns align fileAlign longest imps =
 
 
 --------------------------------------------------------------------------------
-step :: Int -> Align -> Step
+step :: Int -> Options -> Step
 step columns = makeStep "Imports" . step' columns
 
 
 --------------------------------------------------------------------------------
-step' :: Int -> Align -> Lines -> Module -> Lines
+step' :: Int -> Options -> Lines -> Module -> Lines
 step' columns align ls (module', _) = applyChanges
     [ change block $ const $
         prettyImportGroup columns align fileAlign longest importGroup
