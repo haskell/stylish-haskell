@@ -1,5 +1,12 @@
 # CHANGELOG
 
+- 0.6.3.0
+    * Bump `optparse-applicative` to 0.13.0.0
+    * Export Import options & add a default
+    * Add `list_padding: module_name` option (by Oleg Grenrus)
+    * Bump `aeson` to 1.0 (by Oleg Grenrus)
+    * Special setting for empty import lists (by Oleg Grenrus)
+
 - 0.6.2.0
     * Bump `haskell-src-exts` to 1.18
 
