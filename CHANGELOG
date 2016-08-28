@@ -1,5 +1,9 @@
 # CHANGELOG
 
+- 0.6.4.0
+    * Remove `XmlSyntax` from whitelisted language extensions, since it was
+      causing parsing errors
+
 - 0.6.3.0
     * Bump `optparse-applicative` to 0.13.0.0
     * Export Import options & add a default
