@@ -29,7 +29,6 @@ defaultExtensions = map H.EnableExtension
   , H.PatternGuards
   , H.StandaloneDeriving
   , H.UnicodeSyntax
-  , H.XmlSyntax
   ]
 
 

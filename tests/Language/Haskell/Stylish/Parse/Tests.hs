@@ -26,6 +26,7 @@ tests = testGroup "Language.Haskell.Stylish.Parse"
     , testCase "KindSignatures extension"    testKindSignatures
     , testCase "StandalonDeriving extension" testStandaloneDeriving
     , testCase "UnicodeSyntax extension"     testUnicodeSyntax
+    , testCase "XmlSyntax regression"        testXmlSyntaxRegression
     ]
 
 --------------------------------------------------------------------------------
@@ -112,6 +113,11 @@ testUnicodeSyntax = assert $ isRight $ parseModule [] Nothing $ unlines
   [ "module Main where"
   , "monadic ∷ (Monad m) ⇒ m a → m a"
   , "monadic = id"
+  ]
+
+testXmlSyntaxRegression :: Assertion
+testXmlSyntaxRegression = assert $ isRight $ parseModule [] Nothing $ unlines
+  [ "smaller a b = a <b"
   ]
 
 --------------------------------------------------------------------------------
