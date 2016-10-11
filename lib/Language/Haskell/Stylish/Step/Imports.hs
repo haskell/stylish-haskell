@@ -17,8 +17,9 @@ module Language.Haskell.Stylish.Step.Imports
 import           Control.Arrow                   ((&&&))
 import           Control.Monad                   (void)
 import           Data.Char                       (toLower)
-import           Data.List                       (intercalate, sortBy)
+import           Data.List                       (elemIndex, intercalate, sortBy)
 import           Data.Maybe                      (isJust, maybeToList)
+import           Data.Monoid                     ((<>))
 import           Data.Ord                        (comparing)
 import qualified Language.Haskell.Exts           as H
 import qualified Data.Aeson                      as A
@@ -39,6 +40,7 @@ data Options = Options
     , emptyListAlign :: EmptyListAlign
     , listPadding    :: ListPadding
     , separateLists  :: Bool
+    , pinnedModules  :: [String]
     } deriving (Eq, Show)
 
 defaultOptions :: Options
@@ -49,6 +51,7 @@ defaultOptions = Options
     , emptyListAlign = Inherit
     , listPadding    = LPConstant 4
     , separateLists  = True
+    , pinnedModules  = []
     }
 
 data ListPadding
@@ -99,9 +102,16 @@ longestImport = maximum . map (length . importName)
 
 --------------------------------------------------------------------------------
 -- | Compare imports for ordering
-compareImports :: H.ImportDecl l -> H.ImportDecl l -> Ordering
-compareImports = comparing (map toLower . importName &&& H.importQualified)
+compareImports :: [String] -> H.ImportDecl l -> H.ImportDecl l -> Ordering
+compareImports modules = importance <> alphabetic
+  where
+    importance = comparing (toImp . importName)
+    alphabetic = comparing (map toLower . importName &&& H.importQualified)
+    toImp n = maybe PosUnknown Pos $ elemIndex n modules
 
+-- Helper type for above
+data Pos = Pos Int | PosUnknown
+    deriving (Eq, Ord)
 
 --------------------------------------------------------------------------------
 -- | The implementation is a bit hacky to get proper sorting for input specs:
@@ -274,7 +284,7 @@ prettyImportGroup :: Int -> Options -> Bool -> Int
                   -> Lines
 prettyImportGroup columns align fileAlign longest imps =
     concatMap (prettyImport columns align padQual padName longest') $
-    sortBy compareImports imps
+    sortBy (compareImports $ pinnedModules align) imps
   where
     align' = importAlign align
 

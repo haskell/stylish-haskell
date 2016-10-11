@@ -46,6 +46,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 19b" case19b
     , testCase "case 19d" case19c
     , testCase "case 19d" case19d
+    , testCase "case 20" case20
     ]
 
 
@@ -185,7 +186,7 @@ case07 = expected @=? testStep (step 80 $ fromImportAlign File) input'
 --------------------------------------------------------------------------------
 case08 :: Assertion
 case08 = expected
-    @=? testStep (step 80 $ Options Global WithAlias Inline Inherit (LPConstant 4) True) input
+    @=? testStep (step 80 $ Options Global WithAlias Inline Inherit (LPConstant 4) True []) input
   where
     expected = unlines
         [ "module Herp where"
@@ -208,7 +209,7 @@ case08 = expected
 --------------------------------------------------------------------------------
 case09 :: Assertion
 case09 = expected
-    @=? testStep (step 80 $ Options Global WithAlias Multiline Inherit (LPConstant 4) True) input
+    @=? testStep (step 80 $ Options Global WithAlias Multiline Inherit (LPConstant 4) True []) input
   where
     expected = unlines
         [ "module Herp where"
@@ -242,7 +243,7 @@ case09 = expected
 --------------------------------------------------------------------------------
 case10 :: Assertion
 case10 = expected
-    @=? testStep (step 40 $ Options Group WithAlias Multiline Inherit (LPConstant 4) True) input
+    @=? testStep (step 40 $ Options Group WithAlias Multiline Inherit (LPConstant 4) True []) input
   where
     expected = unlines
         [ "module Herp where"
@@ -281,7 +282,7 @@ case10 = expected
 --------------------------------------------------------------------------------
 case11 :: Assertion
 case11 = expected
-    @=? testStep (step 80 $ Options Group NewLine Inline Inherit (LPConstant 4) True) input
+    @=? testStep (step 80 $ Options Group NewLine Inline Inherit (LPConstant 4) True []) input
   where
     expected = unlines
         [ "module Herp where"
@@ -309,7 +310,7 @@ case11 = expected
 --------------------------------------------------------------------------------
 case12 :: Assertion
 case12 = expected
-    @=? testStep (step 80 $ Options Group NewLine Inline Inherit (LPConstant 2) True) input'
+    @=? testStep (step 80 $ Options Group NewLine Inline Inherit (LPConstant 2) True []) input'
   where
     input' = unlines
         [ "import Data.List (map)"
@@ -324,7 +325,7 @@ case12 = expected
 --------------------------------------------------------------------------------
 case13 :: Assertion
 case13 = expected
-    @=? testStep (step 80 $ Options None WithAlias InlineWithBreak Inherit (LPConstant 4) True) input'
+    @=? testStep (step 80 $ Options None WithAlias InlineWithBreak Inherit (LPConstant 4) True []) input'
   where
     input' = unlines
         [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
@@ -342,7 +343,7 @@ case13 = expected
 case14 :: Assertion
 case14 = expected
     @=? testStep
-      (step 80 $ Options None WithAlias InlineWithBreak Inherit (LPConstant 10) True) expected
+      (step 80 $ Options None WithAlias InlineWithBreak Inherit (LPConstant 10) True []) expected
   where
     expected = unlines
         [ "import qualified Data.List as List (concat, map, null, reverse, tail, (++))"
@@ -352,7 +353,7 @@ case14 = expected
 --------------------------------------------------------------------------------
 case15 :: Assertion
 case15 = expected
-    @=? testStep (step 80 $ Options None AfterAlias Multiline Inherit (LPConstant 4) True) input'
+    @=? testStep (step 80 $ Options None AfterAlias Multiline Inherit (LPConstant 4) True []) input'
   where
     expected = unlines
         [ "import Data.Acid (AcidState)"
@@ -378,7 +379,7 @@ case15 = expected
 --------------------------------------------------------------------------------
 case16 :: Assertion
 case16 = expected
-    @=? testStep (step 80 $ Options None AfterAlias Multiline Inherit (LPConstant 4) False) input'
+    @=? testStep (step 80 $ Options None AfterAlias Multiline Inherit (LPConstant 4) False []) input'
   where
     expected = unlines
         [ "import Data.Acid (AcidState)"
@@ -402,7 +403,7 @@ case16 = expected
 --------------------------------------------------------------------------------
 case17 :: Assertion
 case17 = expected
-    @=? testStep (step 80 $ Options None AfterAlias Multiline Inherit (LPConstant 4) True) input'
+    @=? testStep (step 80 $ Options None AfterAlias Multiline Inherit (LPConstant 4) True []) input'
   where
     expected = unlines
         [ "import Control.Applicative (Applicative (pure, (<*>)))"
@@ -420,7 +421,7 @@ case17 = expected
 --------------------------------------------------------------------------------
 case18 :: Assertion
 case18 = expected @=? testStep
-    (step 40 $ Options None AfterAlias InlineToMultiline Inherit (LPConstant 4) True) input'
+    (step 40 $ Options None AfterAlias InlineToMultiline Inherit (LPConstant 4) True []) input'
   where
     expected = unlines
            ----------------------------------------
@@ -447,7 +448,7 @@ case18 = expected @=? testStep
 --------------------------------------------------------------------------------
 case19 :: Assertion
 case19 = expected @=? testStep
-    (step 40 $ Options Global NewLine InlineWithBreak RightAfter (LPConstant 17) True) case19input
+    (step 40 $ Options Global NewLine InlineWithBreak RightAfter (LPConstant 17) True []) case19input
   where
     expected = unlines
            ----------------------------------------
@@ -462,7 +463,7 @@ case19 = expected @=? testStep
 
 case19b :: Assertion
 case19b = expected @=? testStep
-    (step 40 $ Options File NewLine InlineWithBreak RightAfter (LPConstant 17) True) case19input
+    (step 40 $ Options File NewLine InlineWithBreak RightAfter (LPConstant 17) True []) case19input
   where
     expected = unlines
            ----------------------------------------
@@ -477,7 +478,7 @@ case19b = expected @=? testStep
 
 case19c :: Assertion
 case19c = expected @=? testStep
-    (step 40 $ Options File NewLine InlineWithBreak RightAfter LPModuleName True) case19input
+    (step 40 $ Options File NewLine InlineWithBreak RightAfter LPModuleName True []) case19input
   where
     expected = unlines
            ----------------------------------------
@@ -492,7 +493,7 @@ case19c = expected @=? testStep
 
 case19d :: Assertion
 case19d = expected @=? testStep
-    (step 40 $ Options Global NewLine InlineWithBreak RightAfter LPModuleName True) case19input
+    (step 40 $ Options Global NewLine InlineWithBreak RightAfter LPModuleName True []) case19input
   where
     expected = unlines
            ----------------------------------------
@@ -510,5 +511,30 @@ case19input = unlines
         [ "import Prelude.Compat hiding (foldMap)"
         , "import Prelude ()"
         , ""
+        , "import Data.List (foldl', intercalate, intersperse)"
+        ]
+
+--------------------------------------------------------------------------------
+
+-- Compare with case19d
+case20 :: Assertion
+case20 = expected @=? testStep
+    (step 40 $ Options Global NewLine InlineWithBreak RightAfter LPModuleName True ["Prelude", "Prelude.Compat"]) case20input
+  where
+    expected = unlines
+           ----------------------------------------
+        [ "import           Prelude ()"
+        , "import           Prelude.Compat hiding"
+        , "                 (foldMap)"
+        , "import           Data.List"
+        , "                 (foldl', intercalate,"
+        , "                 intersperse)"
+        ]
+
+-- In comparsion to case19input there is one block
+case20input :: String
+case20input = unlines
+        [ "import Prelude.Compat hiding (foldMap)"
+        , "import Prelude ()"
         , "import Data.List (foldl', intercalate, intersperse)"
         ]

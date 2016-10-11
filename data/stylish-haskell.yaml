@@ -126,6 +126,14 @@ steps:
       # Default: true
       separate_lists: true
 
+      # List of pinned modules which are sorted to the top,
+      # in the order specified in the list.
+      #
+      # For example if you want your (custom) Prelude import to be always on top.
+      #
+      # Default: []
+      pinned_modules: []
+
   # Language pragmas
   - language_pragmas:
       # We can generate different styles of language pragma lists.
