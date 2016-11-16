@@ -59,6 +59,7 @@ align
     :: Int                    -- ^ Max columns
     -> [Alignable H.SrcSpan]  -- ^ Alignables
     -> [Change String]        -- ^ Changes performing the alignment.
+align _ [] = []
 align maxColumns alignment
     -- Do not make any change if we would go past the maximum number of columns.
     | longestLeft + longestRight > maxColumns = []
