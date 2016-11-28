@@ -1,5 +1,9 @@
 # CHANGELOG
 
+- 0.6.5.0
+    * Fix issue with unit records (by Mizunashi Mana)
+    * Bump `HUnit` to 1.5
+
 - 0.6.4.0
     * Remove `XmlSyntax` from whitelisted language extensions, since it was
       causing parsing errors
