@@ -46,6 +46,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 19b" case19b
     , testCase "case 19d" case19c
     , testCase "case 19d" case19d
+    , testCase "case 20" case20
     ]
 
 
@@ -511,4 +512,20 @@ case19input = unlines
         , "import Prelude ()"
         , ""
         , "import Data.List (foldl', intercalate, intersperse)"
+        ]
+
+--------------------------------------------------------------------------------
+case20 :: Assertion
+case20 = expected
+    @=? testStep (step 80 defaultOptions) input'
+  where
+    expected = unlines
+        [ "import qualified Data.Map  as Map"
+        , "import           Data.Set  (empty)"
+        , "import {-# SOURCE #-} qualified Data.Text as T"
+        ]
+    input' = unlines
+        [ "import {-# SOURCE #-} qualified Data.Text as T"
+        , "import qualified   Data.Map as Map"
+        , "import Data.Set (empty)"
         ]

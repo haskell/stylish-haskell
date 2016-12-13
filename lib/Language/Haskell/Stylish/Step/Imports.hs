@@ -235,6 +235,8 @@ prettyImport columns Options{..} padQualified padName longest imp
 
     base' baseName importAs hasHiding' = unwords $ concat $ filter (not . null)
         [ ["import"]
+        , source
+        , safe
         , qualified
         , show <$> maybeToList (H.importPkg imp)
         , [baseName]
@@ -261,6 +263,14 @@ prettyImport columns Options{..} padQualified padName longest imp
         | H.importQualified imp = ["qualified"]
         | padQualified          = ["         "]
         | otherwise             = []
+
+    safe
+        | H.importSafe imp = ["safe"]
+        | otherwise        = []
+
+    source
+        | H.importSrc imp = ["{-# SOURCE #-}"]
+        | otherwise       = []
 
     mapSpecs f = case importSpecs of
         Nothing -> []     -- Import everything
