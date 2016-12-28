@@ -520,12 +520,14 @@ case20 = expected
     @=? testStep (step 80 defaultOptions) input'
   where
     expected = unlines
-        [ "import qualified Data.Map  as Map"
-        , "import           Data.Set  (empty)"
-        , "import {-# SOURCE #-} qualified Data.Text as T"
+        [ "import {-# SOURCE #-} Data.ByteString as BS"
+        , "import qualified Data.Map        as Map"
+        , "import           Data.Set        (empty)"
+        , "import {-# SOURCE #-} qualified Data.Text       as T"
         ]
     input' = unlines
-        [ "import {-# SOURCE #-} qualified Data.Text as T"
+        [ "import {-# SOURCE #-}    Data.ByteString as BS"
+        , "import {-# SOURCE #-} qualified Data.Text as T"
         , "import qualified   Data.Map as Map"
         , "import Data.Set (empty)"
         ]

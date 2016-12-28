@@ -261,7 +261,12 @@ prettyImport columns Options{..} padQualified padName longest imp
 
     qualified
         | H.importQualified imp = ["qualified"]
-        | padQualified          = ["         "]
+        | padQualified          =
+              if H.importSrc imp
+                  then []
+                  else if H.importSafe imp
+                           then ["    "]
+                           else ["         "]
         | otherwise             = []
 
     safe
