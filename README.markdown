@@ -15,7 +15,7 @@ This tool tries to help where necessary without getting in the way.
 Installation
 ------------
 
-You can install it using `cabal install stylish-haskell`.
+You can install it using `stack install stylish-haskell` or `cabal install stylish-haskell`.
 
 You can also install it using your package manager:
  * Debian 9 or later: `apt-get install stylish-haskell`
