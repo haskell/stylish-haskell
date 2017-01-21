@@ -5,3 +5,5 @@ extra-deps:
 - 'haskell-src-exts-1.18.2'
 - 'optparse-applicative-0.13.0.0'
 resolver: lts-6.10
+install-ghc: true
+system-ghc: false

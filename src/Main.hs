@@ -10,6 +10,7 @@ import           Data.Monoid              ((<>))
 import           Data.Version             (showVersion)
 import qualified Options.Applicative      as OA
 import qualified Paths_stylish_haskell
+import           System.Exit              (exitFailure)
 import qualified System.IO                as IO
 import qualified System.IO.Strict         as IO.Strict
 
@@ -117,8 +118,10 @@ file sa conf mfp = do
     let result = runSteps (configLanguageExtensions conf)
             mfp (configSteps conf) $ lines contents
     case result of
-        Left  err -> IO.hPutStrLn IO.stderr err >> write contents contents
         Right ok  -> write contents $ unlines ok
+        Left  err -> do
+            IO.hPutStrLn IO.stderr err
+            exitFailure
   where
     write old new = case mfp of
                 Nothing -> putStrNewline new
