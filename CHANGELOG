@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- 0.7.1.0
+    * Keep `safe` and `{-# SOURCE #-}` import annotations (by Moritz Drexl)
+
 - 0.7.0.0
     * If there's parse errors, show these and exit with code 1
     * Bump `aeson` to 1.1
