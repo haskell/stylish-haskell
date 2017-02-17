@@ -41,7 +41,7 @@ steps:
       # Default: global.
       align: global
 
-      # Folowing options affect only import list alignment.
+      # The following options affect only import list alignment.
       #
       # List align has following options:
       #
