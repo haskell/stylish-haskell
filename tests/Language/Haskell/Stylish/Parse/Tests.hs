@@ -27,6 +27,7 @@ tests = testGroup "Language.Haskell.Stylish.Parse"
     , testCase "StandalonDeriving extension" testStandaloneDeriving
     , testCase "UnicodeSyntax extension"     testUnicodeSyntax
     , testCase "XmlSyntax regression"        testXmlSyntaxRegression
+    , testCase "MagicHash regression"        testMagicHashRegression
     ]
 
 --------------------------------------------------------------------------------
@@ -118,6 +119,11 @@ testUnicodeSyntax = assert $ isRight $ parseModule [] Nothing $ unlines
 testXmlSyntaxRegression :: Assertion
 testXmlSyntaxRegression = assert $ isRight $ parseModule [] Nothing $ unlines
   [ "smaller a b = a <b"
+  ]
+
+testMagicHashRegression :: Assertion
+testMagicHashRegression = assert $ isRight $ parseModule [] Nothing $ unlines
+  [ "xs = \"foo\"#|1#|'a'#|bar#|Nil"
   ]
 
 --------------------------------------------------------------------------------

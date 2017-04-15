@@ -24,7 +24,6 @@ defaultExtensions = map H.EnableExtension
   [ H.GADTs
   , H.HereDocuments
   , H.KindSignatures
-  , H.MagicHash
   , H.NewQualifiedOperators
   , H.PatternGuards
   , H.StandaloneDeriving
