@@ -1,5 +1,9 @@
 # CHANGELOG
 
+- next
+    * Remove `MagicHash` from whitelisted language extensions, since it was
+      causing parsing errors
+
 - 0.7.1.0
     * Keep `safe` and `{-# SOURCE #-}` import annotations (by Moritz Drexl)
 
