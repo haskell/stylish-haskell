@@ -123,11 +123,12 @@ automatically when you save a Haskell file.
 Emacs integration
 -----------------
 
-[haskell-mode] for Emacs supports `stylish-haskell`. For configuration, see
-[Emacs/Formatting] on the HaskellWiki.
+[haskell-mode] for Emacs supports `stylish-haskell`. For configuration,
+see [the “Using external formatters” section][haskell-mode/format] of the
+haskell-mode manual.
 
 [haskell-mode]: https://github.com/haskell/haskell-mode
-[Emacs/Formatting]: http://wiki.haskell.org/Emacs/Formatting
+[haskell-mode/format]: http://haskell.github.io/haskell-mode/manual/latest/Autoformating.html
 
 Atom integration
 ----------------
