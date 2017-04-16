@@ -29,6 +29,8 @@ Features
 - Groups and wraps `{-# LANGUAGE #-}` pragmas, can remove (some) redundant
   pragmas
 - Removes trailing whitespace
+- Aligns branches in `case` and fields in records
+- Converts line endings (customizable)
 - Replaces tabs by four spaces (turned off by default)
 - Replaces some ASCII sequences by their Unicode equivalents (turned off by
   default)
