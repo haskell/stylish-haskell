@@ -3,6 +3,8 @@
 - next
     * Remove `MagicHash` from whitelisted language extensions, since it was
       causing parsing errors
+    * Don't leave a `#-}` hanging on the next line when `language_pragmas`
+      is set to `compact` and the `#-}` doesn't fit into character limit
 
 - 0.7.1.0
     * Keep `safe` and `{-# SOURCE #-}` import annotations (by Moritz Drexl)

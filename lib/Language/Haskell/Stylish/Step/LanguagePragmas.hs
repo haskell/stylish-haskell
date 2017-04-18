@@ -56,7 +56,7 @@ verticalPragmas longest align pragmas' =
 --------------------------------------------------------------------------------
 compactPragmas :: Int -> [String] -> Lines
 compactPragmas columns pragmas' = wrap columns "{-# LANGUAGE" 13 $
-    map (++ ",") (init pragmas') ++ [last pragmas', "#-}"]
+    map (++ ",") (init pragmas') ++ [last pragmas' ++ " #-}"]
 
 
 --------------------------------------------------------------------------------

@@ -26,6 +26,8 @@ tests = testGroup "Language.Haskell.Stylish.Step.LanguagePragmas.Tests"
     , testCase "case 06" case06
     , testCase "case 07" case07
     , testCase "case 08" case08
+    , testCase "case 09" case09
+    , testCase "case 10" case10
     ]
 
 
@@ -166,4 +168,32 @@ case08 = expected @=? testStep (step 80 CompactLine False False) input
         [ "{-# LANGUAGE DeriveDataTypeable, StandaloneDeriving, " ++
           "TemplateHaskell #-}"
         , "{-# LANGUAGE TypeOperators, ViewPatterns #-}"
+        ]
+
+
+--------------------------------------------------------------------------------
+case09 :: Assertion
+case09 = expected @=? testStep (step 80 Compact True False) input
+  where
+    input = unlines
+        [ "{-# LANGUAGE DefaultSignatures, FlexibleInstances, LambdaCase, " ++
+          "TypeApplications"
+        , "             #-}"
+        ]
+    expected = unlines
+        [ "{-# LANGUAGE DefaultSignatures, FlexibleInstances, LambdaCase,"
+        , "             TypeApplications #-}"
+        ]
+
+--------------------------------------------------------------------------------
+case10 :: Assertion
+case10 = expected @=? testStep (step 80 Compact True False) input
+  where
+    input = unlines
+        [ "{-# LANGUAGE NondecreasingIndentation, ScopedTypeVariables,"
+        , "             TypeApplications #-}"
+        ]
+    expected = unlines
+        [ "{-# LANGUAGE NondecreasingIndentation, ScopedTypeVariables, " ++
+          "TypeApplications #-}"
         ]
