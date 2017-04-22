@@ -16,10 +16,13 @@ module Language.Haskell.Stylish.Step.Imports
 --------------------------------------------------------------------------------
 import           Control.Arrow                   ((&&&))
 import           Control.Monad                   (void)
+import           Data.Monoid                     ((<>))
 import           Data.Char                       (toLower)
 import           Data.List                       (intercalate, sortBy)
 import           Data.Maybe                      (isJust, maybeToList)
 import           Data.Ord                        (comparing)
+import qualified Data.Map                        as M
+import qualified Data.Set                        as S
 import qualified Language.Haskell.Exts           as H
 import qualified Data.Aeson                      as A
 import qualified Data.Aeson.Types                as A
@@ -81,6 +84,16 @@ data LongListAlign
     | Multiline
     deriving (Eq, Show)
 
+
+--------------------------------------------------------------------------------
+
+modifyImportSpecs :: ([H.ImportSpec l] -> [H.ImportSpec l])
+                  -> H.ImportDecl l -> H.ImportDecl l
+modifyImportSpecs f imp = imp {H.importSpecs = f' <$> H.importSpecs imp}
+  where
+    f' (H.ImportSpecList l h specs) = H.ImportSpecList l h (f specs)
+
+
 --------------------------------------------------------------------------------
 imports :: H.Module l -> [H.ImportDecl l]
 imports (H.Module _ _ _ is _) = is
@@ -104,6 +117,67 @@ compareImports = comparing (map toLower . importName &&& H.importQualified)
 
 
 --------------------------------------------------------------------------------
+-- | Remove (or merge) duplicated import specs.
+--
+-- * When something is mentioned twice, it's removed: @A, A@ -> A
+-- * More general forms take priority: @A, A(..)@ -> @A(..)@
+-- * Sometimes we have to combine imports: @A(x), A(y)@ -> @A(x, y)@
+--
+-- Import specs are always sorted by subsequent steps so we don't have to care
+-- about preserving order.
+deduplicateImportSpecs :: Ord l => H.ImportDecl l -> H.ImportDecl l
+deduplicateImportSpecs =
+  modifyImportSpecs $
+    map recomposeImportSpec .
+    M.toList . M.fromListWith (<>) .
+    map decomposeImportSpec
+
+-- | What we are importing (variable, class, etc)
+data ImportEntity l
+  -- | A variable
+  = ImportVar l (H.Name l)
+  -- | Something that can be imported partially
+  | ImportClassOrData l (H.Name l)
+  -- | Something else ('H.IAbs')
+  | ImportOther l (H.Namespace l) (H.Name l)
+  deriving (Eq, Ord)
+
+-- | What we are importing from an 'ImportClassOrData'
+data ImportPortion l
+  = ImportSome [H.CName l]  -- ^ @A(x, y, z)@
+  | ImportAll               -- ^ @A(..)@
+
+instance Ord l => Monoid (ImportPortion l) where
+  mempty = ImportSome []
+  mappend (ImportSome a) (ImportSome b) = ImportSome (setUnion a b)
+  mappend _ _                           = ImportAll
+
+-- | O(n log n) union.
+setUnion :: Ord a => [a] -> [a] -> [a]
+setUnion a b = S.toList (S.fromList a `S.union` S.fromList b)
+
+decomposeImportSpec :: H.ImportSpec l -> (ImportEntity l, ImportPortion l)
+decomposeImportSpec x = case x of
+  -- I checked and it looks like namespace's 'l' is always equal to x's 'l'
+  H.IAbs l space n -> case space of
+    H.NoNamespace      _ -> (ImportClassOrData l n, ImportSome [])
+    H.TypeNamespace    _ -> (ImportOther l space n, ImportSome [])
+    H.PatternNamespace _ -> (ImportOther l space n, ImportSome [])
+  H.IVar l n             -> (ImportVar l n, ImportSome [])
+  H.IThingAll l n        -> (ImportClassOrData l n, ImportAll)
+  H.IThingWith l n names -> (ImportClassOrData l n, ImportSome names)
+
+recomposeImportSpec :: (ImportEntity l, ImportPortion l) -> H.ImportSpec l
+recomposeImportSpec (e, p) = case e of
+  ImportClassOrData l n -> case p of
+    ImportSome []       -> H.IAbs l (H.NoNamespace l) n
+    ImportSome names    -> H.IThingWith l n names
+    ImportAll           -> H.IThingAll l n
+  ImportVar l n         -> H.IVar l n
+  ImportOther l space n -> H.IAbs l space n
+
+
+--------------------------------------------------------------------------------
 -- | The implementation is a bit hacky to get proper sorting for input specs:
 -- constructors first, followed by functions, and then operators.
 compareImportSpecs :: H.ImportSpec l -> H.ImportSpec l -> Ordering
@@ -119,10 +193,7 @@ compareImportSpecs = comparing key
 --------------------------------------------------------------------------------
 -- | Sort the input spec list inside an 'H.ImportDecl'
 sortImportSpecs :: H.ImportDecl l -> H.ImportDecl l
-sortImportSpecs imp = imp {H.importSpecs = sort' <$> H.importSpecs imp}
-  where
-    sort' (H.ImportSpecList l h specs) = H.ImportSpecList l h $
-        sortBy compareImportSpecs specs
+sortImportSpecs = modifyImportSpecs (sortBy compareImportSpecs)
 
 
 --------------------------------------------------------------------------------
@@ -320,7 +391,8 @@ step' columns align ls (module', _) = applyChanges
     ]
     ls
   where
-    imps    = map sortImportSpecs $ imports $ fmap linesFromSrcSpan module'
+    imps    = map (sortImportSpecs . deduplicateImportSpecs) $
+              imports $ fmap linesFromSrcSpan module'
     longest = longestImport imps
     groups  = groupAdjacent [(H.ann i, i) | i <- imps]
 

@@ -47,6 +47,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 19d" case19c
     , testCase "case 19d" case19d
     , testCase "case 20" case20
+    , testCase "case 21" case21
     ]
 
 
@@ -530,4 +531,34 @@ case20 = expected
         , "import {-# SOURCE #-} qualified Data.Text as T"
         , "import qualified   Data.Map as Map"
         , "import Data.Set (empty)"
+        ]
+
+--------------------------------------------------------------------------------
+case21 :: Assertion
+case21 = expected
+    @=? testStep (step 80 defaultOptions) input'
+  where
+    expected = unlines
+        [ "{-# LANGUAGE ExplicitNamespaces #-}"
+        , "import           X1 (A, B, C)"
+        , "import           X2 (A, B, C)"
+        , "import           X3 (A (..))"
+        , "import           X4 (A (..))"
+        , "import           X5 (A (..))"
+        , "import           X6 (A (a, b, c), B (m, n, o))"
+        , "import           X7 (a, b, c)"
+        , "import           X8 (type (+), (+))"
+        , "import           X9 hiding (x, y, z)"
+        ]
+    input' = unlines
+        [ "{-# LANGUAGE ExplicitNamespaces #-}"
+        , "import X1 (A, B, A, C, A, B, A)"
+        , "import X2 (C(), B(), A())"
+        , "import X3 (A(..))"
+        , "import X4 (A, A(..))"
+        , "import X5 (A(..), A(x))"
+        , "import X6 (A(a,b), B(m,n), A(c), B(o))"
+        , "import X7 (a, b, a, c)"
+        , "import X8 (type (+), (+))"
+        , "import X9 hiding (x, y, z, x)"
         ]

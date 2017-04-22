@@ -5,6 +5,8 @@
       causing parsing errors
     * Don't leave a `#-}` hanging on the next line when `language_pragmas`
       is set to `compact` and the `#-}` doesn't fit into character limit
+    * Deduplicate import specs (i.e. `import Foo (a, a, b)` becomes
+      `import Foo (a, b)`)
 
 - 0.7.1.0
     * Keep `safe` and `{-# SOURCE #-}` import annotations (by Moritz Drexl)
