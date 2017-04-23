@@ -104,16 +104,33 @@ imports _                     = []
 importName :: H.ImportDecl l -> String
 importName i = let (H.ModuleName _ n) = H.importModule i in n
 
+importPackage :: H.ImportDecl l -> Maybe String
+importPackage i = H.importPkg i
+
+
+--------------------------------------------------------------------------------
+-- | A "compound import name" is import's name and package (if present). For
+-- instance, if you have an import @Foo.Bar@ from package @foobar@, the full
+-- name will be @"foobar" Foo.Bar@.
+compoundImportName :: H.ImportDecl l -> String
+compoundImportName i =
+  case importPackage i of
+    Nothing  -> importName i
+    Just pkg -> show pkg ++ " " ++ importName i
+
 
 --------------------------------------------------------------------------------
 longestImport :: [H.ImportDecl l] -> Int
-longestImport = maximum . map (length . importName)
+longestImport = maximum . map (length . compoundImportName)
 
 
 --------------------------------------------------------------------------------
 -- | Compare imports for ordering
 compareImports :: H.ImportDecl l -> H.ImportDecl l -> Ordering
-compareImports = comparing (map toLower . importName &&& H.importQualified)
+compareImports =
+  comparing (map toLower . importName &&&
+             fmap (map toLower) . importPackage &&&
+             H.importQualified)
 
 
 --------------------------------------------------------------------------------
@@ -292,9 +309,9 @@ prettyImport columns Options{..} padQualified padName longest imp
           . withTail (", " ++))
         ++ [")"])
 
-    paddedBase = base $ padImport $ importName imp
+    paddedBase = base $ padImport $ compoundImportName imp
 
-    paddedNoSpecBase = base $ padImportNoSpec $ importName imp
+    paddedNoSpecBase = base $ padImportNoSpec $ compoundImportName imp
 
     padImport = if hasExtras && padName
         then padRight longest
@@ -304,12 +321,11 @@ prettyImport columns Options{..} padQualified padName longest imp
         then padRight longest
         else id
 
-    base' baseName importAs hasHiding' = unwords $ concat $ filter (not . null)
+    base' baseName importAs hasHiding' = unwords $ concat $
         [ ["import"]
         , source
         , safe
         , qualified
-        , show <$> maybeToList (H.importPkg imp)
         , [baseName]
         , importAs
         , hasHiding'
@@ -319,9 +335,10 @@ prettyImport columns Options{..} padQualified padName longest imp
         ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp]
         ["hiding" | hasHiding]
 
-    inlineBaseLength = length $ base' (padImport $ importName imp) [] []
+    inlineBaseLength = length $
+                       base' (padImport $ compoundImportName imp) [] []
 
-    afterAliasBaseLength = length $ base' (padImport $ importName imp)
+    afterAliasBaseLength = length $ base' (padImport $ compoundImportName imp)
         ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp] []
 
     (hasHiding, importSpecs) = case H.importSpecs imp of
