@@ -48,6 +48,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 19d" case19d
     , testCase "case 20" case20
     , testCase "case 21" case21
+    , testCase "case 22" case22
     ]
 
 
@@ -561,4 +562,30 @@ case21 = expected
         , "import X7 (a, b, a, c)"
         , "import X8 (type (+), (+))"
         , "import X9 hiding (x, y, z, x)"
+        ]
+
+--------------------------------------------------------------------------------
+case22 :: Assertion
+case22 = expected
+    @=? testStep (step 80 defaultOptions) input'
+  where
+    expected = unlines
+        [ "{-# LANGUAGE PackageImports #-}"
+        , "import           A"
+        , "import           \"blah\" A"
+        , "import           \"foo\" A"
+        , "import qualified \"foo\" A  as X"
+        , "import           \"foo\" B  (shortName, someLongName, someLongerName,"
+        , "                           theLongestNameYet)"
+        ]
+    input' = unlines
+        [ "{-# LANGUAGE PackageImports #-}"
+        , "import A"
+        , "import \"foo\" A"
+        , "import \"blah\" A"
+        , "import qualified \"foo\" A as X"
+        -- this import fits into 80 chats without "foo",
+        -- but doesn't fit when "foo" is included into the calculation
+        , "import \"foo\" B (someLongName, someLongerName, " ++
+          "theLongestNameYet, shortName)"
         ]
