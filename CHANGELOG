@@ -1,12 +1,18 @@
 # CHANGELOG
 
-- next
+- 0.8.0.0
     * Remove `MagicHash` from whitelisted language extensions, since it was
-      causing parsing errors
+      causing parsing errors (by Artyom Kazak)
     * Don't leave a `#-}` hanging on the next line when `language_pragmas`
       is set to `compact` and the `#-}` doesn't fit into character limit
+      (by Artyom Kazak)
     * Deduplicate import specs (i.e. `import Foo (a, a, b)` becomes
-      `import Foo (a, b)`)
+      `import Foo (a, b)`) (by Artyom Kazak)
+    * Take package imports into account when prettifying imports
+      (by Artyom Kazak)
+    * Bump `aeson` to 1.2
+    * Bump `syb` to 0.7
+    * Bump `HUnit` to 1.6
 
 - 0.7.1.0
     * Keep `safe` and `{-# SOURCE #-}` import annotations (by Moritz Drexl)
