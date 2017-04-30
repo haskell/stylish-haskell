@@ -73,12 +73,12 @@ defaultConfigFilePath = getDataFileName "data/stylish-haskell.yaml"
 configFilePath :: Verbose -> Maybe FilePath -> IO FilePath
 configFilePath _       (Just userSpecified) = return userSpecified
 configFilePath verbose Nothing              = do
-    current  <- getCurrentDirectory
-    home     <- getHomeDirectory
-    def      <- defaultConfigFilePath
-    mbConfig <- search $
+    current     <- getCurrentDirectory
+    configPath  <- getXdgDirectory XdgConfig "stylish-haskell"
+    def         <- defaultConfigFilePath
+    mbConfig    <- search $
         [d </> configFileName | d <- ancestors current] ++
-        [home </> configFileName, def]
+        [configPath </> "config.yaml", def]
 
     case mbConfig of
         Just config -> return config
