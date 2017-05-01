@@ -95,8 +95,10 @@ following order:
    settings)
 3. `.stylish-haskell.yaml` in the nearest ancestor directory (useful for
    per-project settings)
-4. `config.yaml` in the [configuration directory][xdgconfig]
-   of your platform (useful for user-wide settings)
+4. `stylish-haskell/config.yaml` in the platform’s configuration directory
+   (on Windows, it is %APPDATA%, elsewhere it defaults to `~/.config` and
+   can be overridden by the `XDG_CONFIG_HOME` environment variable;
+   useful for user-wide settings)
 5. `.stylish-haskell.yaml` in your home directory (useful for user-wide
    settings)
 6. The default settings.
@@ -104,8 +106,6 @@ following order:
 Use `stylish-haskell --defaults > .stylish-haskell.yaml` to dump a
 well-documented default configuration to a file, this way you can get started
 quickly.
-
-[xdgconfig]: https://hackage.haskell.org/package/directory-1.2.3.0/docs/System-Directory.html#v:XdgConfig
 
 VIM integration
 ---------------
