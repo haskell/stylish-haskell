@@ -95,9 +95,11 @@ following order:
    settings)
 3. `.stylish-haskell.yaml` in the nearest ancestor directory (useful for
    per-project settings)
-4. `.stylish-haskell.yaml` in the [configuration directory][xdgconfig]
+4. `config.yaml` in the [configuration directory][xdgconfig]
    of your platform (useful for user-wide settings)
-5. The default settings.
+5. `.stylish-haskell.yaml` in your home directory (useful for user-wide
+   settings)
+6. The default settings.
 
 Use `stylish-haskell --defaults > .stylish-haskell.yaml` to dump a
 well-documented default configuration to a file, this way you can get started

@@ -75,10 +75,11 @@ configFilePath _       (Just userSpecified) = return userSpecified
 configFilePath verbose Nothing              = do
     current     <- getCurrentDirectory
     configPath  <- getXdgDirectory XdgConfig "stylish-haskell"
+    home        <- getHomeDirectory
     def         <- defaultConfigFilePath
     mbConfig    <- search $
         [d </> configFileName | d <- ancestors current] ++
-        [configPath </> "config.yaml", def]
+        [configPath </> "config.yaml", home </> configFileName, def]
 
     case mbConfig of
         Just config -> return config
