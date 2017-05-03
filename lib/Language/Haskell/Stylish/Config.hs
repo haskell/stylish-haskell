@@ -190,7 +190,8 @@ parseImports config o = Imports.step
         <*> (o A..:? "empty_list_align"
             >>= parseEnum emptyListAligns (def Imports.emptyListAlign))
         <*> o A..:? "list_padding" A..!= (def Imports.listPadding)
-        <*> o A..:? "separate_lists" A..!= (def Imports.separateLists))
+        <*> o A..:? "separate_lists" A..!= (def Imports.separateLists)
+        <*> o A..:? "space_surround" A..!= (def Imports.spaceSurround))
   where
     def f = f Imports.defaultOptions
 

@@ -42,6 +42,7 @@ data Options = Options
     , emptyListAlign :: EmptyListAlign
     , listPadding    :: ListPadding
     , separateLists  :: Bool
+    , spaceSurround  :: Bool
     } deriving (Eq, Show)
 
 defaultOptions :: Options
@@ -52,6 +53,7 @@ defaultOptions = Options
     , emptyListAlign = Inherit
     , listPadding    = LPConstant 4
     , separateLists  = True
+    , spaceSurround  = False
     }
 
 data ListPadding
@@ -280,8 +282,8 @@ prettyImport columns Options{..} padQualified padName longest imp
     inlineWrap = inlineWrapper
         $ mapSpecs
         $ withInit (++ ",")
-        . withHead ("(" ++)
-        . withLast (++ ")")
+        . withHead (("(" ++ maybeSpace) ++)
+        . withLast (++ (maybeSpace ++ ")"))
 
     inlineWrapper = case listAlign of
         NewLine    -> (paddedNoSpecBase :) . wrapRest columns listPadding'
@@ -369,6 +371,10 @@ prettyImport columns Options{..} padQualified padName longest imp
         Nothing -> []     -- Import everything
         Just [] -> ["()"] -- Instance only imports
         Just is -> f $ map (prettyImportSpec separateLists) is
+
+    maybeSpace = case spaceSurround of
+        True -> " "
+        False -> ""
 
 
 --------------------------------------------------------------------------------
