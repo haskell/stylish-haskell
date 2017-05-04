@@ -289,14 +289,14 @@ prettyImport columns Options{..} padQualified padName longest imp
         NewLine    -> (paddedNoSpecBase :) . wrapRest columns listPadding'
         WithAlias  -> wrap columns paddedBase (inlineBaseLength + 1)
         -- Add 1 extra space to ensure same padding as in original code.
-        AfterAlias -> withTail (' ' :)
+        AfterAlias -> withTail ((' ' : maybeSpace) ++)
             . wrap columns paddedBase (afterAliasBaseLength + 1)
 
     inlineWithBreakWrap = paddedNoSpecBase : wrapRest columns listPadding'
         ( mapSpecs
         $ withInit (++ ",")
-        . withHead ("(" ++)
-        . withLast (++ ")"))
+        . withHead (("(" ++ maybeSpace) ++)
+        . withLast (++ (maybeSpace ++ ")")))
 
     inlineToMultilineWrap
         | length inlineWithBreakWrap > 2

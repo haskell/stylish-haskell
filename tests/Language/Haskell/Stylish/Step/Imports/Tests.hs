@@ -50,6 +50,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 21" case21
     , testCase "case 22" case22
     , testCase "case 23" case23
+    , testCase "case 24" case24
     ]
 
 
@@ -594,7 +595,7 @@ case22 = expected
 --------------------------------------------------------------------------------
 case23 :: Assertion
 case23 = expected
-    @=? testStep (step 80 $ Options None AfterAlias Multiline Inherit (LPConstant 4) True True) input'
+    @=? testStep (step 40 $ Options None AfterAlias Inline Inherit (LPConstant 4) True True) input'
   where
     expected = unlines
         [ "import Data.Acid ( AcidState )"
@@ -602,7 +603,8 @@ case23 = expected
         , ""
         , "import Data.Monoid ( (<>) )"
         , ""
-        , "import Data.Foo ( Foo, Goo )"
+        , "import Data.ALongName.Foo ( Boo, Foo,"
+        , "                            Goo )"
         ]
 
     input' = unlines
@@ -611,5 +613,28 @@ case23 = expected
         , ""
         , "import Data.Monoid ((<>) )"
         , ""
-        , "import Data.Foo (Foo, Goo)"
+        , "import Data.ALongName.Foo (Foo, Goo, Boo)"
+        ]
+
+--------------------------------------------------------------------------------
+case24 :: Assertion
+case24 = expected
+    @=? testStep (step 40 $ Options None AfterAlias InlineWithBreak Inherit (LPConstant 4) True True) input'
+  where
+    expected = unlines
+        [ "import Data.Acid ( AcidState )"
+        , "import Data.Default.Class"
+        , "    ( Default (def) )"
+        , ""
+        , "import Data.ALongName.Foo"
+        , "    ( BooReallyLong, FooReallyLong,"
+        , "    GooReallyLong )"
+        ]
+
+    input' = unlines
+        [ "import Data.Acid (AcidState)"
+        , "import Data.Default.Class (Default(def))"
+        , ""
+        , "import Data.ALongName.Foo (FooReallyLong, " ++
+          "GooReallyLong, BooReallyLong)"
         ]
