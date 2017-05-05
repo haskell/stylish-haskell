@@ -51,6 +51,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 22" case22
     , testCase "case 23" case23
     , testCase "case 24" case24
+    , testCase "case 25" case25
     ]
 
 
@@ -637,4 +638,30 @@ case24 = expected
         , ""
         , "import Data.ALongName.Foo (FooReallyLong, " ++
           "GooReallyLong, BooReallyLong)"
+        ]
+
+--------------------------------------------------------------------------------
+case25 :: Assertion
+case25 = expected
+    @=? testStep (step 80 $ Options Global AfterAlias AlwaysMultiline Inherit (LPConstant 4) True True) input'
+  where
+    expected = unlines
+        [ "import           Data.AThing    ( short )"
+        , "import           Data.Foo       ( Foo"
+        , "                                , Goo"
+        , "                                )"
+        , ""
+        , "import           Data.LongerOne ( shortName"
+        , "                                , someLongName"
+        , "                                , someLongerName"
+        , "                                , theLongestNameYet"
+        , "                                )"
+        ]
+
+    input' = unlines
+        [ "import Data.AThing (short)"
+        , "import Data.Foo (Foo, Goo)"
+        , ""
+        , "import Data.LongerOne (someLongName, someLongerName, " ++
+          "theLongestNameYet, shortName)"
         ]
