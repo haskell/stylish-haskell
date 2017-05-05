@@ -42,6 +42,7 @@ data Options = Options
     , emptyListAlign :: EmptyListAlign
     , listPadding    :: ListPadding
     , separateLists  :: Bool
+    , spaceSurround  :: Bool
     } deriving (Eq, Show)
 
 defaultOptions :: Options
@@ -52,6 +53,7 @@ defaultOptions = Options
     , emptyListAlign = Inherit
     , listPadding    = LPConstant 4
     , separateLists  = True
+    , spaceSurround  = False
     }
 
 data ListPadding
@@ -82,6 +84,7 @@ data LongListAlign
     | InlineWithBreak
     | InlineToMultiline
     | Multiline
+    | AlwaysMultiline
     deriving (Eq, Show)
 
 
@@ -258,6 +261,7 @@ prettyImport columns Options{..} padQualified padName longest imp
         InlineWithBreak   -> longListWrapper inlineWrap inlineWithBreakWrap
         InlineToMultiline -> longListWrapper inlineWrap inlineToMultilineWrap
         Multiline         -> longListWrapper inlineWrap multilineWrap
+        AlwaysMultiline   -> twoOrMoreWrapper inlineWrap everyElementWrap
   where
     emptyImportSpec = Just (H.ImportSpecList () False [])
     -- "import" + space + qualifiedLength has space in it.
@@ -273,6 +277,10 @@ prettyImport columns Options{..} padQualified padName longest imp
             = longWrap
         | otherwise = shortWrap
 
+    twoOrMoreWrapper shortWrap longWrap
+        | maybe 0 length importSpecs > 1 = longWrap
+        | otherwise = shortWrap
+
     emptyWrap = case emptyListAlign of
         Inherit -> inlineWrap
         RightAfter -> [paddedNoSpecBase ++ " ()"]
@@ -280,21 +288,21 @@ prettyImport columns Options{..} padQualified padName longest imp
     inlineWrap = inlineWrapper
         $ mapSpecs
         $ withInit (++ ",")
-        . withHead ("(" ++)
-        . withLast (++ ")")
+        . withHead (("(" ++ maybeSpace) ++)
+        . withLast (++ (maybeSpace ++ ")"))
 
     inlineWrapper = case listAlign of
         NewLine    -> (paddedNoSpecBase :) . wrapRest columns listPadding'
         WithAlias  -> wrap columns paddedBase (inlineBaseLength + 1)
         -- Add 1 extra space to ensure same padding as in original code.
-        AfterAlias -> withTail (' ' :)
+        AfterAlias -> withTail ((' ' : maybeSpace) ++)
             . wrap columns paddedBase (afterAliasBaseLength + 1)
 
     inlineWithBreakWrap = paddedNoSpecBase : wrapRest columns listPadding'
         ( mapSpecs
         $ withInit (++ ",")
-        . withHead ("(" ++)
-        . withLast (++ ")"))
+        . withHead (("(" ++ maybeSpace) ++)
+        . withLast (++ (maybeSpace ++ ")")))
 
     inlineToMultilineWrap
         | length inlineWithBreakWrap > 2
@@ -308,6 +316,12 @@ prettyImport columns Options{..} padQualified padName longest imp
           ( withHead ("( " ++)
           . withTail (", " ++))
         ++ [")"])
+
+    everyElementWrap = mapSpecs
+        $ withHead ((paddedBase ++ " ( ") ++)
+        . withTail (indent (afterAliasBaseLength + 1))
+        . (++ [")"])
+        . withTail (", " ++)
 
     paddedBase = base $ padImport $ compoundImportName imp
 
@@ -369,6 +383,10 @@ prettyImport columns Options{..} padQualified padName longest imp
         Nothing -> []     -- Import everything
         Just [] -> ["()"] -- Instance only imports
         Just is -> f $ map (prettyImportSpec separateLists) is
+
+    maybeSpace = case spaceSurround of
+        True -> " "
+        False -> ""
 
 
 --------------------------------------------------------------------------------
