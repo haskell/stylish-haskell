@@ -213,6 +213,7 @@ parseImports config o = Imports.step
         , ("new_line",           Imports.InlineWithBreak)
         , ("new_line_multiline", Imports.InlineToMultiline)
         , ("multiline",          Imports.Multiline)
+        , ("always_multiline",   Imports.AlwaysMultiline)
         ]
 
     emptyListAligns =

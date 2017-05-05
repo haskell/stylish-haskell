@@ -84,6 +84,13 @@ steps:
       #   >     , delete
       #   >     )
       #
+      # - always_multiline: One line per import, no matter how many there are.
+      #
+      #   > import qualified Data.List     ( concat )
+      #   > import qualified Data.Map as M ( empty
+      #   >                                , singleton
+      #   >                                )
+      #
       # Default: inline
       long_list_align: inline
 

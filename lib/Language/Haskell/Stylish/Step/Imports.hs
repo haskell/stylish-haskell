@@ -84,6 +84,7 @@ data LongListAlign
     | InlineWithBreak
     | InlineToMultiline
     | Multiline
+    | AlwaysMultiline
     deriving (Eq, Show)
 
 
@@ -260,6 +261,7 @@ prettyImport columns Options{..} padQualified padName longest imp
         InlineWithBreak   -> longListWrapper inlineWrap inlineWithBreakWrap
         InlineToMultiline -> longListWrapper inlineWrap inlineToMultilineWrap
         Multiline         -> longListWrapper inlineWrap multilineWrap
+        AlwaysMultiline   -> twoOrMoreWrapper inlineWrap everyElementWrap
   where
     emptyImportSpec = Just (H.ImportSpecList () False [])
     -- "import" + space + qualifiedLength has space in it.
@@ -273,6 +275,10 @@ prettyImport columns Options{..} padQualified padName longest imp
         || length shortWrap > 1
         || length (head shortWrap) > columns
             = longWrap
+        | otherwise = shortWrap
+
+    twoOrMoreWrapper shortWrap longWrap
+        | maybe 0 length importSpecs > 1 = longWrap
         | otherwise = shortWrap
 
     emptyWrap = case emptyListAlign of
@@ -310,6 +316,12 @@ prettyImport columns Options{..} padQualified padName longest imp
           ( withHead ("( " ++)
           . withTail (", " ++))
         ++ [")"])
+
+    everyElementWrap = mapSpecs
+        $ withHead ((paddedBase ++ " ( ") ++)
+        . withTail (indent (afterAliasBaseLength + 1))
+        . (++ [")"])
+        . withTail (", " ++)
 
     paddedBase = base $ padImport $ compoundImportName imp
 
