@@ -44,43 +44,46 @@ Example
 
 Turns:
 
-    {-# LANGUAGE ViewPatterns, TemplateHaskell #-}
-    {-# LANGUAGE GeneralizedNewtypeDeriving,
-                ViewPatterns,
-        ScopedTypeVariables #-}
+```haskell
+{-# LANGUAGE ViewPatterns, TemplateHaskell #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving,
+            ViewPatterns,
+    ScopedTypeVariables #-}
 
-    module Bad where
+module Bad where
 
-    import Control.Applicative ((<$>))
-    import System.Directory (doesFileExist)
+import Control.Applicative ((<$>))
+import System.Directory (doesFileExist)
 
-    import qualified Data.Map as M
-    import      Data.Map    ((!), keys, Map)
+import qualified Data.Map as M
+import      Data.Map    ((!), keys, Map)
 
-    data Point = Point
-        { pointX, pointY :: Double
-        , pointName :: String
-        } deriving (Show)
+data Point = Point
+    { pointX, pointY :: Double
+    , pointName :: String
+    } deriving (Show)
+```
 
 into:
 
-    {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-    {-# LANGUAGE ScopedTypeVariables        #-}
-    {-# LANGUAGE TemplateHaskell            #-}
+```haskell
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE TemplateHaskell            #-}
 
-    module Bad where
+module Bad where
 
-    import           Control.Applicative ((<$>))
-    import           System.Directory    (doesFileExist)
+import           Control.Applicative ((<$>))
+import           System.Directory    (doesFileExist)
 
-    import           Data.Map            (Map, keys, (!))
-    import qualified Data.Map            as M
+import           Data.Map            (Map, keys, (!))
+import qualified Data.Map            as M
 
-    data Point = Point
-        { pointX, pointY :: Double
-        , pointName      :: String
-        } deriving (Show)
-
+data Point = Point
+    { pointX, pointY :: Double
+    , pointName      :: String
+    } deriving (Show)
+```
 Configuration
 -------------
 
