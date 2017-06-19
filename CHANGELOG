@@ -1,5 +1,10 @@
 # CHANGELOG
 
+- 0.8.1.0 (2017-06-19)
+    * Add `pad_module_names` option (by Yuriy Syrovetskiy)
+    * Add `space_surround` option to import styling (by Linus Arver)
+    * Bump `optparse-applicative` to 0.14
+
 - 0.8.0.0
     * Remove `MagicHash` from whitelisted language extensions, since it was
       causing parsing errors (by Artyom Kazak)
