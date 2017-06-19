@@ -38,6 +38,7 @@ import           Language.Haskell.Stylish.Util
 data Options = Options
     { importAlign    :: ImportAlign
     , listAlign      :: ListAlign
+    , listSameAlign  :: Bool
     , longListAlign  :: LongListAlign
     , emptyListAlign :: EmptyListAlign
     , listPadding    :: ListPadding
@@ -49,6 +50,7 @@ defaultOptions :: Options
 defaultOptions = Options
     { importAlign    = Global
     , listAlign      = AfterAlias
+    , listSameAlign  = True
     , longListAlign  = Inline
     , emptyListAlign = Inherit
     , listPadding    = LPConstant 4
@@ -386,12 +388,13 @@ prettyImportGroup columns align fileAlign longest imps =
     sortBy compareImports imps
   where
     align' = importAlign align
+    sameAlign = listSameAlign align
 
     longest' = case align' of
         Group -> longestImport imps
         _     -> longest
 
-    padName = align' /= None
+    padName = align' /= None && sameAlign
 
     padQual = case align' of
         Global -> True

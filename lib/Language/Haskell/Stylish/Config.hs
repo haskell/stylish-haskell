@@ -184,6 +184,7 @@ parseImports config o = Imports.step
     <*> (Imports.Options
         <$> (o A..:? "align" >>= parseEnum aligns (def Imports.importAlign))
         <*> (o A..:? "list_align" >>= parseEnum listAligns (def Imports.listAlign))
+        <*> (o A..:? "list_same_align" A..!= def Imports.listSameAlign)
         <*> (o A..:? "long_list_align"
             >>= parseEnum longListAligns (def Imports.longListAlign))
         -- Note that padding has to be at least 1. Default is 4.
