@@ -1,5 +1,5 @@
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 --------------------------------------------------------------------------------
 module Language.Haskell.Stylish.Step.Imports
     ( Options (..)
@@ -16,16 +16,16 @@ module Language.Haskell.Stylish.Step.Imports
 --------------------------------------------------------------------------------
 import           Control.Arrow                   ((&&&))
 import           Control.Monad                   (void)
-import           Data.Monoid                     ((<>))
-import           Data.Char                       (toLower)
-import           Data.List                       (intercalate, sortBy)
-import           Data.Maybe                      (isJust, maybeToList)
-import           Data.Ord                        (comparing)
-import qualified Data.Map                        as M
-import qualified Data.Set                        as S
-import qualified Language.Haskell.Exts           as H
 import qualified Data.Aeson                      as A
 import qualified Data.Aeson.Types                as A
+import           Data.Char                       (toLower)
+import           Data.List                       (intercalate, sortBy)
+import qualified Data.Map                        as M
+import           Data.Maybe                      (isJust, maybeToList)
+import           Data.Monoid                     ((<>))
+import           Data.Ord                        (comparing)
+import qualified Data.Set                        as S
+import qualified Language.Haskell.Exts           as H
 
 
 --------------------------------------------------------------------------------
@@ -38,7 +38,7 @@ import           Language.Haskell.Stylish.Util
 data Options = Options
     { importAlign    :: ImportAlign
     , listAlign      :: ListAlign
-    , listSameAlign  :: Bool
+    , padModuleNames :: Bool
     , longListAlign  :: LongListAlign
     , emptyListAlign :: EmptyListAlign
     , listPadding    :: ListPadding
@@ -50,7 +50,7 @@ defaultOptions :: Options
 defaultOptions = Options
     { importAlign    = Global
     , listAlign      = AfterAlias
-    , listSameAlign  = True
+    , padModuleNames = True
     , longListAlign  = Inline
     , emptyListAlign = Inherit
     , listPadding    = LPConstant 4
@@ -191,9 +191,9 @@ decomposeImportSpec x = case x of
 recomposeImportSpec :: (ImportEntity l, ImportPortion l) -> H.ImportSpec l
 recomposeImportSpec (e, p) = case e of
   ImportClassOrData l n -> case p of
-    ImportSome []       -> H.IAbs l (H.NoNamespace l) n
-    ImportSome names    -> H.IThingWith l n names
-    ImportAll           -> H.IThingAll l n
+    ImportSome []    -> H.IAbs l (H.NoNamespace l) n
+    ImportSome names -> H.IThingWith l n names
+    ImportAll        -> H.IThingAll l n
   ImportVar l n         -> H.IVar l n
   ImportOther l space n -> H.IAbs l space n
 
@@ -278,7 +278,7 @@ prettyImport columns Options{..} padQualified padName longest imp
         | otherwise = shortWrap
 
     emptyWrap = case emptyListAlign of
-        Inherit -> inlineWrap
+        Inherit    -> inlineWrap
         RightAfter -> [paddedNoSpecBase ++ " ()"]
 
     inlineWrap = inlineWrapper
@@ -375,7 +375,7 @@ prettyImport columns Options{..} padQualified padName longest imp
         Just is -> f $ map (prettyImportSpec separateLists) is
 
     maybeSpace = case spaceSurround of
-        True -> " "
+        True  -> " "
         False -> ""
 
 
@@ -388,13 +388,13 @@ prettyImportGroup columns align fileAlign longest imps =
     sortBy compareImports imps
   where
     align' = importAlign align
-    sameAlign = listSameAlign align
+    padModuleNames' = padModuleNames align
 
     longest' = case align' of
         Group -> longestImport imps
         _     -> longest
 
-    padName = align' /= None && sameAlign
+    padName = align' /= None && padModuleNames'
 
     padQual = case align' of
         Global -> True
