@@ -22,7 +22,8 @@ Data-files:
   data/stylish-haskell.yaml
 
 Extra-source-files:
-  CHANGELOG
+  CHANGELOG,
+  README.markdown
 
 Library
   Hs-source-dirs: lib
