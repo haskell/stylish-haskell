@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PatternGuards     #-}
 {-# LANGUAGE RecordWildCards   #-}
 --------------------------------------------------------------------------------
 module Language.Haskell.Stylish.Step.Imports
@@ -19,7 +20,7 @@ import           Control.Monad                   (void)
 import qualified Data.Aeson                      as A
 import qualified Data.Aeson.Types                as A
 import           Data.Char                       (toLower)
-import           Data.List                       (intercalate, sortBy)
+import           Data.List                       (foldl', sortBy)
 import qualified Data.Map                        as M
 import           Data.Maybe                      (isJust, maybeToList)
 import           Data.Monoid                     ((<>))
@@ -238,19 +239,25 @@ compareImportSubSpecs = comparing key
 -- > import Foo (Bar (..))
 --
 -- instead.
-prettyImportSpec :: (Ord l) => Bool -> H.ImportSpec l -> String
-prettyImportSpec separate = prettyImportSpec'
+prettyImportSpec :: (Ord l) => Int -> Bool -> Int -> H.ImportSpec l -> String
+prettyImportSpec columns separate basePadding = prettyImportSpec'
   where
     prettyImportSpec' (H.IThingAll  _ n)     = H.prettyPrint n ++ sep "(..)"
     prettyImportSpec' (H.IThingWith _ n cns) = H.prettyPrint n
         ++ sep "("
-        ++ intercalate ", "
+        ++ format (basePadding + length (H.prettyPrint n) + 2)
           (map H.prettyPrint $ sortBy compareImportSubSpecs cns)
         ++ ")"
     prettyImportSpec' x                      = H.prettyPrint x
 
     sep = if separate then (' ' :) else id
 
+    format padding = fst . foldl' accum ("", 0)
+      where
+        spaceLeft = columns - padding
+        accum (s, l) el | l == 0 = (el, length el)
+                        | l' <- l + 2 + length el, l' < spaceLeft = (s ++ ", " ++ el, l')
+                        | otherwise = (s ++ ",\n" ++ replicate padding ' ' ++ el, length el)
 
 --------------------------------------------------------------------------------
 prettyImport :: (Ord l, Show l) =>
@@ -372,7 +379,7 @@ prettyImport columns Options{..} padQualified padName longest imp
     mapSpecs f = case importSpecs of
         Nothing -> []     -- Import everything
         Just [] -> ["()"] -- Instance only imports
-        Just is -> f $ map (prettyImportSpec separateLists) is
+        Just is -> f $ map (prettyImportSpec columns separateLists (afterAliasBaseLength + 2)) is
 
     maybeSpace = case spaceSurround of
         True  -> " "
