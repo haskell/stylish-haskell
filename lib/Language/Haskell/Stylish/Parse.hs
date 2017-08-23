@@ -44,11 +44,11 @@ unCpp = unlines . go False . lines
 
 
 --------------------------------------------------------------------------------
--- | Remove shebang from the first line
+-- | Remove shebang lines
 unShebang :: String -> String
-unShebang str
-    | "#!" `isPrefixOf` str = unlines $ ("" :) $ drop 1 $ lines str
-    | otherwise             = str
+unShebang str =
+    let (shebangs, other) = break (not . ("#!" `isPrefixOf`)) (lines str) in
+    unlines $ map (const "") shebangs ++ other
 
 
 --------------------------------------------------------------------------------

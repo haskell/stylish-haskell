@@ -22,6 +22,7 @@ tests = testGroup "Language.Haskell.Stylish.Parse"
     , testCase "Haskell2010 extension"       testHaskell2010
     , testCase "Shebang"                     testShebang
     , testCase "ShebangExt"                  testShebangExt
+    , testCase "ShebangDouble"               testShebangDouble
     , testCase "GADTs extension"             testGADTs
     , testCase "KindSignatures extension"    testKindSignatures
     , testCase "StandalonDeriving extension" testStandaloneDeriving
@@ -79,6 +80,16 @@ testHaskell2010 = assert $ isRight $ parseModule [] Nothing $ unlines
 testShebang :: Assertion
 testShebang = assert $ isRight $ parseModule [] Nothing $ unlines
     [ "#!runhaskell"
+    , "module Main where"
+    , "main = return ()"
+    ]
+
+--------------------------------------------------------------------------------
+
+testShebangDouble :: Assertion
+testShebangDouble = assert $ isRight $ parseModule [] Nothing $ unlines
+    [ "#!nix-shell"
+    , "#!nix-shell -i runhaskell -p haskellPackages.ghc"
     , "module Main where"
     , "main = return ()"
     ]
