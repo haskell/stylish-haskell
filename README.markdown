@@ -115,10 +115,18 @@ Or you can define `formatprg`
 
 and then use `gq`.
 
-There is also the [vim-stylish-haskell] plugin, which runs stylish-haskell
-automatically when you save a Haskell file.
+The problem with this approach is that your entire source file will be replaced
+with an error from stylish-haskell if there are any syntax errors. For a
+solution to this see [vim-stylishask].
+
+There are also plugins that run stylish-haskell automatically when you save a
+Haskell file:
+
+* [vim-stylish-haskell]
+* [vim-stylishask]
 
 [vim-stylish-haskell]: https://github.com/nbouscal/vim-stylish-haskell
+[vim-stylishask]: https://github.com/alx741/vim-stylishask
 
 Emacs integration
 -----------------
