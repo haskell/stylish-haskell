@@ -52,6 +52,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 23" case23
     , testCase "case 24" case24
     , testCase "case 25" case25
+    , testCase "case 26 (issue 185)" case26
     ]
 
 
@@ -662,4 +663,18 @@ case25 = expected
         , "import qualified Data.Maybe.Extra (Maybe(Just, Nothing))"
         , ""
         , "import Data.Foo (Foo (Foo,Bar), Goo(Goo))"
+        ]
+
+
+--------------------------------------------------------------------------------
+case26 :: Assertion
+case26 = expected
+    @=? testStep (step 80 options ) input'
+  where
+    options = defaultOptions { listAlign = NewLine, longListAlign = Multiline }
+    input' = unlines
+        [ "import Data.List"
+        ]
+    expected = unlines
+        [ "import           Data.List"
         ]
