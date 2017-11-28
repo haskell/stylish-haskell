@@ -311,7 +311,11 @@ prettyImport columns Options{..} padQualified padName longest imp
         ( mapSpecs
           ( withHead ("( " ++)
           . withTail (", " ++))
-        ++ [")"])
+        ++ closer)
+      where
+        closer = if null importSpecs
+            then []
+            else [")"]
 
     paddedBase = base $ padImport $ compoundImportName imp
 
