@@ -1,5 +1,13 @@
 # CHANGELOG
 
+- 0.9.0.0 (2017-12-26)
+    * Embed the default configuration
+    * Add platform-specific configuration paths (by Jan Tojnar)
+    * Bump `haskell-src-exts` to 0.20
+    * Avoid unpaired parenthesis when import doesn't specify any items (by
+      Matthew Kennerly)
+    * Remove shebang lines at the beginning of file (by Vaibhav Sagar)
+
 - 0.8.1.0 (2017-06-19)
     * Add `pad_module_names` option (by Yuriy Syrovetskiy)
     * Add `space_surround` option to import styling (by Linus Arver)
