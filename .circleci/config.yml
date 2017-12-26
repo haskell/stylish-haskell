@@ -1,0 +1,34 @@
+version: 2
+
+workflows:
+  version: 2
+  simple-workflow:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /.*/
+
+jobs:
+  build:
+    docker:
+      - image: 'fpco/stack-build:latest'
+
+    steps:
+      - checkout
+      - restore_cache:
+          key: 'v1-stylish-haskell-{{ arch }}-{{ .Branch }}'
+      - run:
+          name: 'Update cabal indices'
+          command: 'cabal update'
+      - run:
+          name: 'Build and install'
+          command: 'cabal install --enable-tests --jobs=1'
+      - run:
+          name: 'Run tests'
+          command: 'cabal test'
+      - save_cache:
+          key: 'v1-stylish-haskell-{{ arch }}-{{ .Branch }}-{{ .Revision }}'
+          paths:
+            - '~/.cabal'
+            - '~/.ghc'
