@@ -6,10 +6,10 @@ module Main
 
 --------------------------------------------------------------------------------
 import           Control.Monad            (forM_, unless)
+import qualified Data.ByteString.Char8    as BC8
 import           Data.Monoid              ((<>))
 import           Data.Version             (showVersion)
 import qualified Options.Applicative      as OA
-import qualified Paths_stylish_haskell
 import           System.Exit              (exitFailure)
 import qualified System.IO                as IO
 import qualified System.IO.Strict         as IO.Strict
@@ -70,7 +70,7 @@ parseStylishArgs = StylishArgs
 
 --------------------------------------------------------------------------------
 stylishHaskellVersion :: String
-stylishHaskellVersion = "stylish-haskell " <> showVersion Paths_stylish_haskell.version
+stylishHaskellVersion = "stylish-haskell " <> showVersion version
 
 
 --------------------------------------------------------------------------------
@@ -94,9 +94,8 @@ stylishHaskell sa = do
         putStrLn stylishHaskellVersion
 
         else if saDefaults sa then do
-            fileName <- defaultConfigFilePath
-            verbose' $ "Dumping config from " ++ fileName
-            readUTF8File fileName >>= putStr
+            verbose' "Dumping embedded config..."
+            BC8.putStr defaultConfigBytes
 
         else do
             conf <- loadConfig verbose' (saConfig sa)

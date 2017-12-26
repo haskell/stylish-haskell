@@ -18,9 +18,6 @@ Description:
 
     <https://github.com/jaspervdj/stylish-haskell/blob/master/README.markdown>
 
-Data-files:
-  data/stylish-haskell.yaml
-
 Extra-source-files:
   CHANGELOG,
   README.markdown
@@ -50,24 +47,22 @@ Library
     Paths_stylish_haskell
 
   Build-depends:
-    aeson            >= 0.6  && < 1.3,
-    base             >= 4.8  && < 5,
-    bytestring       >= 0.9  && < 0.11,
-    containers       >= 0.3  && < 0.6,
-    directory        >= 1.1  && < 1.4,
-    filepath         >= 1.1  && < 1.5,
-    haskell-src-exts >= 1.18 && < 1.21,
-    mtl              >= 2.0  && < 2.3,
-    syb              >= 0.3  && < 0.8,
-    yaml             >= 0.7  && < 0.9
+    aeson            >= 0.6    && < 1.3,
+    base             >= 4.8    && < 5,
+    bytestring       >= 0.9    && < 0.11,
+    containers       >= 0.3    && < 0.6,
+    directory        >= 1.1    && < 1.4,
+    filepath         >= 1.1    && < 1.5,
+    file-embed       >= 0.0.10 && < 0.1,
+    haskell-src-exts >= 1.18   && < 1.21,
+    mtl              >= 2.0    && < 2.3,
+    syb              >= 0.3    && < 0.8,
+    yaml             >= 0.7    && < 0.9
 
 Executable stylish-haskell
   Ghc-options:    -Wall
   Hs-source-dirs: src
   Main-is:        Main.hs
-
-  Other-modules:
-    Paths_stylish_haskell
 
   Build-depends:
     stylish-haskell,
@@ -114,7 +109,6 @@ Test-suite stylish-haskell-tests
     Language.Haskell.Stylish.Tests.Util
     Language.Haskell.Stylish.Util
     Language.Haskell.Stylish.Verbose
-    Paths_stylish_haskell
 
   Build-depends:
     HUnit                >= 1.2 && < 1.7,

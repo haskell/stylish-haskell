@@ -1,9 +1,10 @@
 --------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 module Language.Haskell.Stylish.Config
     ( Extensions
     , Config (..)
-    , defaultConfigFilePath
+    , defaultConfigBytes
     , configFilePath
     , loadConfig
     ) where
@@ -14,12 +15,13 @@ import           Control.Monad                                    (forM, mzero)
 import           Data.Aeson                                       (FromJSON (..))
 import qualified Data.Aeson                                       as A
 import qualified Data.Aeson.Types                                 as A
-import Data.Maybe (fromMaybe)
 import qualified Data.ByteString                                  as B
+import qualified Data.FileEmbed                                   as FileEmbed
 import           Data.List                                        (inits,
                                                                    intercalate)
 import           Data.Map                                         (Map)
 import qualified Data.Map                                         as M
+import           Data.Maybe                                       (fromMaybe)
 import           Data.Yaml                                        (decodeEither)
 import           System.Directory
 import           System.FilePath                                  (joinPath,
@@ -38,7 +40,6 @@ import qualified Language.Haskell.Stylish.Step.Tabs               as Tabs
 import qualified Language.Haskell.Stylish.Step.TrailingWhitespace as TrailingWhitespace
 import qualified Language.Haskell.Stylish.Step.UnicodeSyntax      as UnicodeSyntax
 import           Language.Haskell.Stylish.Verbose
-import           Paths_stylish_haskell                            (getDataFileName)
 
 
 --------------------------------------------------------------------------------
@@ -65,26 +66,21 @@ configFileName = ".stylish-haskell.yaml"
 
 
 --------------------------------------------------------------------------------
-defaultConfigFilePath :: IO FilePath
-defaultConfigFilePath = getDataFileName "data/stylish-haskell.yaml"
+defaultConfigBytes :: B.ByteString
+defaultConfigBytes = $(FileEmbed.embedFile "data/stylish-haskell.yaml")
 
 
 --------------------------------------------------------------------------------
-configFilePath :: Verbose -> Maybe FilePath -> IO FilePath
-configFilePath _       (Just userSpecified) = return userSpecified
+configFilePath :: Verbose -> Maybe FilePath -> IO (Maybe FilePath)
+configFilePath _       (Just userSpecified) = return (Just userSpecified)
 configFilePath verbose Nothing              = do
     current  <- getCurrentDirectory
     home     <- getHomeDirectory
-    def      <- defaultConfigFilePath
     mbConfig <- search $
         [d </> configFileName | d <- ancestors current] ++
-        [home </> configFileName, def]
+        [home </> configFileName]
 
-    case mbConfig of
-        Just config -> return config
-        Nothing     -> fail $
-            "Language.Haskell.Stylish.Config.configFilePath: " ++
-            "could not load default configuration at: " ++ def
+    return mbConfig
   where
     -- All ancestors of a dir (including that dir)
     ancestors :: FilePath -> [FilePath]
@@ -101,11 +97,11 @@ configFilePath verbose Nothing              = do
 
 --------------------------------------------------------------------------------
 loadConfig :: Verbose -> Maybe FilePath -> IO Config
-loadConfig verbose mfp = do
-    fp <- configFilePath verbose mfp
-    verbose $ "Loading configuration at " ++ fp
-    bs <- B.readFile fp
-    case decodeEither bs of
+loadConfig verbose userSpecified = do
+    mbFp <- configFilePath verbose userSpecified
+    verbose $ "Loading configuration at " ++ fromMaybe "<embedded>" mbFp
+    bytes <- maybe (return defaultConfigBytes) B.readFile mbFp
+    case decodeEither bytes of
         Left err     -> error $
             "Language.Haskell.Stylish.Config.loadConfig: " ++ err
         Right config -> return config
