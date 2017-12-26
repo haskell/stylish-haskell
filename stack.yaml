@@ -2,8 +2,8 @@ flags: {}
 packages:
 - '.'
 extra-deps:
-- 'optparse-applicative-0.14.0.0'
-resolver: 'nightly-2017-06-19'
+- 'haskell-src-exts-1.20.1'
+resolver: nightly-2017-12-14
 install-ghc: true
 system-ghc: false
 allow-newer: true
