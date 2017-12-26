@@ -9,6 +9,9 @@ BINARY="$REPOSITORY"
 
 echo "Tag: $TAG"
 echo "Suffix: $SUFFIX"
+echo "Repository: $REPOSITORY"
+
+$BINARY --version
 
 if [[ -z "$TAG" ]]; then
     echo "Not a tagged build, skipping release..."
