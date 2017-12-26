@@ -74,11 +74,12 @@ defaultConfigBytes = $(FileEmbed.embedFile "data/stylish-haskell.yaml")
 configFilePath :: Verbose -> Maybe FilePath -> IO (Maybe FilePath)
 configFilePath _       (Just userSpecified) = return (Just userSpecified)
 configFilePath verbose Nothing              = do
-    current  <- getCurrentDirectory
-    home     <- getHomeDirectory
-    mbConfig <- search $
+    current    <- getCurrentDirectory
+    configPath <- getXdgDirectory XdgConfig "stylish-haskell"
+    home       <- getHomeDirectory
+    mbConfig   <- search $
         [d </> configFileName | d <- ancestors current] ++
-        [home </> configFileName]
+        [configPath </> "config.yaml", home </> configFileName]
 
     return mbConfig
   where
