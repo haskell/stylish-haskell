@@ -32,3 +32,6 @@ jobs:
           paths:
             - '~/.cabal'
             - '~/.ghc'
+      - run:
+          name: 'Upload release'
+          command: '.circleci/release.sh "$CIRCLE_TAG"'
