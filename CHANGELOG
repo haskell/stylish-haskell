@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- 0.9.0.1 (2017-12-29)
+    * Fix missing Extra-source-file in cabal file
+
 - 0.9.0.0 (2017-12-26)
     * Embed the default configuration
     * Add platform-specific configuration paths (by Jan Tojnar)
