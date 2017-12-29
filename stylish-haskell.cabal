@@ -20,7 +20,8 @@ Description:
 
 Extra-source-files:
   CHANGELOG,
-  README.markdown
+  README.markdown,
+  data/stylish-haskell.yaml
 
 Library
   Hs-source-dirs: lib
