@@ -149,6 +149,15 @@ Atom integration
 [ide-haskell]: https://atom.io/packages/ide-haskell
 [atom-beautify]: Https://atom.io/packages/atom-beautify
 
+Using with Continuous Integration
+---------------------------------
+
+You can quickly grab the latest binary and run `stylish-haskell` like so:
+
+    curl -sL https://raw.github.com/jaspervdj/stylish-haskell/master/scripts/latest.sh | sh -s .
+
+Where the `.` can be replaced with the arguments you pass to `stylish-haskell`.
+
 Credits
 -------
 
