@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- 0.9.0.2 (2018-01-03)
+    * Bump lower bound of `directory` to `1.2.3` for `getXdgDirectory`
+
 - 0.9.0.1 (2017-12-29)
     * Fix missing Extra-source-file in cabal file
 
