@@ -7,8 +7,8 @@ PACKAGE=stylish-haskell
 echo Downloading and running $PACKAGE...
 
 RELEASES=$(curl --silent https://github.com/jaspervdj/$PACKAGE/releases)
-URL=https://github.com/$(echo $RELEASES | grep -o '\"[^\"]*-x86_64-linux\.tar\.gz\"' | sed s/\"//g | head -n1)
-VERSION=$(echo $URL | sed -e 's/.*-\([\.0-9]\+\)-x86_64-linux\.tar\.gz/\1/')
+URL=https://github.com/$(echo $RELEASES | grep -o '\"[^\"]*-linux-x86_64\.tar\.gz\"' | sed s/\"//g | head -n1)
+VERSION=$(echo $URL | sed -e 's/.*-\([\.0-9]\+\)-linux-x86_64\.tar\.gz/\1/')
 TEMP=$(mktemp --directory .$PACKAGE-XXXXX)
 
 cleanup(){
