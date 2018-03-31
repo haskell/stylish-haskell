@@ -22,9 +22,9 @@ import           Data.Char                       (toLower)
 import           Data.List                       (intercalate, sortBy)
 import qualified Data.Map                        as M
 import           Data.Maybe                      (isJust, maybeToList)
-import           Data.Monoid                     ((<>))
 import           Data.Ord                        (comparing)
 import qualified Data.Set                        as S
+import           Data.Semigroup                  (Semigroup ((<>)))
 import qualified Language.Haskell.Exts           as H
 
 
@@ -168,10 +168,13 @@ data ImportPortion l
   = ImportSome [H.CName l]  -- ^ @A(x, y, z)@
   | ImportAll               -- ^ @A(..)@
 
+instance Ord l => Semigroup (ImportPortion l) where
+  ImportSome a <> ImportSome b = ImportSome (setUnion a b)
+  _ <> _                       = ImportAll
+
 instance Ord l => Monoid (ImportPortion l) where
   mempty = ImportSome []
-  mappend (ImportSome a) (ImportSome b) = ImportSome (setUnion a b)
-  mappend _ _                           = ImportAll
+  mappend = (<>)
 
 -- | O(n log n) union.
 setUnion :: Ord a => [a] -> [a] -> [a]
