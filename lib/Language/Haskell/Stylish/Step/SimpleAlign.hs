@@ -8,6 +8,7 @@ module Language.Haskell.Stylish.Step.SimpleAlign
 
 --------------------------------------------------------------------------------
 import           Data.Data                       (Data)
+import           Data.List                       (foldl')
 import           Data.Maybe                      (maybeToList)
 import qualified Language.Haskell.Exts           as H
 
@@ -42,14 +43,30 @@ cases modu = [alts | H.Case _ _ alts <- everything modu]
 
 
 --------------------------------------------------------------------------------
-altToAlignable :: H.Alt l -> Maybe (Alignable l)
-altToAlignable (H.Alt _   _   _   (Just _)) = Nothing
-altToAlignable (H.Alt ann pat rhs Nothing)  = Just $ Alignable
-    { aContainer = ann
-    , aLeft      = H.ann pat
-    , aRight     = H.ann rhs
-    , aRightLead = length "-> "
-    }
+-- | For this to work well, we require a way to merge annotations.  This merge
+-- operation should follow the semigroup laws.
+altToAlignable :: (l -> l -> l) -> H.Alt l -> Maybe (Alignable l)
+altToAlignable _ (H.Alt _   _   _   (Just _)) = Nothing
+altToAlignable _ (H.Alt ann pat rhs@(H.UnGuardedRhs _ _) Nothing) = Just $
+    Alignable
+        { aContainer = ann
+        , aLeft      = H.ann pat
+        , aRight     = H.ann rhs
+        , aRightLead = length "-> "
+        }
+altToAlignable
+        merge
+        (H.Alt ann pat (H.GuardedRhss _ [H.GuardedRhs _ guards rhs]) Nothing) =
+    -- We currently only support the case where an alternative has a single
+    -- guarded RHS.  If there are more, we would need to return multiple
+    -- `Alignable`s from this function, which would be a significant change.
+    Just $ Alignable
+        { aContainer = ann
+        , aLeft      = foldl' merge (H.ann pat) (map H.ann guards)
+        , aRight     = H.ann rhs
+        , aRightLead = length "-> "
+        }
+altToAlignable _ _ = Nothing
 
 
 --------------------------------------------------------------------------------
@@ -101,9 +118,11 @@ step maxColumns config = makeStep "Cases" $ \ls (module', _) ->
             , change_ <- align maxColumns aligns
             ]
 
-        configured             = concat $
-            [changes cases   altToAlignable       | cCases config] ++
-            [changes tlpats  matchToAlignable     | cTopLevelPatterns config] ++
+        configured = concat $
+            [ changes cases (altToAlignable H.mergeSrcSpan)
+            | cCases config
+            ] ++
+            [changes tlpats  matchToAlignable | cTopLevelPatterns config] ++
             [changes records fieldDeclToAlignable | cRecords config]
 
     in applyChanges configured ls
