@@ -25,6 +25,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.SimpleAlign.Tests"
     , testCase "case 05" case05
     , testCase "case 06" case06
     , testCase "case 07" case07
+    , testCase "case 08" case08
     ]
 
 
@@ -147,4 +148,21 @@ case07 =
         , "    { foo :: String"
         , "    , barqux :: Int"
         , "    }"
+        ]
+
+
+--------------------------------------------------------------------------------
+case08 :: Assertion
+case08 = expected @=? testStep (step 80 defaultConfig) input
+  where
+    input = unlines
+        [ "canDrink mbAge = case mbAge of"
+        , "    Just age | age > 18 -> True"
+        , "    _ -> False"
+        ]
+
+    expected = unlines
+        [ "canDrink mbAge = case mbAge of"
+        , "    Just age | age > 18 -> True"
+        , "    _                   -> False"
         ]
