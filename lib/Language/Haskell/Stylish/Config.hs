@@ -36,6 +36,7 @@ import           Language.Haskell.Stylish.Step
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
 import qualified Language.Haskell.Stylish.Step.SimpleAlign        as SimpleAlign
+import qualified Language.Haskell.Stylish.Step.Squash             as Squash
 import qualified Language.Haskell.Stylish.Step.Tabs               as Tabs
 import qualified Language.Haskell.Stylish.Step.TrailingWhitespace as TrailingWhitespace
 import qualified Language.Haskell.Stylish.Step.UnicodeSyntax      as UnicodeSyntax
@@ -137,6 +138,7 @@ catalog = M.fromList
     [ ("imports",             parseImports)
     , ("language_pragmas",    parseLanguagePragmas)
     , ("simple_align",        parseSimpleAlign)
+    , ("squash",              parseSquash)
     , ("tabs",                parseTabs)
     , ("trailing_whitespace", parseTrailingWhitespace)
     , ("unicode_syntax",      parseUnicodeSyntax)
@@ -172,6 +174,11 @@ parseSimpleAlign c o = SimpleAlign.step
         <*> withDef SimpleAlign.cRecords          "records")
   where
     withDef f k = fromMaybe (f SimpleAlign.defaultConfig) <$> (o A..:? k)
+
+
+--------------------------------------------------------------------------------
+parseSquash :: Config -> A.Object -> A.Parser Step
+parseSquash _ _ = return Squash.step
 
 
 --------------------------------------------------------------------------------

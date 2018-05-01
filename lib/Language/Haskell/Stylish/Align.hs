@@ -7,7 +7,6 @@ module Language.Haskell.Stylish.Align
 
 
 --------------------------------------------------------------------------------
-import           Data.Char                       (isSpace)
 import           Data.List                       (nub)
 import qualified Language.Haskell.Exts           as H
 
@@ -80,9 +79,6 @@ align maxColumns alignment
         let column      = H.srcSpanEndColumn $ aLeft a
             (pre, post) = splitAt column str
         in [padRight longestLeft (trimRight pre) ++ trimLeft post]
-
-    trimLeft  = dropWhile isSpace
-    trimRight = reverse . trimLeft . reverse
 
 
 --------------------------------------------------------------------------------
