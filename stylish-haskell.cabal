@@ -32,6 +32,7 @@ Library
     Language.Haskell.Stylish.Step.Imports
     Language.Haskell.Stylish.Step.LanguagePragmas
     Language.Haskell.Stylish.Step.SimpleAlign
+    Language.Haskell.Stylish.Step.Squash
     Language.Haskell.Stylish.Step.Tabs
     Language.Haskell.Stylish.Step.TrailingWhitespace
     Language.Haskell.Stylish.Step.UnicodeSyntax
@@ -99,6 +100,8 @@ Test-suite stylish-haskell-tests
     Language.Haskell.Stylish.Step
     Language.Haskell.Stylish.Step.SimpleAlign
     Language.Haskell.Stylish.Step.SimpleAlign.Tests
+    Language.Haskell.Stylish.Step.Squash
+    Language.Haskell.Stylish.Step.Squash.Tests
     Language.Haskell.Stylish.Step.Imports
     Language.Haskell.Stylish.Step.Imports.Tests
     Language.Haskell.Stylish.Step.LanguagePragmas

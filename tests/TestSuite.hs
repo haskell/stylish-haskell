@@ -13,6 +13,7 @@ import qualified Language.Haskell.Stylish.Parse.Tests
 import qualified Language.Haskell.Stylish.Step.Imports.Tests
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas.Tests
 import qualified Language.Haskell.Stylish.Step.SimpleAlign.Tests
+import qualified Language.Haskell.Stylish.Step.Squash.Tests
 import qualified Language.Haskell.Stylish.Step.Tabs.Tests
 import qualified Language.Haskell.Stylish.Step.TrailingWhitespace.Tests
 import qualified Language.Haskell.Stylish.Step.UnicodeSyntax.Tests
@@ -25,6 +26,7 @@ main = defaultMain
     , Language.Haskell.Stylish.Step.Imports.Tests.tests
     , Language.Haskell.Stylish.Step.LanguagePragmas.Tests.tests
     , Language.Haskell.Stylish.Step.SimpleAlign.Tests.tests
+    , Language.Haskell.Stylish.Step.Squash.Tests.tests
     , Language.Haskell.Stylish.Step.Tabs.Tests.tests
     , Language.Haskell.Stylish.Step.TrailingWhitespace.Tests.tests
     , Language.Haskell.Stylish.Step.UnicodeSyntax.Tests.tests

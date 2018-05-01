@@ -6,6 +6,8 @@ module Language.Haskell.Stylish.Util
     , padRight
     , everything
     , infoPoints
+    , trimLeft
+    , trimRight
     , wrap
     , wrapRest
 
@@ -18,7 +20,7 @@ module Language.Haskell.Stylish.Util
 
 --------------------------------------------------------------------------------
 import           Control.Arrow                 ((&&&), (>>>))
-import           Data.Char                     (isAlpha)
+import           Data.Char                     (isAlpha, isSpace)
 import           Data.Data                     (Data)
 import qualified Data.Generics                 as G
 import           Data.Maybe                    (fromMaybe, listToMaybe,
@@ -66,6 +68,16 @@ everything = G.everything (++) (maybeToList . cast)
 --------------------------------------------------------------------------------
 infoPoints :: H.SrcSpanInfo -> [((Int, Int), (Int, Int))]
 infoPoints = H.srcInfoPoints >>> map (H.srcSpanStart &&& H.srcSpanEnd)
+
+
+--------------------------------------------------------------------------------
+trimLeft :: String -> String
+trimLeft  = dropWhile isSpace
+
+
+--------------------------------------------------------------------------------
+trimRight :: String -> String
+trimRight = reverse . trimLeft . reverse
 
 
 --------------------------------------------------------------------------------
