@@ -28,12 +28,16 @@ case01 = expected @=? testStep step input
   where
     input = unlines
         [ "module Main where"
-        , " "
+        , " \t"
         , "data Foo = Bar | Qux\t "
+        , "\12"    -- page break
+        , "   \12" -- malformed page break
         ]
 
     expected = unlines
         [ "module Main where"
         , ""
         , "data Foo = Bar | Qux"
+        , "\12" -- page break
+        , ""
         ]
