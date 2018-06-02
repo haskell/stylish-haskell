@@ -149,6 +149,13 @@ Atom integration
 [ide-haskell]: https://atom.io/packages/ide-haskell
 [atom-beautify]: Https://atom.io/packages/atom-beautify
 
+Visual Studio Code integration
+------------------------------
+
+[stylish-haskell-vscode] for VSCode supports `stylish-haskell`.
+
+[stylish-haskell-vscode]: https://github.com/vigoo/stylish-haskell-vscode
+
 Using with Continuous Integration
 ---------------------------------
 
