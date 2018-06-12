@@ -72,6 +72,7 @@ data ImportAlign
 
 data ListAlign
     = NewLine
+    | WithModuleName
     | WithAlias
     | AfterAlias
     deriving (Eq, Show)
@@ -291,10 +292,11 @@ prettyImport columns Options{..} padQualified padName longest imp
         . withLast (++ (maybeSpace ++ ")"))
 
     inlineWrapper = case listAlign of
-        NewLine    -> (paddedNoSpecBase :) . wrapRest columns listPadding'
-        WithAlias  -> wrap columns paddedBase (inlineBaseLength + 1)
+        NewLine        -> (paddedNoSpecBase :) . wrapRest columns listPadding'
+        WithModuleName -> wrap columns paddedBase (withModuleNameBaseLength + 4)
+        WithAlias      -> wrap columns paddedBase (inlineBaseLength + 1)
         -- Add 1 extra space to ensure same padding as in original code.
-        AfterAlias -> withTail ((' ' : maybeSpace) ++)
+        AfterAlias     -> withTail ((' ' : maybeSpace) ++)
             . wrap columns paddedBase (afterAliasBaseLength + 1)
 
     inlineWithBreakWrap = paddedNoSpecBase : wrapRest columns listPadding'
@@ -348,6 +350,8 @@ prettyImport columns Options{..} padQualified padName longest imp
 
     inlineBaseLength = length $
                        base' (padImport $ compoundImportName imp) [] []
+
+    withModuleNameBaseLength = length $ base' "" [] []
 
     afterAliasBaseLength = length $ base' (padImport $ compoundImportName imp)
         ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp] []

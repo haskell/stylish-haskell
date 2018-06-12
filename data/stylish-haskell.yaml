@@ -56,6 +56,18 @@ steps:
       #   > import qualified Data.List      as List (concat, foldl, foldr, head,
       #   >                                 init, last, length)
       #
+      # - with_module_name: Import list is aligned `list_padding` spaces after
+      #   the module name.
+      #
+      #   > import qualified Data.List      as List (concat, foldl, foldr, head,
+      #                          init, last, length)
+      #
+      #   This is mainly intended for use with `pad_module_names: false`.
+      #
+      #   > import qualified Data.List as List (concat, foldl, foldr, head,
+      #                          init, last, length, scanl, scanr, take, drop,
+      #                          sort, nub)
+      #
       # - new_line: Import list starts always on new line.
       #
       #   > import qualified Data.List      as List
