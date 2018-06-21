@@ -18,6 +18,7 @@ import           Control.Arrow                   ((&&&))
 import           Control.Monad                   (void)
 import qualified Data.Aeson                      as A
 import qualified Data.Aeson.Types                as A
+import           Data.Bool
 import           Data.Char                       (toLower)
 import           Data.List                       (intercalate, sortBy)
 import qualified Data.Map                        as M
@@ -67,6 +68,8 @@ data ImportAlign
     = Global
     | File
     | Group
+    | Semicolons
+    | SemicolonsNone
     | None
     deriving (Eq, Show)
 
@@ -89,7 +92,6 @@ data LongListAlign
     | Multiline
     deriving (Eq, Show)
 
-
 --------------------------------------------------------------------------------
 
 modifyImportSpecs :: ([H.ImportSpec l] -> [H.ImportSpec l])
@@ -98,6 +100,11 @@ modifyImportSpecs f imp = imp {H.importSpecs = f' <$> H.importSpecs imp}
   where
     f' (H.ImportSpecList l h specs) = H.ImportSpecList l h (f specs)
 
+data PaddingStyle
+    = PadQualified
+    | PadImport
+    | PadNothing
+    deriving (Eq, Show)
 
 --------------------------------------------------------------------------------
 imports :: H.Module l -> [H.ImportDecl l]
@@ -128,14 +135,20 @@ compoundImportName i =
 longestImport :: [H.ImportDecl l] -> Int
 longestImport = maximum . map (length . compoundImportName)
 
+longestImportAndQualification :: [H.ImportDecl l] -> Int
+longestImportAndQualification = maximum . map impLength
+ where
+    impLength imp = length (importName imp)
+                    + if H.importQualified imp then 17 else 7
 
 --------------------------------------------------------------------------------
 -- | Compare imports for ordering
-compareImports :: H.ImportDecl l -> H.ImportDecl l -> Ordering
-compareImports =
-  comparing (map toLower . importName &&&
-             fmap (map toLower) . importPackage &&&
-             H.importQualified)
+compareImports :: Bool -> H.ImportDecl l -> H.ImportDecl l -> Ordering
+compareImports qualifiedFirst
+    = comparing ( map toLower . importName
+                  &&& fmap (map toLower) . importPackage
+                  &&& bool id not qualifiedFirst . H.importQualified )
+
 
 
 --------------------------------------------------------------------------------
@@ -258,7 +271,7 @@ prettyImportSpec separate = prettyImportSpec'
 
 --------------------------------------------------------------------------------
 prettyImport :: (Ord l, Show l) =>
-    Int -> Options -> Bool -> Bool -> Int -> H.ImportDecl l -> [String]
+    Int -> Options -> PaddingStyle -> Bool -> Int -> H.ImportDecl l -> [String]
 prettyImport columns Options{..} padQualified padName longest imp
     | (void `fmap` H.importSpecs imp) == emptyImportSpec = emptyWrap
     | otherwise = case longListAlign of
@@ -322,9 +335,9 @@ prettyImport columns Options{..} padQualified padName longest imp
             then []
             else [")"]
 
-    paddedBase = base $ padImport $ compoundImportName imp
+    paddedBase = base padImport $ compoundImportName imp
 
-    paddedNoSpecBase = base $ padImportNoSpec $ compoundImportName imp
+    paddedNoSpecBase = base padImportNoSpec $ compoundImportName imp
 
     padImport = if hasExtras && padName
         then padRight longest
@@ -334,26 +347,36 @@ prettyImport columns Options{..} padQualified padName longest imp
         then padRight longest
         else id
 
-    base' baseName importAs hasHiding' = unwords $ concat $
-        [ ["import"]
-        , source
-        , safe
-        , qualified
-        , [baseName]
+    unwordsNonEmpties = unwords . concat . filter (not . null)
+
+    base' pad baseName importAs hasHiding' = unwordsNonEmpties
+        [ if importAlign `elem` [Semicolons, SemicolonsNone]
+            then [ pad $ unwordsNonEmpties
+                    [ _import
+                    , source
+                    , safe
+                    , qualified
+                    , [baseName] ] ]
+            else [ unwordsNonEmpties
+                    [ _import
+                    , source
+                    , safe
+                    , qualified
+                    , [pad baseName] ] ]
         , importAs
         , hasHiding'
         ]
 
-    base baseName = base' baseName
+    base pad baseName = base' pad baseName
         ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp]
         ["hiding" | hasHiding]
 
     inlineBaseLength = length $
-                       base' (padImport $ compoundImportName imp) [] []
+                       base' padImport (compoundImportName imp) [] []
 
-    withModuleNameBaseLength = length $ base' "" [] []
+    withModuleNameBaseLength = length $ base' id "" [] []
 
-    afterAliasBaseLength = length $ base' (padImport $ compoundImportName imp)
+    afterAliasBaseLength = length $ base' padImport (compoundImportName imp)
         ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp] []
 
     (hasHiding, importSpecs) = case H.importSpecs imp of
@@ -362,15 +385,19 @@ prettyImport columns Options{..} padQualified padName longest imp
 
     hasExtras = isJust (H.importAs imp) || isJust (H.importSpecs imp)
 
+    _import
+        | H.importQualified imp     = ["import"]
+        | padQualified /= PadImport = ["import"]
+        | H.importSrc imp           = ["import"]
+        | H.importSafe imp          = ["    ;import"]
+        | otherwise                 = ["         ;import"]
+
     qualified
-        | H.importQualified imp = ["qualified"]
-        | padQualified          =
-              if H.importSrc imp
-                  then []
-                  else if H.importSafe imp
-                           then ["    "]
-                           else ["         "]
-        | otherwise             = []
+        | H.importQualified imp        = ["qualified"]
+        | padQualified /= PadQualified = []
+        | H.importSrc imp              = []
+        | H.importSafe imp             = ["    "]
+        | otherwise                    = ["         "]
 
     safe
         | H.importSafe imp = ["safe"]
@@ -395,23 +422,30 @@ prettyImportGroup :: Int -> Options -> Bool -> Int
                   -> [H.ImportDecl LineBlock]
                   -> Lines
 prettyImportGroup columns align fileAlign longest imps =
-    concatMap (prettyImport columns align padQual padName longest') $
-    sortBy compareImports imps
+    foldr (\imp f qmod -> prettyImport columns align (padQual qmod imp) padName longest' imp
+                          ++ f (if H.importQualified imp then importName imp
+                                                         else qmod))
+          (const [])
+          (sortBy (compareImports (align' `elem` [Semicolons,SemicolonsNone])) imps)
+          "" -- Last seen qualified import (qmod).
   where
     align' = importAlign align
     padModuleNames' = padModuleNames align
 
     longest' = case align' of
-        Group -> longestImport imps
-        _     -> longest
+        Semicolons -> longestImportAndQualification imps
+        Group      -> longestImport imps
+        _          -> longest
 
-    padName = align' /= None && padModuleNames'
+    padName = align' `notElem` [None, SemicolonsNone] && padModuleNames'
 
-    padQual = case align' of
-        Global -> True
-        File   -> fileAlign
-        Group  -> any H.importQualified imps
-        None   -> False
+    padQual qmod imp = case align' of
+        Global         -> PadQualified
+        File           -> if fileAlign then PadQualified else PadNothing
+        Group          -> if any H.importQualified imps then PadQualified else PadNothing
+        Semicolons     -> if qmod == importName imp then PadImport else PadNothing
+        SemicolonsNone -> if qmod == importName imp then PadImport else PadNothing
+        None           -> PadNothing
 
 
 --------------------------------------------------------------------------------

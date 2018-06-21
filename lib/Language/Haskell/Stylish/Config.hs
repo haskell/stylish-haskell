@@ -202,10 +202,12 @@ parseImports config o = Imports.step
     def f = f Imports.defaultOptions
 
     aligns =
-        [ ("global", Imports.Global)
-        , ("file",   Imports.File)
-        , ("group",  Imports.Group)
-        , ("none",   Imports.None)
+        [ ("global",          Imports.Global)
+        , ("file",            Imports.File)
+        , ("group",           Imports.Group)
+        , ("semicolons",      Imports.Semicolons)
+        , ("semicolons_none", Imports.SemicolonsNone)
+        , ("none",            Imports.None)
         ]
 
     listAligns =

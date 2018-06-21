@@ -36,6 +36,10 @@ steps:
       # - group: Only align the imports per group (a group is formed by adjacent
       #   import lines).
       #
+      # - semicolons: Like group, but indents non-qualified imports instead of
+      #   having a column for "qualified".  It uses semicolons to keep the
+      #   syntax legal.
+      #
       # - none: Do not perform any alignment.
       #
       # Default: global.
