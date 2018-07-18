@@ -6,9 +6,9 @@ set -e
 PACKAGE=stylish-haskell
 echo Downloading and running $PACKAGE...
 
-RELEASES=$(curl --silent https://github.com/jaspervdj/$PACKAGE/releases)
-URL=https://github.com/$(echo $RELEASES | grep -o '\"[^\"]*-linux-x86_64\.tar\.gz\"' | sed s/\"//g | head -n1)
-VERSION=$(echo $URL | sed -e 's/.*-\([\.0-9]\+\)-linux-x86_64\.tar\.gz/\1/')
+RELEASES=$(curl --silent https://api.github.com/repos/jaspervdj/$PACKAGE/releases/latest | grep browser_download_url)
+URL=$(echo $RELEASES | grep -o '\"[^\"]*-linux-x86_64\.tar\.gz\"' | sed s/\"//g | head -n1)
+VERSION=$(echo $URL | sed -e 's/.*-\(v\+[\.0-9]\+\)-linux-x86_64\.tar\.gz/\1/')
 TEMP=$(mktemp --directory .$PACKAGE-XXXXX)
 
 cleanup(){
@@ -17,5 +17,5 @@ cleanup(){
 trap cleanup EXIT
 
 curl --progress-bar --location -o$TEMP/$PACKAGE.tar.gz $URL
-tar -xzf $TEMP/$PACKAGE.tar.gz -C$TEMP
-$TEMP/$PACKAGE-$VERSION/$PACKAGE $*
+tar -xzf $TEMP/$PACKAGE.tar.gz -C$TEMP --strip-components 1
+$TEMP/$PACKAGE $*
