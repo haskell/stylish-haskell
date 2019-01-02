@@ -22,7 +22,8 @@ import           Data.List                                        (inits,
 import           Data.Map                                         (Map)
 import qualified Data.Map                                         as M
 import           Data.Maybe                                       (fromMaybe)
-import           Data.Yaml                                        (decodeEither)
+import           Data.Yaml                                        (decodeEither',
+                                                                   prettyPrintParseException)
 import           System.Directory
 import           System.FilePath                                  (joinPath,
                                                                    splitPath,
@@ -103,9 +104,9 @@ loadConfig verbose userSpecified = do
     mbFp <- configFilePath verbose userSpecified
     verbose $ "Loading configuration at " ++ fromMaybe "<embedded>" mbFp
     bytes <- maybe (return defaultConfigBytes) B.readFile mbFp
-    case decodeEither bytes of
+    case decodeEither' bytes of
         Left err     -> error $
-            "Language.Haskell.Stylish.Config.loadConfig: " ++ err
+            "Language.Haskell.Stylish.Config.loadConfig: " ++ prettyPrintParseException err
         Right config -> return config
 
 
