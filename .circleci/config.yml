@@ -17,21 +17,15 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: 'v1-stylish-haskell-{{ arch }}-{{ .Branch }}'
+          key: 'v2-stylish-haskell-{{ arch }}-{{ .Branch }}'
       - run:
-          name: 'Update cabal indices'
-          command: 'cabal update'
-      - run:
-          name: 'Build and install'
-          command: 'cabal install --enable-tests --jobs=1'
-      - run:
-          name: 'Run tests'
-          command: 'cabal test'
+          name: 'Build, install, test'
+          command: 'stack build --test --copy-bins --jobs=1'
       - save_cache:
-          key: 'v1-stylish-haskell-{{ arch }}-{{ .Branch }}-{{ .Revision }}'
+          key: 'v2-stylish-haskell-{{ arch }}-{{ .Branch }}-{{ .Revision }}'
           paths:
-            - '~/.cabal'
-            - '~/.ghc'
+            - '~/.stack-work'
+            - '~/.stack'
       - run:
           name: 'Upload release'
           command: '.circleci/release.sh "$CIRCLE_TAG"'
