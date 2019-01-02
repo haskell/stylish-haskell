@@ -19,7 +19,7 @@ jobs:
       - restore_cache:
           key: 'v2-stylish-haskell-{{ arch }}-{{ .Branch }}'
       - run:
-          name: 'Build, install, test'
+          name: 'Build, install and test'
           command: 'stack build --test --copy-bins --jobs=1'
       - save_cache:
           key: 'v2-stylish-haskell-{{ arch }}-{{ .Branch }}-{{ .Revision }}'
