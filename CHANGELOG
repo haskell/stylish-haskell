@@ -1,5 +1,10 @@
 # CHANGELOG
 
+- 0.9.2.1 (2019-01-02)
+    * Bump `aeson` to 1.4
+    * Bump `yaml` to 0.11
+    * Bump `containers` to 0.6
+
 - 0.9.2.0 (2018-05-01)
     * Support alignment of case expressions with a single guard
     * Add a new step to squash multiple spaces between some elements (by Martin
