@@ -17,7 +17,7 @@ steps:
 
   # Align the right hand side of some elements.  This is quite conservative
   # and only applies to statements where each element occupies a single
-  # line.
+  # line. All default to true.
   - simple_align:
       cases: true
       top_level_patterns: true
@@ -126,6 +126,8 @@ steps:
       #
       # - module_name: align under start of module name.
       #   Useful for 'file' and 'group' align settings.
+      #
+      # Default: 4
       list_padding: 4
 
       # Separate lists option affects formatting of import list for type
