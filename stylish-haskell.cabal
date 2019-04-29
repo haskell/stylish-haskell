@@ -56,7 +56,7 @@ Library
     directory        >= 1.2.3  && < 1.4,
     filepath         >= 1.1    && < 1.5,
     file-embed       >= 0.0.10 && < 0.1,
-    haskell-src-exts >= 1.18   && < 1.21,
+    haskell-src-exts >= 1.18   && < 1.22,
     mtl              >= 2.0    && < 2.3,
     semigroups       >= 0.18   && < 0.19,
     syb              >= 0.3    && < 0.8,
@@ -79,7 +79,7 @@ Executable stylish-haskell
     directory        >= 1.2.3  && < 1.4,
     filepath         >= 1.1    && < 1.5,
     file-embed       >= 0.0.10 && < 0.1,
-    haskell-src-exts >= 1.18   && < 1.21,
+    haskell-src-exts >= 1.18   && < 1.22,
     mtl              >= 2.0    && < 2.3,
     syb              >= 0.3    && < 0.8,
     yaml             >= 0.8.11 && < 0.12
@@ -128,7 +128,7 @@ Test-suite stylish-haskell-tests
     directory        >= 1.2.3  && < 1.4,
     filepath         >= 1.1    && < 1.5,
     file-embed       >= 0.0.10 && < 0.1,
-    haskell-src-exts >= 1.18   && < 1.21,
+    haskell-src-exts >= 1.18   && < 1.22,
     mtl              >= 2.0    && < 2.3,
     syb              >= 0.3    && < 0.8,
     yaml             >= 0.8.11 && < 0.12
