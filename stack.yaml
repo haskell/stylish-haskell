@@ -1,4 +1,4 @@
-flags: {}
+resolver: lts-13.19
+
 packages:
-- '.'
-resolver: lts-13.0
+  - '.'
