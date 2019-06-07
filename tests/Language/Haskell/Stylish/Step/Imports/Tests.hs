@@ -32,11 +32,15 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 06" case06
     , testCase "case 07" case07
     , testCase "case 08" case08
+    , testCase "case 08b" case08b
     , testCase "case 09" case09
     , testCase "case 10" case10
     , testCase "case 11" case11
+    , testCase "case 11b" case11b
     , testCase "case 12" case12
+    , testCase "case 12b" case12b
     , testCase "case 13" case13
+    , testCase "case 13b" case13b
     , testCase "case 14" case14
     , testCase "case 15" case15
     , testCase "case 16" case16
@@ -138,7 +142,6 @@ case03 = expected @=? testStep (step 80 $ fromImportAlign None) input
         , "herp = putStrLn \"import Hello world\""
         ]
 
-
 --------------------------------------------------------------------------------
 case04 :: Assertion
 case04 = expected @=? testStep (step 80 $ fromImportAlign Global) input'
@@ -188,7 +191,6 @@ case07 = expected @=? testStep (step 80 $ fromImportAlign File) input'
         , "import qualified Foo.Bar"
         ]
 
-
 --------------------------------------------------------------------------------
 case08 :: Assertion
 case08 = expected
@@ -201,6 +203,28 @@ case08 = expected
         , "import           Data.List           as List (concat, foldl, foldr, head, init,"
         , "                                     last, length, map, null, reverse, tail,"
         , "                                     (++))"
+        , "import           Data.Map            (Map, insert, lookup, (!))"
+        , "import qualified Data.Map            as M"
+        , "import           Only.Instances      ()"
+        , ""
+        , "import           Foo                 (Bar (..))"
+        , "import           Herp.Derp.Internals hiding (foo)"
+        , ""
+        , "herp = putStrLn \"import Hello world\""
+        ]
+
+
+--------------------------------------------------------------------------------
+case08b :: Assertion
+case08b = expected
+    @=? testStep (step 80 $ Options Global WithModuleName True Inline Inherit (LPConstant 4) True False) input
+  where
+    expected = unlines
+        ["module Herp where"
+        , ""
+        , "import           Control.Monad"
+        , "import           Data.List           as List (concat, foldl, foldr, head, init,"
+        , "                     last, length, map, null, reverse, tail, (++))"
         , "import           Data.Map            (Map, insert, lookup, (!))"
         , "import qualified Data.Map            as M"
         , "import           Only.Instances      ()"
@@ -312,6 +336,25 @@ case11 = expected
         , "herp = putStrLn \"import Hello world\""
         ]
 
+case11b :: Assertion
+case11b = expected
+    @=? testStep (step 80 $ Options Group WithModuleName True Inline Inherit (LPConstant 4) True False) input
+  where
+    expected = unlines
+        [ "module Herp where"
+        , ""
+        , "import           Control.Monad"
+        , "import           Data.List      as List (concat, foldl, foldr, head, init, last,"
+        , "                     length, map, null, reverse, tail, (++))"
+        , "import           Data.Map       (Map, insert, lookup, (!))"
+        , "import qualified Data.Map       as M"
+        , "import           Only.Instances ()"
+        , ""
+        , "import Foo                 (Bar (..))"
+        , "import Herp.Derp.Internals hiding (foo)"
+        , ""
+        , "herp = putStrLn \"import Hello world\""
+        ]
 
 --------------------------------------------------------------------------------
 case12 :: Assertion
@@ -327,6 +370,16 @@ case12 = expected
         , "  (map)"
         ]
 
+--------------------------------------------------------------------------------
+case12b :: Assertion
+case12b = expected
+    @=? testStep (step 80 $ Options Group WithModuleName True Inline Inherit (LPConstant 2) True False) input'
+  where
+    input' = unlines
+        [ "import Data.List (map)"
+        ]
+
+    expected = input'
 
 --------------------------------------------------------------------------------
 case13 :: Assertion
@@ -344,6 +397,21 @@ case13 = expected
         , "    (++))"
         ]
 
+--------------------------------------------------------------------------------
+case13b :: Assertion
+case13b = expected
+    @=? testStep (step 80 $ Options None WithModuleName True InlineWithBreak Inherit (LPConstant 4) True False) input'
+  where
+    input' = unlines
+        [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
+        , "    last, length, map, null, reverse, tail, (++))"
+        ]
+
+    expected = unlines
+        [ "import qualified Data.List as List"
+        , "    (concat, foldl, foldr, head, init, last, length, map, null, reverse, tail,"
+        , "    (++))"
+        ]
 
 --------------------------------------------------------------------------------
 case14 :: Assertion
