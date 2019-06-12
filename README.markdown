@@ -124,7 +124,8 @@ Or you can define `formatprg`
 
 and then use `gq`.
 
-Alternatively, [vim-autoformat] supports stylish-haskell. To have it automatically reformat the files on save, add to your vimrc:
+Alternatively, [vim-autoformat] supports stylish-haskell. To have it
+automatically reformat the files on save, add to your vimrc:
 
 ```vim
 autocmd BufWrite *.hs :Autoformat
@@ -132,12 +133,14 @@ autocmd BufWrite *.hs :Autoformat
 autocmd FileType haskell let b:autoformat_autoindent=0
 ```
 
-[vim-autoformat]: https://github.com/Chiel92/vim-autoformat
+There are also plugins that run stylish-haskell automatically when you save a
+Haskell file:
 
-There is also the [vim-stylish-haskell] plugin, which runs stylish-haskell
-automatically when you save a Haskell file.
+* [vim-stylish-haskell]
+* [vim-stylishask]
 
 [vim-stylish-haskell]: https://github.com/nbouscal/vim-stylish-haskell
+[vim-stylishask]: https://github.com/alx741/vim-stylishask
 
 Emacs integration
 -----------------
