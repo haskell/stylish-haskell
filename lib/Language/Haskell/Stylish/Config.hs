@@ -209,9 +209,10 @@ parseImports config o = Imports.step
         ]
 
     listAligns =
-        [ ("new_line",    Imports.NewLine)
-        , ("with_alias",  Imports.WithAlias)
-        , ("after_alias", Imports.AfterAlias)
+        [ ("new_line",          Imports.NewLine)
+        , ("with_module_name",  Imports.WithModuleName)
+        , ("with_alias",        Imports.WithAlias)
+        , ("after_alias",       Imports.AfterAlias)
         ]
 
     longListAligns =

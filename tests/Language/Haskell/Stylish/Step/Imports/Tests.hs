@@ -32,11 +32,15 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 06" case06
     , testCase "case 07" case07
     , testCase "case 08" case08
+    , testCase "case 08b" case08b
     , testCase "case 09" case09
     , testCase "case 10" case10
     , testCase "case 11" case11
+    , testCase "case 11b" case11b
     , testCase "case 12" case12
+    , testCase "case 12b" case12b
     , testCase "case 13" case13
+    , testCase "case 13b" case13b
     , testCase "case 14" case14
     , testCase "case 15" case15
     , testCase "case 16" case16
@@ -50,6 +54,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 21" case21
     , testCase "case 22" case22
     , testCase "case 23" case23
+    , testCase "case 23b" case23b
     , testCase "case 24" case24
     , testCase "case 25" case25
     , testCase "case 26 (issue 185)" case26
@@ -213,6 +218,28 @@ case08 = expected
 
 
 --------------------------------------------------------------------------------
+case08b :: Assertion
+case08b = expected
+    @=? testStep (step 80 $ Options Global WithModuleName True Inline Inherit (LPConstant 4) True False) input
+  where
+    expected = unlines
+        ["module Herp where"
+        , ""
+        , "import           Control.Monad"
+        , "import           Data.List           as List (concat, foldl, foldr, head, init,"
+        , "                     last, length, map, null, reverse, tail, (++))"
+        , "import           Data.Map            (Map, insert, lookup, (!))"
+        , "import qualified Data.Map            as M"
+        , "import           Only.Instances      ()"
+        , ""
+        , "import           Foo                 (Bar (..))"
+        , "import           Herp.Derp.Internals hiding (foo)"
+        , ""
+        , "herp = putStrLn \"import Hello world\""
+        ]
+
+
+--------------------------------------------------------------------------------
 case09 :: Assertion
 case09 = expected
     @=? testStep (step 80 $ Options Global WithAlias True Multiline Inherit (LPConstant 4) True False) input
@@ -313,6 +340,27 @@ case11 = expected
         ]
 
 
+case11b :: Assertion
+case11b = expected
+    @=? testStep (step 80 $ Options Group WithModuleName True Inline Inherit (LPConstant 4) True False) input
+  where
+    expected = unlines
+        [ "module Herp where"
+        , ""
+        , "import           Control.Monad"
+        , "import           Data.List      as List (concat, foldl, foldr, head, init, last,"
+        , "                     length, map, null, reverse, tail, (++))"
+        , "import           Data.Map       (Map, insert, lookup, (!))"
+        , "import qualified Data.Map       as M"
+        , "import           Only.Instances ()"
+        , ""
+        , "import Foo                 (Bar (..))"
+        , "import Herp.Derp.Internals hiding (foo)"
+        , ""
+        , "herp = putStrLn \"import Hello world\""
+        ]
+
+
 --------------------------------------------------------------------------------
 case12 :: Assertion
 case12 = expected
@@ -329,9 +377,38 @@ case12 = expected
 
 
 --------------------------------------------------------------------------------
+case12b :: Assertion
+case12b = expected
+    @=? testStep (step 80 $ Options Group WithModuleName True Inline Inherit (LPConstant 2) True False) input'
+  where
+    input' = unlines
+        [ "import Data.List (map)"
+        ]
+
+    expected = input'
+
+
+--------------------------------------------------------------------------------
 case13 :: Assertion
 case13 = expected
     @=? testStep (step 80 $ Options None WithAlias True InlineWithBreak Inherit (LPConstant 4) True False) input'
+  where
+    input' = unlines
+        [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
+        , "    last, length, map, null, reverse, tail, (++))"
+        ]
+
+    expected = unlines
+        [ "import qualified Data.List as List"
+        , "    (concat, foldl, foldr, head, init, last, length, map, null, reverse, tail,"
+        , "    (++))"
+        ]
+
+
+--------------------------------------------------------------------------------
+case13b :: Assertion
+case13b = expected
+    @=? testStep (step 80 $ Options None WithModuleName True InlineWithBreak Inherit (LPConstant 4) True False) input'
   where
     input' = unlines
         [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
@@ -451,6 +528,7 @@ case18 = expected @=? testStep
         , "import Data.Acid as Acid (closeAcidState, createCheckpoint, openLocalStateFrom)"
         ]
 
+
 --------------------------------------------------------------------------------
 case19 :: Assertion
 case19 = expected @=? testStep
@@ -467,6 +545,7 @@ case19 = expected @=? testStep
         , "                 intersperse)"
         ]
 
+
 case19b :: Assertion
 case19b = expected @=? testStep
     (step 40 $ Options File NewLine True InlineWithBreak RightAfter (LPConstant 17) True False) case19input
@@ -481,6 +560,7 @@ case19b = expected @=? testStep
         , "                 (foldl', intercalate,"
         , "                 intersperse)"
         ]
+
 
 case19c :: Assertion
 case19c = expected @=? testStep
@@ -497,6 +577,7 @@ case19c = expected @=? testStep
         , "       intersperse)"
         ]
 
+
 case19d :: Assertion
 case19d = expected @=? testStep
     (step 40 $ Options Global NewLine True InlineWithBreak RightAfter LPModuleName True False) case19input
@@ -512,6 +593,7 @@ case19d = expected @=? testStep
         , "                 intersperse)"
         ]
 
+
 case19input :: String
 case19input = unlines
         [ "import Prelude.Compat hiding (foldMap)"
@@ -519,6 +601,7 @@ case19input = unlines
         , ""
         , "import Data.List (foldl', intercalate, intersperse)"
         ]
+
 
 --------------------------------------------------------------------------------
 case20 :: Assertion
@@ -537,6 +620,7 @@ case20 = expected
         , "import qualified   Data.Map as Map"
         , "import Data.Set (empty)"
         ]
+
 
 --------------------------------------------------------------------------------
 case21 :: Assertion
@@ -568,6 +652,7 @@ case21 = expected
         , "import X9 hiding (x, y, z, x)"
         ]
 
+
 --------------------------------------------------------------------------------
 case22 :: Assertion
 case22 = expected
@@ -594,6 +679,7 @@ case22 = expected
           "theLongestNameYet, shortName)"
         ]
 
+
 --------------------------------------------------------------------------------
 case23 :: Assertion
 case23 = expected
@@ -618,6 +704,33 @@ case23 = expected
         , "import Data.ALongName.Foo (Foo, Goo, Boo)"
         ]
 
+
+--------------------------------------------------------------------------------
+case23b :: Assertion
+case23b = expected
+    @=? testStep (step 40 $ Options None WithModuleName False Inline Inherit (LPConstant 4) True True) input'
+  where
+    expected = unlines
+        [ "import Data.Acid ( AcidState )"
+        , "import Data.Default.Class"
+        , "           ( Default (def) )"
+        , ""
+        , "import Data.Monoid ( (<>) )"
+        , ""
+        , "import Data.ALongName.Foo ( Boo, Foo,"
+        , "           Goo )"
+        ]
+
+    input' = unlines
+        [ "import Data.Acid (AcidState)"
+        , "import Data.Default.Class (Default(def))"
+        , ""
+        , "import Data.Monoid ((<>) )"
+        , ""
+        , "import Data.ALongName.Foo (Foo, Goo, Boo)"
+        ]
+
+
 --------------------------------------------------------------------------------
 case24 :: Assertion
 case24 = expected
@@ -640,6 +753,7 @@ case24 = expected
         , "import Data.ALongName.Foo (FooReallyLong, " ++
           "GooReallyLong, BooReallyLong)"
         ]
+
 
 --------------------------------------------------------------------------------
 case25 :: Assertion
