@@ -54,11 +54,11 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 21" case21
     , testCase "case 22" case22
     , testCase "case 23" case23
+    , testCase "case 23b" case23b
     , testCase "case 24" case24
     , testCase "case 25" case25
     , testCase "case 26 (issue 185)" case26
     ]
-
 
 --------------------------------------------------------------------------------
 input :: String
@@ -77,7 +77,6 @@ input = unlines
     , ""
     , "herp = putStrLn \"import Hello world\""
     ]
-
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
@@ -100,7 +99,6 @@ case01 = expected @=? testStep (step 80 $ fromImportAlign Global) input
         , "herp = putStrLn \"import Hello world\""
         ]
 
-
 --------------------------------------------------------------------------------
 case02 :: Assertion
 case02 = expected @=? testStep (step 80 $ fromImportAlign Group) input
@@ -120,7 +118,6 @@ case02 = expected @=? testStep (step 80 $ fromImportAlign Group) input
         , ""
         , "herp = putStrLn \"import Hello world\""
         ]
-
 
 --------------------------------------------------------------------------------
 case03 :: Assertion
@@ -156,14 +153,12 @@ case04 = expected @=? testStep (step 80 $ fromImportAlign Global) input'
         , "                                   (.:), (.:?), (.=))"
         ]
 
-
 --------------------------------------------------------------------------------
 case05 :: Assertion
 case05 = input' @=? testStep (step 80 $ fromImportAlign Group) input'
   where
     input' = "import Distribution.PackageDescription.Configuration " ++
         "(finalizePackageDescription)\n"
-
 
 --------------------------------------------------------------------------------
 case06 :: Assertion
@@ -173,7 +168,6 @@ case06 = input' @=? testStep (step 80 $ fromImportAlign File) input'
         [ "import Bar.Qux"
         , "import Foo.Bar"
         ]
-
 
 --------------------------------------------------------------------------------
 case07 :: Assertion
@@ -213,7 +207,6 @@ case08 = expected
         , "herp = putStrLn \"import Hello world\""
         ]
 
-
 --------------------------------------------------------------------------------
 case08b :: Assertion
 case08b = expected
@@ -234,7 +227,6 @@ case08b = expected
         , ""
         , "herp = putStrLn \"import Hello world\""
         ]
-
 
 --------------------------------------------------------------------------------
 case09 :: Assertion
@@ -268,7 +260,6 @@ case09 = expected
         , ""
         , "herp = putStrLn \"import Hello world\""
         ]
-
 
 --------------------------------------------------------------------------------
 case10 :: Assertion
@@ -307,7 +298,6 @@ case10 = expected
         , ""
         , "herp = putStrLn \"import Hello world\""
         ]
-
 
 --------------------------------------------------------------------------------
 case11 :: Assertion
@@ -423,7 +413,6 @@ case14 = expected
         [ "import qualified Data.List as List (concat, map, null, reverse, tail, (++))"
         ]
 
-
 --------------------------------------------------------------------------------
 case15 :: Assertion
 case15 = expected
@@ -449,7 +438,6 @@ case15 = expected
         , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (foo, bar)"
         ]
 
-
 --------------------------------------------------------------------------------
 case16 :: Assertion
 case16 = expected
@@ -473,7 +461,6 @@ case16 = expected
         , "import Data.Foo (Foo (Foo,Bar), Goo(Goo))"
         ]
 
-
 --------------------------------------------------------------------------------
 case17 :: Assertion
 case17 = expected
@@ -490,7 +477,6 @@ case17 = expected
         , ""
         , "import Data.Identity (Identity (runIdentity,Identity))"
         ]
-
 
 --------------------------------------------------------------------------------
 case18 :: Assertion
@@ -662,6 +648,7 @@ case22 = expected
           "theLongestNameYet, shortName)"
         ]
 
+
 --------------------------------------------------------------------------------
 case23 :: Assertion
 case23 = expected
@@ -675,6 +662,31 @@ case23 = expected
         , ""
         , "import Data.ALongName.Foo ( Boo, Foo,"
         , "                            Goo )"
+        ]
+
+    input' = unlines
+        [ "import Data.Acid (AcidState)"
+        , "import Data.Default.Class (Default(def))"
+        , ""
+        , "import Data.Monoid ((<>) )"
+        , ""
+        , "import Data.ALongName.Foo (Foo, Goo, Boo)"
+        ]
+
+--------------------------------------------------------------------------------
+case23b :: Assertion
+case23b = expected
+    @=? testStep (step 40 $ Options None WithModuleName False Inline Inherit (LPConstant 4) True True) input'
+  where
+    expected = unlines
+        [ "import Data.Acid ( AcidState )"
+        , "import Data.Default.Class"
+        , "           ( Default (def) )"
+        , ""
+        , "import Data.Monoid ( (<>) )"
+        , ""
+        , "import Data.ALongName.Foo ( Boo, Foo,"
+        , "           Goo )"
         ]
 
     input' = unlines
@@ -732,7 +744,6 @@ case25 = expected
         , ""
         , "import Data.Foo (Foo (Foo,Bar), Goo(Goo))"
         ]
-
 
 --------------------------------------------------------------------------------
 case26 :: Assertion
