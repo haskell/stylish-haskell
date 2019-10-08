@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- 0.9.3.1 (2019-10-08)
+    * Fix CircleCI configuration
+
 - 0.9.3.0 (2019-10-08)
     * Bump `optparse-applicative` to 0.15
     * Don't remove page breaks in the trailing whitespace step (by Chris
