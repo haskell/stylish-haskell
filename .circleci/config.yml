@@ -20,7 +20,7 @@ jobs:
       # - checkout
       - run:
           name: 'checkout'
-          command: 'git clone https://github.com/jaspervdj/stylish-haskell.git .'
+          command: 'git clone https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .'
       - restore_cache:
           key: 'v2-stylish-haskell-{{ arch }}-{{ .Branch }}'
       - run:
