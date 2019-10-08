@@ -1,5 +1,12 @@
 # CHANGELOG
 
+- 0.9.3.0 (2019-10-08)
+    * Bump `optparse-applicative` to 0.15
+    * Don't remove page breaks in the trailing whitespace step (by Chris
+      Perivolaropoulos)
+    * Add `with_module_name` option to `list_align` for import styling (by
+      Rupert Horlick)
+
 - 0.9.2.2 (2019-06-12)
     * Bump `semigroups` to 0.19
     * Bump `haskell-src-exts` to 1.21
