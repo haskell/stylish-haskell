@@ -15,7 +15,12 @@ jobs:
       - image: 'fpco/stack-build:latest'
 
     steps:
-      - checkout
+      # 'checkout' command is currently broken because the Docker image stopped
+      # providing 'ssh'.  We do a manual checkout instead.
+      # - checkout
+      - run:
+          name: 'checkout'
+          command: 'git clone https://github.com/jaspervdj/stylish-haskell.git .'
       - restore_cache:
           key: 'v2-stylish-haskell-{{ arch }}-{{ .Branch }}'
       - run:
