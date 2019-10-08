@@ -19,7 +19,7 @@ jobs:
       # providing 'ssh'.  We do a manual checkout instead.
       # - checkout
       - run:
-          name: 'checkout'
+          name: 'Checkout'
           command: 'git clone https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .'
       - restore_cache:
           key: 'v2-stylish-haskell-{{ arch }}-{{ .Branch }}'
