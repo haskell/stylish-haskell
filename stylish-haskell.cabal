@@ -96,6 +96,7 @@ Test-suite stylish-haskell-tests
     Language.Haskell.Stylish.Align
     Language.Haskell.Stylish.Block
     Language.Haskell.Stylish.Config
+    Language.Haskell.Stylish.Config.Tests
     Language.Haskell.Stylish.Editor
     Language.Haskell.Stylish.Parse
     Language.Haskell.Stylish.Parse.Tests
@@ -122,6 +123,7 @@ Test-suite stylish-haskell-tests
     HUnit                >= 1.2 && < 1.7,
     test-framework       >= 0.4 && < 0.9,
     test-framework-hunit >= 0.2 && < 0.4,
+    random               >= 1.1,
     -- Copied from regular dependencies...
     aeson            >= 0.6    && < 1.5,
     base             >= 4.8    && < 5,
