@@ -46,14 +46,12 @@ createTempDirectory template  = do
 
 -- | Perform an action inside a temporary directory tree and purge the tree afterwords
 withTestDirTree :: IO a -> IO a
-withTestDirTree action = do
-  current <- getCurrentDirectory
-  temp <- createTempDirectory "stylish_haskell"
-  setCurrentDirectory temp
-  result <- action
-  setCurrentDirectory current
-  removeDirectoryRecursive temp
-  pure result
+withTestDirTree action = bracket
+    ((,) <$> getCurrentDirectory <*> createTempDirectory "stylish_haskell")
+    (\(current, temp) ->
+        setCurrentDirectory current *>
+        removeDirectoryRecursive temp)
+    (\(_, temp) -> setCurrentDirectory temp *> action)
 
 -- | Put an example config files (.cabal/.stylish-haskell.yaml/both)
 -- into the current directory and extract extensions from it.
