@@ -41,6 +41,8 @@ Library
     Language.Haskell.Stylish.Align
     Language.Haskell.Stylish.Block
     Language.Haskell.Stylish.Config
+    Language.Haskell.Stylish.Config.Cabal
+    Language.Haskell.Stylish.Config.Internal
     Language.Haskell.Stylish.Editor
     Language.Haskell.Stylish.Parse
     Language.Haskell.Stylish.Step
@@ -52,7 +54,7 @@ Library
     aeson            >= 0.6    && < 1.5,
     base             >= 4.8    && < 5,
     bytestring       >= 0.9    && < 0.11,
-    Cabal            >= 2.4.0.1,
+    Cabal            >= 2.4    && < 2.5,
     containers       >= 0.3    && < 0.7,
     directory        >= 1.2.3  && < 1.4,
     filepath         >= 1.1    && < 1.5,
@@ -76,8 +78,8 @@ Executable stylish-haskell
     aeson            >= 0.6    && < 1.5,
     base             >= 4.8    && < 5,
     bytestring       >= 0.9    && < 0.11,
+    Cabal            >= 2.4    && < 2.5,
     containers       >= 0.3    && < 0.7,
-    Cabal            >= 2.4.0.1,
     directory        >= 1.2.3  && < 1.4,
     filepath         >= 1.1    && < 1.5,
     file-embed       >= 0.0.10 && < 0.1,
@@ -96,19 +98,21 @@ Test-suite stylish-haskell-tests
     Language.Haskell.Stylish.Align
     Language.Haskell.Stylish.Block
     Language.Haskell.Stylish.Config
+    Language.Haskell.Stylish.Config.Cabal
+    Language.Haskell.Stylish.Config.Internal
     Language.Haskell.Stylish.Config.Tests
     Language.Haskell.Stylish.Editor
     Language.Haskell.Stylish.Parse
     Language.Haskell.Stylish.Parse.Tests
     Language.Haskell.Stylish.Step
-    Language.Haskell.Stylish.Step.SimpleAlign
-    Language.Haskell.Stylish.Step.SimpleAlign.Tests
-    Language.Haskell.Stylish.Step.Squash
-    Language.Haskell.Stylish.Step.Squash.Tests
     Language.Haskell.Stylish.Step.Imports
     Language.Haskell.Stylish.Step.Imports.Tests
     Language.Haskell.Stylish.Step.LanguagePragmas
     Language.Haskell.Stylish.Step.LanguagePragmas.Tests
+    Language.Haskell.Stylish.Step.SimpleAlign
+    Language.Haskell.Stylish.Step.SimpleAlign.Tests
+    Language.Haskell.Stylish.Step.Squash
+    Language.Haskell.Stylish.Step.Squash.Tests
     Language.Haskell.Stylish.Step.Tabs
     Language.Haskell.Stylish.Step.Tabs.Tests
     Language.Haskell.Stylish.Step.TrailingWhitespace
@@ -128,8 +132,8 @@ Test-suite stylish-haskell-tests
     aeson            >= 0.6    && < 1.5,
     base             >= 4.8    && < 5,
     bytestring       >= 0.9    && < 0.11,
+    Cabal            >= 2.4    && < 2.5,
     containers       >= 0.3    && < 0.7,
-    Cabal            >= 2.4.0.1,
     directory        >= 1.2.3  && < 1.4,
     filepath         >= 1.1    && < 1.5,
     file-embed       >= 0.0.10 && < 0.1,
