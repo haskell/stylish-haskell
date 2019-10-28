@@ -16,14 +16,24 @@ import           Data.Aeson                                       (FromJSON (..)
 import qualified Data.Aeson                                       as A
 import qualified Data.Aeson.Types                                 as A
 import qualified Data.ByteString                                  as B
+import           Data.Either                                      (isRight)
 import qualified Data.FileEmbed                                   as FileEmbed
-import           Data.List                                        (inits,
-                                                                   intercalate)
+import           Data.List                                        (concatMap,
+                                                                   inits,
+                                                                   intercalate,
+                                                                   nub)
 import           Data.Map                                         (Map)
 import qualified Data.Map                                         as M
-import           Data.Maybe                                       (fromMaybe)
+import           Data.Maybe                                       (fromMaybe,
+                                                                   maybeToList)
 import           Data.Yaml                                        (decodeEither',
                                                                    prettyPrintParseException)
+import qualified Distribution.PackageDescription                  as Cabal
+import qualified Distribution.PackageDescription.Parsec           as Cabal
+import qualified Distribution.Simple.Utils                        as Cabal
+import qualified Distribution.Types.CondTree                      as Cabal
+import qualified Distribution.Verbosity                           as Cabal
+import qualified Language.Haskell.Extension                       as Language
 import           System.Directory
 import           System.FilePath                                  (joinPath,
                                                                    splitPath,
@@ -79,24 +89,23 @@ configFilePath verbose Nothing              = do
     current    <- getCurrentDirectory
     configPath <- getXdgDirectory XdgConfig "stylish-haskell"
     home       <- getHomeDirectory
-    mbConfig   <- search $
+    mbConfig   <- search verbose $
         [d </> configFileName | d <- ancestors current] ++
         [configPath </> "config.yaml", home </> configFileName]
 
     return mbConfig
-  where
-    -- All ancestors of a dir (including that dir)
-    ancestors :: FilePath -> [FilePath]
-    ancestors = init . map joinPath . reverse . inits . splitPath
 
-    search :: [FilePath] -> IO (Maybe FilePath)
-    search []       = return Nothing
-    search (f : fs) = do
-        -- TODO Maybe catch an error here, dir might be unreadable
-        exists <- doesFileExist f
-        verbose $ f ++ if exists then " exists" else " does not exist"
-        if exists then return (Just f) else search fs
+-- All ancestors of a dir (including that dir)
+ancestors :: FilePath -> [FilePath]
+ancestors = init . map joinPath . reverse . inits . splitPath
 
+search :: Verbose -> [FilePath] -> IO (Maybe FilePath)
+search _ []             = return Nothing
+search verbose (f : fs) = do
+    -- TODO Maybe catch an error here, dir might be unreadable
+    exists <- doesFileExist f
+    verbose $ f ++ if exists then " exists" else " does not exist"
+    if exists then return (Just f) else search verbose fs
 
 --------------------------------------------------------------------------------
 loadConfig :: Verbose -> Maybe FilePath -> IO Config
@@ -107,8 +116,76 @@ loadConfig verbose userSpecified = do
     case decodeEither' bytes of
         Left err     -> error $
             "Language.Haskell.Stylish.Config.loadConfig: " ++ prettyPrintParseException err
-        Right config -> return config
+        Right config -> do
+          mbCabalFile <- cabalFilePath verbose
+          exsFromCabal <- case mbCabalFile of
+                            Just cabalFile -> map show <$>
+                              readDefaultLanguageExtensions verbose cabalFile
+                            Nothing -> return []
+          let exsFromConfig = configLanguageExtensions config
+          return $ config {configLanguageExtensions = nub (exsFromConfig <> exsFromCabal)}
 
+--------------------------------------------------------------------------------
+-- | Find the closest .cabal file, possibly going up the directory structure.
+--   It's essential that
+cabalFilePath :: Verbose -> IO (Maybe FilePath)
+cabalFilePath verbose = do
+  potentialProjectRoots <- ancestors <$> getCurrentDirectory
+  potentialCabalFile <- filter isRight <$>
+    traverse Cabal.findPackageDesc potentialProjectRoots
+  case potentialCabalFile of
+    [Right cabalFile] -> return (Just cabalFile)
+    _ -> do
+      verbose $ ".cabal file not found, directories searched: " <>
+        show potentialProjectRoots
+      verbose $ "Stylish Haskell will work basing on LANGUAGE pragmas in source files."
+      return Nothing
+
+--------------------------------------------------------------------------------
+-- | Extract @default-extensions@ fields from a @.cabal@ file
+readDefaultLanguageExtensions :: Verbose -> FilePath -> IO [Language.KnownExtension]
+readDefaultLanguageExtensions verbose cabalFile = do
+  verbose $ "Parsing " <> cabalFile <> "..."
+  packageDescription <- Cabal.readGenericPackageDescription Cabal.silent cabalFile
+  let library :: [Cabal.Library]
+      library = maybeToList $ fst . Cabal.ignoreConditions <$>
+        Cabal.condLibrary packageDescription
+
+      subLibraries :: [Cabal.Library]
+      subLibraries = fst . Cabal.ignoreConditions . snd <$>
+        Cabal.condSubLibraries packageDescription
+
+      executables :: [Cabal.Executable]
+      executables = fst . Cabal.ignoreConditions . snd <$>
+        Cabal.condExecutables packageDescription
+
+      testSuites :: [Cabal.TestSuite]
+      testSuites = fst . Cabal.ignoreConditions . snd <$>
+        Cabal.condTestSuites packageDescription
+
+      benchmarks :: [Cabal.Benchmark]
+      benchmarks = fst . Cabal.ignoreConditions . snd <$>
+        Cabal.condBenchmarks packageDescription
+
+      gatherBuildInfos :: [Cabal.BuildInfo]
+      gatherBuildInfos = map Cabal.libBuildInfo library <>
+                         map Cabal.libBuildInfo subLibraries <>
+                         map Cabal.buildInfo executables <>
+                         map Cabal.testBuildInfo testSuites <>
+                         map Cabal.benchmarkBuildInfo benchmarks
+
+      defaultExtensions :: [Language.KnownExtension]
+      defaultExtensions = map fromEnabled . filter isEnabled $
+        concatMap Cabal.defaultExtensions gatherBuildInfos
+        where isEnabled (Language.EnableExtension _) = True
+              isEnabled _                            = False
+
+              fromEnabled (Language.EnableExtension x) = x
+              fromEnabled x                             =
+                error $ "Language.Haskell.Stylish.Config.readLanguageExtensions: " <>
+                        "invalid LANGUAGE pragma:  " <> show x
+  verbose $ "Gathered default-extensions: " <> show defaultExtensions
+  pure $ nub defaultExtensions
 
 --------------------------------------------------------------------------------
 parseConfig :: A.Value -> A.Parser Config
