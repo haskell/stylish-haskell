@@ -12,22 +12,17 @@ workflows:
 jobs:
   build:
     docker:
-      - image: 'fpco/stack-build:latest'
+      - image: 'haskell:8.6'
 
     steps:
-      # 'checkout' command is currently broken because the Docker image stopped
-      # providing 'ssh'.  We do a manual checkout instead.
-      # - checkout
-      - run:
-          name: 'Checkout'
-          command: 'git clone https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .'
+      - checkout
       - restore_cache:
-          key: 'v2-stylish-haskell-{{ arch }}-{{ .Branch }}'
+          key: 'v3-stylish-haskell-{{ arch }}-{{ .Branch }}'
       - run:
           name: 'Build, install and test'
           command: 'stack build --test --copy-bins --jobs=1'
       - save_cache:
-          key: 'v2-stylish-haskell-{{ arch }}-{{ .Branch }}-{{ .Revision }}'
+          key: 'v3-stylish-haskell-{{ arch }}-{{ .Branch }}-{{ .Revision }}'
           paths:
             - '~/.stack-work'
             - '~/.stack'
