@@ -1,5 +1,9 @@
 # CHANGELOG
 
+- 0.9.4.3 (2019-10-29)
+    * Bump release script
+    * Bump `Cabal` to 3.0
+
 - 0.9.4.2 (2019-10-29)
     * Bump release script
 
