@@ -1,3 +1,6 @@
 resolver: lts-14.6
 packages:
-  - '.'
+- '.'
+
+extra-deps:
+- 'Cabal-3.0.0.0'
