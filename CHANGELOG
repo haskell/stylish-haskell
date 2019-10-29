@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- 0.9.4.0 (2019-10-19)
+    * Read language extensions from `.cabal` file (by Georgy Lukyanov)
+
 - 0.9.3.1 (2019-10-08)
     * Fix CircleCI configuration
 
