@@ -31,7 +31,6 @@ findLanguageExtensions verbose =
 
 --------------------------------------------------------------------------------
 -- | Find the closest .cabal file, possibly going up the directory structure.
---   It's essential that
 findCabalFile :: Verbose -> IO (Maybe FilePath)
 findCabalFile verbose = do
   potentialProjectRoots <- ancestors <$> getCurrentDirectory
