@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- 0.9.4.4 (2019-11-03)
+    * Bump `haskell-src-exts` to 1.22
+
 - 0.9.4.3 (2019-10-29)
     * Bump release script
     * Bump `Cabal` to 3.0
