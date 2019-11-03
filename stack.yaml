@@ -4,3 +4,4 @@ packages:
 
 extra-deps:
 - 'Cabal-3.0.0.0'
+- 'haskell-src-exts-1.22.0'
