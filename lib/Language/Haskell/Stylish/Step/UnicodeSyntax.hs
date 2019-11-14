@@ -39,12 +39,12 @@ replaceAll :: [(Int, [(Int, String)])] -> [Change String]
 replaceAll = map changeLine'
   where
     changeLine' (r, ns) = changeLine r $ \str -> return $
-        flip applyChanges str
+        applyChanges 
             [ change (Block c ec) (const repl)
             | (c, needle) <- sort ns
             , let ec = c + length needle - 1
             , repl <- maybeToList $ M.lookup needle unicodeReplacements
-            ]
+            ] str
 
 
 --------------------------------------------------------------------------------
@@ -104,15 +104,15 @@ between (startRow, startCol) (endRow, endCol) needle =
 
 
 --------------------------------------------------------------------------------
-step :: Bool -> Step
-step = makeStep "UnicodeSyntax" . step'
+step :: Bool -> Bool -> Step
+step = (makeStep "UnicodeSyntax" .) . step'
 
 
 --------------------------------------------------------------------------------
-step' :: Bool -> Lines -> Module -> Lines
-step' alp ls (module', _) = applyChanges changes ls
+step' :: Bool -> Bool -> Lines -> Module -> Lines
+step' lw alp ls (module', _) = applyChanges changes ls
   where
-    changes = (if alp then addLanguagePragma "UnicodeSyntax" module' else []) ++
+    changes = (if alp then addLanguagePragma lw "UnicodeSyntax" module' else []) ++
         replaceAll perLine
     perLine = sort $ groupPerLine $
         typeSigs module' ls ++

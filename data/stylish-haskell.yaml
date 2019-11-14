@@ -203,6 +203,9 @@ steps:
       # is set to true, it will remove those redundant pragmas. Default: true.
       remove_redundant: true
 
+      # If this is set to true, it will allow lowercase pragmas. Default: false.
+      allow_lowercase: false
+
   # Replace tabs by spaces. This is disabled by default.
   # - tabs:
   #     # Number of spaces to use for each tab. Default: 8, as specified by the
