@@ -204,7 +204,7 @@ steps:
       remove_redundant: true
 
       # If this is set to true, it will allow lowercase pragmas. Default: false.
-      allow_lowercase: false
+      lowercase_language: false
 
   # Replace tabs by spaces. This is disabled by default.
   # - tabs:

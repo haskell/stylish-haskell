@@ -237,7 +237,7 @@ parseLanguagePragmas config o = LanguagePragmas.step
     <*> (o A..:? "style" >>= parseEnum styles LanguagePragmas.Vertical)
     <*> o A..:? "align"            A..!= True
     <*> o A..:? "remove_redundant" A..!= True
-    <*> o A..:? "allow_lowercase"  A..!= False
+    <*> o A..:? "lowercase_language"  A..!= False
   where
     styles =
         [ ("vertical",     LanguagePragmas.Vertical)
@@ -261,5 +261,5 @@ parseTrailingWhitespace _ _ = return TrailingWhitespace.step
 parseUnicodeSyntax :: Config -> A.Object -> A.Parser Step
 parseUnicodeSyntax c o = UnicodeSyntax.step
     <$> o A..:? "add_language_pragma"    A..!= True
-    <*> o A..:? "allow_lowercase_pragma" A..!= allowLowercase
-    where allowLowercase = elem "allow_lowercase" $ configLanguageExtensions c
+    <*> o A..:? "lowercase_language_pragma" A..!= allowLowercase
+    where allowLowercase = elem "lowercase_language" $ configLanguageExtensions c
