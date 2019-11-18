@@ -31,10 +31,12 @@ tests = testGroup "Language.Haskell.Stylish.Step.LanguagePragmas.Tests"
     , testCase "case 11" case11
     ]
 
+lANG :: String
+lANG = "LANGUAGE"
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testStep (step 80 Vertical True False False) input
+case01 = expected @=? testStep (step 80 Vertical True False lANG) input
   where
     input = unlines
         [ "{-# LANGUAGE ViewPatterns #-}"
@@ -53,7 +55,7 @@ case01 = expected @=? testStep (step 80 Vertical True False False) input
 
 --------------------------------------------------------------------------------
 case02 :: Assertion
-case02 = expected @=? testStep (step 80 Vertical True True False) input
+case02 = expected @=? testStep (step 80 Vertical True True lANG) input
   where
     input = unlines
         [ "{-# LANGUAGE BangPatterns #-}"
@@ -69,7 +71,7 @@ case02 = expected @=? testStep (step 80 Vertical True True False) input
 
 --------------------------------------------------------------------------------
 case03 :: Assertion
-case03 = expected @=? testStep (step 80 Vertical True True False) input
+case03 = expected @=? testStep (step 80 Vertical True True lANG) input
   where
     input = unlines
         [ "{-# LANGUAGE BangPatterns #-}"
@@ -85,7 +87,7 @@ case03 = expected @=? testStep (step 80 Vertical True True False) input
 
 --------------------------------------------------------------------------------
 case04 :: Assertion
-case04 = expected @=? testStep (step 80 Compact True False False) input
+case04 = expected @=? testStep (step 80 Compact True False lANG) input
   where
     input = unlines
         [ "{-# LANGUAGE TypeOperators, StandaloneDeriving, DeriveDataTypeable,"
@@ -102,7 +104,7 @@ case04 = expected @=? testStep (step 80 Compact True False False) input
 
 --------------------------------------------------------------------------------
 case05 :: Assertion
-case05 = expected @=? testStep (step 80 Vertical True False False) input
+case05 = expected @=? testStep (step 80 Vertical True False lANG) input
   where
     input = unlines
         [ "{-# LANGUAGE CPP #-}"
@@ -123,7 +125,7 @@ case05 = expected @=? testStep (step 80 Vertical True False False) input
 
 --------------------------------------------------------------------------------
 case06 :: Assertion
-case06 = expected @=? testStep (step 80 CompactLine True False False) input
+case06 = expected @=? testStep (step 80 CompactLine True False lANG) input
   where
     input = unlines
         [ "{-# LANGUAGE TypeOperators, StandaloneDeriving, DeriveDataTypeable,"
@@ -138,7 +140,7 @@ case06 = expected @=? testStep (step 80 CompactLine True False False) input
 
 --------------------------------------------------------------------------------
 case07 :: Assertion
-case07 = expected @=? testStep (step 80 Vertical False False False) input
+case07 = expected @=? testStep (step 80 Vertical False False lANG) input
   where
     input = unlines
         [ "{-# LANGUAGE ViewPatterns #-}"
@@ -158,7 +160,7 @@ case07 = expected @=? testStep (step 80 Vertical False False False) input
 
 --------------------------------------------------------------------------------
 case08 :: Assertion
-case08 = expected @=? testStep (step 80 CompactLine False False False) input
+case08 = expected @=? testStep (step 80 CompactLine False False lANG) input
   where
     input = unlines
         [ "{-# LANGUAGE TypeOperators, StandaloneDeriving, DeriveDataTypeable,"
@@ -174,7 +176,7 @@ case08 = expected @=? testStep (step 80 CompactLine False False False) input
 
 --------------------------------------------------------------------------------
 case09 :: Assertion
-case09 = expected @=? testStep (step 80 Compact True False False) input
+case09 = expected @=? testStep (step 80 Compact True False lANG) input
   where
     input = unlines
         [ "{-# LANGUAGE DefaultSignatures, FlexibleInstances, LambdaCase, " ++
@@ -188,7 +190,7 @@ case09 = expected @=? testStep (step 80 Compact True False False) input
 
 --------------------------------------------------------------------------------
 case10 :: Assertion
-case10 = expected @=? testStep (step 80 Compact True False False) input
+case10 = expected @=? testStep (step 80 Compact True False lANG) input
   where
     input = unlines
         [ "{-# LANGUAGE NondecreasingIndentation, ScopedTypeVariables,"
@@ -201,7 +203,7 @@ case10 = expected @=? testStep (step 80 Compact True False False) input
 
 --------------------------------------------------------------------------------
 case11 :: Assertion
-case11 = expected @=? testStep (step 80 Vertical False False True) input
+case11 = expected @=? testStep (step 80 Vertical False False "language") input
   where
     input = unlines
         [ "{-# LANGUAGE ViewPatterns #-}"

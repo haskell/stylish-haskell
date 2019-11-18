@@ -8,6 +8,7 @@ module Language.Haskell.Stylish.Step.LanguagePragmas
 
 
 --------------------------------------------------------------------------------
+import           Data.Char                       (toLower)
 import qualified Data.Set                        as S
 import qualified Language.Haskell.Exts           as H
 
@@ -41,9 +42,9 @@ firstLocation = minimum . map (blockStart . fst)
 
 
 --------------------------------------------------------------------------------
-verticalPragmas :: Bool -> Int -> Bool -> [String] -> Lines
-verticalPragmas lw longest align pragmas' =
-    [ "{-# " ++ lowerCaseLang lw ++ " " ++ pad pragma ++ " #-}"
+verticalPragmas :: String -> Int -> Bool -> [String] -> Lines
+verticalPragmas lg longest align pragmas' =
+    [ "{-# " ++ makeLang lg ++ " " ++ pad pragma ++ " #-}"
     | pragma <- pragmas'
     ]
   where
@@ -53,17 +54,17 @@ verticalPragmas lw longest align pragmas' =
 
 
 --------------------------------------------------------------------------------
-compactPragmas :: Bool -> Int -> [String] -> Lines
-compactPragmas lw columns pragmas' = wrap columns ("{-# " ++ lowerCaseLang lw) 13 $
+compactPragmas :: String -> Int -> [String] -> Lines
+compactPragmas lg columns pragmas' = wrap columns ("{-# " ++ makeLang lg) 13 $
     map (++ ",") (init pragmas') ++ [last pragmas' ++ " #-}"]
 
 
 --------------------------------------------------------------------------------
-compactLinePragmas :: Bool -> Int -> Bool -> [String] -> Lines
+compactLinePragmas :: String -> Int -> Bool -> [String] -> Lines
 compactLinePragmas _  _ _ [] = []
-compactLinePragmas lw columns align pragmas' = map (wrapLanguage . pad) prags
+compactLinePragmas lg columns align pragmas' = map (wrapLanguage . pad) prags
   where
-    wrapLanguage ps = "{-# " ++ lowerCaseLang lw ++ ps ++  " #-}"
+    wrapLanguage ps = "{-# " ++ makeLang lg ++ ps ++  " #-}"
     maxWidth = columns - 16
     longest  = maximum $ map length prags
     pad
@@ -82,15 +83,14 @@ truncateComma xs
 
 
 --------------------------------------------------------------------------------
-prettyPragmas :: Bool -> Int -> Int -> Bool -> Style -> [String] -> Lines
-prettyPragmas lw _    longest align Vertical    = verticalPragmas lw longest align
-prettyPragmas lw cols _       _     Compact     = compactPragmas lw cols
-prettyPragmas lw cols _       align CompactLine = compactLinePragmas lw cols align
+prettyPragmas :: String -> Int -> Int -> Bool -> Style -> [String] -> Lines
+prettyPragmas lp _    longest align Vertical    = verticalPragmas lp longest align
+prettyPragmas lp cols _       _     Compact     = compactPragmas lp cols
+prettyPragmas lp cols _       align CompactLine = compactLinePragmas lp cols align
 
 --------------------------------------------------------------------------------
-lowerCaseLang :: Bool -> String
-lowerCaseLang True  = "language"
-lowerCaseLang False = "LANGUAGE"
+makeLang :: String -> String
+makeLang x = if fmap toLower x == "language" then x else "LANGUAGE"
 
 
 --------------------------------------------------------------------------------
@@ -110,13 +110,13 @@ filterRedundant isRedundant' = snd . foldr filterRedundant' (S.empty, [])
         known' = xs' `S.union` known
 
 --------------------------------------------------------------------------------
-step :: Int -> Style -> Bool -> Bool -> Bool -> Step
+step :: Int -> Style -> Bool -> Bool -> String -> Step
 step = ((((makeStep "LanguagePragmas" .) .) .) .) . step'
 
 
 --------------------------------------------------------------------------------
-step' :: Int -> Style -> Bool -> Bool -> Bool -> Lines -> Module -> Lines
-step' columns style align removeRedundant allowLower ls (module', _)
+step' :: Int -> Style -> Bool -> Bool -> String -> Lines -> Module -> Lines
+step' columns style align removeRedundant lngPrefix ls (module', _)
     | null pragmas' = ls
     | otherwise     = applyChanges changes ls
   where
@@ -127,17 +127,17 @@ step' columns style align removeRedundant allowLower ls (module', _)
     longest  = maximum $ map length $ snd =<< pragmas'
     groups   = [(b, concat pgs) | (b, pgs) <- groupAdjacent pragmas']
     changes  =
-        [ change b (const $ prettyPragmas allowLower columns longest align style pg)
+        [ change b (const $ prettyPragmas lngPrefix columns longest align style pg)
         | (b, pg) <- filterRedundant isRedundant' groups
         ]
 
 
 --------------------------------------------------------------------------------
 -- | Add a LANGUAGE pragma to a module if it is not present already.
-addLanguagePragma :: Bool -> String -> H.Module H.SrcSpanInfo -> [Change String]
-addLanguagePragma lw prag modu
+addLanguagePragma :: String -> String -> H.Module H.SrcSpanInfo -> [Change String]
+addLanguagePragma lg prag modu
     | prag `elem` present = []
-    | otherwise           = [insert line ["{-# " ++ lowerCaseLang lw ++ " " ++ prag ++ " #-}"]]
+    | otherwise           = [insert line ["{-# " ++ makeLang lg ++ " " ++ prag ++ " #-}"]]
   where
     pragmas' = pragmas (fmap linesFromSrcSpan modu)
     present  = concatMap snd pragmas'

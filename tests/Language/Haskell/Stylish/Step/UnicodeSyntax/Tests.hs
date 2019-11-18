@@ -25,7 +25,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.UnicodeSyntax.Tests"
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testStep (step False True) input
+case01 = expected @=? testStep (step True "LANGUAGE") input
   where
     input = unlines
         [ "sort :: Ord a => [a] -> [a]"
@@ -41,7 +41,7 @@ case01 = expected @=? testStep (step False True) input
 
 --------------------------------------------------------------------------------
 case02 :: Assertion
-case02 = expected @=? testStep (step True True) input
+case02 = expected @=? testStep (step True "LaNgUaGe") input
   where
     input = unlines
         [ "sort :: Ord a => [a] -> [a]"
@@ -49,7 +49,7 @@ case02 = expected @=? testStep (step True True) input
         ]
 
     expected = unlines
-        [ "{-# language UnicodeSyntax #-}"
+        [ "{-# LaNgUaGe UnicodeSyntax #-}"
         , "sort ∷ Ord a ⇒ [a] → [a]"
         , "sort _ = []"
         ]

@@ -104,15 +104,15 @@ between (startRow, startCol) (endRow, endCol) needle =
 
 
 --------------------------------------------------------------------------------
-step :: Bool -> Bool -> Step
+step :: Bool -> String -> Step
 step = (makeStep "UnicodeSyntax" .) . step'
 
 
 --------------------------------------------------------------------------------
-step' :: Bool -> Bool -> Lines -> Module -> Lines
-step' lw alp ls (module', _) = applyChanges changes ls
+step' :: Bool -> String -> Lines -> Module -> Lines
+step' alp lg ls (module', _) = applyChanges changes ls
   where
-    changes = (if alp then addLanguagePragma lw "UnicodeSyntax" module' else []) ++
+    changes = (if alp then addLanguagePragma lg "UnicodeSyntax" module' else []) ++
         replaceAll perLine
     perLine = sort $ groupPerLine $
         typeSigs module' ls ++
