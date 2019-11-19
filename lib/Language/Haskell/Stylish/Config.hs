@@ -249,15 +249,15 @@ parseLanguagePragmas config o = LanguagePragmas.step
 
 --------------------------------------------------------------------------------
 -- | Utilities for validating language prefixes
-validateLg :: String -> String
-validateLg s
-    | fmap toLower s == "language" = s
-    | otherwise = fail "please provide a valid language prefix"
-
 mkLanguage :: A.Object -> A.Parser String
 mkLanguage o = do
     lang <- o A..:? "language_prefix"
-    return $ maybe "LANGUAGE" validateLg lang
+    maybe (pure "LANGUAGE") validate lang
+    where 
+        validate :: String -> A.Parser String
+        validate s
+            | fmap toLower s == "language" = pure s
+            | otherwise = fail "please provide a valid language prefix"
 
 
 --------------------------------------------------------------------------------
