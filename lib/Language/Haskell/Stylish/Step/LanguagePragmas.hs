@@ -8,7 +8,6 @@ module Language.Haskell.Stylish.Step.LanguagePragmas
 
 
 --------------------------------------------------------------------------------
-import           Data.Char                       (toLower)
 import qualified Data.Set                        as S
 import qualified Language.Haskell.Exts           as H
 
@@ -44,7 +43,7 @@ firstLocation = minimum . map (blockStart . fst)
 --------------------------------------------------------------------------------
 verticalPragmas :: String -> Int -> Bool -> [String] -> Lines
 verticalPragmas lg longest align pragmas' =
-    [ "{-# " ++ makeLang lg ++ " " ++ pad pragma ++ " #-}"
+    [ "{-# " ++ lg ++ " " ++ pad pragma ++ " #-}"
     | pragma <- pragmas'
     ]
   where
@@ -55,7 +54,7 @@ verticalPragmas lg longest align pragmas' =
 
 --------------------------------------------------------------------------------
 compactPragmas :: String -> Int -> [String] -> Lines
-compactPragmas lg columns pragmas' = wrap columns ("{-# " ++ makeLang lg) 13 $
+compactPragmas lg columns pragmas' = wrap columns ("{-# " ++ lg) 13 $
     map (++ ",") (init pragmas') ++ [last pragmas' ++ " #-}"]
 
 
@@ -64,7 +63,7 @@ compactLinePragmas :: String -> Int -> Bool -> [String] -> Lines
 compactLinePragmas _  _ _ [] = []
 compactLinePragmas lg columns align pragmas' = map (wrapLanguage . pad) prags
   where
-    wrapLanguage ps = "{-# " ++ makeLang lg ++ ps ++  " #-}"
+    wrapLanguage ps = "{-# " ++ lg ++ ps ++  " #-}"
     maxWidth = columns - 16
     longest  = maximum $ map length prags
     pad
@@ -87,10 +86,6 @@ prettyPragmas :: String -> Int -> Int -> Bool -> Style -> [String] -> Lines
 prettyPragmas lp _    longest align Vertical    = verticalPragmas lp longest align
 prettyPragmas lp cols _       _     Compact     = compactPragmas lp cols
 prettyPragmas lp cols _       align CompactLine = compactLinePragmas lp cols align
-
---------------------------------------------------------------------------------
-makeLang :: String -> String
-makeLang x = if fmap toLower x == "language" then x else "LANGUAGE"
 
 
 --------------------------------------------------------------------------------
@@ -137,7 +132,7 @@ step' columns style align removeRedundant lngPrefix ls (module', _)
 addLanguagePragma :: String -> String -> H.Module H.SrcSpanInfo -> [Change String]
 addLanguagePragma lg prag modu
     | prag `elem` present = []
-    | otherwise           = [insert line ["{-# " ++ makeLang lg ++ " " ++ prag ++ " #-}"]]
+    | otherwise           = [insert line ["{-# " ++ lg ++ " " ++ prag ++ " #-}"]]
   where
     pragmas' = pragmas (fmap linesFromSrcSpan modu)
     present  = concatMap snd pragmas'

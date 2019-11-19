@@ -16,6 +16,7 @@ import           Data.Aeson                                       (FromJSON (..)
 import qualified Data.Aeson                                       as A
 import qualified Data.Aeson.Types                                 as A
 import qualified Data.ByteString                                  as B
+import           Data.Char                                        (toLower)
 import qualified Data.FileEmbed                                   as FileEmbed
 import           Data.List                                        (intercalate,
                                                                    nub)
@@ -237,13 +238,26 @@ parseLanguagePragmas config o = LanguagePragmas.step
     <*> (o A..:? "style" >>= parseEnum styles LanguagePragmas.Vertical)
     <*> o A..:? "align"            A..!= True
     <*> o A..:? "remove_redundant" A..!= True
-    <*> o A..:? "language_prefix"  A..!= "LANGUAGE"
+    <*> mkLanguage o
   where
     styles =
         [ ("vertical",     LanguagePragmas.Vertical)
         , ("compact",      LanguagePragmas.Compact)
         , ("compact_line", LanguagePragmas.CompactLine)
         ]
+
+
+--------------------------------------------------------------------------------
+-- | Utilities for validating language prefixes
+validateLg :: String -> String
+validateLg s
+    | fmap toLower s == "language" = s
+    | otherwise = fail "please provide a valid language prefix"
+
+mkLanguage :: A.Object -> A.Parser String
+mkLanguage o = do
+    lang <- o A..:? "language_prefix"
+    return $ maybe "LANGUAGE" validateLg lang
 
 
 --------------------------------------------------------------------------------
@@ -261,4 +275,4 @@ parseTrailingWhitespace _ _ = return TrailingWhitespace.step
 parseUnicodeSyntax :: Config -> A.Object -> A.Parser Step
 parseUnicodeSyntax _ o = UnicodeSyntax.step
     <$> o A..:? "add_language_pragma" A..!= True
-    <*> o A..:? "language_prefix"     A..!= "LANGUAGE"
+    <*> mkLanguage o
