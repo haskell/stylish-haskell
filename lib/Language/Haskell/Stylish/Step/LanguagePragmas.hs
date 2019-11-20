@@ -2,7 +2,6 @@
 module Language.Haskell.Stylish.Step.LanguagePragmas
     ( Style (..)
     , step
-
       -- * Utilities
     , addLanguagePragma
     ) where
@@ -42,9 +41,9 @@ firstLocation = minimum . map (blockStart . fst)
 
 
 --------------------------------------------------------------------------------
-verticalPragmas :: Int -> Bool -> [String] -> Lines
-verticalPragmas longest align pragmas' =
-    [ "{-# LANGUAGE " ++ pad pragma ++ " #-}"
+verticalPragmas :: String -> Int -> Bool -> [String] -> Lines
+verticalPragmas lg longest align pragmas' =
+    [ "{-# " ++ lg ++ " " ++ pad pragma ++ " #-}"
     | pragma <- pragmas'
     ]
   where
@@ -54,26 +53,22 @@ verticalPragmas longest align pragmas' =
 
 
 --------------------------------------------------------------------------------
-compactPragmas :: Int -> [String] -> Lines
-compactPragmas columns pragmas' = wrap columns "{-# LANGUAGE" 13 $
+compactPragmas :: String -> Int -> [String] -> Lines
+compactPragmas lg columns pragmas' = wrap columns ("{-# " ++ lg) 13 $
     map (++ ",") (init pragmas') ++ [last pragmas' ++ " #-}"]
 
 
 --------------------------------------------------------------------------------
-compactLinePragmas :: Int -> Bool -> [String] -> Lines
-compactLinePragmas _ _ [] = []
-compactLinePragmas columns align pragmas' = map (wrapLanguage . pad) prags
+compactLinePragmas :: String -> Int -> Bool -> [String] -> Lines
+compactLinePragmas _  _ _ [] = []
+compactLinePragmas lg columns align pragmas' = map (wrapLanguage . pad) prags
   where
-    wrapLanguage ps = "{-# LANGUAGE" ++ ps ++  " #-}"
-
+    wrapLanguage ps = "{-# " ++ lg ++ ps ++  " #-}"
     maxWidth = columns - 16
-
     longest  = maximum $ map length prags
-
     pad
       | align = padRight longest
       | otherwise = id
-
     prags = map truncateComma $ wrap maxWidth "" 1 $
       map (++ ",") (init pragmas') ++ [last pragmas']
 
@@ -87,10 +82,10 @@ truncateComma xs
 
 
 --------------------------------------------------------------------------------
-prettyPragmas :: Int -> Int -> Bool -> Style -> [String] -> Lines
-prettyPragmas _    longest align Vertical    = verticalPragmas longest align
-prettyPragmas cols _       _     Compact     = compactPragmas cols
-prettyPragmas cols _       align CompactLine = compactLinePragmas cols align
+prettyPragmas :: String -> Int -> Int -> Bool -> Style -> [String] -> Lines
+prettyPragmas lp _    longest align Vertical    = verticalPragmas lp longest align
+prettyPragmas lp cols _       _     Compact     = compactPragmas lp cols
+prettyPragmas lp cols _       align CompactLine = compactLinePragmas lp cols align
 
 
 --------------------------------------------------------------------------------
@@ -110,35 +105,34 @@ filterRedundant isRedundant' = snd . foldr filterRedundant' (S.empty, [])
         known' = xs' `S.union` known
 
 --------------------------------------------------------------------------------
-step :: Int -> Style -> Bool -> Bool -> Step
-step = (((makeStep "LanguagePragmas" .) .) .) . step'
+step :: Int -> Style -> Bool -> Bool -> String -> Step
+step = ((((makeStep "LanguagePragmas" .) .) .) .) . step'
 
 
 --------------------------------------------------------------------------------
-step' :: Int -> Style -> Bool -> Bool -> Lines -> Module -> Lines
-step' columns style align removeRedundant ls (module', _)
+step' :: Int -> Style -> Bool -> Bool -> String -> Lines -> Module -> Lines
+step' columns style align removeRedundant lngPrefix ls (module', _)
     | null pragmas' = ls
     | otherwise     = applyChanges changes ls
   where
     isRedundant'
         | removeRedundant = isRedundant module'
         | otherwise       = const False
-
     pragmas' = pragmas $ fmap linesFromSrcSpan module'
     longest  = maximum $ map length $ snd =<< pragmas'
     groups   = [(b, concat pgs) | (b, pgs) <- groupAdjacent pragmas']
     changes  =
-        [ change b (const $ prettyPragmas columns longest align style pg)
+        [ change b (const $ prettyPragmas lngPrefix columns longest align style pg)
         | (b, pg) <- filterRedundant isRedundant' groups
         ]
 
 
 --------------------------------------------------------------------------------
 -- | Add a LANGUAGE pragma to a module if it is not present already.
-addLanguagePragma :: String -> H.Module H.SrcSpanInfo -> [Change String]
-addLanguagePragma prag modu
+addLanguagePragma :: String -> String -> H.Module H.SrcSpanInfo -> [Change String]
+addLanguagePragma lg prag modu
     | prag `elem` present = []
-    | otherwise           = [insert line ["{-# LANGUAGE " ++ prag ++ " #-}"]]
+    | otherwise           = [insert line ["{-# " ++ lg ++ " " ++ prag ++ " #-}"]]
   where
     pragmas' = pragmas (fmap linesFromSrcSpan modu)
     present  = concatMap snd pragmas'
@@ -158,7 +152,7 @@ isRedundant _ _              = False
 -- | Check if the ViewPatterns language pragma is redundant.
 isRedundantViewPatterns :: H.Module H.SrcSpanInfo -> Bool
 isRedundantViewPatterns m = null
-    [() | H.PViewPat _ _ _ <- everything m :: [H.Pat H.SrcSpanInfo]]
+    [() | H.PViewPat {} <- everything m :: [H.Pat H.SrcSpanInfo]]
 
 
 --------------------------------------------------------------------------------

@@ -58,6 +58,7 @@ languagePragmas :: Int -- ^ columns
                 -> LanguagePragmas.Style
                 -> Bool -- ^ Pad to same length in vertical mode?
                 -> Bool -- ^ remove redundant?
+                -> String -- ^ language prefix
                 -> Step
 languagePragmas = LanguagePragmas.step
 
@@ -75,6 +76,7 @@ trailingWhitespace = TrailingWhitespace.step
 
 --------------------------------------------------------------------------------
 unicodeSyntax :: Bool -- ^ add language pragma?
+              -> String -- ^ language prefix
               -> Step
 unicodeSyntax = UnicodeSyntax.step
 

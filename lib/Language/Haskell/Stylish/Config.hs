@@ -16,6 +16,7 @@ import           Data.Aeson                                       (FromJSON (..)
 import qualified Data.Aeson                                       as A
 import qualified Data.Aeson.Types                                 as A
 import qualified Data.ByteString                                  as B
+import           Data.Char                                        (toLower)
 import qualified Data.FileEmbed                                   as FileEmbed
 import           Data.List                                        (intercalate,
                                                                    nub)
@@ -80,11 +81,9 @@ configFilePath verbose Nothing              = do
     current    <- getCurrentDirectory
     configPath <- getXdgDirectory XdgConfig "stylish-haskell"
     home       <- getHomeDirectory
-    mbConfig   <- search verbose $
+    search verbose $
         [d </> configFileName | d <- ancestors current] ++
         [configPath </> "config.yaml", home </> configFileName]
-
-    return mbConfig
 
 search :: Verbose -> [FilePath] -> IO (Maybe FilePath)
 search _ []             = return Nothing
@@ -200,9 +199,9 @@ parseImports config o = Imports.step
         -- Note that padding has to be at least 1. Default is 4.
         <*> (o A..:? "empty_list_align"
             >>= parseEnum emptyListAligns (def Imports.emptyListAlign))
-        <*> o A..:? "list_padding" A..!= (def Imports.listPadding)
-        <*> o A..:? "separate_lists" A..!= (def Imports.separateLists)
-        <*> o A..:? "space_surround" A..!= (def Imports.spaceSurround))
+        <*> o A..:? "list_padding" A..!= def Imports.listPadding
+        <*> o A..:? "separate_lists" A..!= def Imports.separateLists
+        <*> o A..:? "space_surround" A..!= def Imports.spaceSurround)
   where
     def f = f Imports.defaultOptions
 
@@ -237,14 +236,28 @@ parseLanguagePragmas :: Config -> A.Object -> A.Parser Step
 parseLanguagePragmas config o = LanguagePragmas.step
     <$> pure (configColumns config)
     <*> (o A..:? "style" >>= parseEnum styles LanguagePragmas.Vertical)
-    <*> o A..:? "align" A..!= True
+    <*> o A..:? "align"            A..!= True
     <*> o A..:? "remove_redundant" A..!= True
+    <*> mkLanguage o
   where
     styles =
         [ ("vertical",     LanguagePragmas.Vertical)
         , ("compact",      LanguagePragmas.Compact)
         , ("compact_line", LanguagePragmas.CompactLine)
         ]
+
+
+--------------------------------------------------------------------------------
+-- | Utilities for validating language prefixes
+mkLanguage :: A.Object -> A.Parser String
+mkLanguage o = do
+    lang <- o A..:? "language_prefix"
+    maybe (pure "LANGUAGE") validate lang
+    where 
+        validate :: String -> A.Parser String
+        validate s
+            | fmap toLower s == "language" = pure s
+            | otherwise = fail "please provide a valid language prefix"
 
 
 --------------------------------------------------------------------------------
@@ -262,3 +275,4 @@ parseTrailingWhitespace _ _ = return TrailingWhitespace.step
 parseUnicodeSyntax :: Config -> A.Object -> A.Parser Step
 parseUnicodeSyntax _ o = UnicodeSyntax.step
     <$> o A..:? "add_language_pragma" A..!= True
+    <*> mkLanguage o

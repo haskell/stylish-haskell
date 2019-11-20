@@ -1,3 +1,5 @@
+{-# language LambdaCase #-}
+
 --------------------------------------------------------------------------------
 -- | This module provides you with a line-based editor. It's main feature is
 -- that you can specify multiple changes at the same time, e.g.:
@@ -19,8 +21,7 @@ module Language.Haskell.Stylish.Editor
 
 
 --------------------------------------------------------------------------------
-import           Data.List                      (intercalate, sortBy)
-import           Data.Ord                       (comparing)
+import           Data.List                      (intercalate, sortOn)
 
 
 --------------------------------------------------------------------------------
@@ -31,7 +32,7 @@ import           Language.Haskell.Stylish.Block
 -- | Changes the lines indicated by the 'Block' into the given 'Lines'
 data Change a = Change
     { changeBlock :: Block a
-    , changeLines :: ([a] -> [a])
+    , changeLines :: [a] -> [a]
     }
 
 
@@ -49,7 +50,7 @@ applyChanges changes0
         intercalate ", " (map printBlock blocks)
     | otherwise          = go 1 changes1
   where
-    changes1 = sortBy (comparing (blockStart . changeBlock)) changes0
+    changes1 = sortOn (blockStart . changeBlock) changes0
     blocks   = map changeBlock changes1
 
     printBlock b = show (blockStart b) ++ "-" ++ show (blockEnd b)
@@ -87,7 +88,7 @@ change = Change
 --------------------------------------------------------------------------------
 -- | Change a single line for some other lines
 changeLine :: Int -> (a -> [a]) -> Change a
-changeLine start f = change (Block start start) $ \xs -> case xs of
+changeLine start f = change (Block start start) $ \case
     []      -> []
     (x : _) -> f x
 

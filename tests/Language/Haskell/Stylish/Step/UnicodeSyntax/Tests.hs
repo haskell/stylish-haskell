@@ -19,12 +19,13 @@ import           Language.Haskell.Stylish.Tests.Util
 tests :: Test
 tests = testGroup "Language.Haskell.Stylish.Step.UnicodeSyntax.Tests"
     [ testCase "case 01" case01
+    , testCase "case 02" case02
     ]
 
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testStep (step True) input
+case01 = expected @=? testStep (step True "LANGUAGE") input
   where
     input = unlines
         [ "sort :: Ord a => [a] -> [a]"
@@ -33,6 +34,22 @@ case01 = expected @=? testStep (step True) input
 
     expected = unlines
         [ "{-# LANGUAGE UnicodeSyntax #-}"
+        , "sort ∷ Ord a ⇒ [a] → [a]"
+        , "sort _ = []"
+        ]
+
+
+--------------------------------------------------------------------------------
+case02 :: Assertion
+case02 = expected @=? testStep (step True "LaNgUaGe") input
+  where
+    input = unlines
+        [ "sort :: Ord a => [a] -> [a]"
+        , "sort _ = []"
+        ]
+
+    expected = unlines
+        [ "{-# LaNgUaGe UnicodeSyntax #-}"
         , "sort ∷ Ord a ⇒ [a] → [a]"
         , "sort _ = []"
         ]

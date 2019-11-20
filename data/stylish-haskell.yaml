@@ -203,6 +203,11 @@ steps:
       # is set to true, it will remove those redundant pragmas. Default: true.
       remove_redundant: true
 
+      # Language prefix to be used for pragma declaration, this allows you to
+      # use other options non case-sensitive like "language" or "Language".
+      # If a non correct String is provided, it will default to: LANGUAGE.
+      language_prefix: LANGUAGE
+
   # Replace tabs by spaces. This is disabled by default.
   # - tabs:
   #     # Number of spaces to use for each tab. Default: 8, as specified by the
