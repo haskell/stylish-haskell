@@ -1,6 +1,6 @@
 ## stylish-haskell
 
-<img src="./assets/Logo/SVG/RoundedLogo.svg">
+<img src="./assets/Logo/SVG/RoundedLogo.svg" width="100px">
 
 [![Build Status](https://img.shields.io/circleci/project/github/jaspervdj/stylish-haskell.svg)](https://circleci.com/gh/jaspervdj/stylish-haskell)
 
