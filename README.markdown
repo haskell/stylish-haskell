@@ -1,10 +1,10 @@
-stylish-haskell
-===============
+## stylish-haskell
+
+<img src="./assets/Logo/SVG/RoundedLogo.svg" width="100px">
 
 [![Build Status](https://img.shields.io/circleci/project/github/jaspervdj/stylish-haskell.svg)](https://circleci.com/gh/jaspervdj/stylish-haskell)
 
-Introduction
-------------
+## Introduction
 
 A simple Haskell code prettifier. The goal is not to format all of the code in
 a file, since I find those kind of tools often "get in the way". However,
@@ -12,18 +12,17 @@ manually cleaning up import statements etc. gets tedious very quickly.
 
 This tool tries to help where necessary without getting in the way.
 
-Installation
-------------
+## Installation
 
 You can install it using `stack install stylish-haskell` or `cabal install stylish-haskell`.
 
 You can also install it using your package manager:
- * Debian 9 or later: `apt-get install stylish-haskell`
- * Ubuntu 16.10 or later: `apt-get install stylish-haskell`
- * Arch Linux: `pacman -S stylish-haskell`
 
-Features
---------
+- Debian 9 or later: `apt-get install stylish-haskell`
+- Ubuntu 16.10 or later: `apt-get install stylish-haskell`
+- Arch Linux: `pacman -S stylish-haskell`
+
+## Features
 
 - Aligns and sorts `import` statements
 - Groups and wraps `{-# LANGUAGE #-}` pragmas, can remove (some) redundant
@@ -39,8 +38,7 @@ Feature requests are welcome! Use the [issue tracker] for that.
 
 [issue tracker]: https://github.com/jaspervdj/stylish-haskell/issues
 
-Example
--------
+## Example
 
 Turns:
 
@@ -84,8 +82,8 @@ data Point = Point
     , pointName      :: String
     } deriving (Show)
 ```
-Configuration
--------------
+
+## Configuration
 
 The tool is customizable to some extent. It tries to find a config file in the
 following order:
@@ -107,8 +105,7 @@ Use `stylish-haskell --defaults > .stylish-haskell.yaml` to dump a
 well-documented default configuration to a file, this way you can get started
 quickly.
 
-VIM integration
----------------
+## VIM integration
 
 Since it works as a filter it is pretty easy to integrate this with VIM.
 
@@ -136,14 +133,13 @@ autocmd FileType haskell let b:autoformat_autoindent=0
 There are also plugins that run stylish-haskell automatically when you save a
 Haskell file:
 
-* [vim-stylish-haskell]
-* [vim-stylishask]
+- [vim-stylish-haskell]
+- [vim-stylishask]
 
 [vim-stylish-haskell]: https://github.com/nbouscal/vim-stylish-haskell
 [vim-stylishask]: https://github.com/alx741/vim-stylishask
 
-Emacs integration
------------------
+## Emacs integration
 
 [haskell-mode] for Emacs supports `stylish-haskell`. For configuration,
 see [the “Using external formatters” section][haskell-mode/format] of the
@@ -152,8 +148,7 @@ haskell-mode manual.
 [haskell-mode]: https://github.com/haskell/haskell-mode
 [haskell-mode/format]: http://haskell.github.io/haskell-mode/manual/latest/Autoformating.html
 
-Atom integration
-----------------
+## Atom integration
 
 [ide-haskell] for Atom supports `stylish-haskell`.
 
@@ -162,15 +157,13 @@ Atom integration
 [ide-haskell]: https://atom.io/packages/ide-haskell
 [atom-beautify]: Https://atom.io/packages/atom-beautify
 
-Visual Studio Code integration
-------------------------------
+## Visual Studio Code integration
 
 [stylish-haskell-vscode] for VSCode supports `stylish-haskell`.
 
 [stylish-haskell-vscode]: https://github.com/vigoo/stylish-haskell-vscode
 
-Using with Continuous Integration
----------------------------------
+## Using with Continuous Integration
 
 You can quickly grab the latest binary and run `stylish-haskell` like so:
 
@@ -178,8 +171,7 @@ You can quickly grab the latest binary and run `stylish-haskell` like so:
 
 Where the `.` can be replaced with the arguments you pass to `stylish-haskell`.
 
-Credits
--------
+## Credits
 
 Written and maintained by Jasper Van der Jeugt.
 
