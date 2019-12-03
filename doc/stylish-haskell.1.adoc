@@ -1,0 +1,54 @@
+= stylish-haskell(1)
+
+== NAME
+
+stylish-haskell - simple Haskell code prettifier
+
+== SYNOPSIS
+
+*stylish-haskell* [_-c_|_--config=FILE_] [_-v|--verbose_]
+[_-i_|_--inplace_] [--no-utf8] [_FILES_]...
+
+*stylish-haskell* _-d_|_--defaults_
+
+*stylish-haskell* _-?_|_--help_
+
+*stylish-haskell* _--version_
+
+== DESCRIPTION
+
+*stylish-haskell* performs automatic formatting on the Haskell code in
+the files passed on the command line or piped via STDIN. It outputs to
+STDOUT unless *-i* is specified.
+
+STDIN is assumed to be encoded UTF-8, unless the *--no-utf8* option is
+used.
+
+=== OPTIONS
+
+*-c*, *--config=FILE*::
+  Override the default configuration file.
+
+*-v*, *--verbose*::
+  Turn on verbose output.
+
+*-i*, *--inplace*::
+  Prettify and overwrite the given files in place.
+
+*-d*, *--defaults*::
+  Dump default config and exit.
+
+*-?*, *--help*::
+  Output help text and exit.
+
+*--version*::
+  Output version information and exit.
+
+*--no-utf8*::
+  Don't assume that STDIN is encoded UTF-8, and don't force UTF-8 output.
+
+== AUTHOR
+
+This manual page was originally written by Sean Whitton
+<\spwhitton@spwhitton.name> for the Debian GNU/Linux system (but may be
+used by others).
