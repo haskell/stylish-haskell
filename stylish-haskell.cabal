@@ -63,7 +63,8 @@ Library
     mtl              >= 2.0    && < 2.3,
     semigroups       >= 0.18   && < 0.20,
     syb              >= 0.3    && < 0.8,
-    yaml             >= 0.8.11 && < 0.12
+    HsYAML-aeson     >=0.2.0   && < 0.3,
+    HsYAML           >=0.2.0   && < 0.3
 
 Executable stylish-haskell
   Ghc-options:    -Wall
@@ -86,7 +87,8 @@ Executable stylish-haskell
     haskell-src-exts >= 1.18   && < 1.23,
     mtl              >= 2.0    && < 2.3,
     syb              >= 0.3    && < 0.8,
-    yaml             >= 0.8.11 && < 0.12
+    HsYAML-aeson     >=0.2.0   && < 0.3,
+    HsYAML           >=0.2.0   && < 0.3
 
 Test-suite stylish-haskell-tests
   Ghc-options:    -Wall
@@ -140,7 +142,8 @@ Test-suite stylish-haskell-tests
     haskell-src-exts >= 1.18   && < 1.23,
     mtl              >= 2.0    && < 2.3,
     syb              >= 0.3    && < 0.8,
-    yaml             >= 0.8.11 && < 0.12
+    HsYAML-aeson     >=0.2.0   && < 0.3,
+    HsYAML           >=0.2.0   && < 0.3
 
 Source-repository head
   Type:     git

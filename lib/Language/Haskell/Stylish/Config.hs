@@ -16,6 +16,7 @@ import           Data.Aeson                                       (FromJSON (..)
 import qualified Data.Aeson                                       as A
 import qualified Data.Aeson.Types                                 as A
 import qualified Data.ByteString                                  as B
+import           Data.ByteString.Lazy                             (fromStrict)
 import           Data.Char                                        (toLower)
 import qualified Data.FileEmbed                                   as FileEmbed
 import           Data.List                                        (intercalate,
@@ -23,8 +24,8 @@ import           Data.List                                        (intercalate,
 import           Data.Map                                         (Map)
 import qualified Data.Map                                         as M
 import           Data.Maybe                                       (fromMaybe)
-import           Data.Yaml                                        (decodeEither',
-                                                                   prettyPrintParseException)
+import           Data.YAML                                        (prettyPosWithSource)
+import           Data.YAML.Aeson                                  (decode1Strict)
 import           System.Directory
 import           System.FilePath                                  ((</>))
 import qualified System.IO                                        as IO (Newline (..),
@@ -99,9 +100,8 @@ loadConfig verbose userSpecified = do
     mbFp <- configFilePath verbose userSpecified
     verbose $ "Loading configuration at " ++ fromMaybe "<embedded>" mbFp
     bytes <- maybe (return defaultConfigBytes) B.readFile mbFp
-    case decodeEither' bytes of
-        Left err     -> error $
-            "Language.Haskell.Stylish.Config.loadConfig: " ++ prettyPrintParseException err
+    case decode1Strict bytes of
+        Left (pos, err)     -> error $ prettyPosWithSource pos (fromStrict bytes) ("Language.Haskell.Stylish.Config.loadConfig: " ++ err)
         Right config -> do
           cabalLanguageExtensions <- if configCabal config
             then map show <$> Cabal.findLanguageExtensions verbose
