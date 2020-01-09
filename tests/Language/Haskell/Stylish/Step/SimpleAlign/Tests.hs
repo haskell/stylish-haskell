@@ -26,12 +26,13 @@ tests = testGroup "Language.Haskell.Stylish.Step.SimpleAlign.Tests"
     , testCase "case 06" case06
     , testCase "case 07" case07
     , testCase "case 08" case08
+    , testCase "case 09" case09
     ]
 
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testStep (step 80 defaultConfig) input
+case01 = expected @=? testStep (step (Just 80) defaultConfig) input
   where
     input = unlines
         [ "eitherToMaybe e = case e of"
@@ -48,7 +49,7 @@ case01 = expected @=? testStep (step 80 defaultConfig) input
 
 --------------------------------------------------------------------------------
 case02 :: Assertion
-case02 = expected @=? testStep (step 80 defaultConfig) input
+case02 = expected @=? testStep (step (Just 80) defaultConfig) input
   where
     input = unlines
         [ "eitherToMaybe (Left _) = Nothing"
@@ -63,7 +64,7 @@ case02 = expected @=? testStep (step 80 defaultConfig) input
 
 --------------------------------------------------------------------------------
 case03 :: Assertion
-case03 = expected @=? testStep (step 80 defaultConfig) input
+case03 = expected @=? testStep (step (Just 80) defaultConfig) input
   where
     input = unlines
         [ "heady def [] = def"
@@ -78,7 +79,7 @@ case03 = expected @=? testStep (step 80 defaultConfig) input
 
 --------------------------------------------------------------------------------
 case04 :: Assertion
-case04 = expected @=? testStep (step 80 defaultConfig) input
+case04 = expected @=? testStep (step (Just 80) defaultConfig) input
   where
     input = unlines
         [ "data Foo = Foo"
@@ -97,7 +98,7 @@ case04 = expected @=? testStep (step 80 defaultConfig) input
 
 --------------------------------------------------------------------------------
 case05 :: Assertion
-case05 = input @=? testStep (step 80 defaultConfig) input
+case05 = input @=? testStep (step (Just 80) defaultConfig) input
   where
     -- Don't attempt to align this since a field spans multiple lines
     input = unlines
@@ -113,7 +114,7 @@ case05 = input @=? testStep (step 80 defaultConfig) input
 case06 :: Assertion
 case06 =
     -- 22 max columns is /just/ enough to align this stuff.
-    expected @=? testStep (step 22 defaultConfig) input
+    expected @=? testStep (step (Just 22) defaultConfig) input
   where
     input = unlines
         [ "data Foo = Foo"
@@ -134,7 +135,7 @@ case06 =
 case07 :: Assertion
 case07 =
     -- 21 max columns is /just NOT/ enough to align this stuff.
-    expected @=? testStep (step 21 defaultConfig) input
+    expected @=? testStep (step (Just 21) defaultConfig) input
   where
     input = unlines
         [ "data Foo = Foo"
@@ -153,7 +154,7 @@ case07 =
 
 --------------------------------------------------------------------------------
 case08 :: Assertion
-case08 = expected @=? testStep (step 80 defaultConfig) input
+case08 = expected @=? testStep (step (Just 80) defaultConfig) input
   where
     input = unlines
         [ "canDrink mbAge = case mbAge of"
@@ -165,4 +166,24 @@ case08 = expected @=? testStep (step 80 defaultConfig) input
         [ "canDrink mbAge = case mbAge of"
         , "    Just age | age > 18 -> True"
         , "    _                   -> False"
+        ]
+
+
+--------------------------------------------------------------------------------
+case09 :: Assertion
+case09 =
+    expected @=? testStep (step Nothing defaultConfig) input
+  where
+    input = unlines
+        [ "data Foo = Foo"
+        , "    { foo :: String"
+        , "    , barqux :: Int"
+        , "    }"
+        ]
+
+    expected = unlines
+        [ "data Foo = Foo"
+        , "    { foo    :: String"
+        , "    , barqux :: Int"
+        , "    }"
         ]

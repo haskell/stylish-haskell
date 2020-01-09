@@ -25,6 +25,12 @@ tests = testGroup "Language.Haskell.Stylish.Config"
                testExtensionsFromDotStylish
     , testCase "Extensions extracted correctly from .stylish-haskell.yaml and .cabal files"
                testExtensionsFromBoth
+    , testCase "Correctly read .stylish-haskell.yaml file with default max column number"
+               testDefaultColumns
+    , testCase "Correctly read .stylish-haskell.yaml file with specified max column number"
+               testSpecifiedColumns
+    , testCase "Correctly read .stylish-haskell.yaml file with no max column number"
+               testNoColumns
     ]
 --------------------------------------------------------------------------------
 
@@ -55,8 +61,8 @@ withTestDirTree action = bracket
 
 -- | Put an example config files (.cabal/.stylish-haskell.yaml/both)
 -- into the current directory and extract extensions from it.
-createFilesAndGetExtensions :: [(FilePath, String)] -> IO Extensions
-createFilesAndGetExtensions files = withTestDirTree $ do
+createFilesAndGetConfig :: [(FilePath, String)] -> IO Config
+createFilesAndGetConfig files = withTestDirTree $ do
   mapM_ (\(k, v) -> writeFile k v) files
   -- create an empty directory and change into it
   createDirectory "src"
@@ -64,33 +70,57 @@ createFilesAndGetExtensions files = withTestDirTree $ do
   -- from that directory read the config file and extract extensions
   -- to make sure the search for .cabal file works
   config <- loadConfig (const (pure ())) Nothing
-  pure $ configLanguageExtensions config
+  pure config
 
 --------------------------------------------------------------------------------
 testExtensionsFromDotCabal :: Assertion
 testExtensionsFromDotCabal =
-  assert $ (expected ==) . Set.fromList <$>
-    createFilesAndGetExtensions [("test.cabal", dotCabal True)]
+  assert $ (expected ==) . Set.fromList . configLanguageExtensions <$>
+    createFilesAndGetConfig [("test.cabal", dotCabal True)]
     where
       expected = Set.fromList ["ScopedTypeVariables", "DataKinds"]
 
 --------------------------------------------------------------------------------
 testExtensionsFromDotStylish :: Assertion
 testExtensionsFromDotStylish =
-  assert $ (expected ==) . Set.fromList <$>
-    createFilesAndGetExtensions [(".stylish-haskell.yaml", dotStylish)]
+  assert $ (expected ==) . Set.fromList . configLanguageExtensions <$>
+    createFilesAndGetConfig [(".stylish-haskell.yaml", dotStylish)]
     where
       expected = Set.fromList ["TemplateHaskell", "QuasiQuotes"]
 
 --------------------------------------------------------------------------------
 testExtensionsFromBoth :: Assertion
 testExtensionsFromBoth =
-  assert $ (expected ==) . Set.fromList <$>
-    createFilesAndGetExtensions [ ("test.cabal", dotCabal True)
-                                , (".stylish-haskell.yaml", dotStylish)]
+  assert $ (expected ==) . Set.fromList . configLanguageExtensions <$>
+    createFilesAndGetConfig [ ("test.cabal", dotCabal True)
+                            , (".stylish-haskell.yaml", dotStylish)]
     where
       expected = Set.fromList
         ["ScopedTypeVariables", "DataKinds", "TemplateHaskell", "QuasiQuotes"]
+
+--------------------------------------------------------------------------------
+testSpecifiedColumns :: Assertion
+testSpecifiedColumns =
+  assert $ (expected ==) . configColumns <$>
+    createFilesAndGetConfig [(".stylish-haskell.yaml", dotStylish)]
+    where
+      expected = Just 110
+
+--------------------------------------------------------------------------------
+testDefaultColumns :: Assertion
+testDefaultColumns =
+  assert $ (expected ==) . configColumns <$>
+    createFilesAndGetConfig [(".stylish-haskell.yaml", dotStylish2)]
+    where
+      expected = Just 80
+
+--------------------------------------------------------------------------------
+testNoColumns :: Assertion
+testNoColumns =
+  assert $ (expected ==) . configColumns <$>
+    createFilesAndGetConfig [(".stylish-haskell.yaml", dotStylish3)]
+    where
+      expected = Nothing
 
 -- | Example cabal file borrowed from
 --   https://www.haskell.org/cabal/users-guide/developing-packages.html
@@ -136,6 +166,45 @@ dotStylish = unlines $
   , "      remove_redundant: true"
   , "  - trailing_whitespace: {}"
   , "columns: 110"
+  , "language_extensions:"
+  , "  - TemplateHaskell"
+  , "  - QuasiQuotes"
+  ]
+
+-- | Example .stylish-haskell.yaml
+dotStylish2 :: String
+dotStylish2 = unlines $
+  [ "steps:"
+  , "  - imports:"
+  , "      align: none"
+  , "      list_align: after_alias"
+  , "      long_list_align: inline"
+  , "      separate_lists: true"
+  , "  - language_pragmas:"
+  , "      style: vertical"
+  , "      align: false"
+  , "      remove_redundant: true"
+  , "  - trailing_whitespace: {}"
+  , "language_extensions:"
+  , "  - TemplateHaskell"
+  , "  - QuasiQuotes"
+  ]
+
+-- | Example .stylish-haskell.yaml
+dotStylish3 :: String
+dotStylish3 = unlines $
+  [ "steps:"
+  , "  - imports:"
+  , "      align: none"
+  , "      list_align: after_alias"
+  , "      long_list_align: inline"
+  , "      separate_lists: true"
+  , "  - language_pragmas:"
+  , "      style: vertical"
+  , "      align: false"
+  , "      remove_redundant: true"
+  , "  - trailing_whitespace: {}"
+  , "columns: null"
   , "language_extensions:"
   , "  - TemplateHaskell"
   , "  - QuasiQuotes"

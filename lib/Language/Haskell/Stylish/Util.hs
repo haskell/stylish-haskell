@@ -10,6 +10,8 @@ module Language.Haskell.Stylish.Util
     , trimRight
     , wrap
     , wrapRest
+    , wrapMaybe
+    , wrapRestMaybe
 
     , withHead
     , withInit
@@ -99,6 +101,27 @@ wrap maxWidth leading ind = wrap' leading
 
 
 --------------------------------------------------------------------------------
+wrapMaybe :: Maybe Int -- ^ Maximum line width (maybe)
+          -> String    -- ^ Leading string
+          -> Int       -- ^ Indentation
+          -> [String]  -- ^ Strings to add/wrap
+          -> Lines     -- ^ Resulting lines
+wrapMaybe (Just maxWidth) = wrap maxWidth
+wrapMaybe Nothing         = noWrap
+
+
+--------------------------------------------------------------------------------
+noWrap :: String    -- ^ Leading string
+       -> Int       -- ^ Indentation
+       -> [String]  -- ^ Strings to add
+       -> Lines     -- ^ Resulting lines
+noWrap leading _ind = noWrap' leading
+  where
+    noWrap' ss [] = [ss]
+    noWrap' ss (str:strs) = noWrap' (ss ++ " " ++ str) strs
+
+
+--------------------------------------------------------------------------------
 wrapRest :: Int
          -> Int
          -> [String]
@@ -114,6 +137,29 @@ wrapRest maxWidth ind = reverse . wrapRest' [] ""
         | otherwise = wrapRest' ls (ss ++ " " ++ str) strs
 
     overflows ss str = (length ss + length str + 1) >= maxWidth
+
+
+--------------------------------------------------------------------------------
+wrapRestMaybe :: Maybe Int
+              -> Int
+              -> [String]
+              -> Lines
+wrapRestMaybe (Just maxWidth) = wrapRest maxWidth
+wrapRestMaybe Nothing         = noWrapRest
+
+
+--------------------------------------------------------------------------------
+noWrapRest :: Int
+           -> [String]
+           -> Lines
+noWrapRest ind = reverse . noWrapRest' [] ""
+  where
+    noWrapRest' ls ss []
+        | null ss = ls
+        | otherwise = ss:ls
+    noWrapRest' ls ss (str:strs)
+        | null ss = noWrapRest' ls (indent ind str) strs
+        | otherwise = noWrapRest' ls (ss ++ " " ++ str) strs
 
 
 --------------------------------------------------------------------------------

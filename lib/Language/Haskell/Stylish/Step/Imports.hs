@@ -258,7 +258,7 @@ prettyImportSpec separate = prettyImportSpec'
 
 --------------------------------------------------------------------------------
 prettyImport :: (Ord l, Show l) =>
-    Int -> Options -> Bool -> Bool -> Int -> H.ImportDecl l -> [String]
+    Maybe Int -> Options -> Bool -> Bool -> Int -> H.ImportDecl l -> [String]
 prettyImport columns Options{..} padQualified padName longest imp
     | (void `fmap` H.importSpecs imp) == emptyImportSpec = emptyWrap
     | otherwise = case longListAlign of
@@ -277,7 +277,7 @@ prettyImport columns Options{..} padQualified padName longest imp
     longListWrapper shortWrap longWrap
         | listAlign == NewLine
         || length shortWrap > 1
-        || length (head shortWrap) > columns
+        || exceedsColumns (length (head shortWrap))
             = longWrap
         | otherwise = shortWrap
 
@@ -292,14 +292,14 @@ prettyImport columns Options{..} padQualified padName longest imp
         . withLast (++ (maybeSpace ++ ")"))
 
     inlineWrapper = case listAlign of
-        NewLine        -> (paddedNoSpecBase :) . wrapRest columns listPadding'
-        WithModuleName -> wrap columns paddedBase (withModuleNameBaseLength + 4)
-        WithAlias      -> wrap columns paddedBase (inlineBaseLength + 1)
+        NewLine        -> (paddedNoSpecBase :) . wrapRestMaybe columns listPadding'
+        WithModuleName -> wrapMaybe columns paddedBase (withModuleNameBaseLength + 4)
+        WithAlias      -> wrapMaybe columns paddedBase (inlineBaseLength + 1)
         -- Add 1 extra space to ensure same padding as in original code.
         AfterAlias     -> withTail ((' ' : maybeSpace) ++)
-            . wrap columns paddedBase (afterAliasBaseLength + 1)
+            . wrapMaybe columns paddedBase (afterAliasBaseLength + 1)
 
-    inlineWithBreakWrap = paddedNoSpecBase : wrapRest columns listPadding'
+    inlineWithBreakWrap = paddedNoSpecBase : wrapRestMaybe columns listPadding'
         ( mapSpecs
         $ withInit (++ ",")
         . withHead (("(" ++ maybeSpace) ++)
@@ -307,7 +307,7 @@ prettyImport columns Options{..} padQualified padName longest imp
 
     inlineToMultilineWrap
         | length inlineWithBreakWrap > 2
-        || any ((> columns) . length) (tail inlineWithBreakWrap)
+        || any (exceedsColumns . length) (tail inlineWithBreakWrap)
             = multilineWrap
         | otherwise = inlineWithBreakWrap
 
@@ -389,9 +389,14 @@ prettyImport columns Options{..} padQualified padName longest imp
         True  -> " "
         False -> ""
 
+    exceedsColumns i = case columns of
+        Nothing -> False  -- No number exceeds a maximum column count of
+                          -- Nothing, because there is no limit to exceed.
+        Just c -> i > c
+
 
 --------------------------------------------------------------------------------
-prettyImportGroup :: Int -> Options -> Bool -> Int
+prettyImportGroup :: Maybe Int -> Options -> Bool -> Int
                   -> [H.ImportDecl LineBlock]
                   -> Lines
 prettyImportGroup columns align fileAlign longest imps =
@@ -415,12 +420,12 @@ prettyImportGroup columns align fileAlign longest imps =
 
 
 --------------------------------------------------------------------------------
-step :: Int -> Options -> Step
+step :: Maybe Int -> Options -> Step
 step columns = makeStep "Imports" . step' columns
 
 
 --------------------------------------------------------------------------------
-step' :: Int -> Options -> Lines -> Module -> Lines
+step' :: Maybe Int -> Options -> Lines -> Module -> Lines
 step' columns align ls (module', _) = applyChanges
     [ change block $ const $
         prettyImportGroup columns align fileAlign longest importGroup

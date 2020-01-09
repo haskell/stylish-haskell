@@ -55,16 +55,21 @@ data Alignable a = Alignable
 --------------------------------------------------------------------------------
 -- | Create changes that perform the alignment.
 align
-    :: Int                    -- ^ Max columns
+    :: Maybe Int              -- ^ Max columns
     -> [Alignable H.SrcSpan]  -- ^ Alignables
     -> [Change String]        -- ^ Changes performing the alignment.
 align _ [] = []
 align maxColumns alignment
     -- Do not make any change if we would go past the maximum number of columns.
-    | longestLeft + longestRight > maxColumns = []
-    | not (fixable alignment)                 = []
-    | otherwise                               = map align' alignment
+    | exceedsColumns (longestLeft + longestRight) = []
+    | not (fixable alignment)                     = []
+    | otherwise                                   = map align' alignment
   where
+    exceedsColumns i = case maxColumns of
+        Nothing -> False  -- No number exceeds a maximum column count of
+                          -- Nothing, because there is no limit to exceed.
+        Just c -> i > c
+
     -- The longest thing in the left column.
     longestLeft = maximum $ map (H.srcSpanEndColumn . aLeft) alignment
 
