@@ -1,7 +1,7 @@
-resolver: lts-14.13
+resolver: lts-14.20
 packages:
 - '.'
 
 extra-deps:
 - 'Cabal-3.0.0.0'
-- 'haskell-src-exts-1.22.0'
+- 'haskell-src-exts-1.23.0'
