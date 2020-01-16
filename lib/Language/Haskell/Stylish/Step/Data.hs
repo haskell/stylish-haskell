@@ -25,12 +25,18 @@ step' ls (module', _) = applyChanges changes ls
     changes = datas' >>= (maybeToList . changeDecl)
 
 changeDecl :: (LineBlock, H.Decl l)  -> Maybe ChangeLine
-changeDecl (block, H.DataDecl _ (H.DataType _) _ dhead [(H.QualConDecl _ _ _ (H.RecDecl _ dname fields))] _) =
-  Just $ change block (const newLines)
+changeDecl (block, H.DataDecl _ (H.DataType _) _ dhead decls _) =
+  Just $ change block (const $ concat newLines)
   where
-    newLines = typeConstructor : (firstName $ extractField $ head fields) : (fmap (otherName . extractField) (tail fields)) ++ ["  }"]
-    typeConstructor = "data " <> H.prettyPrint dhead <> " = " <> H.prettyPrint dname
+    zipped = zip decls [1..]
+    newLines = fmap (\(decl, i) -> if (i == 1) then processConstructor typeConstructor decl else processConstructor "  | " decl) zipped
+    typeConstructor = "data " <> H.prettyPrint dhead <> " = "
     firstName (fname, _type) = "  { " <> H.prettyPrint fname <> " :: " <> H.prettyPrint _type
     otherName (fname, _type) = "  , " <> H.prettyPrint fname <> " :: " <> H.prettyPrint _type
     extractField (H.FieldDecl _ names _type) = (head names, _type)
+
+    processConstructor init (H.QualConDecl _ _ _ (H.RecDecl _ dname fields)) = do
+      init <> H.prettyPrint dname : (firstName $ extractField $ head fields) : (fmap (otherName . extractField) (tail fields)) ++ ["  }"]
+    processConstructor _ _ = []
+
 changeDecl _ = Nothing
