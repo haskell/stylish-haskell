@@ -25,4 +25,14 @@ step' ls (module', _) = applyChanges changes ls
     changes = datas' >>= changeDecl
 
 changeDecl :: (LineBlock, H.Decl l)  -> [ChangeLine]
-changeDecl (block,  _) = [change block ("-- this is a comment" : )]
+changeDecl (block, H.DataDecl _ (H.DataType _) _ (H.DHead _ ident) qualConDecls _) = do
+  (H.QualConDecl _ _ _ (H.RecDecl _ dname fields)) <- qualConDecls
+  (H.FieldDecl _ names _type) <- fields
+  fname <- names
+  [change block (\_ ->
+                   ["data " <> H.prettyPrint ident <> " = " <> H.prettyPrint dname
+                   ,"  { " <> H.prettyPrint fname <> " :: " <> H.prettyPrint _type
+                   ,"  }"
+                   ]
+                )]
+changeDecl _ = []
