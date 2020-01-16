@@ -25,11 +25,11 @@ step' ls (module', _) = applyChanges changes ls
     changes = datas' >>= (maybeToList . changeDecl)
 
 changeDecl :: (LineBlock, H.Decl l)  -> Maybe ChangeLine
-changeDecl (block, H.DataDecl _ (H.DataType _) _ (H.DHead _ ident) [(H.QualConDecl _ _ _ (H.RecDecl _ dname fields))] _) =
+changeDecl (block, H.DataDecl _ (H.DataType _) _ dhead [(H.QualConDecl _ _ _ (H.RecDecl _ dname fields))] _) =
   Just $ change block (const newLines)
   where
     newLines = typeConstructor : (firstName $ extractField $ head fields) : (fmap (otherName . extractField) (tail fields)) ++ ["  }"]
-    typeConstructor = "data " <> H.prettyPrint ident <> " = " <> H.prettyPrint dname
+    typeConstructor = "data " <> H.prettyPrint dhead <> " = " <> H.prettyPrint dname
     firstName (fname, _type) = "  { " <> H.prettyPrint fname <> " :: " <> H.prettyPrint _type
     otherName (fname, _type) = "  , " <> H.prettyPrint fname <> " :: " <> H.prettyPrint _type
     extractField (H.FieldDecl _ names _type) = (head names, _type)
