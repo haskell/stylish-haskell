@@ -184,7 +184,8 @@ parseSimpleAlign c o = SimpleAlign.step
 
 --------------------------------------------------------------------------------
 parseRecords :: Config -> A.Object -> A.Parser Step
-parseRecords _ _ = return Data.step
+parseRecords _ o = Data.step
+    <$> (o A..:? "indent" A..!= 4)
 
 
 --------------------------------------------------------------------------------

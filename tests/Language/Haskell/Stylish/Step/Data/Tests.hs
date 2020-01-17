@@ -18,10 +18,11 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 06" case06
     , testCase "case 07" case07
     , testCase "case 08" case08
+    , testCase "case 09" case09
     ]
 
 case01 :: Assertion
-case01 = expected @=? testStep step input
+case01 = expected @=? testStep (step 2) input
   where
     input = unlines
       [ "module Herp where"
@@ -38,7 +39,7 @@ case01 = expected @=? testStep step input
        ]
 
 case02 :: Assertion
-case02 = expected @=? testStep step input
+case02 = expected @=? testStep (step 2) input
   where
     input = unlines
       [ "module Herp where"
@@ -55,7 +56,7 @@ case02 = expected @=? testStep step input
        ]
 
 case03 :: Assertion
-case03 = expected @=? testStep step input
+case03 = expected @=? testStep (step 2) input
   where
     input = unlines
       [ "module Herp where"
@@ -72,7 +73,7 @@ case03 = expected @=? testStep step input
        ]
 
 case04 :: Assertion
-case04 = expected @=? testStep step input
+case04 = expected @=? testStep (step 2) input
   where
     input = unlines
       [ "module Herp where"
@@ -92,7 +93,7 @@ case04 = expected @=? testStep step input
        ]
 
 case05 :: Assertion
-case05 = expected @=? testStep step input
+case05 = expected @=? testStep (step 2) input
   where
     input = unlines
        [ "module Herp where"
@@ -112,7 +113,7 @@ case05 = expected @=? testStep step input
        ]
 
 case06 :: Assertion
-case06 = expected @=? testStep step input
+case06 = expected @=? testStep (step 2) input
   where
     input = unlines
       [ "module Herp where"
@@ -122,7 +123,7 @@ case06 = expected @=? testStep step input
     expected = input
 
 case07 :: Assertion
-case07 = expected @=? testStep step input
+case07 = expected @=? testStep (step 2) input
   where
     input = unlines
       [ "module Herp where"
@@ -132,7 +133,7 @@ case07 = expected @=? testStep step input
     expected = input
 
 case08 :: Assertion
-case08 = expected @=? testStep step input
+case08 = expected @=? testStep (step 2) input
   where
     input = unlines
       [ "module Herp where"
@@ -145,3 +146,24 @@ case08 = expected @=? testStep step input
       , ""
       , "data Phantom a = Phantom"
       ]
+
+case09 :: Assertion
+case09 = expected @=? testStep (step 4) input
+  where
+    input = unlines
+      [ "module Herp where"
+      , ""
+      , "data Foo a b = Foo { a :: a, a2 :: String } | Bar { b :: a, c:: b }"
+      ]
+    expected = unlines
+       [ "module Herp where"
+       , ""
+       , "data Foo a b = Foo"
+       , "    { a :: a"
+       , "    , a2 :: String"
+       , "    }"
+       , "    | Bar"
+       , "    { b :: a"
+       , "    , c :: b"
+       , "    }"
+       ]
