@@ -22,6 +22,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 09" case09
     , testCase "case 10" case10
     , testCase "case 11" case11
+    , testCase "case 12" case12
     ]
 
 case00 :: Assertion
@@ -219,4 +220,22 @@ case11 = expected @=? testStep (step 2) input
        , "  { a :: Int"
        , "  }"
        , "  deriving stock (Show)"
+       ]
+
+case12 :: Assertion
+case12 = expected @=? testStep (step 2) input
+  where
+    input = unlines
+      [ "module Herp where"
+      , ""
+      , "data Point = Point { pointX, pointY :: Double , pointName :: String} deriving (Show)"
+      ]
+
+    expected = unlines
+       [ "module Herp where"
+       , ""
+       , "data Point = Point"
+       , "    { pointX, pointY :: Double"
+       , "    , pointName      :: String"
+       , "    deriving (Show)"
        ]
