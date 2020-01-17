@@ -27,7 +27,7 @@ step' indentSize ls (module', _) = applyChanges changes ls
     changes = datas' >>= (maybeToList . (changeDecl indentSize))
 
 changeDecl :: Int -> (LineBlock, H.Decl l)  -> Maybe ChangeLine
-changeDecl indentSize (block, H.DataDecl _ (H.DataType _) _ dhead decls derivings) =
+changeDecl indentSize (block, H.DataDecl _ (H.DataType _) Nothing dhead decls derivings) =
   Just $ change block (const $ concat newLines)
   where
     zipped = zip decls ([1..] ::[Int])
