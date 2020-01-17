@@ -1,5 +1,6 @@
 module Language.Haskell.Stylish.Step.Data where
 
+import           Prelude hiding (init)
 import           Data.Maybe                      (maybeToList)
 import qualified Language.Haskell.Exts           as H
 import           Language.Haskell.Stylish.Block
@@ -17,19 +18,19 @@ datas modu =
 type ChangeLine = Change String
 
 step :: Int -> Step
-step indent = makeStep "Data" (step' indent)
+step indentSize = makeStep "Data" (step' indentSize)
 
 step' :: Int -> Lines -> Module -> Lines
-step' indent ls (module', _) = applyChanges changes ls
+step' indentSize ls (module', _) = applyChanges changes ls
   where
     datas' = datas $ fmap linesFromSrcSpan module'
-    changes = datas' >>= (maybeToList . (changeDecl indent))
+    changes = datas' >>= (maybeToList . (changeDecl indentSize))
 
 changeDecl :: Int -> (LineBlock, H.Decl l)  -> Maybe ChangeLine
-changeDecl indent (block, H.DataDecl _ (H.DataType _) _ dhead decls _) =
+changeDecl indentSize (block, H.DataDecl _ (H.DataType _) _ dhead decls _) =
   Just $ change block (const $ concat newLines)
   where
-    zipped = zip decls [1..]
+    zipped = zip decls ([1..] ::[Int])
     newLines = fmap (\(decl, i) -> if (i == 1) then processConstructor typeConstructor decl else processConstructor (indented "| ") decl) zipped
     typeConstructor = "data " <> H.prettyPrint dhead <> " = "
     firstName (fname, _type) = indented "{ " <> H.prettyPrint fname <> " :: " <> H.prettyPrint _type
@@ -40,5 +41,6 @@ changeDecl indent (block, H.DataDecl _ (H.DataType _) _ dhead decls _) =
       init <> H.prettyPrint dname : (firstName $ extractField $ head fields) : (fmap (otherName . extractField) (tail fields)) ++ [indented "}"]
     processConstructor init decl = [init <> trimLeft (H.prettyPrint decl)]
 
-    indented str = (replicate indent ' ') <> str
+    indented str = indent indentSize str
+
 changeDecl _ _ = Nothing
