@@ -223,7 +223,7 @@ case11 = expected @=? testStep (step 2) input
        ]
 
 case12 :: Assertion
-case12 = expected @=? testStep (step 2) input
+case12 = expected @=? testStep (step 4) input
   where
     input = unlines
       [ "module Herp where"
@@ -236,6 +236,7 @@ case12 = expected @=? testStep (step 2) input
        , ""
        , "data Point = Point"
        , "    { pointX, pointY :: Double"
-       , "    , pointName      :: String"
+       , "    , pointName :: String"
+       , "    }"
        , "    deriving (Show)"
        ]

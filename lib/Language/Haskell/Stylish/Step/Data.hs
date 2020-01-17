@@ -1,6 +1,7 @@
 module Language.Haskell.Stylish.Step.Data where
 
 import           Prelude hiding (init)
+import           Data.List (intercalate)
 import           Data.Maybe                      (maybeToList)
 import qualified Language.Haskell.Exts           as H
 import           Language.Haskell.Stylish.Block
@@ -35,9 +36,9 @@ changeDecl indentSize (block, H.DataDecl _ (H.DataType _) Nothing dhead decls de
     newLines :: [[String]]
     newLines = (fmap (\(decl, i) -> if (i == 1) then processConstructor typeConstructor decl else processConstructor (indented "| ") decl) zipped) ++ [fmap (\d -> indented $ H.prettyPrint d) derivings]
     typeConstructor = "data " <> H.prettyPrint dhead <> " = "
-    firstName (fname, _type) = indented "{ " <> H.prettyPrint fname <> " :: " <> H.prettyPrint _type
-    otherName (fname, _type) = indented ", " <> H.prettyPrint fname <> " :: " <> H.prettyPrint _type
-    extractField (H.FieldDecl _ names _type) = (head names, _type)
+    firstName (fnames, _type) = indented "{ " <> intercalate ", " (fmap H.prettyPrint fnames) <> " :: " <> H.prettyPrint _type
+    otherName (fnames, _type) = indented ", " <> intercalate ", " (fmap H.prettyPrint fnames) <> " :: " <> H.prettyPrint _type
+    extractField (H.FieldDecl _ names _type) = (names, _type)
 
     processConstructor init (H.QualConDecl _ _ _ (H.RecDecl _ dname fields)) = do
       init <> H.prettyPrint dname : (firstName $ extractField $ head fields) : (fmap (otherName . extractField) (tail fields)) ++ [indented "}"]
