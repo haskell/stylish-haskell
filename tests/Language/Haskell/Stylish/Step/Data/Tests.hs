@@ -10,7 +10,8 @@ import           Test.HUnit                          (Assertion, (@=?))
 
 tests :: Test
 tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
-    [ testCase "case 01" case01
+    [ testCase "case 00" case00
+    , testCase "case 01" case01
     , testCase "case 02" case02
     , testCase "case 03" case03
     , testCase "case 04" case04
@@ -22,6 +23,17 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 10" case10
     , testCase "case 11" case11
     ]
+
+case00 :: Assertion
+case00 = expected @=? testStep (step 2) input
+  where
+    input = unlines
+      [ "module Herp where"
+      , ""
+      , "data Foo"
+      ]
+
+    expected = input
 
 case01 :: Assertion
 case01 = expected @=? testStep (step 2) input

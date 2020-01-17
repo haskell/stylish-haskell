@@ -27,6 +27,7 @@ step' indentSize ls (module', _) = applyChanges changes ls
     changes = datas' >>= (maybeToList . (changeDecl indentSize))
 
 changeDecl :: Int -> (LineBlock, H.Decl l)  -> Maybe ChangeLine
+changeDecl _ (_, H.DataDecl _ (H.DataType _) Nothing _ [] _) = Nothing
 changeDecl indentSize (block, H.DataDecl _ (H.DataType _) Nothing dhead decls derivings) =
   Just $ change block (const $ concat newLines)
   where
