@@ -36,12 +36,11 @@ changeDecl indentSize (block, H.DataDecl _ (H.DataType _) Nothing dhead decls de
     newLines :: [[String]]
     newLines = (fmap (\(decl, i) -> if (i == 1) then processConstructor typeConstructor decl else processConstructor (indented "| ") decl) zipped) ++ [fmap (\d -> indented $ H.prettyPrint d) derivings]
     typeConstructor = "data " <> H.prettyPrint dhead <> " = "
-    firstName (fnames, _type) = indented "{ " <> intercalate ", " (fmap H.prettyPrint fnames) <> " :: " <> H.prettyPrint _type
-    otherName (fnames, _type) = indented ", " <> intercalate ", " (fmap H.prettyPrint fnames) <> " :: " <> H.prettyPrint _type
+    processName init (fnames, _type) = indented init <> intercalate ", " (fmap H.prettyPrint fnames) <> " :: " <> H.prettyPrint _type
     extractField (H.FieldDecl _ names _type) = (names, _type)
 
     processConstructor init (H.QualConDecl _ _ _ (H.RecDecl _ dname fields)) = do
-      init <> H.prettyPrint dname : (firstName $ extractField $ head fields) : (fmap (otherName . extractField) (tail fields)) ++ [indented "}"]
+      init <> H.prettyPrint dname : (processName "{ " $ extractField $ head fields) : (fmap (processName ", " . extractField) (tail fields)) ++ [indented "}"]
     processConstructor init decl = [init <> trimLeft (H.prettyPrint decl)]
 
     indented str = indent indentSize str
