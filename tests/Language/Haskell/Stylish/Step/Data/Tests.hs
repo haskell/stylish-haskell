@@ -14,6 +14,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 02" case02
     , testCase "case 03" case03
     , testCase "case 04" case04
+    , testCase "case 05" case05
     ]
 
 case01 :: Assertion
@@ -86,3 +87,24 @@ case04 = expected @=? testStep step input
        , "  { b :: a"
        , "  }"
        ]
+
+case05 :: Assertion
+case05 = expected @=? testStep step input
+  where
+    input = unlines
+       [ "module Herp where"
+       , ""
+       , "data Foo = Foo {"
+       , "  a :: Int"
+       , "  , a2 :: String"
+       , "  }"
+       ]
+    expected = unlines
+       [ "module Herp where"
+       , ""
+       , "data Foo = Foo"
+       , "  { a :: Int"
+       , "  , a2 :: String"
+       , "  }"
+       ]
+
