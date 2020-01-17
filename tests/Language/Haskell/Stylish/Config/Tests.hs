@@ -165,6 +165,7 @@ dotStylish = unlines $
   , "      align: false"
   , "      remove_redundant: true"
   , "  - trailing_whitespace: {}"
+  , "  - records: {}"
   , "columns: 110"
   , "language_extensions:"
   , "  - TemplateHaskell"

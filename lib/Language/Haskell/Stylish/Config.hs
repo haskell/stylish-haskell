@@ -35,6 +35,7 @@ import qualified System.IO                                        as IO (Newline
 import qualified Language.Haskell.Stylish.Config.Cabal            as Cabal
 import           Language.Haskell.Stylish.Config.Internal
 import           Language.Haskell.Stylish.Step
+import qualified Language.Haskell.Stylish.Step.Data               as Data
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
 import qualified Language.Haskell.Stylish.Step.SimpleAlign        as SimpleAlign
@@ -141,6 +142,7 @@ parseConfig _            = mzero
 catalog :: Map String (Config -> A.Object -> A.Parser Step)
 catalog = M.fromList
     [ ("imports",             parseImports)
+    , ("records",             parseRecords)
     , ("language_pragmas",    parseLanguagePragmas)
     , ("simple_align",        parseSimpleAlign)
     , ("squash",              parseSquash)
@@ -179,6 +181,10 @@ parseSimpleAlign c o = SimpleAlign.step
         <*> withDef SimpleAlign.cRecords          "records")
   where
     withDef f k = fromMaybe (f SimpleAlign.defaultConfig) <$> (o A..:? k)
+
+--------------------------------------------------------------------------------
+parseRecords :: Config -> A.Object -> A.Parser Step
+parseRecords _ _ = return Data.step
 
 
 --------------------------------------------------------------------------------

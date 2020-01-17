@@ -29,6 +29,7 @@ import           Control.Monad                                    (foldM)
 import           Language.Haskell.Stylish.Config
 import           Language.Haskell.Stylish.Parse
 import           Language.Haskell.Stylish.Step
+import qualified Language.Haskell.Stylish.Step.Data               as Data
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
 import qualified Language.Haskell.Stylish.Step.SimpleAlign        as SimpleAlign
@@ -38,6 +39,10 @@ import qualified Language.Haskell.Stylish.Step.UnicodeSyntax      as UnicodeSynt
 import           Language.Haskell.Stylish.Verbose
 import           Paths_stylish_haskell                            (version)
 
+
+--------------------------------------------------------------------------------
+records :: Step
+records = Data.step
 
 --------------------------------------------------------------------------------
 simpleAlign :: Maybe Int  -- ^ Columns

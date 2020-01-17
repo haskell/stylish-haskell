@@ -221,6 +221,7 @@ steps:
   # elements into single spaces. Basically, this undoes the effect of
   # simple_align but is a bit less conservative.
   # - squash: {}
+  - records: {}
 
 # A common setting is the number of columns (parts of) code will be wrapped
 # to. Different steps take this into account.
