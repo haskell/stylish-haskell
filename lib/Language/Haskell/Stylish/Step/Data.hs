@@ -27,11 +27,12 @@ step' indentSize ls (module', _) = applyChanges changes ls
     changes = datas' >>= (maybeToList . (changeDecl indentSize))
 
 changeDecl :: Int -> (LineBlock, H.Decl l)  -> Maybe ChangeLine
-changeDecl indentSize (block, H.DataDecl _ (H.DataType _) _ dhead decls _) =
+changeDecl indentSize (block, H.DataDecl _ (H.DataType _) _ dhead decls derivings) =
   Just $ change block (const $ concat newLines)
   where
     zipped = zip decls ([1..] ::[Int])
-    newLines = fmap (\(decl, i) -> if (i == 1) then processConstructor typeConstructor decl else processConstructor (indented "| ") decl) zipped
+    newLines :: [[String]]
+    newLines = (fmap (\(decl, i) -> if (i == 1) then processConstructor typeConstructor decl else processConstructor (indented "| ") decl) zipped) ++ [fmap (\d -> indented $ H.prettyPrint d) derivings]
     typeConstructor = "data " <> H.prettyPrint dhead <> " = "
     firstName (fname, _type) = indented "{ " <> H.prettyPrint fname <> " :: " <> H.prettyPrint _type
     otherName (fname, _type) = indented ", " <> H.prettyPrint fname <> " :: " <> H.prettyPrint _type
