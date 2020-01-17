@@ -5,6 +5,7 @@ import qualified Language.Haskell.Exts           as H
 import           Language.Haskell.Stylish.Block
 import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.Step
+import           Language.Haskell.Stylish.Util
 
 datas :: H.Module l -> [(l, H.Decl l)]
 datas modu =
@@ -37,6 +38,6 @@ changeDecl (block, H.DataDecl _ (H.DataType _) _ dhead decls _) =
 
     processConstructor init (H.QualConDecl _ _ _ (H.RecDecl _ dname fields)) = do
       init <> H.prettyPrint dname : (firstName $ extractField $ head fields) : (fmap (otherName . extractField) (tail fields)) ++ ["  }"]
-    processConstructor _ _ = []
+    processConstructor init decl = [init <> trimLeft (H.prettyPrint decl)]
 
 changeDecl _ = Nothing

@@ -15,7 +15,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 03" case03
     , testCase "case 04" case04
     , testCase "case 05" case05
---    , testCase "case 06" case06
+    , testCase "case 06" case06
     ]
 
 case01 :: Assertion
