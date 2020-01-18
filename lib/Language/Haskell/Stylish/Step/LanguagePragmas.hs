@@ -53,23 +53,23 @@ verticalPragmas lg longest align pragmas' =
 
 
 --------------------------------------------------------------------------------
-compactPragmas :: String -> Int -> [String] -> Lines
-compactPragmas lg columns pragmas' = wrap columns ("{-# " ++ lg) 13 $
+compactPragmas :: String -> Maybe Int -> [String] -> Lines
+compactPragmas lg columns pragmas' = wrapMaybe columns ("{-# " ++ lg) 13 $
     map (++ ",") (init pragmas') ++ [last pragmas' ++ " #-}"]
 
 
 --------------------------------------------------------------------------------
-compactLinePragmas :: String -> Int -> Bool -> [String] -> Lines
+compactLinePragmas :: String -> Maybe Int -> Bool -> [String] -> Lines
 compactLinePragmas _  _ _ [] = []
 compactLinePragmas lg columns align pragmas' = map (wrapLanguage . pad) prags
   where
     wrapLanguage ps = "{-# " ++ lg ++ ps ++  " #-}"
-    maxWidth = columns - 16
+    maxWidth = fmap (\c -> c - 16) columns
     longest  = maximum $ map length prags
     pad
       | align = padRight longest
       | otherwise = id
-    prags = map truncateComma $ wrap maxWidth "" 1 $
+    prags = map truncateComma $ wrapMaybe maxWidth "" 1 $
       map (++ ",") (init pragmas') ++ [last pragmas']
 
 
@@ -82,7 +82,7 @@ truncateComma xs
 
 
 --------------------------------------------------------------------------------
-prettyPragmas :: String -> Int -> Int -> Bool -> Style -> [String] -> Lines
+prettyPragmas :: String -> Maybe Int -> Int -> Bool -> Style -> [String] -> Lines
 prettyPragmas lp _    longest align Vertical    = verticalPragmas lp longest align
 prettyPragmas lp cols _       _     Compact     = compactPragmas lp cols
 prettyPragmas lp cols _       align CompactLine = compactLinePragmas lp cols align
@@ -105,12 +105,12 @@ filterRedundant isRedundant' = snd . foldr filterRedundant' (S.empty, [])
         known' = xs' `S.union` known
 
 --------------------------------------------------------------------------------
-step :: Int -> Style -> Bool -> Bool -> String -> Step
+step :: Maybe Int -> Style -> Bool -> Bool -> String -> Step
 step = ((((makeStep "LanguagePragmas" .) .) .) .) . step'
 
 
 --------------------------------------------------------------------------------
-step' :: Int -> Style -> Bool -> Bool -> String -> Lines -> Module -> Lines
+step' :: Maybe Int -> Style -> Bool -> Bool -> String -> Lines -> Module -> Lines
 step' columns style align removeRedundant lngPrefix ls (module', _)
     | null pragmas' = ls
     | otherwise     = applyChanges changes ls

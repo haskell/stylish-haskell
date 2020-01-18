@@ -52,7 +52,7 @@ type Extensions = [String]
 --------------------------------------------------------------------------------
 data Config = Config
     { configSteps              :: [Step]
-    , configColumns            :: Int
+    , configColumns            :: Maybe Int
     , configLanguageExtensions :: [String]
     , configNewline            :: IO.Newline
     , configCabal              :: Bool
@@ -119,7 +119,7 @@ parseConfig (A.Object o) = do
     -- First load the config without the actual steps
     config <- Config
         <$> pure []
-        <*> (o A..:? "columns"             A..!= 80)
+        <*> (o A..:! "columns"             A..!= Just 80)
         <*> (o A..:? "language_extensions" A..!= [])
         <*> (o A..:? "newline"             >>= parseEnum newlines IO.nativeNewline)
         <*> (o A..:? "cabal"               A..!= True)
@@ -253,7 +253,7 @@ mkLanguage :: A.Object -> A.Parser String
 mkLanguage o = do
     lang <- o A..:? "language_prefix"
     maybe (pure "LANGUAGE") validate lang
-    where 
+    where
         validate :: String -> A.Parser String
         validate s
             | fmap toLower s == "language" = pure s

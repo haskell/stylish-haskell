@@ -40,21 +40,21 @@ import           Paths_stylish_haskell                            (version)
 
 
 --------------------------------------------------------------------------------
-simpleAlign :: Int  -- ^ Columns
+simpleAlign :: Maybe Int  -- ^ Columns
             -> SimpleAlign.Config
             -> Step
 simpleAlign = SimpleAlign.step
 
 
 --------------------------------------------------------------------------------
-imports :: Int -- ^ columns
+imports :: Maybe Int -- ^ columns
         -> Imports.Options
         -> Step
 imports = Imports.step
 
 
 --------------------------------------------------------------------------------
-languagePragmas :: Int -- ^ columns
+languagePragmas :: Maybe Int -- ^ columns
                 -> LanguagePragmas.Style
                 -> Bool -- ^ Pad to same length in vertical mode?
                 -> Bool -- ^ remove redundant?

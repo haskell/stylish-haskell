@@ -108,7 +108,7 @@ fieldDeclToAlignable (H.FieldDecl ann names ty) = Just $ Alignable
 
 
 --------------------------------------------------------------------------------
-step :: Int -> Config -> Step
+step :: Maybe Int -> Config -> Step
 step maxColumns config = makeStep "Cases" $ \ls (module', _) ->
     let module''               = fmap H.srcInfoSpan module'
         changes search toAlign =
