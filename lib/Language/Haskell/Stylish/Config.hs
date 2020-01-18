@@ -52,12 +52,13 @@ type Extensions = [String]
 
 --------------------------------------------------------------------------------
 data Config = Config
-    { configSteps              :: [Step]
-    , configColumns            :: Maybe Int
-    , configLanguageExtensions :: [String]
-    , configNewline            :: IO.Newline
-    , configCabal              :: Bool
-    }
+  { configSteps              :: [Step]
+  , configIndent             :: Int
+  , configColumns            :: Maybe Int
+  , configLanguageExtensions :: [String]
+  , configNewline            :: IO.Newline
+  , configCabal              :: Bool
+  }
 
 
 --------------------------------------------------------------------------------
@@ -120,6 +121,7 @@ parseConfig (A.Object o) = do
     -- First load the config without the actual steps
     config <- Config
         <$> pure []
+        <*> (o A..:? "indent"              A..!= 4)
         <*> (o A..:! "columns"             A..!= Just 80)
         <*> (o A..:? "language_extensions" A..!= [])
         <*> (o A..:? "newline"             >>= parseEnum newlines IO.nativeNewline)
@@ -184,8 +186,8 @@ parseSimpleAlign c o = SimpleAlign.step
 
 --------------------------------------------------------------------------------
 parseRecords :: Config -> A.Object -> A.Parser Step
-parseRecords _ o = Data.step
-    <$> (o A..:? "indent" A..!= 4)
+parseRecords c _ = Data.step
+    <$> pure (configIndent c)
 
 
 --------------------------------------------------------------------------------

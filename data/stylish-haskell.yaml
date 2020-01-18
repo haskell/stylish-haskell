@@ -16,8 +16,7 @@ steps:
   #     add_language_pragma: true
 
   # Format record definitions
-  - records:
-      indent: 4
+  - records: {}
 
   # Align the right hand side of some elements.  This is quite conservative
   # and only applies to statements where each element occupies a single
@@ -225,6 +224,9 @@ steps:
   # elements into single spaces. Basically, this undoes the effect of
   # simple_align but is a bit less conservative.
   # - squash: {}
+
+# A common indentation setting. Different steps take this into account.
+indent: 4
 
 # A common setting is the number of columns (parts of) code will be wrapped
 # to. Different steps take this into account.
