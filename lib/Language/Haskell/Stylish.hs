@@ -40,10 +40,6 @@ import           Paths_stylish_haskell                            (version)
 
 
 --------------------------------------------------------------------------------
-records :: Step
-records = Data.step
-
---------------------------------------------------------------------------------
 simpleAlign :: Maybe Int  -- ^ Columns
             -> SimpleAlign.Config
             -> Step
