@@ -52,13 +52,13 @@ type Extensions = [String]
 
 --------------------------------------------------------------------------------
 data Config = Config
-  { configSteps              :: [Step]
-  , configIndent             :: Int
-  , configColumns            :: Maybe Int
-  , configLanguageExtensions :: [String]
-  , configNewline            :: IO.Newline
-  , configCabal              :: Bool
-  }
+    { configSteps              :: [Step]
+    , configIndent             :: Int
+    , configColumns            :: Maybe Int
+    , configLanguageExtensions :: [String]
+    , configNewline            :: IO.Newline
+    , configCabal              :: Bool
+    }
 
 
 --------------------------------------------------------------------------------
