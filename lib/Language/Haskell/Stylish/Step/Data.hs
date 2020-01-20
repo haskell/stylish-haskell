@@ -32,19 +32,20 @@ changeDecl _ (_, H.DataDecl _ (H.DataType _) Nothing _ [] _) = Nothing
 changeDecl indentSize (block, H.DataDecl _ (H.DataType _) Nothing dhead decls derivings) =
   Just $ change block (const $ concat newLines)
   where
-    zipped = zip decls ([1..] ::[Int])
     newLines = fmap constructors zipped ++ [fmap (indented . H.prettyPrint) derivings]
-
-    constructors (decl, 1) = processConstructor typeConstructor decl
-    constructors (decl, _) = processConstructor (indented "| ") decl
+    zipped = zip decls ([1..] ::[Int])
+    constructors (decl, 1) = processConstructor typeConstructor indentSize decl
+    constructors (decl, _) = processConstructor (indented "| ") indentSize decl
     typeConstructor = "data " <> H.prettyPrint dhead <> " = "
-    processName init (fnames, _type) = indented init <> intercalate ", " (fmap H.prettyPrint fnames) <> " :: " <> H.prettyPrint _type
-    extractField (H.FieldDecl _ names _type) = (names, _type)
-
-    processConstructor init (H.QualConDecl _ _ _ (H.RecDecl _ dname fields)) =
-      init <> H.prettyPrint dname : processName "{ " ( extractField $ head fields) : fmap (processName ", " . extractField) (tail fields) ++ [indented "}"]
-    processConstructor init decl = [init <> trimLeft (H.prettyPrint decl)]
-
     indented = indent indentSize
-
 changeDecl _ _ = Nothing
+
+processConstructor :: String -> Int -> H.QualConDecl l -> [String]
+processConstructor init indentSize (H.QualConDecl _ _ _ (H.RecDecl _ dname fields)) =
+  init <> H.prettyPrint dname : processName "{ " ( extractField $ head fields) : fmap (processName ", " . extractField) (tail fields) ++ [indented "}"]
+  where
+    processName prefix (fnames, _type) =
+      indented prefix <> intercalate ", " (fmap H.prettyPrint fnames) <> " :: " <> H.prettyPrint _type
+    extractField (H.FieldDecl _ names _type) = (names, _type)
+    indented = indent indentSize
+processConstructor init _ decl = [init <> trimLeft (H.prettyPrint decl)]
