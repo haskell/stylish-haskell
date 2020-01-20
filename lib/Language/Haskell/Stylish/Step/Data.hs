@@ -9,12 +9,9 @@ import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
 import           Prelude                         hiding (init)
 
-datas :: H.Module l -> [(l, H.Decl l)]
-datas modu =
-    [ (l, H.DataDecl l b c d e f)
-    | H.Module _ _ _ _ decls                  <- [modu]
-    , H.DataDecl l b c d e f                  <- decls
-    ]
+datas :: H.Module l -> [H.Decl l]
+datas (H.Module _ _ _ _ decls) = decls
+datas _                        = []
 
 type ChangeLine = Change String
 
@@ -27,9 +24,9 @@ step' indentSize ls (module', _) = applyChanges changes ls
     datas' = datas $ fmap linesFromSrcSpan module'
     changes = datas' >>= maybeToList . changeDecl indentSize
 
-changeDecl :: Int -> (LineBlock, H.Decl l)  -> Maybe ChangeLine
-changeDecl _ (_, H.DataDecl _ (H.DataType _) Nothing _ [] _) = Nothing
-changeDecl indentSize (block, H.DataDecl _ (H.DataType _) Nothing dhead decls derivings) =
+changeDecl :: Int -> H.Decl LineBlock -> Maybe ChangeLine
+changeDecl _ (H.DataDecl _ (H.DataType _) Nothing _ [] _) = Nothing
+changeDecl indentSize (H.DataDecl block (H.DataType _) Nothing dhead decls derivings) =
   Just $ change block (const $ concat newLines)
   where
     newLines = fmap constructors zipped ++ [fmap (indented . H.prettyPrint) derivings]
