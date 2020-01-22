@@ -23,6 +23,10 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 10" case10
     , testCase "case 11" case11
     , testCase "case 12" case12
+    , testCase "case 13" case13
+    , testCase "case 14" case14
+--    , testCase "case 15" case15
+--    , testCase "case 16" case16
     ]
 
 case00 :: Assertion
@@ -239,4 +243,82 @@ case12 = expected @=? testStep (step 4) input
        , "    , pointName :: String"
        , "    }"
        , "    deriving (Show)"
+       ]
+
+case13 :: Assertion
+case13 = expected @=? testStep (step 2) input
+  where
+    input = unlines
+      [ "module Herp where"
+      , ""
+      , "-- this is a comment"
+      , "data Foo = Foo { a :: Int }"
+      ]
+    expected = unlines
+      [ "module Herp where"
+      , ""
+      , "-- this is a comment"
+      , "data Foo = Foo"
+      , "  { a :: Int"
+      , "  }"
+      ]
+
+case14 :: Assertion
+case14 = expected @=? testStep (step 2) input
+  where
+    input = unlines
+      [ "module Herp where"
+      , ""
+      , "{- this is"
+      , "   a comment -}"
+      , "data Foo = Foo { a :: Int }"
+      ]
+    expected = unlines
+      [ "module Herp where"
+      , ""
+      , "{- this is"
+      , "   a comment -}"
+      , "data Foo = Foo"
+      , "  { a :: Int"
+      , "  }"
+      ]
+
+case15 :: Assertion
+case15 = expected @=? testStep (step 2) input
+  where
+    input = unlines
+      [ "module Herp where"
+      , ""
+      , "data Foo = Foo"
+      , "  { a :: Int -- comment"
+      , "  }"
+      ]
+    expected = unlines
+      [ "module Herp where"
+      , ""
+      , "data Foo = Foo"
+      , "  { a :: Int -- comment"
+      , "  }"
+      ]
+
+case16 :: Assertion
+case16 = expected @=? testStep (step 2) input
+  where
+    input = unlines
+       [ "module Herp where"
+       , ""
+       , "data Foo a = Foo"
+       , "  { a :: a"
+       , "-- comment"
+       , "  , a2 :: String"
+       , "  }"
+       ]
+    expected = unlines
+       [ "module Herp where"
+       , ""
+       , "data Foo a = Foo"
+       , "  { a :: a"
+       , "-- comment"
+       , "  , a2 :: String"
+       , "  }"
        ]
