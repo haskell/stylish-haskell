@@ -29,9 +29,12 @@ step' indentSize ls module' = applyChanges changes ls
 changeDecl :: Int -> H.Decl (LineBlock, [Comment]) -> Maybe ChangeLine
 changeDecl _ (H.DataDecl _ (H.DataType _) Nothing _ [] _) = Nothing
 changeDecl indentSize (H.DataDecl (block, _) (H.DataType _) Nothing dhead decls derivings) =
-  Just $ change block (const $ concat newLines)
+  fmap (\l -> change block (const $ concat l)) newLines
   where
-    newLines = fmap constructors zipped ++ [fmap (indented . H.prettyPrint) derivings]
+    newLines = if Nothing `elem` maybeConstructors then Nothing
+       else Just $ fmap concat maybeConstructors ++ [fmap (indented . H.prettyPrint) derivings]
+    maybeConstructors :: [Maybe [String]]
+    maybeConstructors = fmap constructors zipped
     zipped = zip decls ([1..] ::[Int])
     constructors (decl, 1) = processConstructor typeConstructor indentSize decl
     constructors (decl, _) = processConstructor (indented "| ") indentSize decl
@@ -39,12 +42,15 @@ changeDecl indentSize (H.DataDecl (block, _) (H.DataType _) Nothing dhead decls 
     indented = indent indentSize
 changeDecl _ _ = Nothing
 
-processConstructor :: String -> Int -> H.QualConDecl (LineBlock, [Comment]) -> [String]
-processConstructor init indentSize (H.QualConDecl _ _ _ (H.RecDecl _ dname fields)) =
-  init <> H.prettyPrint dname : processName "{ " ( extractField $ head fields) : fmap (processName ", " . extractField) (tail fields) ++ [indented "}"]
+processConstructor :: String -> Int -> H.QualConDecl (LineBlock, [Comment]) -> Maybe [String]
+processConstructor init indentSize (H.QualConDecl _ _ _ (H.RecDecl _ dname fields)) = do
+  n1 <- processName "{ " ( extractField $ head fields)
+  ns <- traverse (processName ", " . extractField) (tail fields)
+  Just $ init <> H.prettyPrint dname : n1 : ns ++ [indented "}"]
   where
-    processName prefix (fnames, _type, comments) =
-      indented prefix <> intercalate ", " (fmap H.prettyPrint fnames) <> " :: " <> H.prettyPrint _type <> (concat $ fmap show comments)
+    processName prefix (fnames, _type, []) = Just $
+      indented prefix <> intercalate ", " (fmap H.prettyPrint fnames) <> " :: " <> H.prettyPrint _type
+    processName _ _ = Nothing
     extractField (H.FieldDecl (_, comments) names _type) = (names, _type, comments)
     indented = indent indentSize
-processConstructor init _ decl = [init <> trimLeft (H.prettyPrint decl)]
+processConstructor init _ decl = Just [init <> trimLeft (H.prettyPrint decl)]
