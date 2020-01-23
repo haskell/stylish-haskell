@@ -1,7 +1,7 @@
 module Language.Haskell.Stylish.Step.Data where
 
 import           Data.List                       (find, intercalate)
-import           Data.Maybe                      (isNothing, maybeToList)
+import           Data.Maybe                      (maybeToList)
 import qualified Language.Haskell.Exts           as H
 import           Language.Haskell.Exts.Comments
 import           Language.Haskell.Stylish.Block
@@ -26,27 +26,24 @@ step' indentSize ls (module', allComments) = applyChanges changes ls
     changes = datas' >>= maybeToList . changeDecl allComments indentSize
 
 findComment :: LineBlock -> [Comment] -> Maybe Comment
-findComment lb = find foo
+findComment lb = find commentOnLine
   where
-    foo (Comment _ (H.SrcSpan _ start _ end _) _) =
+    commentOnLine (Comment _ (H.SrcSpan _ start _ end _) _) =
       blockStart lb == start && blockEnd lb == end
 
-commentWithin :: LineBlock -> [Comment] -> Maybe Comment
-commentWithin lb = find foo
+commentsWithin :: LineBlock -> [Comment] -> [Comment]
+commentsWithin lb = filter within
   where
-    foo (Comment _ (H.SrcSpan _ start _ end _) _) =
+    within (Comment _ (H.SrcSpan _ start _ end _) _) =
       start >= blockStart lb && end <= blockEnd lb
 
 changeDecl :: [Comment] -> Int -> H.Decl LineBlock -> Maybe ChangeLine
 changeDecl _ _ (H.DataDecl _ (H.DataType _) Nothing _ [] _) = Nothing
 changeDecl allComments indentSize (H.DataDecl block (H.DataType _) Nothing dhead decls derivings)
-  | isNothing $ commentWithin block allComments = fmap (\l -> change block (const $ concat l)) newLines
+  | null $ commentsWithin block allComments = Just $ change block (const $ concat newLines)
   | otherwise = Nothing
   where
-    newLines = if Nothing `elem` maybeConstructors then Nothing
-       else Just $ fmap concat maybeConstructors ++ [fmap (indented . H.prettyPrint) derivings]
-    maybeConstructors :: [Maybe [String]]
-    maybeConstructors = fmap constructors zipped
+    newLines = fmap constructors zipped ++ [fmap (indented . H.prettyPrint) derivings]
     zipped = zip decls ([1..] ::[Int])
     constructors (decl, 1) = processConstructor allComments typeConstructor indentSize decl
     constructors (decl, _) = processConstructor allComments (indented "| ") indentSize decl
@@ -54,16 +51,16 @@ changeDecl allComments indentSize (H.DataDecl block (H.DataType _) Nothing dhead
     indented = indent indentSize
 changeDecl _ _ _ = Nothing
 
-processConstructor :: [Comment] -> String -> Int -> H.QualConDecl LineBlock -> Maybe [String]
+processConstructor :: [Comment] -> String -> Int -> H.QualConDecl LineBlock -> [String]
 processConstructor allComments init indentSize (H.QualConDecl _ _ _ (H.RecDecl _ dname fields)) = do
-  n1 <- processName "{ " ( extractField $ head fields)
-  ns <- traverse (processName ", " . extractField) (tail fields)
-  Just $ init <> H.prettyPrint dname : n1 : ns ++ [indented "}"]
+  init <> H.prettyPrint dname : n1 : ns ++ [indented "}"]
   where
-    processName prefix (fnames, _type, Nothing) = Just $
+    n1 = processName "{ " ( extractField $ head fields)
+    ns = fmap (processName ", " . extractField) (tail fields)
+    processName prefix (fnames, _type, Nothing) =
       indented prefix <> intercalate ", " (fmap H.prettyPrint fnames) <> " :: " <> H.prettyPrint _type
-    processName prefix (fnames, _type, (Just (Comment _ _ c))) = Just $
+    processName prefix (fnames, _type, (Just (Comment _ _ c))) =
       indented prefix <> intercalate ", " (fmap H.prettyPrint fnames) <> " :: " <> H.prettyPrint _type <> " --" <> c
     extractField (H.FieldDecl lb names _type) = (names, _type, findComment lb allComments)
     indented = indent indentSize
-processConstructor _ init _ decl = Just [init <> trimLeft (H.prettyPrint decl)]
+processConstructor _ init _ decl = [init <> trimLeft (H.prettyPrint decl)]
