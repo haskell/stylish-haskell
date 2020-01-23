@@ -25,11 +25,17 @@ step' indentSize ls (module', allComments) = applyChanges changes ls
     datas' = datas $ fmap linesFromSrcSpan module'
     changes = datas' >>= maybeToList . changeDecl allComments indentSize
 
-findComment :: LineBlock -> [Comment] -> Maybe Comment
-findComment lb = find commentOnLine
+findCommentOnLine :: LineBlock -> [Comment] -> Maybe Comment
+findCommentOnLine lb = find commentOnLine
   where
     commentOnLine (Comment _ (H.SrcSpan _ start _ end _) _) =
       blockStart lb == start && blockEnd lb == end
+
+findCommentBelowLine :: LineBlock -> [Comment] -> Maybe Comment
+findCommentBelowLine lb = find commentOnLine
+  where
+    commentOnLine (Comment _ (H.SrcSpan _ start _ end _) _) =
+      blockStart lb == start - 1 && blockEnd lb == end - 1
 
 commentsWithin :: LineBlock -> [Comment] -> [Comment]
 commentsWithin lb = filter within
@@ -52,14 +58,17 @@ changeDecl _ _ _ = Nothing
 
 processConstructor :: [Comment] -> String -> Int -> H.QualConDecl LineBlock -> [String]
 processConstructor allComments init indentSize (H.QualConDecl _ _ _ (H.RecDecl _ dname fields)) = do
-  init <> H.prettyPrint dname : n1 : ns ++ [indented "}"]
+  init <> H.prettyPrint dname : n1 ++ ns ++ [indented "}"]
   where
     n1 = processName "{ " ( extractField $ head fields)
-    ns = fmap (processName ", " . extractField) (tail fields)
-    processName prefix (fnames, _type, Nothing) =
-      indented prefix <> intercalate ", " (fmap H.prettyPrint fnames) <> " :: " <> H.prettyPrint _type
-    processName prefix (fnames, _type, (Just (Comment _ _ c))) =
-      indented prefix <> intercalate ", " (fmap H.prettyPrint fnames) <> " :: " <> H.prettyPrint _type <> " --" <> c
-    extractField (H.FieldDecl lb names _type) = (names, _type, findComment lb allComments)
+    ns = tail fields >>= (processName ", " . extractField)
+    processName prefix (fnames, _type, lineComment, commentBelowLine) =
+      [indented prefix <> intercalate ", " (fmap H.prettyPrint fnames) <> " :: " <> H.prettyPrint _type <> addLineComment lineComment] ++ addCommentBelow commentBelowLine
+    addLineComment (Just (Comment _ _ c)) = " --" <> c
+    addLineComment Nothing                = ""
+    addCommentBelow Nothing                = []
+    addCommentBelow (Just (Comment _ _ c)) = [indented " --" <> c]
+    extractField (H.FieldDecl lb names _type) =
+      (names, _type, findCommentOnLine lb allComments, findCommentBelowLine lb allComments)
     indented = indent indentSize
 processConstructor _ init _ decl = [init <> trimLeft (H.prettyPrint decl)]

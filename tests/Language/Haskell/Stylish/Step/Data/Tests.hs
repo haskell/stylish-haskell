@@ -27,6 +27,9 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 14" case14
     , testCase "case 15" case15
     , testCase "case 16" case16
+    , testCase "case 17" case17
+    , testCase "case 18" case18
+    , testCase "case 19" case19
     ]
 
 case00 :: Assertion
@@ -320,3 +323,69 @@ case16 = expected @=? testStep (step 2) input
       , "  { a :: Int -- ^ comment"
       , "  }"
       ]
+
+case17 :: Assertion
+case17 = expected @=? testStep (step 2) input
+  where
+    input = unlines
+       [ "module Herp where"
+       , ""
+       , "data Foo a = Foo"
+       , "  { a :: a,"
+       , "-- comment"
+       , "   a2 :: String"
+       , "  }"
+       ]
+    expected = unlines
+       [ "module Herp where"
+       , ""
+       , "data Foo a = Foo"
+       , "  { a :: a"
+       , "   -- comment"
+       , "  , a2 :: String"
+       , "  }"
+       ]
+
+case18 :: Assertion
+case18 = expected @=? testStep (step 2) input
+  where
+    input = unlines
+       [ "module Herp where"
+       , ""
+       , "data Foo a = Foo"
+       , "  { a :: a,"
+       , "-- ^ comment"
+       , "   a2 :: String"
+       , "  }"
+       ]
+    expected = unlines
+       [ "module Herp where"
+       , ""
+       , "data Foo a = Foo"
+       , "  { a :: a"
+       , "   -- ^ comment"
+       , "  , a2 :: String"
+       , "  }"
+       ]
+
+case19 :: Assertion
+case19 = expected @=? testStep (step 2) input
+  where
+    input = unlines
+       [ "module Herp where"
+       , ""
+       , "data Foo a = Foo"
+       , "  { firstName, lastName :: String,"
+       , "-- ^ names"
+       , "   age :: Int"
+       , "  }"
+       ]
+    expected = unlines
+       [ "module Herp where"
+       , ""
+       , "data Foo a = Foo"
+       , "  { firstName, lastName :: String"
+       , "   -- ^ names"
+       , "  , age :: Int"
+       , "  }"
+       ]
