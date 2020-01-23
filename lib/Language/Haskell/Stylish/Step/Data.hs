@@ -39,9 +39,8 @@ commentsWithin lb = filter within
 
 changeDecl :: [Comment] -> Int -> H.Decl LineBlock -> Maybe ChangeLine
 changeDecl _ _ (H.DataDecl _ (H.DataType _) Nothing _ [] _) = Nothing
-changeDecl allComments indentSize (H.DataDecl block (H.DataType _) Nothing dhead decls derivings)
-  | null $ commentsWithin block allComments = Just $ change block (const $ concat newLines)
-  | otherwise = Nothing
+changeDecl allComments indentSize (H.DataDecl block (H.DataType _) Nothing dhead decls derivings) =
+  Just $ change block (const $ concat newLines)
   where
     newLines = fmap constructors zipped ++ [fmap (indented . H.prettyPrint) derivings]
     zipped = zip decls ([1..] ::[Int])
