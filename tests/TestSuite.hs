@@ -11,6 +11,7 @@ import           Test.Framework                                         (default
 --------------------------------------------------------------------------------
 import qualified Language.Haskell.Stylish.Config.Tests
 import qualified Language.Haskell.Stylish.Parse.Tests
+import qualified Language.Haskell.Stylish.Step.Data.Tests
 import qualified Language.Haskell.Stylish.Step.Imports.Tests
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas.Tests
 import qualified Language.Haskell.Stylish.Step.SimpleAlign.Tests
@@ -25,6 +26,7 @@ main :: IO ()
 main = defaultMain
     [ Language.Haskell.Stylish.Parse.Tests.tests
     , Language.Haskell.Stylish.Config.Tests.tests
+    , Language.Haskell.Stylish.Step.Data.Tests.tests
     , Language.Haskell.Stylish.Step.Imports.Tests.tests
     , Language.Haskell.Stylish.Step.LanguagePragmas.Tests.tests
     , Language.Haskell.Stylish.Step.SimpleAlign.Tests.tests

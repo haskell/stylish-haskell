@@ -35,6 +35,7 @@ import qualified System.IO                                        as IO (Newline
 import qualified Language.Haskell.Stylish.Config.Cabal            as Cabal
 import           Language.Haskell.Stylish.Config.Internal
 import           Language.Haskell.Stylish.Step
+import qualified Language.Haskell.Stylish.Step.Data               as Data
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
 import qualified Language.Haskell.Stylish.Step.SimpleAlign        as SimpleAlign
@@ -52,6 +53,7 @@ type Extensions = [String]
 --------------------------------------------------------------------------------
 data Config = Config
     { configSteps              :: [Step]
+    , configIndent             :: Int
     , configColumns            :: Maybe Int
     , configLanguageExtensions :: [String]
     , configNewline            :: IO.Newline
@@ -119,6 +121,7 @@ parseConfig (A.Object o) = do
     -- First load the config without the actual steps
     config <- Config
         <$> pure []
+        <*> (o A..:? "indent"              A..!= 4)
         <*> (o A..:! "columns"             A..!= Just 80)
         <*> (o A..:? "language_extensions" A..!= [])
         <*> (o A..:? "newline"             >>= parseEnum newlines IO.nativeNewline)
@@ -141,6 +144,7 @@ parseConfig _            = mzero
 catalog :: Map String (Config -> A.Object -> A.Parser Step)
 catalog = M.fromList
     [ ("imports",             parseImports)
+    , ("records",             parseRecords)
     , ("language_pragmas",    parseLanguagePragmas)
     , ("simple_align",        parseSimpleAlign)
     , ("squash",              parseSquash)
@@ -179,6 +183,11 @@ parseSimpleAlign c o = SimpleAlign.step
         <*> withDef SimpleAlign.cRecords          "records")
   where
     withDef f k = fromMaybe (f SimpleAlign.defaultConfig) <$> (o A..:? k)
+
+--------------------------------------------------------------------------------
+parseRecords :: Config -> A.Object -> A.Parser Step
+parseRecords c _ = Data.step
+    <$> pure (configIndent c)
 
 
 --------------------------------------------------------------------------------

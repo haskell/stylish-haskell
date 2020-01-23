@@ -56,10 +56,7 @@ import System.Directory (doesFileExist)
 import qualified Data.Map as M
 import      Data.Map    ((!), keys, Map)
 
-data Point = Point
-    { pointX, pointY :: Double
-    , pointName :: String
-    } deriving (Show)
+data Point = Point { pointX, pointY :: Double , pointName :: String} deriving (Show)
 ```
 
 into:
