@@ -67,7 +67,7 @@ processConstructor allComments init indentSize (H.QualConDecl _ _ _ (H.RecDecl _
     addLineComment (Just (Comment _ _ c)) = " --" <> c
     addLineComment Nothing                = ""
     addCommentBelow Nothing                = []
-    addCommentBelow (Just (Comment _ _ c)) = [indented " --" <> c]
+    addCommentBelow (Just (Comment _ _ c)) = [indented "--" <> c]
     extractField (H.FieldDecl lb names _type) =
       (names, _type, findCommentOnLine lb allComments, findCommentBelowLine lb allComments)
     indented = indent indentSize

@@ -341,7 +341,7 @@ case17 = expected @=? testStep (step 2) input
        , ""
        , "data Foo a = Foo"
        , "  { a :: a"
-       , "   -- comment"
+       , "  -- comment"
        , "  , a2 :: String"
        , "  }"
        ]
@@ -363,7 +363,7 @@ case18 = expected @=? testStep (step 2) input
        , ""
        , "data Foo a = Foo"
        , "  { a :: a"
-       , "   -- ^ comment"
+       , "  -- ^ comment"
        , "  , a2 :: String"
        , "  }"
        ]
@@ -385,7 +385,7 @@ case19 = expected @=? testStep (step 2) input
        , ""
        , "data Foo a = Foo"
        , "  { firstName, lastName :: String"
-       , "   -- ^ names"
+       , "  -- ^ names"
        , "  , age :: Int"
        , "  }"
        ]
