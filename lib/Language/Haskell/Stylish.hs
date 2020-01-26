@@ -16,6 +16,8 @@ module Language.Haskell.Stylish
       -- * Misc
     , module Language.Haskell.Stylish.Verbose
     , version
+    , format
+    , ConfigPath(..)
     , Lines
     , Step
     ) where
@@ -91,3 +93,13 @@ runStep exts mfp ls step =
 runSteps :: Extensions -> Maybe FilePath -> [Step] -> Lines
          -> Either String Lines
 runSteps exts mfp steps ls = foldM (runStep exts mfp) ls steps
+
+newtype ConfigPath = ConfigPath { unConfigPath :: FilePath }
+
+-- |Formats given contents optionally using the config provided as first param.
+-- The second file path is the location from which the contents were read.
+-- If provided, it's going to be printed out in the error message.
+format :: Maybe ConfigPath -> Maybe FilePath -> String -> IO (Either String Lines)
+format maybeConfigPath maybeFilePath contents = do
+  conf <- loadConfig (makeVerbose True) (fmap unConfigPath maybeConfigPath)
+  pure $ runSteps (configLanguageExtensions conf) maybeFilePath (configSteps conf) $ lines contents
