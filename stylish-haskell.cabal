@@ -97,7 +97,6 @@ Test-suite stylish-haskell-tests
 
   Other-modules:
     Language.Haskell.Stylish
-    Language.Haskell.StylishSpec
     Language.Haskell.Stylish.Align
     Language.Haskell.Stylish.Block
     Language.Haskell.Stylish.Config
@@ -124,9 +123,11 @@ Test-suite stylish-haskell-tests
     Language.Haskell.Stylish.Step.TrailingWhitespace.Tests
     Language.Haskell.Stylish.Step.UnicodeSyntax
     Language.Haskell.Stylish.Step.UnicodeSyntax.Tests
+    Language.Haskell.Stylish.Tests
     Language.Haskell.Stylish.Tests.Util
     Language.Haskell.Stylish.Util
     Language.Haskell.Stylish.Verbose
+    Paths_stylish_haskell
 
   Build-depends:
     HUnit                >= 1.2 && < 1.7,

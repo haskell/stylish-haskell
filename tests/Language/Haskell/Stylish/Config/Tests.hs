@@ -4,17 +4,17 @@ module Language.Haskell.Stylish.Config.Tests
 
 
 --------------------------------------------------------------------------------
-import           Control.Exception               hiding (assert)
 import qualified Data.Set                        as Set
 import           System.Directory
-import           System.FilePath                 ((</>))
-import           System.IO.Error
-import           System.Random
 import           Test.Framework                  (Test, testGroup)
 import           Test.Framework.Providers.HUnit  (testCase)
 import           Test.HUnit                      (Assertion, assert)
+
+
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Config
+import           Language.Haskell.Stylish.Tests.Util
+
 
 --------------------------------------------------------------------------------
 tests :: Test
@@ -32,33 +32,9 @@ tests = testGroup "Language.Haskell.Stylish.Config"
     , testCase "Correctly read .stylish-haskell.yaml file with no max column number"
                testNoColumns
     ]
+
+
 --------------------------------------------------------------------------------
-
--- | Create a temporary directory with a randomised name built from the template provided
-createTempDirectory :: String -> IO FilePath
-createTempDirectory template  = do
-  tmpRootDir <- getTemporaryDirectory
-  dirId <- randomIO :: IO Word
-  findTempName tmpRootDir dirId
-  where
-    findTempName :: FilePath -> Word -> IO FilePath
-    findTempName tmpRootDir x = do
-      let dirpath = tmpRootDir </> template ++ show x
-      r <- try $ createDirectory dirpath
-      case r of
-        Right _ -> return dirpath
-        Left  e | isAlreadyExistsError e -> findTempName tmpRootDir (x+1)
-                | otherwise              -> ioError e
-
--- | Perform an action inside a temporary directory tree and purge the tree afterwords
-withTestDirTree :: IO a -> IO a
-withTestDirTree action = bracket
-    ((,) <$> getCurrentDirectory <*> createTempDirectory "stylish_haskell")
-    (\(current, temp) ->
-        setCurrentDirectory current *>
-        removeDirectoryRecursive temp)
-    (\(_, temp) -> setCurrentDirectory temp *> action)
-
 -- | Put an example config files (.cabal/.stylish-haskell.yaml/both)
 -- into the current directory and extract extensions from it.
 createFilesAndGetConfig :: [(FilePath, String)] -> IO Config
@@ -72,6 +48,7 @@ createFilesAndGetConfig files = withTestDirTree $ do
   config <- loadConfig (const (pure ())) Nothing
   pure config
 
+
 --------------------------------------------------------------------------------
 testExtensionsFromDotCabal :: Assertion
 testExtensionsFromDotCabal =
@@ -80,6 +57,7 @@ testExtensionsFromDotCabal =
     where
       expected = Set.fromList ["ScopedTypeVariables", "DataKinds"]
 
+
 --------------------------------------------------------------------------------
 testExtensionsFromDotStylish :: Assertion
 testExtensionsFromDotStylish =
@@ -87,6 +65,7 @@ testExtensionsFromDotStylish =
     createFilesAndGetConfig [(".stylish-haskell.yaml", dotStylish)]
     where
       expected = Set.fromList ["TemplateHaskell", "QuasiQuotes"]
+
 
 --------------------------------------------------------------------------------
 testExtensionsFromBoth :: Assertion
@@ -98,6 +77,7 @@ testExtensionsFromBoth =
       expected = Set.fromList
         ["ScopedTypeVariables", "DataKinds", "TemplateHaskell", "QuasiQuotes"]
 
+
 --------------------------------------------------------------------------------
 testSpecifiedColumns :: Assertion
 testSpecifiedColumns =
@@ -105,6 +85,7 @@ testSpecifiedColumns =
     createFilesAndGetConfig [(".stylish-haskell.yaml", dotStylish)]
     where
       expected = Just 110
+
 
 --------------------------------------------------------------------------------
 testDefaultColumns :: Assertion
@@ -114,6 +95,7 @@ testDefaultColumns =
     where
       expected = Just 80
 
+
 --------------------------------------------------------------------------------
 testNoColumns :: Assertion
 testNoColumns =
@@ -121,6 +103,7 @@ testNoColumns =
     createFilesAndGetConfig [(".stylish-haskell.yaml", dotStylish3)]
     where
       expected = Nothing
+
 
 -- | Example cabal file borrowed from
 --   https://www.haskell.org/cabal/users-guide/developing-packages.html
