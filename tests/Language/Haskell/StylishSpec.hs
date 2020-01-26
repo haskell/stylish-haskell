@@ -41,7 +41,9 @@ case02 = (@?=) result (unsafePerformIO $ format (Just configLocation) Nothing in
                    ]
 
 case03 :: Assertion
-case03 = (@?=) result (unsafePerformIO $ format Nothing (Just fileLocation) input)
+case03 = do
+  actual <- format Nothing (Just fileLocation) input
+  actual @?= result
   where
     fileLocation = "directory/File.hs"
     input = "module Herp"
