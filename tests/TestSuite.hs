@@ -19,14 +19,13 @@ import qualified Language.Haskell.Stylish.Step.Squash.Tests
 import qualified Language.Haskell.Stylish.Step.Tabs.Tests
 import qualified Language.Haskell.Stylish.Step.TrailingWhitespace.Tests
 import qualified Language.Haskell.Stylish.Step.UnicodeSyntax.Tests
-import qualified Language.Haskell.StylishSpec
+import qualified Language.Haskell.Stylish.Tests
 
 
 --------------------------------------------------------------------------------
 main :: IO ()
 main = defaultMain
-    [ Language.Haskell.StylishSpec.tests
-    , Language.Haskell.Stylish.Parse.Tests.tests
+    [ Language.Haskell.Stylish.Parse.Tests.tests
     , Language.Haskell.Stylish.Config.Tests.tests
     , Language.Haskell.Stylish.Step.Data.Tests.tests
     , Language.Haskell.Stylish.Step.Imports.Tests.tests
@@ -36,4 +35,5 @@ main = defaultMain
     , Language.Haskell.Stylish.Step.Tabs.Tests.tests
     , Language.Haskell.Stylish.Step.TrailingWhitespace.Tests.tests
     , Language.Haskell.Stylish.Step.UnicodeSyntax.Tests.tests
+    , Language.Haskell.Stylish.Tests.tests
     ]

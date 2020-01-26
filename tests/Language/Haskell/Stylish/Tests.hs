@@ -1,5 +1,7 @@
 --------------------------------------------------------------------------------
-module Language.Haskell.StylishSpec where
+module Language.Haskell.Stylish.Tests
+    ( tests
+    ) where
 
 
 --------------------------------------------------------------------------------
