@@ -11,14 +11,12 @@ import           Language.Haskell.Stylish
 --------------------------------------------------------------------------------
 import           System.IO.Unsafe
 --------------------------------------------------------------------------------
-
 tests :: Test
 tests = testGroup "Language.Haskell.Stylish.Step.Tabs.Tests"
     [ testCase "case 01" case01
     , testCase "case 02" case02
     , testCase "case 03" case03
     ]
-
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
