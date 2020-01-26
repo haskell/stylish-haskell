@@ -18,3 +18,4 @@ cabal.config
 cabal.sandbox.config
 cabal.sandbox.config
 dist
+/dist-newstyle/
