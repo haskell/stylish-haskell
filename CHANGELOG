@@ -1,5 +1,15 @@
 # CHANGELOG
 
+- 0.10.0.0 (2020-01-26)
+    * Switch to HsYAML library (by vijayphoenix)
+    * Expose `format` from main library (by Łukasz Gołębiewski)
+    * Support record formatting (by Łukasz Gołębiewski and Pawel Szulc)
+    * Allow setting `columns` to `null` to disable all wrapping (by Chris
+      Martin)
+    * Bump `haskell-src-exts` to 1.23
+    * New logo (by Jose Fernando García Parreño)
+    * Make language extension prefix configurable (by Flavio Corpa)
+
 - 0.9.4.4 (2019-11-03)
     * Bump `haskell-src-exts` to 1.22
 
