@@ -10,7 +10,9 @@ import qualified Data.ByteString.Char8    as BC8
 import           Data.Monoid              ((<>))
 import           Data.Version             (showVersion)
 import qualified Options.Applicative      as OA
+import           System.Directory         (listDirectory, doesDirectoryExist)
 import           System.Exit              (exitFailure)
+import           System.FilePath          (takeExtension, (</>))
 import qualified System.IO                as IO
 import qualified System.IO.Strict         as IO.Strict
 
@@ -23,6 +25,7 @@ import           Language.Haskell.Stylish
 data StylishArgs = StylishArgs
     { saVersion  :: Bool
     , saConfig   :: Maybe FilePath
+    , saRecursive:: Maybe FilePath
     , saVerbose  :: Bool
     , saDefaults :: Bool
     , saInPlace  :: Bool
@@ -43,6 +46,12 @@ parseStylishArgs = StylishArgs
             OA.help    "Configuration file"  <>
             OA.long    "config"              <>
             OA.short   'c'                   <>
+            OA.hidden)
+    <*> OA.optional (OA.strOption $
+            OA.metavar "RECURSIVE"             <>
+            OA.help    "Recursive file search" <>
+            OA.long    "recursive"             <>
+            OA.short   'r'                     <>
             OA.hidden)
     <*> OA.switch (
             OA.help  "Run in verbose mode" <>
@@ -99,14 +108,45 @@ stylishHaskell sa = do
 
         else do
             conf <- loadConfig verbose' (saConfig sa)
+            filesR <- findFiles (saRecursive sa)
             let steps = configSteps conf
             forM_ steps $ \s -> verbose' $ "Enabled " ++ stepName s ++ " step"
             verbose' $ "Extra language extensions: " ++
                 show (configLanguageExtensions conf)
-            mapM_ (file sa conf) files'
+            mapM_ (file sa conf) $ files' $ (saFiles sa) <> filesR
   where
     verbose' = makeVerbose (saVerbose sa)
-    files'   = if null (saFiles sa) then [Nothing] else map Just (saFiles sa)
+    files' x = if null x then [Nothing] else map Just x
+
+--------------------------------------------------------------------------------
+{- TODO:
+ - what to do in case of non existent input?
+ - combine this feature with blacklisted folders. (? #200)
+ - haskell file extension as an input?
+-}
+findFiles :: Maybe FilePath -> IO [FilePath]
+findFiles Nothing    = return []
+findFiles (Just dir) = do
+  existsDir <- doesDirectoryExist dir
+  case existsDir of
+    True  -> findFilesRecursive dir >>=
+      return . filter (\x -> takeExtension x == ".hs")
+    False -> return [] -- TODO: handle nonexistent dir error
+  where
+    findFilesRecursive :: FilePath -> IO [FilePath]
+    findFilesRecursive = listDirectoryFiles findFilesRecursive
+
+    listDirectoryFiles :: (FilePath -> IO [FilePath])
+                       -> FilePath -> IO [FilePath]
+    listDirectoryFiles go topdir = do
+      ps <- listDirectory topdir >>=
+        mapM (\x -> do
+                 let path = topdir </> x
+                 existsDir <- doesDirectoryExist path
+                 case existsDir of
+                   True  -> go path
+                   False -> return [path])
+      return $ concat ps
 
 
 --------------------------------------------------------------------------------
