@@ -108,7 +108,7 @@ stylishHaskell sa = do
 
         else do
             conf <- loadConfig verbose' (saConfig sa)
-            filesR <- findFiles (saRecursive sa)
+            filesR <- findFiles (saVerbose sa) (saRecursive sa)
             let steps = configSteps conf
             forM_ steps $ \s -> verbose' $ "Enabled " ++ stepName s ++ " step"
             verbose' $ "Extra language extensions: " ++
@@ -118,20 +118,22 @@ stylishHaskell sa = do
     verbose' = makeVerbose (saVerbose sa)
     files' x = if null x then [Nothing] else map Just x
 
+
 --------------------------------------------------------------------------------
-{- TODO:
- - what to do in case of non existent input?
+{- TODO, Questions:
  - combine this feature with blacklisted folders. (? #200)
  - haskell file extension as an input?
 -}
-findFiles :: Maybe FilePath -> IO [FilePath]
-findFiles Nothing    = return []
-findFiles (Just dir) = do
+findFiles :: Bool -> Maybe FilePath -> IO [FilePath]
+findFiles _ Nothing    = return []
+findFiles v (Just dir) = do
   existsDir <- doesDirectoryExist dir
   case existsDir of
     True  -> findFilesRecursive dir >>=
       return . filter (\x -> takeExtension x == ".hs")
-    False -> return [] -- TODO: handle nonexistent dir error
+    False -> do
+      makeVerbose v ("Input folder does not exists: " <> dir)
+      findFiles v Nothing
   where
     findFilesRecursive :: FilePath -> IO [FilePath]
     findFilesRecursive = listDirectoryFiles findFilesRecursive
