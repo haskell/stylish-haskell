@@ -10,7 +10,7 @@ import qualified Data.ByteString.Char8    as BC8
 import           Data.Monoid              ((<>))
 import           Data.Version             (showVersion)
 import qualified Options.Applicative      as OA
-import           System.Directory         (listDirectory, doesDirectoryExist)
+import           System.Directory         (doesDirectoryExist, listDirectory)
 import           System.Exit              (exitFailure)
 import           System.FilePath          (takeExtension, (</>))
 import qualified System.IO                as IO
@@ -23,14 +23,14 @@ import           Language.Haskell.Stylish
 
 --------------------------------------------------------------------------------
 data StylishArgs = StylishArgs
-    { saVersion  :: Bool
-    , saConfig   :: Maybe FilePath
-    , saRecursive:: Maybe FilePath
-    , saVerbose  :: Bool
-    , saDefaults :: Bool
-    , saInPlace  :: Bool
-    , saNoUtf8   :: Bool
-    , saFiles    :: [FilePath]
+    { saVersion   :: Bool
+    , saConfig    :: Maybe FilePath
+    , saRecursive :: Maybe FilePath
+    , saVerbose   :: Bool
+    , saDefaults  :: Bool
+    , saInPlace   :: Bool
+    , saNoUtf8    :: Bool
+    , saFiles     :: [FilePath]
     } deriving (Show)
 
 
@@ -120,10 +120,7 @@ stylishHaskell sa = do
 
 
 --------------------------------------------------------------------------------
-{- TODO, Questions:
- - combine this feature with blacklisted folders. (? #200)
- - haskell file extension as an input?
--}
+-- | Searches Haskell source files in any given folder recursively.
 findFiles :: Bool -> Maybe FilePath -> IO [FilePath]
 findFiles _ Nothing    = return []
 findFiles v (Just dir) = do
