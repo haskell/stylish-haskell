@@ -54,11 +54,11 @@ changeDecl allComments indentSize (H.DataDecl block (H.DataType _) Nothing dhead
                   (H.QualConDecl _ _ _ (H.RecDecl {})) -> True
                   _ -> False)
       decls
-    newLines = fmap constructors zipped ++ [fmap (indented . H.prettyPrint) derivings]
+    newLines = [[typeConstructor]] ++ fmap constructors zipped ++ [fmap (indented . H.prettyPrint) derivings]
     zipped = zip decls ([1..] ::[Int])
-    constructors (decl, 1) = processConstructor allComments typeConstructor indentSize decl
+    constructors (decl, 1) = processConstructor allComments (indented "= ") indentSize decl
     constructors (decl, _) = processConstructor allComments (indented "| ") indentSize decl
-    typeConstructor = "data " <> H.prettyPrint dhead <> " = "
+    typeConstructor = "data " <> H.prettyPrint dhead
     indented = indent indentSize
 changeDecl _ _ _ = Nothing
 
@@ -73,8 +73,13 @@ processConstructor allComments init indentSize (H.QualConDecl _ _ _ (H.RecDecl _
     addLineComment (Just (Comment _ _ c)) = " --" <> c
     addLineComment Nothing                = ""
     addCommentBelow Nothing                = []
-    addCommentBelow (Just (Comment _ _ c)) = [indented "--" <> c]
+    addCommentBelow (Just (Comment _ _ c)) = [indentedComment "--" <> c]
     extractField (H.FieldDecl lb names _type) =
       (names, _type, findCommentOnLine lb allComments, findCommentBelowLine lb allComments)
-    indented = indent indentSize
+
+    -- Skip indentSize from line start, then skip 2 spaces ("= " or "| ") to align with constructor name,
+    -- then skip indentSize again.
+    indented = indent $ indentSize + 2 + indentSize
+    -- Skip two more spaces from above ("{ " or ", ") to align with field name.
+    indentedComment = indent $ indentSize + 2 + indentSize + 2
 processConstructor _ init _ decl = [init <> trimLeft (H.prettyPrint decl)]

@@ -56,9 +56,10 @@ case01 = expected @=? testStep (step 2) input
     expected = unlines
        [ "module Herp where"
        , ""
-       , "data Foo = Foo"
-       , "  { a :: Int"
-       , "  }"
+       , "data Foo"
+       , "  = Foo"
+       , "      { a :: Int"
+       , "      }"
        ]
 
 case02 :: Assertion
@@ -72,10 +73,11 @@ case02 = expected @=? testStep (step 2) input
     expected = unlines
        [ "module Herp where"
        , ""
-       , "data Foo = Foo"
-       , "  { a :: Int"
-       , "  , a2 :: String"
-       , "  }"
+       , "data Foo"
+       , "  = Foo"
+       , "      { a :: Int"
+       , "      , a2 :: String"
+       , "      }"
        ]
 
 case03 :: Assertion
@@ -89,10 +91,11 @@ case03 = expected @=? testStep (step 2) input
     expected = unlines
        [ "module Herp where"
        , ""
-       , "data Foo a = Foo"
-       , "  { a :: a"
-       , "  , a2 :: String"
-       , "  }"
+       , "data Foo a"
+       , "  = Foo"
+       , "      { a :: a"
+       , "      , a2 :: String"
+       , "      }"
        ]
 
 case04 :: Assertion
@@ -106,13 +109,14 @@ case04 = expected @=? testStep (step 2) input
     expected = unlines
        [ "module Herp where"
        , ""
-       , "data Foo a = Foo"
-       , "  { a :: a"
-       , "  , a2 :: String"
-       , "  }"
+       , "data Foo a"
+       , "  = Foo"
+       , "      { a :: a"
+       , "      , a2 :: String"
+       , "      }"
        , "  | Bar"
-       , "  { b :: a"
-       , "  }"
+       , "      { b :: a"
+       , "      }"
        ]
 
 case05 :: Assertion
@@ -129,10 +133,11 @@ case05 = expected @=? testStep (step 2) input
     expected = unlines
        [ "module Herp where"
        , ""
-       , "data Foo = Foo"
-       , "  { a :: Int"
-       , "  , a2 :: String"
-       , "  }"
+       , "data Foo"
+       , "  = Foo"
+       , "      { a :: Int"
+       , "      , a2 :: String"
+       , "      }"
        ]
 
 case06 :: Assertion
@@ -176,14 +181,15 @@ case09 = expected @=? testStep (step 4) input
     expected = unlines
        [ "module Herp where"
        , ""
-       , "data Foo a b = Foo"
-       , "    { a :: a"
-       , "    , a2 :: String"
-       , "    }"
+       , "data Foo a b"
+       , "    = Foo"
+       , "          { a :: a"
+       , "          , a2 :: String"
+       , "          }"
        , "    | Bar"
-       , "    { b :: a"
-       , "    , c :: b"
-       , "    }"
+       , "          { b :: a"
+       , "          , c :: b"
+       , "          }"
        ]
 
 case10 :: Assertion
@@ -198,9 +204,10 @@ case10 = expected @=? testStep (step 2) input
     expected = unlines
        [ "module Herp where"
        , ""
-       , "data Foo = Foo"
-       , "  { a :: Int"
-       , "  }"
+       , "data Foo"
+       , "  = Foo"
+       , "      { a :: Int"
+       , "      }"
        , "  deriving (Eq, Generic)"
        , "  deriving (Show)"
        ]
@@ -219,9 +226,10 @@ case11 = expected @=? testStep (step 2) input
        [ "{-# LANGUAGE DerivingStrategies #-}"
        , "module Herp where"
        , ""
-       , "data Foo = Foo"
-       , "  { a :: Int"
-       , "  }"
+       , "data Foo"
+       , "  = Foo"
+       , "      { a :: Int"
+       , "      }"
        , "  deriving stock (Show)"
        ]
 
@@ -237,10 +245,11 @@ case12 = expected @=? testStep (step 4) input
     expected = unlines
        [ "module Herp where"
        , ""
-       , "data Point = Point"
-       , "    { pointX, pointY :: Double"
-       , "    , pointName :: String"
-       , "    }"
+       , "data Point"
+       , "    = Point"
+       , "          { pointX, pointY :: Double"
+       , "          , pointName :: String"
+       , "          }"
        , "    deriving (Show)"
        ]
 
@@ -257,9 +266,10 @@ case13 = expected @=? testStep (step 2) input
       [ "module Herp where"
       , ""
       , "-- this is a comment"
-      , "data Foo = Foo"
-      , "  { a :: Int"
-      , "  }"
+      , "data Foo"
+      , "  = Foo"
+      , "      { a :: Int"
+      , "      }"
       ]
 
 case14 :: Assertion
@@ -277,9 +287,10 @@ case14 = expected @=? testStep (step 2) input
       , ""
       , "{- this is"
       , "   a comment -}"
-      , "data Foo = Foo"
-      , "  { a :: Int"
-      , "  }"
+      , "data Foo"
+      , "  = Foo"
+      , "      { a :: Int"
+      , "      }"
       ]
 
 case15 :: Assertion
@@ -296,10 +307,11 @@ case15 = expected @=? testStep (step 2) input
     expected = unlines
        [ "module Herp where"
        , ""
-       , "data Foo a = Foo"
-       , "  { a :: a -- comment"
-       , "  , a2 :: String"
-       , "  }"
+       , "data Foo a"
+       , "  = Foo"
+       , "      { a :: a -- comment"
+       , "      , a2 :: String"
+       , "      }"
        ]
 
 case16 :: Assertion
@@ -315,9 +327,10 @@ case16 = expected @=? testStep (step 2) input
     expected = unlines
       [ "module Herp where"
       , ""
-      , "data Foo = Foo"
-      , "  { a :: Int -- ^ comment"
-      , "  }"
+      , "data Foo"
+      , "  = Foo"
+      , "      { a :: Int -- ^ comment"
+      , "      }"
       ]
 
 case17 :: Assertion
@@ -335,11 +348,12 @@ case17 = expected @=? testStep (step 2) input
     expected = unlines
        [ "module Herp where"
        , ""
-       , "data Foo a = Foo"
-       , "  { a :: a"
-       , "  -- comment"
-       , "  , a2 :: String"
-       , "  }"
+       , "data Foo a"
+       , "  = Foo"
+       , "      { a :: a"
+       , "        -- comment"
+       , "      , a2 :: String"
+       , "      }"
        ]
 
 case18 :: Assertion
@@ -357,11 +371,12 @@ case18 = expected @=? testStep (step 2) input
     expected = unlines
        [ "module Herp where"
        , ""
-       , "data Foo a = Foo"
-       , "  { a :: a"
-       , "  -- ^ comment"
-       , "  , a2 :: String"
-       , "  }"
+       , "data Foo a"
+       , "  = Foo"
+       , "      { a :: a"
+       , "        -- ^ comment"
+       , "      , a2 :: String"
+       , "      }"
        ]
 
 case19 :: Assertion
@@ -379,11 +394,12 @@ case19 = expected @=? testStep (step 2) input
     expected = unlines
        [ "module Herp where"
        , ""
-       , "data Foo a = Foo"
-       , "  { firstName, lastName :: String"
-       , "  -- ^ names"
-       , "  , age :: Int"
-       , "  }"
+       , "data Foo a"
+       , "  = Foo"
+       , "      { firstName, lastName :: String"
+       , "        -- ^ names"
+       , "      , age :: Int"
+       , "      }"
        ]
 
 -- | Should not break Enums (data without records) formating
