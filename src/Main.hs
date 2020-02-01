@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 --------------------------------------------------------------------------------
 module Main
     ( main
@@ -5,12 +6,14 @@ module Main
 
 
 --------------------------------------------------------------------------------
-import           Control.Monad            (forM_, unless)
+import           Control.Monad            (forM, forM_, unless)
 import qualified Data.ByteString.Char8    as BC8
+import           Data.List                (nub, (\\))
 import           Data.Monoid              ((<>))
 import           Data.Version             (showVersion)
 import qualified Options.Applicative      as OA
-import           System.Directory         (listDirectory, doesDirectoryExist)
+import           System.Directory         (doesDirectoryExist, doesFileExist,
+                                           listDirectory)
 import           System.Exit              (exitFailure)
 import           System.FilePath          (takeExtension, (</>))
 import qualified System.IO                as IO
@@ -23,15 +26,17 @@ import           Language.Haskell.Stylish
 
 --------------------------------------------------------------------------------
 data StylishArgs = StylishArgs
-    { saVersion  :: Bool
-    , saConfig   :: Maybe FilePath
-    , saRecursive:: Maybe FilePath
-    , saVerbose  :: Bool
-    , saDefaults :: Bool
-    , saInPlace  :: Bool
-    , saNoUtf8   :: Bool
-    , saFiles    :: [FilePath]
-    } deriving (Show)
+    { saVersion   :: Bool
+    , saConfig    :: Maybe FilePath
+    , saRecursive :: Maybe FilePath
+    , saBlacklist :: Maybe [FilePath]
+    , saVerbose   :: Bool
+    , saDefaults  :: Bool
+    , saInPlace   :: Bool
+    , saNoUtf8    :: Bool
+    , saFiles     :: [FilePath]
+    }
+    deriving (Show)
 
 
 --------------------------------------------------------------------------------
@@ -52,6 +57,12 @@ parseStylishArgs = StylishArgs
             OA.help    "Recursive file search" <>
             OA.long    "recursive"             <>
             OA.short   'r'                     <>
+            OA.hidden)
+    <*> OA.optional (OA.many $ OA.strOption $
+            OA.metavar "BLACKLIST"                             <>
+            OA.help    "File(s)/folder(s) not to be processed" <>
+            OA.long    "except"                                <>
+            OA.short   'e'                                     <>
             OA.hidden)
     <*> OA.switch (
             OA.help  "Run in verbose mode" <>
@@ -108,22 +119,39 @@ stylishHaskell sa = do
 
         else do
             conf <- loadConfig verbose' (saConfig sa)
+            except <- findExceptions (saVerbose sa) (saBlacklist sa)
             filesR <- findFiles (saVerbose sa) (saRecursive sa)
             let steps = configSteps conf
             forM_ steps $ \s -> verbose' $ "Enabled " ++ stepName s ++ " step"
             verbose' $ "Extra language extensions: " ++
                 show (configLanguageExtensions conf)
-            mapM_ (file sa conf) $ files' $ (saFiles sa) <> filesR
+            mapM_ (file sa conf) $ files' $ ((saFiles sa) <> filesR) \\ except
   where
     verbose' = makeVerbose (saVerbose sa)
     files' x = if null x then [Nothing] else map Just x
 
 
 --------------------------------------------------------------------------------
-{- TODO, Questions:
- - combine this feature with blacklisted folders. (? #200)
- - haskell file extension as an input?
--}
+-- | Searches given files/folders to build a list of exceptions.
+findExceptions :: Bool -> Maybe [FilePath] -> IO [FilePath]
+findExceptions v fs@Nothing =
+  makeVerbose v ("Exception-list: " <> show fs) >> return []
+
+findExceptions v (Just fs) = do
+  es <- forM fs $ \x -> do
+    d <- doesDirectoryExist x >>= \case
+      True  -> findFiles v (Just x)
+      False -> doesFileExist x >>= \case
+          True  -> return [x]
+          False -> makeVerbose v ("Not accessible: " <> show x) >> return []
+    return . concat $ d
+  let es' = nub es
+  makeVerbose v ("Exception-list: " <> show es')
+  return es'
+
+
+--------------------------------------------------------------------------------
+-- | Searches Haskell source files in any given folder recursively.
 findFiles :: Bool -> Maybe FilePath -> IO [FilePath]
 findFiles _ Nothing    = return []
 findFiles v (Just dir) = do
