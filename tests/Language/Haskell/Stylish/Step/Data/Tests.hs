@@ -30,6 +30,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 17" case17
     , testCase "case 18" case18
     , testCase "case 19" case19
+    , testCase "case 20 (issue 262)" case20
     ]
 
 case00 :: Assertion
@@ -155,18 +156,13 @@ case07 = expected @=? testStep (step 2) input
     expected = input
 
 case08 :: Assertion
-case08 = expected @=? testStep (step 2) input
+case08 = input @=? testStep (step 2) input
   where
     input = unlines
       [ "module Herp where"
       , ""
       , "data Phantom a ="
       , "  Phantom"
-      ]
-    expected = unlines
-      [ "module Herp where"
-      , ""
-      , "data Phantom a = Phantom"
       ]
 
 case09 :: Assertion
@@ -388,4 +384,16 @@ case19 = expected @=? testStep (step 2) input
        , "  -- ^ names"
        , "  , age :: Int"
        , "  }"
+       ]
+
+-- | Should not break Enums (data without records) formating
+--
+-- See https://github.com/jaspervdj/stylish-haskell/issues/262
+case20 :: Assertion
+case20 = input @=? testStep (step 2) input
+  where
+    input = unlines
+       [ "module Herp where"
+       , ""
+       , "data Tag = Title | Text deriving (Eq, Show)"
        ]

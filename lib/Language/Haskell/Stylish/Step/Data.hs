@@ -45,9 +45,15 @@ commentsWithin lb = filter within
 
 changeDecl :: [Comment] -> Int -> H.Decl LineBlock -> Maybe ChangeLine
 changeDecl _ _ (H.DataDecl _ (H.DataType _) Nothing _ [] _) = Nothing
-changeDecl allComments indentSize (H.DataDecl block (H.DataType _) Nothing dhead decls derivings) =
-  Just $ change block (const $ concat newLines)
+changeDecl allComments indentSize (H.DataDecl block (H.DataType _) Nothing dhead decls derivings)
+  | hasRecordFields = Just $ change block (const $ concat newLines)
+  | otherwise       = Nothing
   where
+    hasRecordFields = any
+      (\qual -> case qual of
+                  (H.QualConDecl _ _ _ (H.RecDecl {})) -> True
+                  _ -> False)
+      decls
     newLines = fmap constructors zipped ++ [fmap (indented . H.prettyPrint) derivings]
     zipped = zip decls ([1..] ::[Int])
     constructors (decl, 1) = processConstructor allComments typeConstructor indentSize decl
