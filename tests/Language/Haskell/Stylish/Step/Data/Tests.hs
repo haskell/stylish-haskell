@@ -395,5 +395,5 @@ case20 = input @=? testStep (step 2) input
     input = unlines
        [ "module Herp where"
        , ""
-       , "data Tag = Title | Text"
+       , "data Tag = Title | Text deriving (Eq, Show)"
        ]

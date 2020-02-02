@@ -28,9 +28,12 @@ tests = testGroup "Language.Haskell.Stylish.Step.Tabs.Tests"
 case01 :: Assertion
 case01 = (@?= result) =<< format Nothing Nothing input
   where
-    input = "module Herp where\ndata Foo = Bar | Baz"
+    input = "module Herp where\ndata Foo = Bar | Baz { baz :: Int }"
     result = Right [ "module Herp where"
-                   , "data Foo = Bar | Baz"
+                   , "data Foo = Bar"
+                   , "    | Baz"
+                   , "    { baz :: Int"
+                   , "    }"
                    ]
 
 
@@ -46,9 +49,12 @@ case02 = withTestDirTree $ do
     actual <- format (Just $ ConfigPath "test-config.yaml") Nothing input
     actual @?= result
   where
-    input = "module Herp where\ndata Foo = Bar | Baz"
+    input = "module Herp where\ndata Foo = Bar | Baz { baz :: Int }"
     result = Right [ "module Herp where"
-                   , "data Foo = Bar | Baz"
+                   , "data Foo = Bar"
+                   , "  | Baz"
+                   , "  { baz :: Int"
+                   , "  }"
                    ]
 
 
