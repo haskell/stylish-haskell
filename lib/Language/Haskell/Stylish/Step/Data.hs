@@ -21,7 +21,7 @@ data Config = Config
     { cEquals           :: !Indent
       -- ^ Indent between type constructor and @=@ sign (measured from column 0)
     , cFirstField       :: !Indent
-      -- ^ Indent between data constructor and @{@ line (measured from column 0)
+      -- ^ Indent between data constructor and @{@ line (measured from column with data constructor name)
     , cFieldComment     :: !Int
       -- ^ Indent between column with @{@ and start of field line comment (this line has @cFieldComment = 2@)
     , cDeriving         :: !Int
@@ -105,8 +105,8 @@ processConstructor allComments init Config{..} (H.QualConDecl _ _ _ (H.RecDecl _
           )
         Indent n ->
           ( Just [init <> H.prettyPrint dname]
-          , indent n "{ "
-          , n
+          , indent (length init + n) "{ "
+          , length init + n
           )
 
     processName prefix (fnames, _type, lineComment, commentBelowLine) =
