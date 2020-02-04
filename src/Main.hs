@@ -34,7 +34,7 @@ data StylishArgs = StylishArgs
     , saDefaults  :: Bool
     , saInPlace   :: Bool
     , saNoUtf8    :: Bool
-    , saFiles     :: [FilePath]
+    , saPathes    :: [FilePath]
     }
     deriving (Show)
 
@@ -125,7 +125,7 @@ stylishHaskell sa = do
             forM_ steps $ \s -> verbose' $ "Enabled " ++ stepName s ++ " step"
             verbose' $ "Extra language extensions: " ++
                 show (configLanguageExtensions conf)
-            mapM_ (file sa conf) $ files' $ ((saFiles sa) <> filesR) \\ except
+            mapM_ (file sa conf) $ files' $ ((saPathes sa) <> filesR) \\ except
   where
     verbose' = makeVerbose (saVerbose sa)
     files' x = if null x then [Nothing] else map Just x
