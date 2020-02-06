@@ -10,9 +10,7 @@ import qualified Data.ByteString.Char8    as BC8
 import           Data.Monoid              ((<>))
 import           Data.Version             (showVersion)
 import qualified Options.Applicative      as OA
-import           System.Directory         (doesDirectoryExist, listDirectory)
 import           System.Exit              (exitFailure)
-import           System.FilePath          (takeExtension, (</>))
 import qualified System.IO                as IO
 import qualified System.IO.Strict         as IO.Strict
 
@@ -117,35 +115,6 @@ stylishHaskell sa = do
   where
     verbose' = makeVerbose (saVerbose sa)
     files' x = if null x then [Nothing] else map Just x
-
-
---------------------------------------------------------------------------------
--- | Searches Haskell source files in any given folder recursively.
-findFiles :: Bool -> Maybe FilePath -> IO [FilePath]
-findFiles _ Nothing    = return []
-findFiles v (Just dir) = do
-  existsDir <- doesDirectoryExist dir
-  case existsDir of
-    True  -> findFilesRecursive dir >>=
-      return . filter (\x -> takeExtension x == ".hs")
-    False -> do
-      makeVerbose v ("Input folder does not exists: " <> dir)
-      findFiles v Nothing
-  where
-    findFilesRecursive :: FilePath -> IO [FilePath]
-    findFilesRecursive = listDirectoryFiles findFilesRecursive
-
-    listDirectoryFiles :: (FilePath -> IO [FilePath])
-                       -> FilePath -> IO [FilePath]
-    listDirectoryFiles go topdir = do
-      ps <- listDirectory topdir >>=
-        mapM (\x -> do
-                 let path = topdir </> x
-                 existsDir <- doesDirectoryExist path
-                 case existsDir of
-                   True  -> go path
-                   False -> return [path])
-      return $ concat ps
 
 
 --------------------------------------------------------------------------------

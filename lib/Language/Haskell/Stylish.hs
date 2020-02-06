@@ -10,6 +10,7 @@ module Language.Haskell.Stylish
     , trailingWhitespace
     , unicodeSyntax
       -- ** Helpers
+    , findFiles
     , stepName
       -- * Config
     , module Language.Haskell.Stylish.Config
@@ -25,7 +26,10 @@ module Language.Haskell.Stylish
 
 --------------------------------------------------------------------------------
 import           Control.Monad                                    (foldM)
-
+import           System.Directory                                 (doesDirectoryExist,
+                                                                   listDirectory)
+import           System.FilePath                                  (takeExtension,
+                                                                   (</>))
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Config
@@ -103,3 +107,32 @@ format :: Maybe ConfigPath -> Maybe FilePath -> String -> IO (Either String Line
 format maybeConfigPath maybeFilePath contents = do
   conf <- loadConfig (makeVerbose True) (fmap unConfigPath maybeConfigPath)
   pure $ runSteps (configLanguageExtensions conf) maybeFilePath (configSteps conf) $ lines contents
+
+
+--------------------------------------------------------------------------------
+-- | Searches Haskell source files in any given folder recursively.
+findFiles :: Bool -> Maybe FilePath -> IO [FilePath]
+findFiles _ Nothing    = return []
+findFiles v (Just dir) = do
+  existsDir <- doesDirectoryExist dir
+  case existsDir of
+    True  -> findFilesRecursive dir >>=
+      return . filter (\x -> takeExtension x == ".hs")
+    False -> do
+      makeVerbose v ("Input folder does not exists: " <> dir)
+      findFiles v Nothing
+  where
+    findFilesRecursive :: FilePath -> IO [FilePath]
+    findFilesRecursive = listDirectoryFiles findFilesRecursive
+
+    listDirectoryFiles :: (FilePath -> IO [FilePath])
+                       -> FilePath -> IO [FilePath]
+    listDirectoryFiles go topdir = do
+      ps <- listDirectory topdir >>=
+        mapM (\x -> do
+                 let path = topdir </> x
+                 existsDir <- doesDirectoryExist path
+                 case existsDir of
+                   True  -> go path
+                   False -> return [path])
+      return $ concat ps
