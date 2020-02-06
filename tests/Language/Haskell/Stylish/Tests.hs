@@ -21,6 +21,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Tabs.Tests"
     [ testCase "case 01" case01
     , testCase "case 02" case02
     , testCase "case 03" case03
+    , testCase "case 04" case04
     ]
 
 
@@ -64,3 +65,8 @@ case03 = (@?= result) =<< format Nothing (Just fileLocation) input
       "Language.Haskell.Stylish.Parse.parseModule: could not parse " <>
       fileLocation <>
       ": ParseFailed (SrcLoc \"<unknown>.hs\" 2 1) \"Parse error: EOF\""
+
+
+--------------------------------------------------------------------------------
+case04 :: Assertion
+case04 = True @?= False
