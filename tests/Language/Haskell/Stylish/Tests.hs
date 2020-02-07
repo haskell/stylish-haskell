@@ -5,6 +5,8 @@ module Language.Haskell.Stylish.Tests
 
 
 --------------------------------------------------------------------------------
+import           Data.List                           (sort)
+import           System.Directory                    (createDirectory)
 import           Test.Framework                      (Test, testGroup)
 import           Test.Framework.Providers.HUnit      (testCase)
 import           Test.HUnit                          (Assertion, (@?=))
@@ -22,6 +24,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Tabs.Tests"
     , testCase "case 02" case02
     , testCase "case 03" case03
     , testCase "case 04" case04
+    , testCase "case 05" case05
     ]
 
 
@@ -68,5 +71,23 @@ case03 = (@?= result) =<< format Nothing (Just fileLocation) input
 
 
 --------------------------------------------------------------------------------
+-- | When providing current dir including folders and files.
 case04 :: Assertion
-case04 = True @?= False
+case04 = withTestDirTree $ do
+  createDirectory "aDir"
+  mapM_ (flip writeFile "") ["b.hs", "c.hx", "a.hs", "aDir/c.hs"]
+  result <- findFiles False (Just ".")
+  sort result @?= sort expected
+  where
+    expected = ["./a.hs", "./b.hs", "./aDir/c.hs"]
+
+
+--------------------------------------------------------------------------------
+-- | When the input is not directory, results in returning [].
+case05 :: Assertion
+case05 = withTestDirTree $ do
+  mapM_ (flip writeFile "") ["b.hs"]
+  result <- findFiles False (Just "./b.hs")
+  result @?= expected
+  where
+    expected = []
