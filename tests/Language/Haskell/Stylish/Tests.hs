@@ -7,6 +7,7 @@ module Language.Haskell.Stylish.Tests
 --------------------------------------------------------------------------------
 import           Data.List                           (sort)
 import           System.Directory                    (createDirectory)
+import           System.FilePath                     ((</>))
 import           Test.Framework                      (Test, testGroup)
 import           Test.Framework.Providers.HUnit      (testCase)
 import           Test.HUnit                          (Assertion, (@?=))
@@ -74,12 +75,14 @@ case03 = (@?= result) =<< format Nothing (Just fileLocation) input
 -- | When providing current dir including folders and files.
 case04 :: Assertion
 case04 = withTestDirTree $ do
-  createDirectory "aDir"
-  mapM_ (flip writeFile "") ["b.hs", "c.hx", "a.hs", "aDir/c.hs"]
+  createDirectory aDir
+  mapM_ (flip writeFile "") input
   result <- findFiles False (Just ".")
   sort result @?= sort expected
   where
-    expected = ["./a.hs", "./b.hs", "./aDir/c.hs"]
+    input    = ["b.hs", "c.hx", "a.hs", aDir </> "c.hs"]
+    aDir     = "aDir"
+    expected = map ("." </>) ["a.hs", "b.hs", aDir </> "c.hs"]
 
 
 --------------------------------------------------------------------------------
