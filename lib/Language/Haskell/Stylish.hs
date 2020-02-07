@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 --------------------------------------------------------------------------------
 module Language.Haskell.Stylish
     ( -- * Run
@@ -114,8 +115,7 @@ format maybeConfigPath maybeFilePath contents = do
 findFiles :: Bool -> Maybe FilePath -> IO [FilePath]
 findFiles _ Nothing    = return []
 findFiles v (Just dir) = do
-  existsDir <- doesDirectoryExist dir
-  case existsDir of
+  doesDirectoryExist dir >>= \case
     True  -> findFilesRecursive dir >>=
       return . filter (\x -> takeExtension x == ".hs")
     False -> do
@@ -131,8 +131,7 @@ findFiles v (Just dir) = do
       ps <- listDirectory topdir >>=
         mapM (\x -> do
                  let path = topdir </> x
-                 existsDir <- doesDirectoryExist path
-                 case existsDir of
+                 doesDirectoryExist path >>= \case
                    True  -> go path
                    False -> return [path])
       return $ concat ps
