@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 --------------------------------------------------------------------------------
 module Language.Haskell.Stylish
     ( -- * Run
@@ -10,6 +11,7 @@ module Language.Haskell.Stylish
     , trailingWhitespace
     , unicodeSyntax
       -- ** Helpers
+    , findFiles
     , stepName
       -- * Config
     , module Language.Haskell.Stylish.Config
@@ -25,7 +27,11 @@ module Language.Haskell.Stylish
 
 --------------------------------------------------------------------------------
 import           Control.Monad                                    (foldM)
-
+import           System.Directory                                 (doesDirectoryExist,
+                                                                   doesFileExist,
+                                                                   listDirectory)
+import           System.FilePath                                  (takeExtension,
+                                                                   (</>))
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Config
@@ -103,3 +109,37 @@ format :: Maybe ConfigPath -> Maybe FilePath -> String -> IO (Either String Line
 format maybeConfigPath maybeFilePath contents = do
   conf <- loadConfig (makeVerbose True) (fmap unConfigPath maybeConfigPath)
   pure $ runSteps (configLanguageExtensions conf) maybeFilePath (configSteps conf) $ lines contents
+
+
+--------------------------------------------------------------------------------
+-- | Searches Haskell source files in any given folder recursively.
+findFiles :: Bool -> [FilePath] -> IO [FilePath]
+findFiles v fs = mapM (findFilesR v . Just) fs >>= return . concat
+
+
+--------------------------------------------------------------------------------
+findFilesR :: Bool -> Maybe FilePath -> IO [FilePath]
+findFilesR _ Nothing    = return []
+findFilesR v (Just dir) = do
+  doesFileExist dir >>= \case
+    True -> return [dir]
+    _    -> doesDirectoryExist dir >>= \case
+      True  -> findFilesRecursive dir >>=
+        return . filter (\x -> takeExtension x == ".hs")
+      False -> do
+        makeVerbose v ("Input folder does not exists: " <> dir)
+        findFilesR v Nothing
+  where
+    findFilesRecursive :: FilePath -> IO [FilePath]
+    findFilesRecursive = listDirectoryFiles findFilesRecursive
+
+    listDirectoryFiles :: (FilePath -> IO [FilePath])
+                       -> FilePath -> IO [FilePath]
+    listDirectoryFiles go topdir = do
+      ps <- listDirectory topdir >>=
+        mapM (\x -> do
+                 let path = topdir </> x
+                 doesDirectoryExist path >>= \case
+                   True  -> go path
+                   False -> return [path])
+      return $ concat ps

@@ -12,10 +12,8 @@ import           Data.List                (nub, (\\))
 import           Data.Monoid              ((<>))
 import           Data.Version             (showVersion)
 import qualified Options.Applicative      as OA
-import           System.Directory         (doesDirectoryExist, doesFileExist,
-                                           listDirectory)
+import           System.Directory         (doesDirectoryExist, doesFileExist)
 import           System.Exit              (exitFailure)
-import           System.FilePath          (takeExtension, (</>))
 import qualified System.IO                as IO
 import qualified System.IO.Strict         as IO.Strict
 
@@ -28,7 +26,7 @@ import           Language.Haskell.Stylish
 data StylishArgs = StylishArgs
     { saVersion   :: Bool
     , saConfig    :: Maybe FilePath
-    , saRecursive :: Maybe FilePath
+    , saRecursive :: Bool
     , saBlacklist :: Maybe [FilePath]
     , saVerbose   :: Bool
     , saDefaults  :: Bool
@@ -52,8 +50,7 @@ parseStylishArgs = StylishArgs
             OA.long    "config"              <>
             OA.short   'c'                   <>
             OA.hidden)
-    <*> OA.optional (OA.strOption $
-            OA.metavar "RECURSIVE"             <>
+    <*> OA.switch (
             OA.help    "Recursive file search" <>
             OA.long    "recursive"             <>
             OA.short   'r'                     <>
@@ -120,12 +117,15 @@ stylishHaskell sa = do
         else do
             conf <- loadConfig verbose' (saConfig sa)
             except <- findExceptions (saVerbose sa) (saBlacklist sa)
-            filesR <- findFiles (saVerbose sa) (saRecursive sa)
+            filesR <- case (saRecursive sa) of
+              True -> findFiles (saVerbose sa) (saPathes sa)
+              _    -> return $ saPathes sa
+
             let steps = configSteps conf
             forM_ steps $ \s -> verbose' $ "Enabled " ++ stepName s ++ " step"
             verbose' $ "Extra language extensions: " ++
                 show (configLanguageExtensions conf)
-            mapM_ (file sa conf) $ files' $ ((saPathes sa) <> filesR) \\ except
+            mapM_ (file sa conf) $ files' (filesR \\ except)
   where
     verbose' = makeVerbose (saVerbose sa)
     files' x = if null x then [Nothing] else map Just x
@@ -140,7 +140,7 @@ findExceptions v fs@Nothing =
 findExceptions v (Just fs) = do
   es <- forM fs $ \x -> do
     d <- doesDirectoryExist x >>= \case
-      True  -> findFiles v (Just x)
+      True  -> findFiles v [x]
       False -> doesFileExist x >>= \case
           True  -> return [x]
           False -> makeVerbose v ("Not accessible: " <> show x) >> return []
@@ -148,33 +148,6 @@ findExceptions v (Just fs) = do
   let es' = nub es
   makeVerbose v ("Exception-list: " <> show es')
   return es'
-
-
---------------------------------------------------------------------------------
--- | Searches Haskell source files in any given folder recursively.
-findFiles :: Bool -> Maybe FilePath -> IO [FilePath]
-findFiles _ Nothing    = return []
-findFiles v (Just dir) = do
-  doesDirectoryExist dir >>= \case
-    True  -> findFilesRecursive dir >>=
-      return . filter (\x -> takeExtension x == ".hs")
-    False -> do
-      makeVerbose v ("Input folder does not exists: " <> dir)
-      findFiles v Nothing
-  where
-    findFilesRecursive :: FilePath -> IO [FilePath]
-    findFilesRecursive = listDirectoryFiles findFilesRecursive
-
-    listDirectoryFiles :: (FilePath -> IO [FilePath])
-                       -> FilePath -> IO [FilePath]
-    listDirectoryFiles go topdir = do
-      ps <- listDirectory topdir >>=
-        mapM (\x -> do
-                 let path = topdir </> x
-                 doesDirectoryExist path >>= \case
-                   True  -> go path
-                   False -> return [path])
-      return $ concat ps
 
 
 --------------------------------------------------------------------------------
