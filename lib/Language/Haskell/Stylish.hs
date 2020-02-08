@@ -28,6 +28,7 @@ module Language.Haskell.Stylish
 --------------------------------------------------------------------------------
 import           Control.Monad                                    (foldM)
 import           System.Directory                                 (doesDirectoryExist,
+                                                                   doesFileExist,
                                                                    listDirectory)
 import           System.FilePath                                  (takeExtension,
                                                                    (</>))
@@ -112,15 +113,22 @@ format maybeConfigPath maybeFilePath contents = do
 
 --------------------------------------------------------------------------------
 -- | Searches Haskell source files in any given folder recursively.
-findFiles :: Bool -> Maybe FilePath -> IO [FilePath]
-findFiles _ Nothing    = return []
-findFiles v (Just dir) = do
-  doesDirectoryExist dir >>= \case
-    True  -> findFilesRecursive dir >>=
-      return . filter (\x -> takeExtension x == ".hs")
-    False -> do
-      makeVerbose v ("Input folder does not exists: " <> dir)
-      findFiles v Nothing
+findFiles :: Bool -> [FilePath] -> IO [FilePath]
+findFiles v fs = mapM (findFilesR v . Just) fs >>= return . concat
+
+
+--------------------------------------------------------------------------------
+findFilesR :: Bool -> Maybe FilePath -> IO [FilePath]
+findFilesR _ Nothing    = return []
+findFilesR v (Just dir) = do
+  doesFileExist dir >>= \case
+    True -> return [dir]
+    _    -> doesDirectoryExist dir >>= \case
+      True  -> findFilesRecursive dir >>=
+        return . filter (\x -> takeExtension x == ".hs")
+      False -> do
+        makeVerbose v ("Input folder does not exists: " <> dir)
+        findFilesR v Nothing
   where
     findFilesRecursive :: FilePath -> IO [FilePath]
     findFilesRecursive = listDirectoryFiles findFilesRecursive

@@ -23,7 +23,7 @@ import           Language.Haskell.Stylish
 data StylishArgs = StylishArgs
     { saVersion   :: Bool
     , saConfig    :: Maybe FilePath
-    , saRecursive :: Maybe FilePath
+    , saRecursive :: Bool
     , saVerbose   :: Bool
     , saDefaults  :: Bool
     , saInPlace   :: Bool
@@ -45,8 +45,7 @@ parseStylishArgs = StylishArgs
             OA.long    "config"              <>
             OA.short   'c'                   <>
             OA.hidden)
-    <*> OA.optional (OA.strOption $
-            OA.metavar "RECURSIVE"             <>
+    <*> OA.switch (
             OA.help    "Recursive file search" <>
             OA.long    "recursive"             <>
             OA.short   'r'                     <>
@@ -106,12 +105,14 @@ stylishHaskell sa = do
 
         else do
             conf <- loadConfig verbose' (saConfig sa)
-            filesR <- findFiles (saVerbose sa) (saRecursive sa)
+            filesR <- case (saRecursive sa) of
+              True -> findFiles (saVerbose sa) (saFiles sa)
+              _    -> return $ saFiles sa
             let steps = configSteps conf
             forM_ steps $ \s -> verbose' $ "Enabled " ++ stepName s ++ " step"
             verbose' $ "Extra language extensions: " ++
                 show (configLanguageExtensions conf)
-            mapM_ (file sa conf) $ files' $ (saFiles sa) <> filesR
+            mapM_ (file sa conf) $ files' filesR
   where
     verbose' = makeVerbose (saVerbose sa)
     files' x = if null x then [Nothing] else map Just x
