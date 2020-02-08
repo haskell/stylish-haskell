@@ -11,6 +11,7 @@ module Language.Haskell.Stylish
     , trailingWhitespace
     , unicodeSyntax
       -- ** Helpers
+    , findExceptions
     , findFiles
     , stepName
       -- * Config
@@ -26,7 +27,8 @@ module Language.Haskell.Stylish
 
 
 --------------------------------------------------------------------------------
-import           Control.Monad                                    (foldM)
+import           Control.Monad                                    (foldM, forM)
+import           Data.List                (nub)
 import           System.Directory                                 (doesDirectoryExist,
                                                                    doesFileExist,
                                                                    listDirectory)
@@ -109,6 +111,25 @@ format :: Maybe ConfigPath -> Maybe FilePath -> String -> IO (Either String Line
 format maybeConfigPath maybeFilePath contents = do
   conf <- loadConfig (makeVerbose True) (fmap unConfigPath maybeConfigPath)
   pure $ runSteps (configLanguageExtensions conf) maybeFilePath (configSteps conf) $ lines contents
+
+
+--------------------------------------------------------------------------------
+-- | Searches given files/folders to build a list of exceptions.
+findExceptions :: Bool -> Maybe [FilePath] -> IO [FilePath]
+findExceptions v fs@Nothing =
+  makeVerbose v ("Exception-list: " <> show fs) >> return []
+
+findExceptions v (Just fs) = do
+  es <- forM fs $ \x -> do
+    d <- doesDirectoryExist x >>= \case
+      True -> findFiles v [x]
+      _    -> doesFileExist x >>= \case
+          True -> return [x]
+          _    -> makeVerbose v ("Not accessible: " <> show x) >> return []
+    return . concat $ d
+  let es' = nub es
+  makeVerbose v ("Exception-list: " <> show es')
+  return es'
 
 
 --------------------------------------------------------------------------------

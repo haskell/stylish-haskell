@@ -6,13 +6,12 @@ module Main
 
 
 --------------------------------------------------------------------------------
-import           Control.Monad            (forM, forM_, unless)
+import           Control.Monad            (forM_, unless)
 import qualified Data.ByteString.Char8    as BC8
-import           Data.List                (nub, (\\))
+import           Data.List                ((\\))
 import           Data.Monoid              ((<>))
 import           Data.Version             (showVersion)
 import qualified Options.Applicative      as OA
-import           System.Directory         (doesDirectoryExist, doesFileExist)
 import           System.Exit              (exitFailure)
 import qualified System.IO                as IO
 import qualified System.IO.Strict         as IO.Strict
@@ -35,6 +34,7 @@ data StylishArgs = StylishArgs
     , saPathes    :: [FilePath]
     }
     deriving (Show)
+
 
 
 --------------------------------------------------------------------------------
@@ -129,25 +129,6 @@ stylishHaskell sa = do
   where
     verbose' = makeVerbose (saVerbose sa)
     files' x = if null x then [Nothing] else map Just x
-
-
---------------------------------------------------------------------------------
--- | Searches given files/folders to build a list of exceptions.
-findExceptions :: Bool -> Maybe [FilePath] -> IO [FilePath]
-findExceptions v fs@Nothing =
-  makeVerbose v ("Exception-list: " <> show fs) >> return []
-
-findExceptions v (Just fs) = do
-  es <- forM fs $ \x -> do
-    d <- doesDirectoryExist x >>= \case
-      True  -> findFiles v [x]
-      False -> doesFileExist x >>= \case
-          True  -> return [x]
-          False -> makeVerbose v ("Not accessible: " <> show x) >> return []
-    return . concat $ d
-  let es' = nub es
-  makeVerbose v ("Exception-list: " <> show es')
-  return es'
 
 
 --------------------------------------------------------------------------------
