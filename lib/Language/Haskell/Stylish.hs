@@ -141,14 +141,14 @@ findHaskellFiles v fs = mapM (findFilesR v) fs >>= return . concat
 --------------------------------------------------------------------------------
 findFilesR :: Bool -> FilePath -> IO [FilePath]
 findFilesR _ []   = return []
-findFilesR v dir = do
-  doesFileExist dir >>= \case
-    True -> return [dir]
-    _    -> doesDirectoryExist dir >>= \case
-      True  -> findFilesRecursive dir >>=
+findFilesR v path = do
+  doesFileExist path >>= \case
+    True -> return [path]
+    _    -> doesDirectoryExist path >>= \case
+      True  -> findFilesRecursive path >>=
         return . filter (\x -> takeExtension x == ".hs")
       False -> do
-        makeVerbose v ("Input folder does not exists: " <> dir)
+        makeVerbose v ("Input folder does not exists: " <> path)
         findFilesR v []
   where
     findFilesRecursive :: FilePath -> IO [FilePath]
@@ -159,8 +159,8 @@ findFilesR v dir = do
     listDirectoryFiles go topdir = do
       ps <- listDirectory topdir >>=
         mapM (\x -> do
-                 let path = topdir </> x
-                 doesDirectoryExist path >>= \case
-                   True  -> go path
-                   False -> return [path])
+                 let dir = topdir </> x
+                 doesDirectoryExist dir >>= \case
+                   True  -> go dir
+                   False -> return [dir])
       return $ concat ps
