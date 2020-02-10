@@ -106,7 +106,7 @@ stylishHaskell sa = do
         else do
             conf <- loadConfig verbose' (saConfig sa)
             filesR <- case (saRecursive sa) of
-              True -> findFiles (saVerbose sa) (saFiles sa)
+              True -> findHaskellFiles (saVerbose sa) (saFiles sa)
               _    -> return $ saFiles sa
             let steps = configSteps conf
             forM_ steps $ \s -> verbose' $ "Enabled " ++ stepName s ++ " step"
