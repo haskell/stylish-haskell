@@ -11,7 +11,7 @@ module Language.Haskell.Stylish
     , trailingWhitespace
     , unicodeSyntax
       -- ** Helpers
-    , findExceptions
+    , withExceptions
     , findHaskellFiles
     , stepName
       -- * Config
@@ -28,7 +28,7 @@ module Language.Haskell.Stylish
 
 --------------------------------------------------------------------------------
 import           Control.Monad                                    (foldM, forM)
-import           Data.List                (nub)
+import           Data.List                (nub, (\\))
 import           System.Directory                                 (doesDirectoryExist,
                                                                    doesFileExist,
                                                                    listDirectory)
@@ -112,6 +112,13 @@ format maybeConfigPath maybeFilePath contents = do
   conf <- loadConfig (makeVerbose True) (fmap unConfigPath maybeConfigPath)
   pure $ runSteps (configLanguageExtensions conf) maybeFilePath (configSteps conf) $ lines contents
 
+withExceptions :: Bool -> Maybe [FilePath] -> [FilePath] -> IO [FilePath]
+withExceptions v Nothing fs = findHaskellFiles v fs
+withExceptions v es fs = do
+  toFormat <- findHaskellFiles v fs
+  notToFormat <- findExceptions v es
+  return $ toFormat \\ notToFormat
+
 
 --------------------------------------------------------------------------------
 -- | Searches given files/folders to build a list of exceptions.
@@ -122,7 +129,7 @@ findExceptions v fs@Nothing =
 findExceptions v (Just fs) = do
   es <- forM fs $ \x -> do
     d <- doesDirectoryExist x >>= \case
-      True -> findFiles v [x]
+      True -> findHaskellFiles v [x]
       _    -> doesFileExist x >>= \case
           True -> return [x]
           _    -> makeVerbose v ("Not accessible: " <> show x) >> return []
@@ -136,7 +143,6 @@ findExceptions v (Just fs) = do
 -- | Searches Haskell source files in any given folder recursively.
 findHaskellFiles :: Bool -> [FilePath] -> IO [FilePath]
 findHaskellFiles v fs = mapM (findFilesR v) fs >>= return . concat
-
 
 --------------------------------------------------------------------------------
 findFilesR :: Bool -> FilePath -> IO [FilePath]
