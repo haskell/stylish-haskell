@@ -12,7 +12,7 @@ module Language.Haskell.Stylish
     , unicodeSyntax
       -- ** Helpers
     , findExceptions
-    , findFiles
+    , findHaskellFiles
     , stepName
       -- * Config
     , module Language.Haskell.Stylish.Config
@@ -134,14 +134,14 @@ findExceptions v (Just fs) = do
 
 --------------------------------------------------------------------------------
 -- | Searches Haskell source files in any given folder recursively.
-findFiles :: Bool -> [FilePath] -> IO [FilePath]
-findFiles v fs = mapM (findFilesR v . Just) fs >>= return . concat
+findHaskellFiles :: Bool -> [FilePath] -> IO [FilePath]
+findHaskellFiles v fs = mapM (findFilesR v) fs >>= return . concat
 
 
 --------------------------------------------------------------------------------
-findFilesR :: Bool -> Maybe FilePath -> IO [FilePath]
-findFilesR _ Nothing    = return []
-findFilesR v (Just dir) = do
+findFilesR :: Bool -> FilePath -> IO [FilePath]
+findFilesR _ []   = return []
+findFilesR v dir = do
   doesFileExist dir >>= \case
     True -> return [dir]
     _    -> doesDirectoryExist dir >>= \case
@@ -149,7 +149,7 @@ findFilesR v (Just dir) = do
         return . filter (\x -> takeExtension x == ".hs")
       False -> do
         makeVerbose v ("Input folder does not exists: " <> dir)
-        findFilesR v Nothing
+        findFilesR v []
   where
     findFilesRecursive :: FilePath -> IO [FilePath]
     findFilesRecursive = listDirectoryFiles findFilesRecursive
