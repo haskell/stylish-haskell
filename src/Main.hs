@@ -127,7 +127,10 @@ stylishHaskell sa = do
             mapM_ (file sa conf) $ files' (filesR \\ except)
   where
     verbose' = makeVerbose (saVerbose sa)
-    files' x = if null x then [Nothing] else map Just x
+    files' x = case (saRecursive sa, null x) of
+      (True,True) -> []         -- No file to format and recursive enabled.
+      (_,True)    -> [Nothing]  -- Involving IO.stdin.
+      (_,False)   -> map Just x -- Process available files.
 
 
 --------------------------------------------------------------------------------
