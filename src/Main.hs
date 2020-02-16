@@ -32,9 +32,7 @@ data StylishArgs = StylishArgs
     , saInPlace   :: Bool
     , saNoUtf8    :: Bool
     , saPathes    :: [FilePath]
-    }
-    deriving (Show)
-
+    } deriving (Show)
 
 
 --------------------------------------------------------------------------------

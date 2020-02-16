@@ -28,7 +28,7 @@ module Language.Haskell.Stylish
 
 --------------------------------------------------------------------------------
 import           Control.Monad                                    (foldM, forM)
-import           Data.List                (nub, (\\))
+import           Data.List                                        (nub, (\\))
 import           System.Directory                                 (doesDirectoryExist,
                                                                    doesFileExist,
                                                                    listDirectory)
@@ -112,6 +112,8 @@ format maybeConfigPath maybeFilePath contents = do
   conf <- loadConfig (makeVerbose True) (fmap unConfigPath maybeConfigPath)
   pure $ runSteps (configLanguageExtensions conf) maybeFilePath (configSteps conf) $ lines contents
 
+
+--------------------------------------------------------------------------------
 withExceptions :: Bool -> Maybe [FilePath] -> [FilePath] -> IO [FilePath]
 withExceptions v Nothing fs = findHaskellFiles v fs
 withExceptions v es fs = do
@@ -137,12 +139,13 @@ findExceptions v (Just fs) = do
   let es' = nub es
   makeVerbose v ("Exception-list: " <> show es')
   return es'
-
+  
 
 --------------------------------------------------------------------------------
 -- | Searches Haskell source files in any given folder recursively.
 findHaskellFiles :: Bool -> [FilePath] -> IO [FilePath]
 findHaskellFiles v fs = mapM (findFilesR v) fs >>= return . concat
+
 
 --------------------------------------------------------------------------------
 findFilesR :: Bool -> FilePath -> IO [FilePath]
