@@ -112,12 +112,15 @@ format maybeConfigPath maybeFilePath contents = do
   conf <- loadConfig (makeVerbose True) (fmap unConfigPath maybeConfigPath)
   pure $ runSteps (configLanguageExtensions conf) maybeFilePath (configSteps conf) $ lines contents
 
+
+--------------------------------------------------------------------------------
+-- | Using recursive search finds available Haskell source files to use them as
+-- exceptions.
 withExceptions :: Bool -> Maybe [FilePath] -> [FilePath] -> IO [FilePath]
 withExceptions v Nothing fs = findHaskellFiles v fs
 withExceptions v es fs = do
-  toFormat <- findHaskellFiles v fs
   notToFormat <- findExceptions v es
-  return $ toFormat \\ notToFormat
+  return $ fs \\ notToFormat
 
 
 --------------------------------------------------------------------------------
