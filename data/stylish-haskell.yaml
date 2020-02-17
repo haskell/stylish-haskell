@@ -15,8 +15,33 @@ steps:
   #     # true.
   #     add_language_pragma: true
 
-  # Format record definitions
-  - records: {}
+  # Format record definitions. This is disabled by default.
+  #
+  # You can control the layout of record fields. The only rules that can't be configured
+  # are these:
+  #
+  # - "|" is always aligned with "="
+  # - "," in fields is always aligned with "{"
+  # - "}" is likewise always aligned with "{"
+  #
+  # - records:
+  #     # How to format equals sign between type constructor and data constructor.
+  #     # Possible values:
+  #     # - "same_line" -- leave "=" AND data constructor on the same line as the type constructor.
+  #     # - "indent N" -- insert a new line and N spaces from the beginning of the next line.
+  #     equals: "indent 2"
+  #
+  #     # How to format first field of each record constructor.
+  #     # Possible values:
+  #     # - "same_line" -- "{" and first field goes on the same line as the data constructor.
+  #     # - "indent N" -- insert a new line and N spaces from the beginning of the data constructor
+  #     first_field: "indent 2"
+  #
+  #     # How many spaces to insert between the column with "," and the beginning of the comment in the next line.
+  #     field_comment: 2
+  #
+  #     # How many spaces to insert before "deriving" clause. Deriving clauses are always on separate lines.
+  #     deriving: 2
 
   # Align the right hand side of some elements.  This is quite conservative
   # and only applies to statements where each element occupies a single
@@ -224,9 +249,6 @@ steps:
   # elements into single spaces. Basically, this undoes the effect of
   # simple_align but is a bit less conservative.
   # - squash: {}
-
-# A common indentation setting. Different steps take this into account.
-indent: 4
 
 # A common setting is the number of columns (parts of) code will be wrapped
 # to. Different steps take this into account.
