@@ -28,7 +28,7 @@ module Language.Haskell.Stylish
 
 --------------------------------------------------------------------------------
 import           Control.Monad                                    (foldM, forM)
-import           Data.List                (nub, (\\))
+import           Data.List                                        (nub, (\\))
 import           System.Directory                                 (doesDirectoryExist,
                                                                    doesFileExist,
                                                                    listDirectory)
@@ -146,6 +146,7 @@ findExceptions v (Just fs) = do
 -- | Searches Haskell source files in any given folder recursively.
 findHaskellFiles :: Bool -> [FilePath] -> IO [FilePath]
 findHaskellFiles v fs = mapM (findFilesR v) fs >>= return . concat
+
 
 --------------------------------------------------------------------------------
 findFilesR :: Bool -> FilePath -> IO [FilePath]
