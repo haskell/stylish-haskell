@@ -8,7 +8,6 @@ module Main
 --------------------------------------------------------------------------------
 import           Control.Monad            (forM_, unless)
 import qualified Data.ByteString.Char8    as BC8
-import           Data.List                ((\\))
 import           Data.Monoid              ((<>))
 import           Data.Version             (showVersion)
 import qualified Options.Applicative      as OA
