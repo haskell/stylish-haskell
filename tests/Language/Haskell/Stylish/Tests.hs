@@ -32,6 +32,7 @@ tests = testGroup "Language.Haskell.Stylish.Tests"
     , testCase "case 09" case09
     , testCase "case 10" case10
     , testCase "case 11" case11
+    , testCase "case 12" case12
     ]
 
 
@@ -150,8 +151,8 @@ case07 = withTestDirTree $ do
 
 --------------------------------------------------------------------------------
 -- | stylish-haskell -e "aDir/c.hs" "aDir/c.hs" a.hs b.hs
-case07 :: Assertion
-case07 = withTestDirTree $ do
+case08 :: Assertion
+case08 = withTestDirTree $ do
   createDirectory aDir >> writeFile c fileCont
   mapM_ (flip writeFile fileCont) fs
   result <- withExceptions False (Just [aDir]) input
@@ -167,8 +168,8 @@ case07 = withTestDirTree $ do
 
 --------------------------------------------------------------------------------
 -- | stylish-haskell -e "aDir/c.hs" "aDir/c.hs"
-case08 :: Assertion
-case08 = withTestDirTree $ do
+case09 :: Assertion
+case09 = withTestDirTree $ do
   createDirectory aDir >> writeFile c fileCont
   result <- withExceptions False (Just [aDir]) input
   sort result @?= (sort $ map normalise expected)
@@ -182,8 +183,8 @@ case08 = withTestDirTree $ do
 
 --------------------------------------------------------------------------------
 -- | stylish-haskell "aDir/c.hs"
-case09 :: Assertion
-case09 = withTestDirTree $ do
+case10 :: Assertion
+case10 = withTestDirTree $ do
   createDirectory aDir >> writeFile c fileCont
   result <- withExceptions False Nothing input
   sort result @?= (sort $ map normalise expected)
@@ -197,8 +198,8 @@ case09 = withTestDirTree $ do
 
 --------------------------------------------------------------------------------
 -- | stylish-haskell -e "aDir/c.hs" a.hs   ## However aDir/c.hs does not exists.
-case10 :: Assertion
-case10 = withTestDirTree $ do
+case11 :: Assertion
+case11 = withTestDirTree $ do
   mapM_ (flip writeFile fileCont) fs
   result <- withExceptions False (Just [c]) input
   sort result @?= (sort $ map normalise expected)
@@ -213,8 +214,8 @@ case10 = withTestDirTree $ do
 
 --------------------------------------------------------------------------------
 -- | stylish-haskell -e "aDir" a.hs ./aDir/c.hs
-case11 :: Assertion
-case11 = withTestDirTree $ do
+case12 :: Assertion
+case12 = withTestDirTree $ do
   createDirectory aDir >> writeFile c fileCont
   mapM_ (flip writeFile fileCont) fs
   result <- withExceptions False (Just [aDir]) input
