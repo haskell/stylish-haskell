@@ -132,7 +132,7 @@ case07 = withTestDirTree $ do
   sort result @?= (sort $ map normalise expected)
   where
     input    = c : fs
-    expected = ["a.hs", "b.hs"]
+    expected = fs
     aDir     = "aDir"
     c        = aDir </> "c.hs"
     fs       = ["b.hs", "a.hs"]
@@ -173,12 +173,11 @@ case09 = withTestDirTree $ do
 -- | stylish-haskell -e "aDir/c.hs" a.hs   ## However aDir/c.hs does not exists.
 case10 :: Assertion
 case10 = withTestDirTree $ do
-  createDirectory aDir >> writeFile c fileCont
   mapM_ (flip writeFile fileCont) fs
   result <- withExceptions False (Just [c]) input
   sort result @?= (sort $ map normalise expected)
   where
-    input    = c : fs
+    input    = fs
     expected = fs
     aDir     = "aDir"
     c        = aDir </> "c.hs"
@@ -187,7 +186,7 @@ case10 = withTestDirTree $ do
 
 
 --------------------------------------------------------------------------------
--- | stylish-haskell -e "aDir" a.hs
+-- | stylish-haskell -e "aDir" a.hs ./aDir/c.hs
 case11 :: Assertion
 case11 = withTestDirTree $ do
   createDirectory aDir >> writeFile c fileCont
@@ -195,7 +194,7 @@ case11 = withTestDirTree $ do
   result <- withExceptions False (Just [aDir]) input
   sort result @?= (sort $ map normalise expected)
   where
-    input    = aDir : fs
+    input    = c : fs
     expected = fs
     aDir     = "aDir"
     c        = aDir </> "c.hs"
