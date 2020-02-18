@@ -406,7 +406,7 @@ case19 = expected @=? testStep (step indentIndentStyle) input
        , "      }"
        ]
 
--- | Should not break Enums (data without records) formating
+-- | Should not break Enums (data without records) formatting
 --
 -- See https://github.com/jaspervdj/stylish-haskell/issues/262
 case20 :: Assertion
