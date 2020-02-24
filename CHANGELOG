@@ -1,5 +1,11 @@
 # CHANGELOG
 
+- 0.11.0.0 (2020-02-24)
+    * Disable record formatting by default
+    * Allow more customization for record formatting (by Maxim Koltsov)
+    * Disable formatting of data types without records (by Maxim Koltsov)
+    * Add `-r` flag to recursively find Haskell files (by Akos Marton)
+
 - 0.10.0.0 (2020-01-26)
     * Switch to HsYAML library (by vijayphoenix)
     * Expose `format` from main library (by Łukasz Gołębiewski)
