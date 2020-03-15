@@ -6,7 +6,8 @@ module Language.Haskell.Stylish.Tests
 
 --------------------------------------------------------------------------------
 import           Data.List                           (sort)
-import           System.Directory                    (createDirectory)
+import           System.Directory                    (createDirectory,
+                                                      createDirectoryIfMissing)
 import           System.FilePath                     (normalise, (</>))
 import           Test.Framework                      (Test, testGroup)
 import           Test.Framework.Providers.HUnit      (testCase)
@@ -114,7 +115,7 @@ case05 :: Assertion
 case05 = withTestDirTree $ do
   createDirectory aDir >> writeFile c fileCont
   mapM_ (flip writeFile fileCont) fs
-  result <- findHaskellFiles False input
+  result <- findHaskellFiles False input toExclude
   sort result @?= (sort $ map normalise expected)
   where
     input    = c : fs
@@ -123,107 +124,90 @@ case05 = withTestDirTree $ do
     aDir     = "aDir"
     expected = ["a.hs", "b.hs", c]
     fileCont = ""
-
+    toExclude = Nothing
 
 --------------------------------------------------------------------------------
 -- | When the input item is not file, do not recurse it.
 case06 :: Assertion
 case06 = withTestDirTree $ do
   mapM_ (flip writeFile "") input
-  result <- findHaskellFiles False input
+  result <- findHaskellFiles False input toExclude
   result @?= expected
   where
     input    = ["b.hs"]
     expected = map normalise input
-
+    toExclude = Nothing
 
 --------------------------------------------------------------------------------
 -- | Empty input should result in empty output.
 case07 :: Assertion
 case07 = withTestDirTree $ do
   mapM_ (flip writeFile "") input
-  result <- findHaskellFiles False input
+  result <- findHaskellFiles False input toExclude
   result @?= expected
   where
     input    = []
     expected = input
-
+    toExclude = Nothing
 
 --------------------------------------------------------------------------------
--- | stylish-haskell -e "aDir/c.hs" "aDir/c.hs" a.hs b.hs
+-- | stylish-haskell a.hs b.hs .git
 case08 :: Assertion
-case08 = withTestDirTree $ do
-  createDirectory aDir >> writeFile c fileCont
-  mapM_ (flip writeFile fileCont) fs
-  result <- excludeFiles False (Just [aDir]) input
-  sort result @?= (sort $ map normalise expected)
+case08 = do
+  let result = excludeFiles input toExclude
+  result @?= expected
   where
-    input    = c : fs
-    expected = fs
-    aDir     = "aDir"
-    c        = aDir </> "c.hs"
-    fs       = ["b.hs", "a.hs"]
-    fileCont = ""
-
-
---------------------------------------------------------------------------------
--- | stylish-haskell -e "aDir/c.hs" "aDir/c.hs"
-case09 :: Assertion
-case09 = withTestDirTree $ do
-  createDirectory aDir >> writeFile c fileCont
-  result <- excludeFiles False (Just [aDir]) input
-  sort result @?= (sort $ map normalise expected)
-  where
-    input    = [c]
-    expected = []
-    aDir     = "aDir"
-    c        = aDir </> "c.hs"
-    fileCont = ""
-
-
---------------------------------------------------------------------------------
--- | stylish-haskell "aDir/c.hs"
-case10 :: Assertion
-case10 = withTestDirTree $ do
-  createDirectory aDir >> writeFile c fileCont
-  result <- excludeFiles False Nothing input
-  sort result @?= (sort $ map normalise expected)
-  where
-    input    = [c]
+    input = ["./a.hs", "b.hs", ".git"]
+    toExclude = Nothing
     expected = input
-    aDir     = "aDir"
-    c        = aDir </> "c.hs"
-    fileCont = ""
-
 
 --------------------------------------------------------------------------------
--- | stylish-haskell -e "aDir/c.hs" a.hs   ## However aDir/c.hs does not exists.
-case11 :: Assertion
-case11 = withTestDirTree $ do
-  mapM_ (flip writeFile fileCont) fs
-  result <- excludeFiles False (Just [c]) input
-  sort result @?= (sort $ map normalise expected)
+-- | stylish-haskell -e .git a.hs b.hs ./.git
+case09 :: Assertion
+case09 = do
+  let result = excludeFiles input toExclude
+  result @?= expected
   where
-    input    = fs
-    expected = fs
-    aDir     = "aDir"
-    c        = aDir </> "c.hs"
-    fs       = ["a.hs"]
-    fileCont = ""
-
+    input = ["a.hs", "b.hs", "./.git"]
+    toExclude = Just $ [".git"]
+    expected = ["a.hs", "b.hs"]
 
 --------------------------------------------------------------------------------
--- | stylish-haskell -e "aDir" a.hs ./aDir/c.hs
+-- | stylish-haskell -e .git -e a/b/c.hs a.hs b.hs .git
+case10 :: Assertion
+case10 = do
+  let result = excludeFiles input toExclude
+  result @?= expected
+  where
+    input = ["a.hs", "b.hs", ".git"]
+    toExclude = Just $ [".git", "a/b/c.hs"]
+    expected = ["a.hs", "b.hs"]
+
+--------------------------------------------------------------------------------
+-- | stylish-haskell -e .git -e a/b/ a.hs b.hs .git a/b/c.hs
+case11 :: Assertion
+case11 = do
+  let result = excludeFiles input toExclude
+  result @?= expected
+  where
+    input = ["a.hs", "b.hs", ".git", "a/b/c.hs"]
+    toExclude = Just $ [".git", "a/b/"]
+    expected = ["a.hs", "b.hs"]
+
+--------------------------------------------------------------------------------
+-- | stylish-haskell -e .git -e a/b/ a.hs b.hs .git a/b/c.hs
 case12 :: Assertion
 case12 = withTestDirTree $ do
-  createDirectory aDir >> writeFile c fileCont
-  mapM_ (flip writeFile fileCont) fs
-  result <- excludeFiles False (Just [aDir]) input
-  sort result @?= (sort $ map normalise expected)
+  createDirectoryIfMissing True aDir
+  createDirectoryIfMissing True gDir
+  mapM_ (flip writeFile fileCont) input
+  result <- findHaskellFiles True input toExclude
+  result @?= expected
   where
-    input    = c : fs
-    expected = fs
-    aDir     = "aDir"
-    c        = aDir </> "c.hs"
-    fs       = ["a.hs"]
+    input    = ["a.hs", "b.hs", gDir </> c, aDir </> c]
+    expected = ["a.hs", "b.hs"]
+    toExclude = Just [aDir, gDir]
+    c        = "c.hs"
+    aDir     = "a" </> "b"
+    gDir     = ".git"
     fileCont = ""

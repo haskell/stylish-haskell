@@ -25,7 +25,7 @@ data StylishArgs = StylishArgs
     { saVersion   :: Bool
     , saConfig    :: Maybe FilePath
     , saRecursive :: Bool
-    , saBlacklist :: Maybe [FilePath]
+    , saBlacklist :: ExcludeList
     , saVerbose   :: Bool
     , saDefaults  :: Bool
     , saInPlace   :: Bool
@@ -114,9 +114,8 @@ stylishHaskell sa = do
         else do
             conf <- loadConfig verbose' (saConfig sa)
             filesR <- case (saRecursive sa) of
-              True -> findHaskellFiles (saVerbose sa) (saPathes sa)
-                      >>= excludeFiles (saVerbose sa) (saBlacklist sa)
-              _    -> excludeFiles (saVerbose sa) (saBlacklist sa) (saPathes sa)
+              True -> findHaskellFiles (saVerbose sa) (saPathes sa) (saBlacklist sa)
+              _    -> return $ excludeFiles (saPathes sa) (saBlacklist sa)
             let steps = configSteps conf
             forM_ steps $ \s -> verbose' $ "Enabled " ++ stepName s ++ " step"
             verbose' $ "Extra language extensions: " ++

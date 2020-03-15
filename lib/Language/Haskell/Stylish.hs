@@ -21,18 +21,20 @@ module Language.Haskell.Stylish
     , version
     , format
     , ConfigPath(..)
+    , ExcludeList
     , Lines
     , Step
     ) where
 
 
 --------------------------------------------------------------------------------
-import           Control.Monad                                    (foldM, forM)
-import           Data.List                                        (nub, (\\))
+import           Control.Monad                                    (foldM)
+import           Data.List                                        (isPrefixOf)
 import           System.Directory                                 (doesDirectoryExist,
                                                                    doesFileExist,
                                                                    listDirectory)
 import           System.FilePath                                  (takeExtension,
+                                                                   normalise,
                                                                    (</>))
 
 --------------------------------------------------------------------------------
@@ -47,6 +49,9 @@ import qualified Language.Haskell.Stylish.Step.TrailingWhitespace as TrailingWhi
 import qualified Language.Haskell.Stylish.Step.UnicodeSyntax      as UnicodeSyntax
 import           Language.Haskell.Stylish.Verbose
 import           Paths_stylish_haskell                            (version)
+
+
+type ExcludeList = Maybe [FilePath]
 
 
 --------------------------------------------------------------------------------
@@ -114,39 +119,18 @@ format maybeConfigPath maybeFilePath contents = do
 
 
 --------------------------------------------------------------------------------
--- | Using recursive search finds available Haskell source files to use them as
--- exceptions.
-
-excludeFiles :: Bool -> Maybe [FilePath] -> [FilePath] -> IO [FilePath]
-excludeFiles v Nothing fs = findHaskellFiles v fs
-excludeFiles v es fs = do
-  notToFormat <- findExceptions v es
-  return $ fs \\ notToFormat
-
-
---------------------------------------------------------------------------------
--- | Searches given files/folders to build a list of exceptions.
-findExceptions :: Bool -> Maybe [FilePath] -> IO [FilePath]
-findExceptions v fs@Nothing =
-  makeVerbose v ("Exception-list: " <> show fs) >> return []
-
-findExceptions v (Just fs) = do
-  es <- forM fs $ \x -> do
-    d <- doesDirectoryExist x >>= \case
-      True -> findHaskellFiles v [x]
-      _    -> doesFileExist x >>= \case
-          True -> return [x]
-          _    -> makeVerbose v ("Not accessible: " <> show x) >> return []
-    return . concat $ d
-  let es' = nub es
-  makeVerbose v ("Exception-list: " <> show es')
-  return es'
-
-
---------------------------------------------------------------------------------
 -- | Searches Haskell source files in any given folder recursively.
-findHaskellFiles :: Bool -> [FilePath] -> IO [FilePath]
-findHaskellFiles v fs = mapM (findFilesR v) fs >>= return . concat
+findHaskellFiles :: Bool -> [FilePath] -> ExcludeList -> IO [FilePath]
+findHaskellFiles v fs es =
+  mapM (findFilesR v) (excludeFiles fs es) >>= return . flip excludeFiles es . concat
+
+
+excludeFiles :: [FilePath] -> ExcludeList -> [FilePath]
+excludeFiles fs Nothing = fs
+excludeFiles fs (Just es) =
+  let es' = map normalise es
+      fs' = map normalise fs
+  in filter (\x -> not $ any (flip isPrefixOf x) es') $ fs'
 
 
 --------------------------------------------------------------------------------
