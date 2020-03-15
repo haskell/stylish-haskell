@@ -53,9 +53,9 @@ parseStylishArgs = StylishArgs
             OA.short   'r'                     <>
             OA.hidden)
     <*> OA.optional (OA.many $ OA.strOption $
-            OA.metavar "BLACKLIST"                             <>
+            OA.metavar "EXCLUDE-LIST"                          <>
             OA.help    "File(s)/folder(s) not to be processed" <>
-            OA.long    "except"                                <>
+            OA.long    "exclude"                               <>
             OA.short   'e'                                     <>
             OA.hidden)
     <*> OA.switch (
