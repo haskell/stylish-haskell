@@ -155,7 +155,7 @@ case08 :: Assertion
 case08 = withTestDirTree $ do
   createDirectory aDir >> writeFile c fileCont
   mapM_ (flip writeFile fileCont) fs
-  result <- withExceptions False (Just [aDir]) input
+  result <- excludeFiles False (Just [aDir]) input
   sort result @?= (sort $ map normalise expected)
   where
     input    = c : fs
@@ -171,7 +171,7 @@ case08 = withTestDirTree $ do
 case09 :: Assertion
 case09 = withTestDirTree $ do
   createDirectory aDir >> writeFile c fileCont
-  result <- withExceptions False (Just [aDir]) input
+  result <- excludeFiles False (Just [aDir]) input
   sort result @?= (sort $ map normalise expected)
   where
     input    = [c]
@@ -186,7 +186,7 @@ case09 = withTestDirTree $ do
 case10 :: Assertion
 case10 = withTestDirTree $ do
   createDirectory aDir >> writeFile c fileCont
-  result <- withExceptions False Nothing input
+  result <- excludeFiles False Nothing input
   sort result @?= (sort $ map normalise expected)
   where
     input    = [c]
@@ -201,7 +201,7 @@ case10 = withTestDirTree $ do
 case11 :: Assertion
 case11 = withTestDirTree $ do
   mapM_ (flip writeFile fileCont) fs
-  result <- withExceptions False (Just [c]) input
+  result <- excludeFiles False (Just [c]) input
   sort result @?= (sort $ map normalise expected)
   where
     input    = fs
@@ -218,7 +218,7 @@ case12 :: Assertion
 case12 = withTestDirTree $ do
   createDirectory aDir >> writeFile c fileCont
   mapM_ (flip writeFile fileCont) fs
-  result <- withExceptions False (Just [aDir]) input
+  result <- excludeFiles False (Just [aDir]) input
   sort result @?= (sort $ map normalise expected)
   where
     input    = c : fs

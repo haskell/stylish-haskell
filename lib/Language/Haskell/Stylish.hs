@@ -11,7 +11,7 @@ module Language.Haskell.Stylish
     , trailingWhitespace
     , unicodeSyntax
       -- ** Helpers
-    , withExceptions
+    , excludeFiles
     , findHaskellFiles
     , stepName
       -- * Config
@@ -116,9 +116,10 @@ format maybeConfigPath maybeFilePath contents = do
 --------------------------------------------------------------------------------
 -- | Using recursive search finds available Haskell source files to use them as
 -- exceptions.
-withExceptions :: Bool -> Maybe [FilePath] -> [FilePath] -> IO [FilePath]
-withExceptions v Nothing fs = findHaskellFiles v fs
-withExceptions v es fs = do
+
+excludeFiles :: Bool -> Maybe [FilePath] -> [FilePath] -> IO [FilePath]
+excludeFiles v Nothing fs = findHaskellFiles v fs
+excludeFiles v es fs = do
   notToFormat <- findExceptions v es
   return $ fs \\ notToFormat
 

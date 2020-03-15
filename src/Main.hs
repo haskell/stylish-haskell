@@ -115,8 +115,8 @@ stylishHaskell sa = do
             conf <- loadConfig verbose' (saConfig sa)
             filesR <- case (saRecursive sa) of
               True -> findHaskellFiles (saVerbose sa) (saPathes sa)
-                      >>= withExceptions (saVerbose sa) (saBlacklist sa)
-              _    -> withExceptions (saVerbose sa) (saBlacklist sa) (saPathes sa)
+                      >>= excludeFiles (saVerbose sa) (saBlacklist sa)
+              _    -> excludeFiles (saVerbose sa) (saBlacklist sa) (saPathes sa)
             let steps = configSteps conf
             forM_ steps $ \s -> verbose' $ "Enabled " ++ stepName s ++ " step"
             verbose' $ "Extra language extensions: " ++
