@@ -197,15 +197,14 @@ parseRecords _ o = Data.step
 
 parseIndent :: A.Value -> A.Parser Data.Indent
 parseIndent = A.withText "Indent" $ \t ->
-  if t == "same_line"
-  then return Data.SameLine
-  else
-    if | "indent absolute " `T.isPrefixOf` t ->
-         Data.IndentAbsolute <$> readNumber 16 t
-       | "indent " `T.isPrefixOf` t ->
-         Data.IndentRelative <$> readNumber 7 t
-       | otherwise ->
-           fail $ "can't parse indent setting: " <> T.unpack t
+  if | t == "same_line" ->
+       return Data.SameLine
+     | "indent absolute " `T.isPrefixOf` t ->
+       Data.IndentAbsolute <$> readNumber 16 t
+     | "indent " `T.isPrefixOf` t ->
+       Data.IndentRelative <$> readNumber 7 t
+     | otherwise ->
+       fail $ "can't parse indent setting: " <> T.unpack t
   where
     readNumber prefix text =
       let toRead = T.unpack $ T.drop prefix text
