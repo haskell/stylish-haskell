@@ -35,13 +35,18 @@ steps:
   #     # Possible values:
   #     # - "same_line" -- "{" and first field goes on the same line as the data constructor.
   #     # - "indent N" -- insert a new line and N spaces from the beginning of the data constructor
+  #     # - "indent absolute N" -- insert a new line and N spaces from the beginning of the line
   #     first_field: "indent 2"
   #
   #     # How many spaces to insert between the column with "," and the beginning of the comment in the next line.
   #     field_comment: 2
   #
-  #     # How many spaces to insert before "deriving" clause. Deriving clauses are always on separate lines.
-  #     deriving: 2
+  #     # How to format the deriving clause.
+  #     # Possible values:
+  #     # - "same_line" -- the deriving clause is inserted after the closing "}".
+  #     # - "indent N" -- insert a new line and N spaces from the beginning of the data constructor
+  #     # - "indent absolute N" -- insert a new line and N spaces from the beginning of the line
+  #     deriving: indent absolute 2
 
   # Align the right hand side of some elements.  This is quite conservative
   # and only applies to statements where each element occupies a single
