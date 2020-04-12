@@ -35,6 +35,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 22" case22
     , testCase "case 23" case23
     , testCase "case 24" case24
+    , testCase "case 25" case25
     ]
 
 case00 :: Assertion
@@ -520,17 +521,45 @@ case24 = expected @=? testStep (step indentIndentStyle) input
        , "  deriving (ToJSON)"
        ]
 
+case25 :: Assertion
+case25 = expected @=? testStep (step sameAbsoluteStyleWithSameLineDeriving) input
+  where
+    input = unlines
+       [ "data Foo a"
+       , "  = Foo { a :: Int,"
+       , "          a2 :: String"
+       , "          -- ^ some haddock"
+       , "        }"
+       , "  | Bar { b :: a }  deriving (Eq, Show)"
+       , "  deriving (ToJSON)"
+       ]
+
+    expected = unlines
+       [ "data Foo a = Foo"
+       , "   { a :: Int"
+       , "   , a2 :: String"
+       , "     -- ^ some haddock"
+       , "   }"
+       , "           | Bar"
+       , "   { b :: a"
+       , "   } deriving (Eq, Show)"
+       , "     deriving (ToJSON)"
+       ]
+
 sameSameStyle :: Config
-sameSameStyle = Config SameLine SameLine 2 2
+sameSameStyle = Config SameLine SameLine 2 (IndentAbsolute 2)
 
 sameIndentStyle :: Config
-sameIndentStyle = Config SameLine (Indent 2) 2 2
+sameIndentStyle = Config SameLine (IndentRelative 2) 2 (IndentAbsolute 2)
 
 indentSameStyle :: Config
-indentSameStyle = Config (Indent 2) SameLine 2 2
+indentSameStyle = Config (IndentRelative 2) SameLine 2 (IndentAbsolute 2)
 
 indentIndentStyle :: Config
-indentIndentStyle = Config (Indent 2) (Indent 2) 2 2
+indentIndentStyle = Config (IndentRelative 2) (IndentRelative 2) 2 (IndentAbsolute 2)
 
 indentIndentStyle4 :: Config
-indentIndentStyle4 = Config (Indent 4) (Indent 4) 4 4
+indentIndentStyle4 = Config (IndentRelative 4) (IndentRelative 4) 4 (IndentAbsolute 4)
+
+sameAbsoluteStyleWithSameLineDeriving :: Config
+sameAbsoluteStyleWithSameLineDeriving = Config SameLine (IndentAbsolute 3) 2 SameLine

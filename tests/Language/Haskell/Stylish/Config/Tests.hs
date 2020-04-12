@@ -4,11 +4,11 @@ module Language.Haskell.Stylish.Config.Tests
 
 
 --------------------------------------------------------------------------------
-import qualified Data.Set                        as Set
+import qualified Data.Set                            as Set
 import           System.Directory
-import           Test.Framework                  (Test, testGroup)
-import           Test.Framework.Providers.HUnit  (testCase)
-import           Test.HUnit                      (Assertion, assert)
+import           Test.Framework                      (Test, testGroup)
+import           Test.Framework.Providers.HUnit      (testCase)
+import           Test.HUnit                          (Assertion, assert)
 
 
 --------------------------------------------------------------------------------
@@ -152,7 +152,7 @@ dotStylish = unlines $
   , "      equals: \"same_line\""
   , "      first_field: \"indent 2\""
   , "      field_comment: 2"
-  , "      deriving: 4"
+  , "      deriving: \"indent 4\""
   , "columns: 110"
   , "language_extensions:"
   , "  - TemplateHaskell"

@@ -2,7 +2,7 @@
 
 module Language.Haskell.Stylish.Step.Data where
 
-import           Data.List                       (find, intercalate)
+import           Data.List                       (find, init, intercalate)
 import           Data.Maybe                      (fromMaybe, maybeToList)
 import qualified Language.Haskell.Exts           as H
 import           Language.Haskell.Exts.Comments
@@ -14,18 +14,19 @@ import           Prelude                         hiding (init)
 
 data Indent
     = SameLine
-    | Indent !Int
+    | IndentRelative !Int
+    | IndentAbsolute !Int
   deriving (Show)
 
 data Config = Config
-    { cEquals           :: !Indent
-      -- ^ Indent between type constructor and @=@ sign (measured from column 0)
-    , cFirstField       :: !Indent
-      -- ^ Indent between data constructor and @{@ line (measured from column with data constructor name)
-    , cFieldComment     :: !Int
+    { cEquals       :: !Indent
+      -- ^ Indent between type constructor and @=@ sign (measured from column 0, relative is ignored here)
+    , cFirstField   :: !Indent
+      -- ^ Indent between data constructor and @{@ line (measured from column 0 if absolute, from column with data constructor name if relative)
+    , cFieldComment :: !Int
       -- ^ Indent between column with @{@ and start of field line comment (this line has @cFieldComment = 2@)
-    , cDeriving         :: !Int
-      -- ^ Indent before @deriving@ lines (measured from column 0)
+    , cDeriving     :: !Indent
+      -- ^ Indent before @deriving@ lines (measured from column 0 if absolute, from column with data constructor name if relative)
     } deriving (Show)
 
 datas :: H.Module l -> [H.Decl l]
@@ -70,7 +71,7 @@ changeDecl allComments cfg@Config{..} (H.DataDecl block (H.DataType _) Nothing d
     hasRecordFields = any
       (\qual -> case qual of
                   (H.QualConDecl _ _ _ (H.RecDecl {})) -> True
-                  _ -> False)
+                  _                                    -> False)
       decls
 
     typeConstructor = "data " <> H.prettyPrint dhead
@@ -78,18 +79,29 @@ changeDecl allComments cfg@Config{..} (H.DataDecl block (H.DataType _) Nothing d
     -- In any case set @pipeIndent@ such that @|@ is aligned with @=@.
     (firstLine, firstLineInit, pipeIndent) =
       case cEquals of
-        SameLine -> (Nothing, typeConstructor <> " = ", length typeConstructor + 1)
-        Indent n -> (Just [[typeConstructor]], indent n "= ", n)
+        SameLine         -> (Nothing, typeConstructor <> " = ", length typeConstructor + 1)
+        IndentRelative n -> (Just [[typeConstructor]], indent n "= ", n)
+        IndentAbsolute n -> (Just [[typeConstructor]], indent n "= ", n)
 
-    newLines = fromMaybe [] firstLine ++ fmap constructors zipped <> [fmap (indent cDeriving . H.prettyPrint) derivings]
+    newLines = fromMaybe [] firstLine ++ addDerivings (fmap constructors zipped)
     zipped = zip decls ([1..] ::[Int])
+
+    addDerivings constructorLines = case derivings of
+      []     -> constructorLines
+      (d:ds) -> case cDeriving of
+        IndentAbsolute n -> constructorLines <> [fmap (indent n . H.prettyPrint) derivings]
+        IndentRelative n -> constructorLines <> [fmap (indent (length firstLineInit + n) . H.prettyPrint) derivings]
+        SameLine         -> let cLines = concat constructorLines
+                                n      = length (last cLines) + 1
+                            in [ init cLines <> [last cLines <> " " <> H.prettyPrint d]
+                               ] <> [fmap (indent n . H.prettyPrint) ds]
 
     constructors (decl, 1) = processConstructor allComments firstLineInit cfg decl
     constructors (decl, _) = processConstructor allComments (indent pipeIndent "| ") cfg decl
 changeDecl _ _ _ = Nothing
 
 processConstructor :: [Comment] -> String -> Config -> H.QualConDecl LineBlock -> [String]
-processConstructor allComments init Config{..} (H.QualConDecl _ _ _ (H.RecDecl _ dname (f:fs))) = do
+processConstructor allComments flInit Config{..} (H.QualConDecl _ _ _ (H.RecDecl _ dname (f:fs))) = do
   fromMaybe [] firstLine <> n1 <> ns <> [indent fieldIndent "}"]
   where
     n1 = processName firstLinePrefix (extractField f)
@@ -100,13 +112,18 @@ processConstructor allComments init Config{..} (H.QualConDecl _ _ _ (H.RecDecl _
       case cFirstField of
         SameLine ->
           ( Nothing
-          , init <> H.prettyPrint dname <> " { "
-          , length init + length (H.prettyPrint dname) + 1
+          , flInit <> H.prettyPrint dname <> " { "
+          , length flInit + length (H.prettyPrint dname) + 1
           )
-        Indent n ->
-          ( Just [init <> H.prettyPrint dname]
-          , indent (length init + n) "{ "
-          , length init + n
+        IndentRelative n ->
+          ( Just [flInit <> H.prettyPrint dname]
+          , indent (length flInit + n) "{ "
+          , length flInit + n
+          )
+        IndentAbsolute n ->
+          ( Just [flInit <> H.prettyPrint dname]
+          , indent n "{ "
+          , n
           )
 
     processName prefix (fnames, _type, lineComment, commentBelowLine) =
@@ -123,4 +140,4 @@ processConstructor allComments init Config{..} (H.QualConDecl _ _ _ (H.RecDecl _
     extractField (H.FieldDecl lb names _type) =
       (names, _type, findCommentOnLine lb allComments, findCommentBelowLine lb allComments)
 
-processConstructor _ init _ decl = [init <> trimLeft (H.prettyPrint decl)]
+processConstructor _ flInit _ decl = [flInit <> trimLeft (H.prettyPrint decl)]

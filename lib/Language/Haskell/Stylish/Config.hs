@@ -1,4 +1,5 @@
 --------------------------------------------------------------------------------
+{-# LANGUAGE MultiWayIf        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 module Language.Haskell.Stylish.Config
@@ -191,20 +192,26 @@ parseRecords _ o = Data.step
         <$> (o A..: "equals" >>= parseIndent)
         <*> (o A..: "first_field" >>= parseIndent)
         <*> (o A..: "field_comment")
-        <*> (o A..: "deriving"))
+        <*> (o A..: "deriving" >>= parseIndent))
 
 
 parseIndent :: A.Value -> A.Parser Data.Indent
 parseIndent = A.withText "Indent" $ \t ->
   if t == "same_line"
-     then return Data.SameLine
-     else
-         if "indent " `T.isPrefixOf` t
-             then
-                 case readMaybe (T.unpack $ T.drop 7 t) of
-                     Just n -> return $ Data.Indent n
-                     Nothing -> fail $ "Indent: not a number" <> T.unpack (T.drop 7 t)
-             else fail $ "can't parse indent setting: " <> T.unpack t
+  then return Data.SameLine
+  else
+    if | "indent absolute " `T.isPrefixOf` t ->
+         Data.IndentAbsolute <$> readNumber 16 t
+       | "indent " `T.isPrefixOf` t ->
+         Data.IndentRelative <$> readNumber 7 t
+       | otherwise ->
+           fail $ "can't parse indent setting: " <> T.unpack t
+  where
+    readNumber prefix text =
+      let toRead = T.unpack $ T.drop prefix text
+      in  case readMaybe toRead of
+            Just n  -> return n
+            Nothing -> fail $ "Indent: not a number" <> toRead
 
 
 --------------------------------------------------------------------------------
