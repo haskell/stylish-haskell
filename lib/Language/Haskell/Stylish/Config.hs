@@ -267,9 +267,10 @@ parseLanguagePragmas config o = LanguagePragmas.step
     <*> mkLanguage o
   where
     styles =
-        [ ("vertical",     LanguagePragmas.Vertical)
-        , ("compact",      LanguagePragmas.Compact)
-        , ("compact_line", LanguagePragmas.CompactLine)
+        [ ("vertical",         LanguagePragmas.Vertical)
+        , ("compact",          LanguagePragmas.Compact)
+        , ("compact_line",     LanguagePragmas.CompactLine)
+        , ("vertical_compact", LanguagePragmas.VerticalCompact)
         ]
 
 
