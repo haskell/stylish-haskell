@@ -22,8 +22,6 @@ import qualified Language.Haskell.GhclibParserEx.GHC.Parser as Parser
 import Language.Haskell.GhclibParserEx.GHC.Settings.Config
 import Language.Haskell.GhclibParserEx.GHC.Driver.Session (readExtension, parsePragmasIntoDynFlags)
 
---import qualified Language.Haskell.GhclibParserEx.GHC.Parser as GHC
-
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Config
 import           Language.Haskell.Stylish.Step
@@ -75,12 +73,12 @@ baseDynFlags = D.defaultDynFlags fakeSettings fakeLlvmConfig
 
 --------------------------------------------------------------------------------
 -- | Abstraction over GHC's parsing
-parseModule :: Extensions -> Maybe FilePath -> String -> IO (Either String (S.Located (G.HsModule GE.GhcPs)))
+parseModule :: Extensions -> Maybe FilePath -> String -> IO (Either String GHCModule)
 parseModule extraExts mfp string = do
   -- Determine the extensions: those specified in the file and the extra ones
     let noPrefixes        = unShebang . dropBom $ string
         extraExts'        = mapMaybe readExtension extraExts
-        enableDisableExts = (extraExts',[])   
+        enableDisableExts = (extraExts' ++ defaultExtensions ,[])   
 
         fp       = fromMaybe "<unknown>" mfp
 
