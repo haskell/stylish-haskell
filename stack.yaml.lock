@@ -19,6 +19,20 @@ packages:
   original:
     hackage: haskell-src-exts-1.23.0
 - completed:
+    hackage: ghc-lib-parser-8.10.1.20200523@sha256:857dbd2d456d4b74e6c3dbd3dacff3888a3c64bdb9fe306bd51b94fdcfb9094e,8770
+    pantry-tree:
+      size: 19503
+      sha256: dc8f7fc30eb951adac7852c1c1cd0e8e3243f1c6dbcc1ce2eccf345421af3346
+  original:
+    hackage: ghc-lib-parser-8.10.1.20200523
+- completed:
+    hackage: ghc-lib-parser-ex-8.10.0.14@sha256:0ee983c978e55fe799814a469777bddd394fb7eff97bdfba960935cb91f15e1c,3627
+    pantry-tree:
+      size: 2118
+      sha256: 643c6d2dab9dd9dd9f9de86b5086ea43c2ca3fa1e82b1fd35a57154f168cd6b0
+  original:
+    hackage: ghc-lib-parser-ex-8.10.0.14
+- completed:
     hackage: HsYAML-0.2.1.0@sha256:e4677daeba57f7a1e9a709a1f3022fe937336c91513e893166bd1f023f530d68,5311
     pantry-tree:
       size: 1340
