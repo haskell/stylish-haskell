@@ -35,7 +35,7 @@ datas _                        = []
 type ChangeLine = Change String
 
 step :: Config -> Step
-step cfg = makeStep "Data" (step' cfg)
+step cfg = makeStep "Data" . Left $ (step' cfg)
 
 step' :: Config -> Lines -> Module -> Lines
 step' cfg ls (module', allComments) = applyChanges changes ls

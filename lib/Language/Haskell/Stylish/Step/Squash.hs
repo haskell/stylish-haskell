@@ -52,7 +52,7 @@ squashAlt (H.Alt _ pat rhs _) = squash pat rhs
 
 --------------------------------------------------------------------------------
 step :: Step
-step = makeStep "Squash" $ \ls (module', _) ->
+step = makeStep "Squash" $ Left $ \ls (module', _) ->
     let module'' = fmap H.srcInfoSpan module'
         changes  = concat
             [ mapMaybe squashAlt       (everything module'')

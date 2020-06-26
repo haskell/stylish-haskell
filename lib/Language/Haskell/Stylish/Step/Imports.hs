@@ -421,7 +421,7 @@ prettyImportGroup columns align fileAlign longest imps =
 
 --------------------------------------------------------------------------------
 step :: Maybe Int -> Options -> Step
-step columns = makeStep "Imports" . step' columns
+step columns = makeStep "Imports" . Left . step' columns
 
 
 --------------------------------------------------------------------------------

@@ -105,7 +105,7 @@ between (startRow, startCol) (endRow, endCol) needle =
 
 --------------------------------------------------------------------------------
 step :: Bool -> String -> Step
-step = (makeStep "UnicodeSyntax" .) . step'
+step alp lg = makeStep "UnicodeSyntax" . Left $ step' alp lg
 
 
 --------------------------------------------------------------------------------

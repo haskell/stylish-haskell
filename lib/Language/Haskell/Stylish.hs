@@ -27,6 +27,7 @@ module Language.Haskell.Stylish
 
 --------------------------------------------------------------------------------
 import           Control.Monad                                    (foldM)
+import           Control.Monad.Except                             (ExceptT(..), liftEither, runExceptT)
 import           System.Directory                                 (doesDirectoryExist,
                                                                    doesFileExist,
                                                                    listDirectory)
@@ -35,7 +36,8 @@ import           System.FilePath                                  (takeExtension
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Config
-import           Language.Haskell.Stylish.Parse
+import           Language.Haskell.Stylish.Parse                   as Parse
+import           Language.Haskell.Stylish.ParseGHC                as ParseGHC
 import           Language.Haskell.Stylish.Step
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
@@ -90,15 +92,20 @@ unicodeSyntax = UnicodeSyntax.step
 
 
 --------------------------------------------------------------------------------
-runStep :: Extensions -> Maybe FilePath -> Lines -> Step -> Either String Lines
-runStep exts mfp ls step =
-    stepFilter step ls <$> parseModule exts mfp (unlines ls)
-
-
+runStep :: Extensions -> Maybe FilePath -> Lines -> Step -> ExceptT String IO Lines
+runStep exts mfp ls step = case step of
+  (Step _ (Left f)) -> do
+    let parsedModule = Parse.parseModule exts mfp (unlines ls)
+    liftEither $ f ls <$> parsedModule
+  (Step _ (Right f)) -> do
+    parsedModule <- ExceptT $ ParseGHC.parseModule exts mfp (unlines ls)
+    return $ f ls parsedModule
+    
 --------------------------------------------------------------------------------
 runSteps :: Extensions -> Maybe FilePath -> [Step] -> Lines
-         -> Either String Lines
-runSteps exts mfp steps ls = foldM (runStep exts mfp) ls steps
+         -> IO (Either String Lines)
+runSteps exts mfp steps ls = do
+    runExceptT $ foldM (runStep exts mfp) ls steps
 
 newtype ConfigPath = ConfigPath { unConfigPath :: FilePath }
 
@@ -108,8 +115,7 @@ newtype ConfigPath = ConfigPath { unConfigPath :: FilePath }
 format :: Maybe ConfigPath -> Maybe FilePath -> String -> IO (Either String Lines)
 format maybeConfigPath maybeFilePath contents = do
   conf <- loadConfig (makeVerbose True) (fmap unConfigPath maybeConfigPath)
-  pure $ runSteps (configLanguageExtensions conf) maybeFilePath (configSteps conf) $ lines contents
-
+  runSteps (configLanguageExtensions conf) maybeFilePath (configSteps conf) $ lines contents
 
 --------------------------------------------------------------------------------
 -- | Searches Haskell source files in any given folder recursively.

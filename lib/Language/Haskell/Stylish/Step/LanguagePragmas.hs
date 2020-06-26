@@ -106,8 +106,8 @@ filterRedundant isRedundant' = snd . foldr filterRedundant' (S.empty, [])
 
 --------------------------------------------------------------------------------
 step :: Maybe Int -> Style -> Bool -> Bool -> String -> Step
-step = ((((makeStep "LanguagePragmas" .) .) .) .) . step'
-
+step columns style align removeRedundant lngPrefix = 
+  makeStep "LanguagePragmas" . Left $ step' columns style align removeRedundant lngPrefix
 
 --------------------------------------------------------------------------------
 step' :: Maybe Int -> Style -> Bool -> Bool -> String -> Lines -> Module -> Lines
@@ -125,7 +125,6 @@ step' columns style align removeRedundant lngPrefix ls (module', _)
         [ change b (const $ prettyPragmas lngPrefix columns longest align style pg)
         | (b, pg) <- filterRedundant isRedundant' groups
         ]
-
 
 --------------------------------------------------------------------------------
 -- | Add a LANGUAGE pragma to a module if it is not present already.

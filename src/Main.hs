@@ -126,7 +126,7 @@ stylishHaskell sa = do
 file :: StylishArgs -> Config -> Maybe FilePath -> IO ()
 file sa conf mfp = do
     contents <- maybe getContents readUTF8File mfp
-    let result = runSteps (configLanguageExtensions conf)
+    result <- runSteps (configLanguageExtensions conf)
             mfp (configSteps conf) $ lines contents
     case result of
         Right ok  -> write contents $ unlines ok
