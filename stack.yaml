@@ -1,12 +1,8 @@
-resolver: lts-14.20
+resolver: lts-15.6
 packages:
 - '.'
 
 extra-deps:
-- 'Cabal-3.0.0.0'
 - 'haskell-src-exts-1.23.0'
 - 'ghc-lib-parser-8.10.1.20200523'
 - 'ghc-lib-parser-ex-8.10.0.14'
-- 'HsYAML-0.2.1.0'
-- 'HsYAML-aeson-0.2.0.0'
-
