@@ -9,10 +9,7 @@ import           Data.List                       (isPrefixOf)
 import           Data.Maybe                      (fromMaybe, listToMaybe, mapMaybe)
 import           Data.Foldable                   (foldMap)
 
-import qualified SrcLoc                          as S
 import qualified Lexer                           as L
-import qualified GHC.Hs                          as G
-import qualified GHC.Hs.Extension                as GE
 import qualified DynFlags                        as D
 
 import qualified Language.Haskell.TH.LanguageExtensions as Ext
