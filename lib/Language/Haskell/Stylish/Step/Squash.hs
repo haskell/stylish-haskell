@@ -1,18 +1,21 @@
 --------------------------------------------------------------------------------
+{-# LANGUAGE PartialTypeSignatures #-}
 module Language.Haskell.Stylish.Step.Squash
     ( step
     ) where
 
 
 --------------------------------------------------------------------------------
+import qualified CoreSyn                         as C
 import           Data.Maybe                      (mapMaybe)
-import qualified Language.Haskell.Exts           as H
 import           Debug.Trace
-import qualified SrcLoc                          as S
-import qualified GHC.Hs.Types                    as T
+import qualified GHC.Hs                          as Hs
 import qualified GHC.Hs.Binds                    as B
 import qualified GHC.Hs.Extension                as E
-import qualified CoreSyn                         as C
+import qualified GHC.Hs.Types                    as T
+import qualified Language.Haskell.Exts           as H
+import qualified Outputable
+import qualified SrcLoc                          as S
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Editor
@@ -38,6 +41,7 @@ squash'
     :: (S.HasSrcSpan l, S.HasSrcSpan r)
     => l -> r -> Maybe (Change String)
 squash' left right = do
+  traceM $ show $ S.getLoc right
   lAnn <- toRealSrcSpan $ S.getLoc left
   rAnn <- toRealSrcSpan $ S.getLoc right
   if S.srcSpanEndLine lAnn == S.srcSpanStartLine rAnn
@@ -75,8 +79,22 @@ squashMatch (H.Match _ name pats rhs _)
   | otherwise = squash (last pats) rhs
 
 
-squashMatch' :: B.HsLocalBindsLR idL idR -> Maybe (Change String)
-squashMatch' bind = undefined
+-- Utility: grab the body out of guarded RHSs if it's a single unguarded one.
+unguardedRhsBody :: Hs.GRHSs E.GhcPs a -> Maybe a
+unguardedRhsBody (Hs.GRHSs _ [grhs] _)
+    | Hs.GRHS _ [] body <- S.unLoc grhs = Just body
+unguardedRhsBody _ = Nothing
+
+
+squashMatch' :: Hs.Match E.GhcPs (Hs.LHsExpr E.GhcPs) -> Maybe (Change String)
+squashMatch' (Hs.Match _ (Hs.FunRhs name _ _) [] grhss) = do
+    body <- unguardedRhsBody grhss
+    squash' name body
+squashMatch' (Hs.Match _ _ pats grhss) = do
+    traceM "wat up"
+    body <- unguardedRhsBody grhss
+    squash' (last pats) body
+
 
 --------------------------------------------------------------------------------
 squashAlt :: H.Alt H.SrcSpan -> Maybe (Change String)
@@ -91,6 +109,7 @@ step :: Step
 step = makeStep "Squash" $ Right $ \ls (module') ->
     let fieldDecls = everything module'
         ghcchanges = trace ("fieldDecls: " ++ show (length fieldDecls)) $
-		mapMaybe squashFieldDecl' fieldDecls
+            mapMaybe squashFieldDecl' fieldDecls ++
+            mapMaybe squashMatch' (everything module')
 
     in trace ("ghc changes: " ++ show (length ghcchanges)) $ applyChanges ghcchanges ls
