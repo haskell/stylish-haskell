@@ -27,6 +27,7 @@ module Language.Haskell.Stylish
 
 --------------------------------------------------------------------------------
 import           Control.Monad                                    (foldM)
+import           Data.Function                                    ((&))
 import           System.Directory                                 (doesDirectoryExist,
                                                                    doesFileExist,
                                                                    listDirectory)
@@ -36,6 +37,7 @@ import           System.FilePath                                  (takeExtension
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Config
 import           Language.Haskell.Stylish.Parse
+import           Language.Haskell.Stylish.Printer.Module
 import           Language.Haskell.Stylish.Step
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
@@ -91,8 +93,9 @@ unicodeSyntax = UnicodeSyntax.step
 
 --------------------------------------------------------------------------------
 runStep :: Extensions -> Maybe FilePath -> Lines -> Step -> Either String Lines
-runStep exts mfp ls step =
-    stepFilter step ls <$> parseModule exts mfp (unlines ls)
+runStep exts mfp ls _step
+  = parseModule exts mfp (unlines ls)
+  & fmap (printModule defaultConfig')
 
 
 --------------------------------------------------------------------------------

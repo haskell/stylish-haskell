@@ -11,6 +11,13 @@ packages:
       sha256: 8e5bc885533431db9bf75e9609f6b80b56ab0c289a903d701f8628e78322afd0
   original:
     hackage: haskell-src-exts-1.23.0
+- completed:
+    hackage: ghc-lib-parser-8.10.1.20200324@sha256:581cfcd1ccc74ca5e6078ca99ee0ba0fba6cd3c20c55faab84f02a8de541629b,8751
+    pantry-tree:
+      size: 19497
+      sha256: dbd89e03bc6b7279916a6a172d7190e79f0d1688333836d6bb0e878a2a231765
+  original:
+    hackage: ghc-lib-parser-8.10.1.20200324
 snapshots:
 - completed:
     size: 491387

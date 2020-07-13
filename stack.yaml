@@ -4,3 +4,4 @@ packages:
 
 extra-deps:
 - 'haskell-src-exts-1.23.0'
+- 'ghc-lib-parser-8.10.1.20200324'

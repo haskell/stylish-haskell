@@ -24,7 +24,6 @@ import qualified Data.Map                        as M
 import           Data.Maybe                      (isJust, maybeToList)
 import           Data.Ord                        (comparing)
 import qualified Data.Set                        as S
-import           Data.Semigroup                  (Semigroup ((<>)))
 import qualified Language.Haskell.Exts           as H
 
 

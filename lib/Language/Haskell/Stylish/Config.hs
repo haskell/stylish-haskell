@@ -4,6 +4,10 @@
 module Language.Haskell.Stylish.Config
     ( Extensions
     , Config (..)
+    , Config' (..)
+    , defaultConfig'
+    , DeclPrinter (..)
+    , ImportsPrinter (..)
     , defaultConfigBytes
     , configFilePath
     , loadConfig
@@ -62,6 +66,23 @@ data Config = Config
     , configCabal              :: Bool
     }
 
+--------------------------------------------------------------------------------
+data Config' = Config'
+    { configDeclPrinter :: DeclPrinter
+    , configImportsPrinter :: ImportsPrinter
+    }
+
+data DeclPrinter
+  = DeclMinimizeDiffs
+
+data ImportsPrinter
+  = DeclMinimizeDiffsPostQualified
+
+defaultConfig' :: Config'
+defaultConfig' = Config'
+  { configDeclPrinter = DeclMinimizeDiffs
+  , configImportsPrinter = DeclMinimizeDiffsPostQualified
+  }
 
 --------------------------------------------------------------------------------
 instance FromJSON Config where

@@ -23,11 +23,12 @@ import           Language.Haskell.Stylish.Step
 
 --------------------------------------------------------------------------------
 testStep :: Step -> String -> String
-testStep step str = case parseModule [] Nothing str of
-    Left err      -> error err
-    Right module' -> unlines $ stepFilter step ls module'
-  where
-    ls = lines str
+testStep = undefined
+--testStep step str = case parseModule [] Nothing str of
+--    Left err      -> error err
+--    Right module' -> unlines $ stepFilter step ls module'
+--  where
+--    ls = lines str
 
 
 --------------------------------------------------------------------------------

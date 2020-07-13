@@ -29,6 +29,12 @@ Library
 
   Exposed-modules:
     Language.Haskell.Stylish
+    Language.Haskell.Stylish.Module
+    Language.Haskell.Stylish.Printer
+    Language.Haskell.Stylish.Printer.Decl
+    Language.Haskell.Stylish.Printer.Module
+    Language.Haskell.Stylish.Printer.ModuleHeader
+    Language.Haskell.Stylish.Printer.Imports
     Language.Haskell.Stylish.Step.Data
     Language.Haskell.Stylish.Step.Imports
     Language.Haskell.Stylish.Step.LanguagePragmas
@@ -61,6 +67,7 @@ Library
     filepath         >= 1.1    && < 1.5,
     file-embed       >= 0.0.10 && < 0.1,
     haskell-src-exts >= 1.18   && < 1.24,
+    ghc-lib-parser   >= 8.10   && < 8.12,
     mtl              >= 2.0    && < 2.3,
     semigroups       >= 0.18   && < 0.20,
     syb              >= 0.3    && < 0.8,
@@ -87,6 +94,7 @@ Executable stylish-haskell
     filepath         >= 1.1    && < 1.5,
     file-embed       >= 0.0.10 && < 0.1,
     haskell-src-exts >= 1.18   && < 1.24,
+    ghc-lib-parser   >= 8.10   && < 8.12,
     mtl              >= 2.0    && < 2.3,
     syb              >= 0.3    && < 0.8,
     HsYAML-aeson     >=0.2.0   && < 0.3,
@@ -107,8 +115,16 @@ Test-suite stylish-haskell-tests
     Language.Haskell.Stylish.Config.Internal
     Language.Haskell.Stylish.Config.Tests
     Language.Haskell.Stylish.Editor
+    Language.Haskell.Stylish.Module
     Language.Haskell.Stylish.Parse
     Language.Haskell.Stylish.Parse.Tests
+    Language.Haskell.Stylish.Printer
+    Language.Haskell.Stylish.Printer.Decl
+    Language.Haskell.Stylish.Printer.Module
+    Language.Haskell.Stylish.Printer.ModuleHeader
+    Language.Haskell.Stylish.Printer.Imports
+    Language.Haskell.Stylish.Printer.Imports.Tests
+    Language.Haskell.Stylish.Printer.ModuleHeader.Tests
     Language.Haskell.Stylish.Step
     Language.Haskell.Stylish.Step.Imports
     Language.Haskell.Stylish.Step.Imports.Tests
@@ -147,6 +163,7 @@ Test-suite stylish-haskell-tests
     filepath         >= 1.1    && < 1.5,
     file-embed       >= 0.0.10 && < 0.1,
     haskell-src-exts >= 1.18   && < 1.24,
+    ghc-lib-parser   >= 8.10   && < 8.12,
     mtl              >= 2.0    && < 2.3,
     syb              >= 0.3    && < 0.8,
     text             >= 1.2    && < 1.3,
