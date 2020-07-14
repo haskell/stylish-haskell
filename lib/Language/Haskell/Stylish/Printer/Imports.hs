@@ -17,15 +17,16 @@ import qualified SrcLoc                          as GHC
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Config (Config'(..), ImportsPrinter(..))
-import           Language.Haskell.Stylish.Module (Comments, Lines, Imports, rawImports)
+import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Printer
 
 --------------------------------------------------------------------------------
-printImports :: Config' -> Lines -> Comments -> Imports -> Lines
-printImports cfg@(Config' {configImportsPrinter = printer}) ls _comments imports =
+printImports :: Config' -> Lines -> Module -> Lines
+printImports cfg@(Config' {configImportsPrinter = printer}) ls m =
   if True then ls else
   runPrinter cfg importPrinter
   where
+    imports = moduleImports m
     importList = rawImports imports
 
     importPrinter = case printer of
