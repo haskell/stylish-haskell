@@ -8,12 +8,12 @@ import           Language.Haskell.Stylish.Printer.Decl (printDecls)
 import           Language.Haskell.Stylish.Printer.ModuleHeader (printModuleHeader)
 import           Language.Haskell.Stylish.Printer.Imports (printImports)
 
-printModule :: Config' -> Module -> Lines
-printModule c m =
+printModule :: Config' -> Lines -> Module -> Lines
+printModule c ls m =
   let
     comments = moduleComments m
   in
-    printModuleHeader c comments (moduleHeader m) <>
-    printImports c comments (moduleImports m) <>
-    printDecls c comments (moduleDecls m) <>
+    printModuleHeader c ls comments (moduleHeader m) <>
+    printImports c ls comments (moduleImports m) <>
+    printDecls c ls comments (moduleDecls m) <>
     []

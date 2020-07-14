@@ -21,20 +21,16 @@ import           Language.Haskell.Stylish.Module (Comments, Lines, Imports, rawI
 import           Language.Haskell.Stylish.Printer
 
 --------------------------------------------------------------------------------
-printImports :: Config' -> Comments -> Imports -> Lines
-printImports cfg@(Config' {configImportsPrinter = printer}) _comments imports =
+printImports :: Config' -> Lines -> Comments -> Imports -> Lines
+printImports cfg@(Config' {configImportsPrinter = printer}) ls _comments imports =
+  if True then ls else
   runPrinter cfg importPrinter
   where
     importList = rawImports imports
 
-    sortImports =
-      sortBy \a0 a1 ->
-        compareOutputable a0 a1 <>
-        if isQualified a0 then GT else LT
-
     importPrinter = case printer of
       DeclMinimizeDiffsPostQualified ->
-        forM_ (sortImports importList) \imp -> printPostQualified imp >> newline
+        forM_ (sortImportDecls importList) \imp -> printPostQualified imp >> newline
 
 --------------------------------------------------------------------------------
 printPostQualified :: LImportDecl GhcPs -> P ()
@@ -60,7 +56,7 @@ printPostQualified decl = do
   forM_ (snd <$> ideclHiding decl') \(GHC.L _ imports) ->
     let
       printedImports =
-        fmap (printImport . unLocated) (sortedImportList imports)
+        fmap (printImport . unLocated) (sortImportList imports)
 
       separated =
         sep (comma >> space)
@@ -80,13 +76,11 @@ printImport = \case
     putText "(..)"
   IEModuleContents _ (GHC.L _ m) ->
     putText (moduleNameString m)
-  IEThingWith _ name _wildcard imps _ ->
-    let
-      sortedImps = flip sortBy imps \(GHC.L _ a0) (GHC.L _ a1) -> compareOutputable a0 a1
-    in do
-      printIeWrappedName name
-      space
-      parenthesize $ sep (comma >> space) (fmap printIeWrappedName sortedImps)
+  IEThingWith _ name _wildcard imps _ -> do
+    printIeWrappedName name
+    space
+    parenthesize $
+      sep (comma >> space) (printIeWrappedName <$> sortBy compareOutputable imps)
   IEGroup _ _ _ ->
     error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEGroup'"
   IEDoc _ _ ->
@@ -138,33 +132,37 @@ isHiding
 unLocated :: GHC.Located a -> a
 unLocated (GHC.L _ a) = a
 
-sortedImportList :: [LIE GhcPs] -> [LIE GhcPs]
-sortedImportList =
-  let
-    unLocated' f (GHC.L _ i0) (GHC.L _ i1) = f (i0, i1)
-  in
-    sortBy $ unLocated' \case
-      (IEVar _ n0, IEVar _ n1) -> compareOutputable n0 n1
+sortImportList :: [LIE GhcPs] -> [LIE GhcPs]
+sortImportList = sortBy $ currycated \case
+  (IEVar _ n0, IEVar _ n1) -> compareOutputable n0 n1
 
-      (IEThingAbs _ n0, IEThingAbs _ n1) -> compareOutputable n0 n1
-      (IEThingAbs _ n0, IEThingAll _ n1) -> compareOutputable n0 n1
-      (IEThingAbs _ n0, IEThingWith _ n1 _ _ _) -> compareOutputable n0 n1
+  (IEThingAbs _ n0, IEThingAbs _ n1) -> compareOutputable n0 n1
+  (IEThingAbs _ n0, IEThingAll _ n1) -> compareOutputable n0 n1
+  (IEThingAbs _ n0, IEThingWith _ n1 _ _ _) -> compareOutputable n0 n1 <> LT
 
-      (IEThingAll _ n0, IEThingAll _ n1) -> compareOutputable n0 n1
-      (IEThingAll _ n0, IEThingAbs _ n1) -> compareOutputable n0 n1
-      (IEThingAll _ n0, IEThingWith _ n1 _ _ _) -> compareOutputable n0 n1
+  (IEThingAll _ n0, IEThingAll _ n1) -> compareOutputable n0 n1
+  (IEThingAll _ n0, IEThingAbs _ n1) -> compareOutputable n0 n1
+  (IEThingAll _ n0, IEThingWith _ n1 _ _ _) -> compareOutputable n0 n1 <> LT
 
-      (IEThingWith _ n0 _ _ _, IEThingWith _ n1 _ _ _) -> compareOutputable n0 n1
-      (IEThingWith _ n0 _ _ _, IEThingAll _ n1) -> compareOutputable n0 n1
-      (IEThingWith _ n0 _ _ _, IEThingAbs _ n1) -> compareOutputable n0 n1
+  (IEThingWith _ n0 _ _ _, IEThingWith _ n1 _ _ _) -> compareOutputable n0 n1
+  (IEThingWith _ n0 _ _ _, IEThingAll _ n1) -> compareOutputable n0 n1 <> GT
+  (IEThingWith _ n0 _ _ _, IEThingAbs _ n1) -> compareOutputable n0 n1 <> GT
 
-      (IEVar _ _, _) -> GT
-      (_, IEVar _ _) -> LT
-      (IEThingAbs _ _, _) -> GT
-      (_, IEThingAbs _ _) -> LT
-      (IEThingAll _ _, _) -> GT
-      (_, IEThingAll _ _) -> LT
-      (IEThingWith _ _ _ _ _, _) -> GT
-      (_, IEThingWith _ _ _ _ _) -> LT
+  (IEVar _ _, _) -> GT
+  (_, IEVar _ _) -> LT
+  (IEThingAbs _ _, _) -> GT
+  (_, IEThingAbs _ _) -> LT
+  (IEThingAll _ _, _) -> GT
+  (_, IEThingAll _ _) -> LT
+  (IEThingWith _ _ _ _ _, _) -> GT
+  (_, IEThingWith _ _ _ _ _) -> LT
 
-      _ -> EQ
+  _ -> EQ
+
+sortImportDecls :: [LImportDecl GhcPs] -> [LImportDecl GhcPs]
+sortImportDecls = sortBy $ currycated \(a0, a1) ->
+  compareOutputable (ideclName a0) (ideclName a1) <>
+  compareOutputable a0 a1
+
+currycated :: ((a, b) -> c) -> (GHC.Located a -> GHC.Located b -> c)
+currycated f = \(GHC.L _ a) (GHC.L _ b) -> f (a, b)

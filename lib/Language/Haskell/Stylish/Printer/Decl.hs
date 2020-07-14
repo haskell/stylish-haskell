@@ -10,5 +10,5 @@ import           Language.Haskell.Stylish.Config (Config'(..))
 --import           GHC.Hs                          (GhcPs)
 
 --------------------------------------------------------------------------------
-printDecls :: Config' -> Comments -> Decls -> Lines
-printDecls _ _ _ = ["printDecl: not implemented"]
+printDecls :: Config' -> Lines -> Comments -> Decls -> Lines
+printDecls _ ls _ _ = ls
