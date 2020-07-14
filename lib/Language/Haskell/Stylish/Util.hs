@@ -17,6 +17,9 @@ module Language.Haskell.Stylish.Util
     , withInit
     , withTail
     , withLast
+
+    , traceOutputtable
+    , traceOutputtableM
     ) where
 
 
@@ -28,7 +31,9 @@ import qualified Data.Generics                 as G
 import           Data.Maybe                    (fromMaybe, listToMaybe,
                                                 maybeToList)
 import           Data.Typeable                 (cast)
+import           Debug.Trace                   (trace)
 import qualified Language.Haskell.Exts         as H
+import qualified Outputable
 
 
 --------------------------------------------------------------------------------
@@ -117,7 +122,7 @@ noWrap :: String    -- ^ Leading string
        -> Lines     -- ^ Resulting lines
 noWrap leading _ind = noWrap' leading
   where
-    noWrap' ss [] = [ss]
+    noWrap' ss []         = [ss]
     noWrap' ss (str:strs) = noWrap' (ss ++ " " ++ str) strs
 
 
@@ -185,3 +190,14 @@ withInit f (x : xs) = f x : withInit f xs
 withTail :: (a -> a) -> [a] -> [a]
 withTail _ []       = []
 withTail f (x : xs) = x : map f xs
+
+
+--------------------------------------------------------------------------------
+traceOutputtable :: Outputable.Outputable a => String -> a -> b -> b
+traceOutputtable title x =
+    trace (title ++ ": " ++ (Outputable.showSDocUnsafe $ Outputable.ppr x))
+
+
+--------------------------------------------------------------------------------
+traceOutputtableM :: (Outputable.Outputable a, Monad m) => String -> a -> m ()
+traceOutputtableM title x = traceOutputtable title x $ pure ()

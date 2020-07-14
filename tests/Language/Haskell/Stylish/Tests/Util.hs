@@ -5,27 +5,33 @@ module Language.Haskell.Stylish.Tests.Util
 
 
 --------------------------------------------------------------------------------
-import           Control.Exception              (bracket, try)
-import           System.Directory               (createDirectory,
-                                                 getCurrentDirectory,
-                                                 getTemporaryDirectory,
-                                                 removeDirectoryRecursive,
-                                                 setCurrentDirectory)
-import           System.FilePath                ((</>))
-import           System.IO.Error                (isAlreadyExistsError)
-import           System.Random                  (randomIO)
+import           Control.Exception                 (bracket, try)
+import           System.Directory                  (createDirectory,
+                                                    getCurrentDirectory,
+                                                    getTemporaryDirectory,
+                                                    removeDirectoryRecursive,
+                                                    setCurrentDirectory)
+import           System.FilePath                   ((</>))
+import           System.IO.Error                   (isAlreadyExistsError)
+import           System.IO.Unsafe                  (unsafePerformIO)
+import           System.Random                     (randomIO)
 
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Parse
+import qualified Language.Haskell.Stylish.ParseGHC as ParseGHC
 import           Language.Haskell.Stylish.Step
 
 
 --------------------------------------------------------------------------------
 testStep :: Step -> String -> String
-testStep step str = case parseModule [] Nothing str of
-    Left err      -> error err
-    Right module' -> unlines $ stepFilter step ls module'
+testStep step str = case stepFilter step of
+    Left f -> case parseModule [] Nothing str of
+        Left err      -> error err
+        Right module' -> unlines $ f ls module'
+    Right f -> case unsafePerformIO (ParseGHC.parseModule mempty Nothing str) of
+        Left err      -> error err
+        Right module' -> unlines $ f ls module'
   where
     ls = lines str
 
