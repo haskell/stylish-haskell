@@ -32,7 +32,6 @@ Library
     Language.Haskell.Stylish.Module
     Language.Haskell.Stylish.Printer
     Language.Haskell.Stylish.Printer.Decl
-    Language.Haskell.Stylish.Printer.Module
     Language.Haskell.Stylish.Printer.ModuleHeader
     Language.Haskell.Stylish.Printer.Imports
     Language.Haskell.Stylish.Step.Data
@@ -120,7 +119,6 @@ Test-suite stylish-haskell-tests
     Language.Haskell.Stylish.Parse.Tests
     Language.Haskell.Stylish.Printer
     Language.Haskell.Stylish.Printer.Decl
-    Language.Haskell.Stylish.Printer.Module
     Language.Haskell.Stylish.Printer.ModuleHeader
     Language.Haskell.Stylish.Printer.Imports
     Language.Haskell.Stylish.Printer.Imports.Tests

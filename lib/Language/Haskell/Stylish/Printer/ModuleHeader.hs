@@ -27,9 +27,10 @@ import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.Block
 
-printModuleHeader :: Config' -> Lines -> Comments -> ModuleHeader -> Lines
-printModuleHeader cfg ls _ header =
+printModuleHeader :: Config' -> Lines -> Module -> Lines
+printModuleHeader cfg ls m =
   let
+    header = moduleHeader m
     name = rawModuleName header
     haddocks = rawModuleHaddocks header
     exports = rawModuleExports header

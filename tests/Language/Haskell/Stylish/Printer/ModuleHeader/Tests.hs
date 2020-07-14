@@ -158,6 +158,6 @@ assertFormatted input expected = withFrozenCallStack $ expected @=? parseAndForm
     parseAndFormat lines =
       case parseModule [] Nothing (unlines lines) of
         Right parsedModule ->
-          printModuleHeader defaultConfig' lines (moduleComments parsedModule) (moduleHeader parsedModule)
+          printModuleHeader defaultConfig' lines parsedModule
         Left err ->
           error $ "parseAndFormat: Should've been able to parse input - " <> err
