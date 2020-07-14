@@ -1,3 +1,5 @@
+{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE LambdaCase #-}
 module Language.Haskell.Stylish.Module
   ( Module
   , ModuleHeader
@@ -20,6 +22,9 @@ module Language.Haskell.Stylish.Module
   ) where
 
 --------------------------------------------------------------------------------
+import qualified ApiAnnotation                   as GHC
+import           Data.Maybe                      (mapMaybe)
+import qualified Lexer                           as GHC
 import qualified GHC.Hs                          as GHC
 import           GHC.Hs.Extension                (GhcPs)
 import           GHC.Hs.Decls                    (LHsDecl)
@@ -33,13 +38,16 @@ type Lines = [String]
 
 --------------------------------------------------------------------------------
 -- | Concrete module type
-newtype Module = Module { unModule :: GHC.Located (GHC.HsModule GhcPs) }
+data Module = Module
+  { parsedComments :: [GHC.RealLocated GHC.AnnotationComment]
+  , parsedModule :: GHC.Located (GHC.HsModule GhcPs)
+  }
 
 newtype Decls = Decls [LHsDecl GhcPs]
 
 data Imports = Imports [LImportDecl GhcPs]
 
-data Comments = Comments [GHC.Located String]
+data Comments = Comments [GHC.RealLocated GHC.AnnotationComment]
 
 data ModuleHeader = ModuleHeader
   { name :: Maybe (GHC.Located GHC.ModuleName)
@@ -47,20 +55,28 @@ data ModuleHeader = ModuleHeader
   , haddocks :: Maybe GHC.LHsDocString
   }
 
-makeModule :: GHC.Located (GHC.HsModule GHC.GhcPs) -> Module
-makeModule = Module
+makeModule :: GHC.PState -> GHC.Located (GHC.HsModule GHC.GhcPs) -> Module
+makeModule pstate = Module comments
+  where
+    comments
+      = filterRealLocated
+      $ GHC.comment_q pstate ++ (GHC.annotations_comments pstate >>= snd)
+
+    filterRealLocated = mapMaybe \case
+      GHC.L (GHC.RealSrcSpan s) e -> Just (GHC.L s e)
+      GHC.L (GHC.UnhelpfulSpan _) _ -> Nothing
 
 moduleDecls :: Module -> Decls
-moduleDecls = Decls . GHC.hsmodDecls . unLocated . unModule
+moduleDecls = Decls . GHC.hsmodDecls . unLocated . parsedModule
 
 moduleComments :: Module -> Comments
-moduleComments = undefined
+moduleComments = Comments . parsedComments
 
 moduleImports :: Module -> Imports
-moduleImports = Imports . GHC.hsmodImports . unLocated . unModule
+moduleImports = Imports . GHC.hsmodImports . unLocated . parsedModule
 
 moduleHeader :: Module -> ModuleHeader
-moduleHeader (Module (GHC.L _ m)) = ModuleHeader
+moduleHeader (Module _ (GHC.L _ m)) = ModuleHeader
   { name = GHC.hsmodName m
   , exports = GHC.hsmodExports m
   , haddocks = GHC.hsmodHaddockModHeader m
@@ -85,5 +101,5 @@ rawModuleExports = exports
 rawModuleHaddocks :: ModuleHeader -> Maybe GHC.LHsDocString
 rawModuleHaddocks = haddocks
 
-rawComments :: Comments -> [GHC.Located String]
+rawComments :: Comments -> [GHC.RealLocated GHC.AnnotationComment]
 rawComments (Comments xs) = xs

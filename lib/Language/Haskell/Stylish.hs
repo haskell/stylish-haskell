@@ -95,7 +95,7 @@ unicodeSyntax = UnicodeSyntax.step
 runStep :: Extensions -> Maybe FilePath -> Lines -> Step -> Either String Lines
 runStep exts mfp ls _step
   = parseModule exts mfp (unlines ls)
-  & fmap (printModule defaultConfig')
+  & fmap (printModule defaultConfig' ls)
 
 
 --------------------------------------------------------------------------------

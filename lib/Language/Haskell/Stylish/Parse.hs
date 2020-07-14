@@ -72,8 +72,8 @@ parseModule exts fp string =
   where
     toModule :: GHC.DynFlags -> GHC.ParseResult (GHC.Located (GHC.HsModule GHC.GhcPs)) -> Either String Module
     toModule dynFlags res = case res of
-      POk _ m ->
-        Right (makeModule m)
+      POk ps m ->
+        Right (makeModule ps m)
       PFailed failureState ->
         Left . unlines . getParserStateErrors dynFlags $ failureState
 
