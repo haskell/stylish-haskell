@@ -24,6 +24,7 @@ module Language.Haskell.Stylish.Module
 --------------------------------------------------------------------------------
 import qualified ApiAnnotation                   as GHC
 import           Data.Maybe                      (mapMaybe)
+import           Data.List                       (sort)
 import qualified Lexer                           as GHC
 import qualified GHC.Hs                          as GHC
 import           GHC.Hs.Extension                (GhcPs)
@@ -59,7 +60,8 @@ makeModule :: GHC.PState -> GHC.Located (GHC.HsModule GHC.GhcPs) -> Module
 makeModule pstate = Module comments
   where
     comments
-      = filterRealLocated
+      = sort
+      . filterRealLocated
       $ GHC.comment_q pstate ++ (GHC.annotations_comments pstate >>= snd)
 
     filterRealLocated = mapMaybe \case

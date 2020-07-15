@@ -28,6 +28,10 @@ tests = testGroup "Language.Haskell.Stylish.Printer.ModuleHeader"
   , testCase "Only reformats module header" ex4
   , testCase "Leaving pragmas in place" ex5
   , testCase "Leaving pragmas in place variant" ex6
+  , testCase "Leaving comments in place" ex7
+  , testCase "Exports all" ex8
+  , testCase "Exports module" ex9
+  , testCase "Exports symbol" ex10
   ]
 
 --------------------------------------------------------------------------------
@@ -149,6 +153,96 @@ ex6 = input `assertFormatted` output
       , "  , t2"
       , "  , t3"
       , "  ) where"
+      ]
+
+ex7 :: Assertion
+ex7 = input `assertFormatted` output
+  where
+    input =
+      [ "module Foo -- Foo"
+      , "("
+      , " -- * t1 something"
+      , "  t1,"
+      , "  t3,"
+      , " -- * t2 something"
+      , "  t2"
+      , ") where -- x"
+      , "-- y"
+      ]
+    output =
+      [ "module Foo -- Foo"
+      , "  ( -- * t1 something"
+      , "    t1"
+      , "    -- * t2 something"
+      , "  , t2"
+      , "  , t3"
+      , "  ) where -- x"
+      , "-- y"
+      ]
+
+
+ex8 :: Assertion
+ex8 = input `assertFormatted` output
+  where
+    input =
+      [ "module Foo ("
+      , " -- * t1 something"
+      , "  A(..),"
+      , "  t3,"
+      , " -- * t2 something"
+      , "  t2"
+      , ") where -- x"
+      , "-- y"
+      ]
+    output =
+      [ "module Foo"
+      , "  ( -- * t1 something"
+      , "    A (..)"
+      , "    -- * t2 something"
+      , "  , t2"
+      , "  , t3"
+      , "  ) where -- x"
+      , "-- y"
+      ]
+
+ex9 :: Assertion
+ex9 = input `assertFormatted` output
+  where
+    input =
+      [ "module Foo ("
+      , " -- * t1 something"
+      , "  module A,"
+      , "  t3,"
+      , " -- * t2 something"
+      , "  t2"
+      , ") where -- x"
+      , "-- y"
+      ]
+    output =
+      [ "module Foo"
+      , "  ( -- * t1 something"
+      , "    module A"
+      , "    -- * t2 something"
+      , "  , t2"
+      , "  , t3"
+      , "  ) where -- x"
+      , "-- y"
+      ]
+
+ex10 :: Assertion
+ex10 = input `assertFormatted` output
+  where
+    input =
+      [ "module Foo ("
+      , "  (<&>)"
+      , ") where -- x"
+      , "-- y"
+      ]
+    output =
+      [ "module Foo"
+      , "  ( (<&>)"
+      , "  ) where -- x"
+      , "-- y"
       ]
 
 --------------------------------------------------------------------------------

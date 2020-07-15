@@ -24,7 +24,8 @@ import           Language.Haskell.Stylish.Printer
 printImports :: Config' -> Lines -> Module -> Lines
 printImports cfg@(Config' {configImportsPrinter = printer}) ls m =
   if True then ls else
-  runPrinter cfg importPrinter
+  -- FIXME add comments here
+  runPrinter cfg [] importPrinter
   where
     imports = moduleImports m
     importList = rawImports imports

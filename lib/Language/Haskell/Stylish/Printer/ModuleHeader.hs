@@ -6,8 +6,11 @@ module Language.Haskell.Stylish.Printer.ModuleHeader
 
 
 --------------------------------------------------------------------------------
+import           ApiAnnotation                   (AnnotationComment(..))
 import           Control.Monad                   (forM_, join, when)
 import           Data.Foldable                   (toList)
+import           Data.Function                   ((&), on)
+import           Data.Functor                    ((<&>))
 import           Data.List                       (sortBy)
 import           Data.Maybe                      (isJust)
 import qualified GHC.Hs.Doc                      as GHC
@@ -17,6 +20,7 @@ import           GHC.Hs.ImpExp                   (IE(..))
 import qualified GHC.Hs.ImpExp                   as GHC
 import qualified Module                          as GHC
 import           SrcLoc                          (Located, GenLocated(..), SrcSpan(..))
+import           SrcLoc                          (RealLocated)
 import           SrcLoc                          (srcSpanStartLine, srcSpanEndLine)
 import           Util                            (notNull)
 
@@ -35,7 +39,25 @@ printModuleHeader cfg ls m =
     haddocks = rawModuleHaddocks header
     exports = rawModuleExports header
 
-    printedModuleHeader = runPrinter cfg (printHeader name exports haddocks)
+    relevantComments :: [RealLocated AnnotationComment]
+    relevantComments
+      = moduleComments m
+      & rawComments
+      & dropAfter exports
+      & dropBefore name
+
+    dropAfter loc xs = case loc of
+      Just (L (RealSrcSpan rloc) _) ->
+        filter (\(L x _) -> srcSpanEndLine rloc >= srcSpanStartLine x) xs
+      _ -> xs
+
+    dropBefore loc xs = case loc of
+      Just (L (RealSrcSpan rloc) _) ->
+        filter (\(L x _) -> srcSpanStartLine rloc <= srcSpanEndLine x) xs
+      _ -> xs
+
+    printedModuleHeader =
+      runPrinter cfg relevantComments (printHeader name exports haddocks)
 
     unsafeGetStart = \case
       (L (RealSrcSpan s) _) -> srcSpanStartLine s
@@ -82,47 +104,80 @@ printHeader ::
   -> Maybe GHC.LHsDocString
   -> P ()
 printHeader mname mexps _ = do
-  forM_ mname \(L _ name) -> do
+  forM_ mname \(L loc name) -> do
     putText "module"
     space
     putText (showOutputable name)
+    attachEolComment loc
 
   maybe
     (when (isJust mname) do newline >> space >> space >> putText "where")
     printExportList
     mexps
 
+attachEolComment :: SrcSpan -> P ()
+attachEolComment = \case
+  UnhelpfulSpan _ -> pure ()
+  RealSrcSpan rspan ->
+    removeLineComment (srcSpanStartLine rspan) >>= mapM_ \c -> space >> putComment c
+
+attachEolCommentEnd :: SrcSpan -> P ()
+attachEolCommentEnd = \case
+  UnhelpfulSpan _ -> pure ()
+  RealSrcSpan rspan ->
+    removeLineComment (srcSpanEndLine rspan) >>= mapM_ \c -> space >> putComment c
+
 printExportList :: Located [GHC.LIE GhcPs] -> P ()
-printExportList (L _ exports) = do
+printExportList (L srcLoc exports) = do
   newline
   indent 2 (putText "(") >> when (notNull exports) space
 
-  sep (newline >> space >> space >> comma >> space) (fmap printExports (sortBy compareOutputable exports))
+  exportsWithComments <-
+    attachComments exports <&> sortBy (compareOutputable `on` snd)
 
-  newline >> indent 2 (putText ")" >> space >> putText "where")
+  printExports exportsWithComments
+
+  putText ")" >> space >> putText "where" >> attachEolCommentEnd srcLoc
   where
     putOutputable = putText . showOutputable
 
-    printExports :: GHC.LIE GhcPs -> P ()
-    printExports (L _ export) = case export of
+    printExports :: [([AnnotationComment], GHC.LIE GhcPs)] -> P ()
+    printExports (([], export) : rest) = do
+      printExport export
+      newline
+      spaces 2
+      printExportsTail rest
+    printExports ((firstComment : comments, export) : rest) = do
+      putComment firstComment >> newline >> spaces 2
+      forM_ comments \c -> spaces 2 >> putComment c >> newline >> spaces 2
+      spaces 2
+      printExport export
+      newline
+      spaces 2
+      printExportsTail rest
+    printExports [] =
+      newline >> spaces 2
+
+    printExportsTail :: [([AnnotationComment], GHC.LIE GhcPs)] -> P ()
+    printExportsTail = mapM_ \(comments, export) -> do
+      forM_ comments \c -> spaces 2 >> putComment c >> newline >> spaces 2
+      comma >> space >> printExport export
+      newline >> spaces 2
+
+    printExport :: GHC.LIE GhcPs -> P ()
+    printExport (L _ export) = case export of
       IEVar _ name -> putOutputable name
       IEThingAbs _ name -> putOutputable name
-      IEThingAll _ _name -> do
-        undefined
-        --printIeWrappedName name
-        --space
-        --putText "(..)"
-      IEModuleContents _ (L _ _m) ->
-        undefined
-        --putText (moduleNameString m)
+      IEThingAll _ name -> do
+        putOutputable name
+        space
+        putText "(..)"
+      IEModuleContents _ (L _ m) -> do
+        putText "module"
+        space
+        putText (showOutputable m)
       IEThingWith _ _name _wildcard _imps _ ->
-        undefined
-        --let
-        --  sortedImps = flip sortBy imps \(GHC.L _ a0) (GHC.L _ a1) -> compareOutputable a0 a1
-        --in do
-        --  printIeWrappedName name
-        --  space
-        --  parenthesize $ sep (comma >> space) (fmap printIeWrappedName sortedImps)
+        error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEThingWith'"
       IEGroup _ _ _ ->
         error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEGroup'"
       IEDoc _ _ ->
@@ -131,3 +186,10 @@ printExportList (L _ exports) = do
         error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEDocNamed'"
       XIE ext ->
         GHC.noExtCon ext
+
+attachComments :: [GHC.LIE GhcPs] -> P [([AnnotationComment], GHC.LIE GhcPs)]
+attachComments (L (RealSrcSpan rloc) x : xs) = do
+  comments <- removeCommentTo (srcSpanStartLine rloc)
+  rest <- attachComments xs
+  pure $ (comments, L (RealSrcSpan rloc) x) : rest
+attachComments _ = pure []
