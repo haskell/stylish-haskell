@@ -96,6 +96,7 @@ unicodeSyntax = UnicodeSyntax.step
 runStep :: Extensions -> Maybe FilePath -> Lines -> Step -> Either String Lines
 runStep exts mfp ls _step
   = parseModule exts mfp (unlines ls)
+  --stepFilter step ls <$> parseModule exts mfp (unlines ls)
   & fmap printSteps
   where
     printSteps m =
@@ -105,7 +106,14 @@ runStep exts mfp ls _step
 --------------------------------------------------------------------------------
 runSteps :: Extensions -> Maybe FilePath -> [Step] -> Lines
          -> Either String Lines
-runSteps exts mfp steps ls = foldM (runStep exts mfp) ls steps
+runSteps exts mfp steps ls =
+  if False then foldM (runStep exts mfp) ls steps
+  else
+    parseModule exts mfp (unlines ls)
+      & fmap printSteps
+  where
+    printSteps m =
+      printImports defaultConfig' (printModuleHeader defaultConfig' ls m) m
 
 newtype ConfigPath = ConfigPath { unConfigPath :: FilePath }
 
