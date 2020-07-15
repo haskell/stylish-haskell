@@ -27,6 +27,7 @@ module Language.Haskell.Stylish.Printer
   , spaces
   , suffix
   , indent
+  , peekNextCommentPos
   , removeLineComment
   , removeCommentTo
     -- ** Outputable helpers
@@ -41,12 +42,13 @@ import           Language.Haskell.Stylish.Parse (baseDynFlags)
 --------------------------------------------------------------------------------
 import           ApiAnnotation                   (AnnotationComment(..))
 import           SrcLoc                          (GenLocated(..), RealLocated)
-import           SrcLoc                          (srcSpanStartLine)
+import           SrcLoc                          (SrcSpan(..), srcSpanStartLine)
 import           Control.Monad                   (forM_, replicateM, replicateM_)
 import           Control.Monad.Reader            (MonadReader, ReaderT(..))
 import           Control.Monad.State             (MonadState, State)
 import           Control.Monad.State             (execState, gets, modify)
 import           Data.Foldable                   (find)
+import           Data.Functor                    ((<&>))
 import           Data.List                       (delete)
 import           GHC.Generics                    (Generic)
 import qualified Outputable                      as GHC
@@ -157,3 +159,9 @@ removeComment p = do
 
   modify \s -> s { pendingComments = newPendingComments }
   pure $ fmap (\(L _ c) -> c) foundComment
+
+peekNextCommentPos :: P (Maybe SrcSpan)
+peekNextCommentPos = do
+  gets pendingComments <&> \case
+    (L next _ : _) -> Just (RealSrcSpan next)
+    [] -> Nothing

@@ -32,6 +32,7 @@ tests = testGroup "Language.Haskell.Stylish.Printer.ModuleHeader"
   , testCase "Exports all" ex8
   , testCase "Exports module" ex9
   , testCase "Exports symbol" ex10
+  , testCase "Respects groups" ex11
   ]
 
 --------------------------------------------------------------------------------
@@ -162,8 +163,8 @@ ex7 = input `assertFormatted` output
       [ "module Foo -- Foo"
       , "("
       , " -- * t1 something"
-      , "  t1,"
       , "  t3,"
+      , "  t1,"
       , " -- * t2 something"
       , "  t2"
       , ") where -- x"
@@ -173,9 +174,9 @@ ex7 = input `assertFormatted` output
       [ "module Foo -- Foo"
       , "  ( -- * t1 something"
       , "    t1"
+      , "  , t3"
       , "    -- * t2 something"
       , "  , t2"
-      , "  , t3"
       , "  ) where -- x"
       , "-- y"
       ]
@@ -187,10 +188,11 @@ ex8 = input `assertFormatted` output
     input =
       [ "module Foo ("
       , " -- * t1 something"
-      , "  A(..),"
       , "  t3,"
+      , "  A(..),"
       , " -- * t2 something"
-      , "  t2"
+      , "  t2,"
+      , "  t1"
       , ") where -- x"
       , "-- y"
       ]
@@ -198,9 +200,10 @@ ex8 = input `assertFormatted` output
       [ "module Foo"
       , "  ( -- * t1 something"
       , "    A (..)"
-      , "    -- * t2 something"
-      , "  , t2"
       , "  , t3"
+      , "    -- * t2 something"
+      , "  , t1"
+      , "  , t2"
       , "  ) where -- x"
       , "-- y"
       ]
@@ -222,9 +225,9 @@ ex9 = input `assertFormatted` output
       [ "module Foo"
       , "  ( -- * t1 something"
       , "    module A"
+      , "  , t3"
       , "    -- * t2 something"
       , "  , t2"
-      , "  , t3"
       , "  ) where -- x"
       , "-- y"
       ]
@@ -243,6 +246,30 @@ ex10 = input `assertFormatted` output
       , "  ( (<&>)"
       , "  ) where -- x"
       , "-- y"
+      ]
+
+ex11 :: Assertion
+ex11 = input `assertFormatted` output
+  where
+    input =
+      [ "module Foo ("
+      , "  -- group 1"
+      , " g1_1,"
+      , " g1_0,"
+      , "  -- group 2"
+      , " g0_1,"
+      , " g0_0"
+      , ") where"
+      ]
+    output =
+      [ "module Foo"
+      , "  ( -- group 1"
+      , "    g1_0"
+      , "  , g1_1"
+      , "    -- group 2"
+      , "  , g0_0"
+      , "  , g0_1"
+      , "  ) where"
       ]
 
 --------------------------------------------------------------------------------
