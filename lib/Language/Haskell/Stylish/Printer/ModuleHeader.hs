@@ -176,14 +176,21 @@ printExportList (L srcLoc exports) = do
         putText "module"
         space
         putText (showOutputable m)
-      IEThingWith _ _name _wildcard _imps _ ->
-        error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEThingWith'"
+      IEThingWith _ name _wildcard imps _ -> do
+        putOutputable name
+        space
+        putText "("
+        sep (comma >> space) (fmap putOutputable (sortBy compareOutputable imps))
+        putText ")"
       IEGroup _ _ _ ->
-        error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEGroup'"
+        error $
+          "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEGroup'" <> showOutputable export
       IEDoc _ _ ->
-        error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEDoc'"
+        error $
+          "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEDoc'" <> showOutputable export
       IEDocNamed _ _ ->
-        error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEDocNamed'"
+        error $
+          "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEDocNamed'" <> showOutputable export
       XIE ext ->
         GHC.noExtCon ext
 
