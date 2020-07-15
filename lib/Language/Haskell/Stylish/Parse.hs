@@ -75,7 +75,10 @@ parseModule exts fp string =
       POk ps m ->
         Right (makeModule ps m)
       PFailed failureState ->
-        Left . unlines . getParserStateErrors dynFlags $ failureState
+        let
+          withFileName x = maybe "" (<> ": ") fp <> x
+        in
+        Left . withFileName . unlines . getParserStateErrors dynFlags $ failureState
 
     removeCpp dynFlags s =
       if GHC.xopt GHC.Cpp dynFlags then unCpp s
