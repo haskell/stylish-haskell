@@ -6,13 +6,13 @@ module Language.Haskell.Stylish.Printer.ModuleHeader
 
 
 --------------------------------------------------------------------------------
-import           ApiAnnotation                   (AnnotationComment(..))
+import           ApiAnnotation                   (AnnotationComment(..), AnnKeywordId(..))
 import           Control.Monad                   (forM_, join, when)
-import           Data.Foldable                   (toList)
+import           Data.Foldable                   (find, toList)
 import           Data.Function                   ((&))
 import           Data.Functor                    ((<&>))
-import           Data.List                       (sortBy)
-import           Data.Maybe                      (isJust)
+import           Data.List                       (sort, sortBy)
+import           Data.Maybe                      (listToMaybe, isJust)
 import qualified GHC.Hs.Doc                      as GHC
 import           GHC.Hs.Extension                (GhcPs)
 import qualified GHC.Hs.Extension                as GHC
@@ -38,6 +38,7 @@ printModuleHeader cfg ls m =
     name = rawModuleName header
     haddocks = rawModuleHaddocks header
     exports = rawModuleExports header
+    annotations = rawModuleAnnotations m
 
     relevantComments :: [RealLocated AnnotationComment]
     relevantComments
@@ -82,12 +83,37 @@ printModuleHeader cfg ls m =
     exportsBlock =
       join $ adjustOffsetFrom <$> nameBlock <*> getBlock exports
 
+    whereM :: Maybe SrcSpan
+    whereM
+      = annotations
+      & filter (\(((_, w), _)) -> w == AnnWhere)
+      & fmap (head . snd) -- get position of annot
+      & sort
+      & listToMaybe
+
+    isModuleHeaderWhere :: Block a -> Bool
+    isModuleHeaderWhere w
+      = not
+      . overlapping
+      $ [w] <> toList nameBlock <> toList exportsBlock
+
+    toLineBlock :: SrcSpan -> Block a
+    toLineBlock (RealSrcSpan s) = Block (srcSpanStartLine s) (srcSpanEndLine s)
+    toLineBlock s
+      = error
+      $ "'where' block was not a RealSrcSpan" <> show s
+
+    whereBlock
+      = whereM
+      & fmap toLineBlock
+      & find isModuleHeaderWhere
+
     mergeAdjacent (a : b : rest) | a `adjacent` b = merge a b : mergeAdjacent rest
     mergeAdjacent (a : rest) = a : mergeAdjacent rest
     mergeAdjacent [] = []
 
     deletes =
-      fmap delete $ mergeAdjacent $ toList nameBlock <> toList exportsBlock
+      fmap delete $ mergeAdjacent $ toList nameBlock <> toList exportsBlock <> toList whereBlock
 
     startLine =
       maybe 1 blockStart nameBlock

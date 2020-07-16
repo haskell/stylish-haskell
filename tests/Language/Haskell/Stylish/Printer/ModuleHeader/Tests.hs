@@ -33,6 +33,7 @@ tests = testGroup "Language.Haskell.Stylish.Printer.ModuleHeader"
   , testCase "Exports module" ex9
   , testCase "Exports symbol" ex10
   , testCase "Respects groups" ex11
+  , testCase "'where' not repeated in case it isn't part of exports" ex12
   ]
 
 --------------------------------------------------------------------------------
@@ -270,6 +271,20 @@ ex11 = input `assertFormatted` output
       , "  , g0_0"
       , "  , g0_1"
       , "  ) where"
+      ]
+
+ex12 :: Assertion
+ex12 = input `assertFormatted` output
+  where
+    input =
+      [ "module Foo"
+      , "  where"
+      , "-- hmm"
+      ]
+    output =
+      [ "module Foo"
+      , "  where"
+      , "-- hmm"
       ]
 
 --------------------------------------------------------------------------------

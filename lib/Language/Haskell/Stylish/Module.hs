@@ -16,9 +16,10 @@ module Language.Haskell.Stylish.Module
     -- * Internal API getters
   , rawComments
   , rawImports
-  , rawModuleName
+  , rawModuleAnnotations
   , rawModuleExports
   , rawModuleHaddocks
+  , rawModuleName
   ) where
 
 --------------------------------------------------------------------------------
@@ -41,6 +42,7 @@ type Lines = [String]
 -- | Concrete module type
 data Module = Module
   { parsedComments :: [GHC.RealLocated GHC.AnnotationComment]
+  , parsedAnnotations :: [(GHC.ApiAnnKey, [GHC.SrcSpan])]
   , parsedModule :: GHC.Located (GHC.HsModule GhcPs)
   }
 
@@ -57,7 +59,7 @@ data ModuleHeader = ModuleHeader
   }
 
 makeModule :: GHC.PState -> GHC.Located (GHC.HsModule GHC.GhcPs) -> Module
-makeModule pstate = Module comments
+makeModule pstate = Module comments annotations
   where
     comments
       = sort
@@ -67,6 +69,8 @@ makeModule pstate = Module comments
     filterRealLocated = mapMaybe \case
       GHC.L (GHC.RealSrcSpan s) e -> Just (GHC.L s e)
       GHC.L (GHC.UnhelpfulSpan _) _ -> Nothing
+
+    annotations = GHC.annotations pstate
 
 moduleDecls :: Module -> Decls
 moduleDecls = Decls . GHC.hsmodDecls . unLocated . parsedModule
@@ -78,7 +82,7 @@ moduleImports :: Module -> Imports
 moduleImports = Imports . GHC.hsmodImports . unLocated . parsedModule
 
 moduleHeader :: Module -> ModuleHeader
-moduleHeader (Module _ (GHC.L _ m)) = ModuleHeader
+moduleHeader (Module _ _ (GHC.L _ m)) = ModuleHeader
   { name = GHC.hsmodName m
   , exports = GHC.hsmodExports m
   , haddocks = GHC.hsmodHaddockModHeader m
@@ -105,3 +109,6 @@ rawModuleHaddocks = haddocks
 
 rawComments :: Comments -> [GHC.RealLocated GHC.AnnotationComment]
 rawComments (Comments xs) = xs
+
+rawModuleAnnotations :: Module -> [(GHC.ApiAnnKey, [GHC.SrcSpan])]
+rawModuleAnnotations = parsedAnnotations
