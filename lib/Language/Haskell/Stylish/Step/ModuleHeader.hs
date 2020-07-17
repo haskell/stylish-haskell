@@ -30,6 +30,7 @@ import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
+import           Language.Haskell.Stylish.Util (getStartLineUnsafe, getEndLineUnsafe)
 
 
 data Config = Config
@@ -66,16 +67,8 @@ printModuleHeader _ ls m =
     printedModuleHeader =
       runPrinter PrinterConfig relevantComments (printHeader name exports haddocks)
 
-    unsafeGetStart = \case
-      (L (RealSrcSpan s) _) -> srcSpanStartLine s
-      _ -> error "could not get start line of block"
-
-    unsafeGetEnd = \case
-      (L (RealSrcSpan s) _) -> srcSpanEndLine s
-      _ -> error "could not get end line of block"
-
     getBlock loc =
-      Block <$> fmap unsafeGetStart loc <*> fmap unsafeGetEnd loc
+      Block <$> fmap getStartLineUnsafe loc <*> fmap getEndLineUnsafe loc
 
     adjustOffsetFrom :: Block a -> Block a -> Maybe (Block a)
     adjustOffsetFrom (Block s0 _) b2@(Block s1 e1)
@@ -113,10 +106,6 @@ printModuleHeader _ ls m =
       = whereM
       & fmap toLineBlock
       & find isModuleHeaderWhere
-
-    mergeAdjacent (a : b : rest) | a `adjacent` b = merge a b : mergeAdjacent rest
-    mergeAdjacent (a : rest) = a : mergeAdjacent rest
-    mergeAdjacent [] = []
 
     deletes =
       fmap delete $ mergeAdjacent $ toList nameBlock <> toList exportsBlock <> toList whereBlock

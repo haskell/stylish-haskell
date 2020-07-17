@@ -28,6 +28,7 @@ tests = testGroup "Language.Haskell.Stylish.Printer.Imports"
   , testCase "Import constructor all" ex4
   , testCase "Import constructor specific" ex5
   , testCase "Import constructor specific sorted" ex6
+  , testCase "Imports step does not change rest of file" ex7
   ]
 
 --------------------------------------------------------------------------------
@@ -125,6 +126,34 @@ ex6 = input `assertFormatted` output
       ]
     output =
       [ "import A (X, Y, Z (X, Y, Z))"
+      ]
+
+ex7 :: Assertion
+ex7 = input `assertFormatted` output
+  where
+    input =
+      [ "module Foo (tests) where"
+      , "import B"
+      , "import A (X, Z, Y)"
+      , "import C"
+      , "import qualified A as A0 (b, Y, a)"
+      , "import D qualified as D0 (Y, b, a)"
+      , "import E qualified as E0 (b, a, Y)"
+      , "-- hello"
+      , "foo :: Int"
+      , "foo = 1"
+      ]
+    output =
+      [ "module Foo (tests) where"
+      , "import A (X, Y, Z)"
+      , "import A qualified as A0 (Y, a, b)"
+      , "import B"
+      , "import C"
+      , "import D qualified as D0 (Y, a, b)"
+      , "import E qualified as E0 (Y, a, b)"
+      , "-- hello"
+      , "foo :: Int"
+      , "foo = 1"
       ]
 
 --------------------------------------------------------------------------------

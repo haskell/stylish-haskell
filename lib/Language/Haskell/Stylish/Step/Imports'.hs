@@ -8,18 +8,24 @@ module Language.Haskell.Stylish.Step.Imports'
 --------------------------------------------------------------------------------
 import           Control.Monad                   (forM_, when)
 import           Data.Function                   ((&))
+import           Data.Foldable                   (toList)
+import           Data.Maybe                      (listToMaybe)
 import           Data.List                       (sortBy)
 import           GHC.Hs.Extension                (GhcPs)
 import qualified GHC.Hs.Extension                as GHC
 import           GHC.Hs.ImpExp
 import           Module                          (ModuleName, moduleNameString)
 import           RdrName
-import qualified SrcLoc                          as GHC
+import           Util                            (lastMaybe)
+import           SrcLoc                          (Located, GenLocated(..))
 
 --------------------------------------------------------------------------------
+import           Language.Haskell.Stylish.Block
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
+import           Language.Haskell.Stylish.Editor
+import           Language.Haskell.Stylish.Util (getStartLineUnsafe, getEndLineUnsafe)
 
 data Config = Config
 
@@ -27,15 +33,35 @@ step :: Config -> Step
 step = makeStep "Imports" . printImports
 
 --------------------------------------------------------------------------------
-printImports :: cfg -> Lines -> Module -> Lines
+printImports :: Config -> Lines -> Module -> Lines
 printImports _ ls m =
-  if True then ls else
-  -- FIXME add comments here
-  runPrinter PrinterConfig [] do
-    forM_ (sortImportDecls importList) \imp -> printPostQualified imp >> newline
-  where
-    imports = moduleImports m
-    importList = rawImports imports
+  let
+    imports =
+      rawImports (moduleImports m)
+
+    importsBlock = Block
+      <$> importStart
+      <*> importEnd
+
+    importStart
+      = listToMaybe imports
+      & fmap getStartLineUnsafe
+
+    importEnd
+      = lastMaybe imports
+      & fmap getEndLineUnsafe
+
+    printedImports = runPrinter PrinterConfig [] do
+      forM_ (sortImportDecls imports) \imp -> printPostQualified imp >> newline
+  in
+    case importStart of
+      Just start ->
+        let
+          deletes = fmap delete $ toList importsBlock
+          additions = [insert start printedImports]
+        in
+          applyChanges (deletes <> additions) ls
+      Nothing -> ls
 
 --------------------------------------------------------------------------------
 printPostQualified :: LImportDecl GhcPs -> P ()
@@ -53,12 +79,12 @@ printPostQualified decl = do
 
   when (isQualified decl) (space >> putText "qualified")
 
-  forM_ (ideclAs decl') \(GHC.L _ name) ->
+  forM_ (ideclAs decl') \(L _ name) ->
     space >> putText "as" >> space >> putText (moduleNameString name)
 
   when (isHiding decl') (space >> putText "hiding" >> space)
 
-  forM_ (snd <$> ideclHiding decl') \(GHC.L _ imports) ->
+  forM_ (snd <$> ideclHiding decl') \(L _ imports) ->
     let
       printedImports =
         fmap (printImport . unLocated) (sortImportList imports)
@@ -79,7 +105,7 @@ printImport = \case
     printIeWrappedName name
     space
     putText "(..)"
-  IEModuleContents _ (GHC.L _ m) ->
+  IEModuleContents _ (L _ m) ->
     putText (moduleNameString m)
   IEThingWith _ name _wildcard imps _ -> do
     printIeWrappedName name
@@ -102,8 +128,8 @@ printIeWrappedName lie = unLocated lie & \case
   IEPattern n -> putText "pattern" >> space >> printRdrName n
   IEType n -> putText "type" >> space >> printRdrName n
 
-printRdrName :: GHC.Located RdrName -> P ()
-printRdrName (GHC.L _ n) = case n of
+printRdrName :: Located RdrName -> P ()
+printRdrName (L _ n) = case n of
   Unqual name ->
     putText (showOutputable name)
   Qual modulePrefix name ->
@@ -134,8 +160,8 @@ isHiding
   = maybe False fst
   . ideclHiding
 
-unLocated :: GHC.Located a -> a
-unLocated (GHC.L _ a) = a
+unLocated :: Located a -> a
+unLocated (L _ a) = a
 
 sortImportList :: [LIE GhcPs] -> [LIE GhcPs]
 sortImportList = sortBy $ currycated \case
@@ -169,5 +195,5 @@ sortImportDecls = sortBy $ currycated \(a0, a1) ->
   compareOutputable (ideclName a0) (ideclName a1) <>
   compareOutputable a0 a1
 
-currycated :: ((a, b) -> c) -> (GHC.Located a -> GHC.Located b -> c)
-currycated f = \(GHC.L _ a) (GHC.L _ b) -> f (a, b)
+currycated :: ((a, b) -> c) -> (Located a -> Located b -> c)
+currycated f = \(L _ a) (L _ b) -> f (a, b)

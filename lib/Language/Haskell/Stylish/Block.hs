@@ -9,6 +9,7 @@ module Language.Haskell.Stylish.Block
     , moveBlock
     , adjacent
     , merge
+    , mergeAdjacent
     , overlapping
     , groupAdjacent
     ) where
@@ -94,3 +95,9 @@ groupAdjacent = foldr go []
     go (b1, x) gs = case break (adjacent b1 . fst) gs of
         (_, [])               -> (b1, [x]) : gs
         (ys, ((b2, xs) : zs)) -> (merge b1 b2, x : xs) : (ys ++ zs)
+
+mergeAdjacent :: [Block a] -> [Block a]
+mergeAdjacent (a : b : rest) | a `adjacent` b = merge a b : mergeAdjacent rest
+mergeAdjacent (a : rest) = a : mergeAdjacent rest
+mergeAdjacent [] = []
+
