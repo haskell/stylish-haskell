@@ -155,9 +155,18 @@ catalog = M.fromList $
     , ("unicode_syntax",      parseUnicodeSyntax)
     ]
   else
-    [ ("module_header", parseModuleHeader)
-    , ("imports",       parseImports')
+    -- Done:
+    [ ("imports",       parseImports')
+    , ("module_header", parseModuleHeader)
+    , ("tabs",          parseTabs)
+    , ("trailing_whitespace", parseTrailingWhitespace)
     ]
+    -- To be ported:
+    --   * data (records)
+    --   * language_pragmas
+    --   * simple_align
+    --   * squash
+    --   * unicode_syntax
 
 
 --------------------------------------------------------------------------------
