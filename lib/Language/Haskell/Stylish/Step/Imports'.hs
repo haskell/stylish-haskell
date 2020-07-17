@@ -11,6 +11,8 @@ import           Data.Function                   ((&))
 import           Data.Foldable                   (toList)
 import           Data.Maybe                      (listToMaybe)
 import           Data.List                       (sortBy)
+import           Data.List.NonEmpty              (NonEmpty)
+import qualified Data.List.NonEmpty              as NonEmpty
 import           GHC.Hs.Extension                (GhcPs)
 import qualified GHC.Hs.Extension                as GHC
 import           GHC.Hs.ImpExp
@@ -39,6 +41,12 @@ printImports _ ls m =
     imports =
       rawImports (moduleImports m)
 
+    relevantComments
+       = moduleComments m
+       & rawComments
+       & dropAfterLocated (lastMaybe imports)
+       & dropBeforeLocated (listToMaybe imports)
+
     importsBlock = Block
       <$> importStart
       <*> importEnd
@@ -51,8 +59,11 @@ printImports _ ls m =
       = lastMaybe imports
       & fmap getEndLineUnsafe
 
-    printedImports = runPrinter PrinterConfig [] do
-      forM_ (sortImportDecls imports) \imp -> printPostQualified imp >> newline
+    printedImports = runPrinter PrinterConfig relevantComments do
+      importsWithComments <- sortedAttachedComments imports
+      forM_ (fmap (fmap sortImportDecls) importsWithComments) \(comments, importGroup) -> do
+        forM_ comments \c -> putComment c >> newline
+        forM_ importGroup \imp -> printPostQualified imp >> newline
   in
     case importStart of
       Just start ->
@@ -190,8 +201,8 @@ sortImportList = sortBy $ currycated \case
 
   _ -> EQ
 
-sortImportDecls :: [LImportDecl GhcPs] -> [LImportDecl GhcPs]
-sortImportDecls = sortBy $ currycated \(a0, a1) ->
+sortImportDecls :: NonEmpty (LImportDecl GhcPs) -> NonEmpty (LImportDecl GhcPs)
+sortImportDecls = NonEmpty.sortBy $ currycated \(a0, a1) ->
   compareOutputable (ideclName a0) (ideclName a1) <>
   compareOutputable a0 a1
 

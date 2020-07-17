@@ -51,18 +51,8 @@ printModuleHeader _ ls m =
     relevantComments
       = moduleComments m
       & rawComments
-      & dropAfter exports
-      & dropBefore name
-
-    dropAfter loc xs = case loc of
-      Just (L (RealSrcSpan rloc) _) ->
-        filter (\(L x _) -> srcSpanEndLine rloc >= srcSpanStartLine x) xs
-      _ -> xs
-
-    dropBefore loc xs = case loc of
-      Just (L (RealSrcSpan rloc) _) ->
-        filter (\(L x _) -> srcSpanStartLine rloc <= srcSpanEndLine x) xs
-      _ -> xs
+      & dropAfterLocated exports
+      & dropBeforeLocated name
 
     printedModuleHeader =
       runPrinter PrinterConfig relevantComments (printHeader name exports haddocks)

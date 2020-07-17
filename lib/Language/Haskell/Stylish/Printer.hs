@@ -32,6 +32,11 @@ module Language.Haskell.Stylish.Printer
   , removeLineComment
   , removeCommentTo
   , sortedAttachedComments
+
+    -- ** Helpers
+  , dropAfterLocated
+  , dropBeforeLocated
+
     -- ** Outputable helpers
   , showOutputable
   , compareOutputable
@@ -43,8 +48,8 @@ import           Language.Haskell.Stylish.Parse  (baseDynFlags)
 --------------------------------------------------------------------------------
 import           ApiAnnotation                   (AnnotationComment(..))
 import           SrcLoc                          (GenLocated(..), RealLocated)
-import           SrcLoc                          (Located)
-import           SrcLoc                          (SrcSpan(..), srcSpanStartLine)
+import           SrcLoc                          (Located, SrcSpan(..))
+import           SrcLoc                          (srcSpanStartLine, srcSpanEndLine)
 import           Control.Monad                   (forM_, replicateM, replicateM_)
 import           Control.Monad.Reader            (MonadReader, ReaderT(..))
 import           Control.Monad.State             (MonadState, State)
@@ -192,4 +197,17 @@ sortedAttachedComments origs = go origs <&> fmap sortGroup
 
       restGroups <- go (restOf nextGroupStartM)
       pure $ (comments, L (RealSrcSpan rloc) x :| sameGroupOf nextGroupStartM) : restGroups
-    go _  = pure []
+
+    go _ = pure []
+
+dropAfterLocated :: Maybe (Located a) -> [RealLocated b] -> [RealLocated b]
+dropAfterLocated loc xs = case loc of
+  Just (L (RealSrcSpan rloc) _) ->
+    filter (\(L x _) -> srcSpanEndLine rloc >= srcSpanStartLine x) xs
+  _ -> xs
+
+dropBeforeLocated :: Maybe (Located a) -> [RealLocated b] -> [RealLocated b]
+dropBeforeLocated loc xs = case loc of
+  Just (L (RealSrcSpan rloc) _) ->
+    filter (\(L x _) -> srcSpanStartLine rloc <= srcSpanEndLine x) xs
+  _ -> xs
