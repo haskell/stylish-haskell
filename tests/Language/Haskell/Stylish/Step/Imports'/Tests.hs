@@ -1,19 +1,20 @@
-module Language.Haskell.Stylish.Printer.Imports.Tests
+module Language.Haskell.Stylish.Step.Imports'.Tests
   ( tests
   ) where
 
 --------------------------------------------------------------------------------
-import Test.Framework                 (Test, testGroup)
-import Test.Framework.Providers.HUnit (testCase)
-import Test.HUnit                     (Assertion, (@=?))
-import GHC.Stack                      (HasCallStack, withFrozenCallStack)
-import Prelude hiding                 (lines)
+import           Test.Framework                         (Test, testGroup)
+import           Test.Framework.Providers.HUnit         (testCase)
+import           Test.HUnit                             (Assertion, (@=?))
+import           GHC.Stack                              (HasCallStack, withFrozenCallStack)
+import           Prelude                                hiding (lines)
 
 
 --------------------------------------------------------------------------------
-import Language.Haskell.Stylish.Module
-import Language.Haskell.Stylish.Parse (parseModule)
-import Language.Haskell.Stylish.Printer.Imports (printImports)
+import           Language.Haskell.Stylish.Module
+import           Language.Haskell.Stylish.Step.Imports' (step)
+import           Language.Haskell.Stylish.Tests.Util    (testStep')
+import qualified Language.Haskell.Stylish.Step.Imports' as Imports
 
 
 
@@ -128,11 +129,4 @@ ex6 = input `assertFormatted` output
 
 --------------------------------------------------------------------------------
 assertFormatted :: HasCallStack => Lines -> Lines -> Assertion
-assertFormatted input expected = withFrozenCallStack $ expected @=? parseAndFormat input
-  where
-    parseAndFormat lines =
-      case parseModule [] Nothing (unlines lines) of
-        Right parsedModule ->
-          printImports True lines parsedModule
-        Left err ->
-          error $ "parseAndFormat: Should've been able to parse input - " <> err
+assertFormatted input expected = withFrozenCallStack $ expected @=? testStep' (step Imports.Config) input

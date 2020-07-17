@@ -3,16 +3,16 @@ module Language.Haskell.Stylish.Step.ModuleHeader.Tests
   ) where
 
 --------------------------------------------------------------------------------
-import Test.Framework                                       (Test, testGroup)
-import Test.Framework.Providers.HUnit                       (testCase)
-import Test.HUnit                                           (Assertion, (@=?))
-import GHC.Stack                                            (HasCallStack, withFrozenCallStack)
-import Prelude                                              hiding (lines)
+import           Test.Framework                             (Test, testGroup)
+import           Test.Framework.Providers.HUnit             (testCase)
+import           Test.HUnit                                 (Assertion, (@=?))
+import           GHC.Stack                                  (HasCallStack, withFrozenCallStack)
+import           Prelude                                    hiding (lines)
 
 --------------------------------------------------------------------------------
-import Language.Haskell.Stylish.Module
-import Language.Haskell.Stylish.Tests.Util                  (testStep')
-import Language.Haskell.Stylish.Step.ModuleHeader           (step)
+import           Language.Haskell.Stylish.Module
+import           Language.Haskell.Stylish.Tests.Util        (testStep')
+import           Language.Haskell.Stylish.Step.ModuleHeader (step)
 import qualified Language.Haskell.Stylish.Step.ModuleHeader as ModuleHeader
 
 

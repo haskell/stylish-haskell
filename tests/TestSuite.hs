@@ -21,7 +21,7 @@ import qualified Language.Haskell.Stylish.Step.Tabs.Tests
 import qualified Language.Haskell.Stylish.Step.TrailingWhitespace.Tests
 import qualified Language.Haskell.Stylish.Step.UnicodeSyntax.Tests
 import qualified Language.Haskell.Stylish.Tests
-import qualified Language.Haskell.Stylish.Printer.Imports.Tests
+import qualified Language.Haskell.Stylish.Step.Imports'.Tests
 
 
 --------------------------------------------------------------------------------
@@ -30,14 +30,14 @@ main = defaultMain
     [ Language.Haskell.Stylish.Parse.Tests.tests
     , Language.Haskell.Stylish.Config.Tests.tests
     , Language.Haskell.Stylish.Step.Data.Tests.tests
+    , Language.Haskell.Stylish.Step.Imports'.Tests.tests
     , Language.Haskell.Stylish.Step.Imports.Tests.tests
-    , Language.Haskell.Stylish.Step.ModuleHeader.Tests.tests
     , Language.Haskell.Stylish.Step.LanguagePragmas.Tests.tests
+    , Language.Haskell.Stylish.Step.ModuleHeader.Tests.tests
     , Language.Haskell.Stylish.Step.SimpleAlign.Tests.tests
     , Language.Haskell.Stylish.Step.Squash.Tests.tests
     , Language.Haskell.Stylish.Step.Tabs.Tests.tests
     , Language.Haskell.Stylish.Step.TrailingWhitespace.Tests.tests
     , Language.Haskell.Stylish.Step.UnicodeSyntax.Tests.tests
     , Language.Haskell.Stylish.Tests.tests
-    , Language.Haskell.Stylish.Printer.Imports.Tests.tests
     ]
