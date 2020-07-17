@@ -10,8 +10,8 @@ import           ApiAnnotation                   (AnnotationComment(..), AnnKeyw
 import           Control.Monad                   (forM_, join, when)
 import           Data.Foldable                   (find, toList)
 import           Data.Function                   ((&))
-import           Data.Functor                    ((<&>))
 import           Data.List                       (sort, sortBy)
+import           Data.List.NonEmpty              (NonEmpty(..))
 import           Data.Maybe                      (listToMaybe, isJust)
 import qualified GHC.Hs.Doc                      as GHC
 import           GHC.Hs.Extension                (GhcPs)
@@ -153,8 +153,7 @@ printExportList (L srcLoc exports) = do
   newline
   indent 2 (putText "(") >> when (notNull exports) space
 
-  exportsWithComments <-
-    attachComments exports <&> fmap (fmap (sortBy compareOutputable))
+  exportsWithComments <- sortedAttachedComments exports
 
   printExports exportsWithComments
 
@@ -162,33 +161,35 @@ printExportList (L srcLoc exports) = do
   where
     putOutputable = putText . showOutputable
 
-    printExports :: [([AnnotationComment], [GHC.LIE GhcPs])] -> P ()
-    printExports (([], firstInGroup : groupRest) : rest) = do
+    printExports :: [([AnnotationComment], NonEmpty (GHC.LIE GhcPs))] -> P ()
+    printExports (([], firstInGroup :| groupRest) : rest) = do
       printExport firstInGroup
       newline
       spaces 2
-      printExportsTail [([], groupRest)]
+      printExportsGroupTail groupRest
       printExportsTail rest
-    printExports ((_, []) : _rest) =
-      error "Expected all groups to contain at least one export, had comments, no export"
-    printExports ((firstComment : comments, firstExport : groupRest) : rest) = do
+    printExports ((firstComment : comments, firstExport :| groupRest) : rest) = do
       putComment firstComment >> newline >> spaces 2
       forM_ comments \c -> spaces 2 >> putComment c >> newline >> spaces 2
       spaces 2
       printExport firstExport
       newline
       spaces 2
-      printExportsTail [([], groupRest)]
+      printExportsGroupTail groupRest
       printExportsTail rest
     printExports [] =
       newline >> spaces 2
 
-    printExportsTail :: [([AnnotationComment], [GHC.LIE GhcPs])] -> P ()
+    printExportsTail :: [([AnnotationComment], NonEmpty (GHC.LIE GhcPs))] -> P ()
     printExportsTail = mapM_ \(comments, exported) -> do
       forM_ comments \c -> spaces 2 >> putComment c >> newline >> spaces 2
       forM_ exported \export -> do
         comma >> space >> printExport export
         newline >> spaces 2
+
+    printExportsGroupTail :: [GHC.LIE GhcPs] -> P ()
+    printExportsGroupTail (x : xs) = printExportsTail [([], x :| xs)]
+    printExportsGroupTail [] = pure ()
 
     printExport :: GHC.LIE GhcPs -> P ()
     printExport (L _ export) = case export of
@@ -219,19 +220,3 @@ printExportList (L srcLoc exports) = do
           "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEDocNamed'" <> showOutputable export
       XIE ext ->
         GHC.noExtCon ext
-
-attachComments :: [GHC.LIE GhcPs] -> P [([AnnotationComment], [GHC.LIE GhcPs])]
-attachComments (L (RealSrcSpan rloc) x : xs) = do
-  comments <- removeCommentTo (srcSpanStartLine rloc)
-  nextGroupStartM <- peekNextCommentPos
-
-  let
-    sameGroupOf = maybe xs \nextGroupStart ->
-      takeWhile (\(L p _)-> p < nextGroupStart) xs
-
-    restOf = maybe [] \nextGroupStart ->
-      dropWhile (\(L p _) -> p <= nextGroupStart) xs
-
-  restGroups <- attachComments (restOf nextGroupStartM)
-  pure $ (comments, L (RealSrcSpan rloc) x : sameGroupOf nextGroupStartM) : restGroups
-attachComments _ = pure []

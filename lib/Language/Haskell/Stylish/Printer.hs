@@ -31,17 +31,19 @@ module Language.Haskell.Stylish.Printer
   , peekNextCommentPos
   , removeLineComment
   , removeCommentTo
+  , sortedAttachedComments
     -- ** Outputable helpers
   , showOutputable
   , compareOutputable
   ) where
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Parse (baseDynFlags)
+import           Language.Haskell.Stylish.Parse  (baseDynFlags)
 
 --------------------------------------------------------------------------------
 import           ApiAnnotation                   (AnnotationComment(..))
 import           SrcLoc                          (GenLocated(..), RealLocated)
+import           SrcLoc                          (Located)
 import           SrcLoc                          (SrcSpan(..), srcSpanStartLine)
 import           Control.Monad                   (forM_, replicateM, replicateM_)
 import           Control.Monad.Reader            (MonadReader, ReaderT(..))
@@ -50,7 +52,10 @@ import           Control.Monad.State             (execState, gets, modify)
 import           Data.Foldable                   (find)
 import           Data.Functor                    ((<&>))
 import           Data.List                       (delete)
+import           Data.List.NonEmpty              (NonEmpty(..))
+import qualified Data.List.NonEmpty              as NonEmpty
 import           GHC.Generics                    (Generic)
+import           Outputable                      (Outputable)
 import qualified Outputable                      as GHC
 import           Prelude                         hiding (lines)
 
@@ -167,3 +172,24 @@ peekNextCommentPos = do
   gets pendingComments <&> \case
     (L next _ : _) -> Just (RealSrcSpan next)
     [] -> Nothing
+
+sortedAttachedComments :: Outputable a => [Located a] -> P [([AnnotationComment], NonEmpty (Located a))]
+sortedAttachedComments origs = go origs <&> fmap sortGroup
+  where
+    sortGroup = fmap (NonEmpty.sortBy compareOutputable)
+
+    go :: [Located a] -> P [([AnnotationComment], NonEmpty (Located a))]
+    go (L (RealSrcSpan rloc) x : xs) = do
+      comments <- removeCommentTo (srcSpanStartLine rloc)
+      nextGroupStartM <- peekNextCommentPos
+
+      let
+        sameGroupOf = maybe xs \nextGroupStart ->
+          takeWhile (\(L p _)-> p < nextGroupStart) xs
+
+        restOf = maybe [] \nextGroupStart ->
+          dropWhile (\(L p _) -> p <= nextGroupStart) xs
+
+      restGroups <- go (restOf nextGroupStartM)
+      pure $ (comments, L (RealSrcSpan rloc) x :| sameGroupOf nextGroupStartM) : restGroups
+    go _  = pure []
