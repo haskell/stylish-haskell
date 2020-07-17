@@ -1,32 +1,29 @@
 --------------------------------------------------------------------------------
 module Language.Haskell.Stylish.Step
     ( Lines
-    , Module
+    , OldModule
     , Step (..)
     , makeStep
+    , oldMakeStep
     ) where
 
 
 --------------------------------------------------------------------------------
 import qualified Language.Haskell.Exts as H
-
-
---------------------------------------------------------------------------------
-type Lines = [String]
-
+import           Language.Haskell.Stylish.Module
 
 --------------------------------------------------------------------------------
--- | Concrete module type
-type Module = (H.Module H.SrcSpanInfo, [H.Comment])
-
+type OldModule = (H.Module H.SrcSpanInfo, [H.Comment])
 
 --------------------------------------------------------------------------------
 data Step = Step
-    { stepName   :: String
-    , stepFilter :: Lines -> Module -> Lines
-    }
-
+  { stepName :: String
+  , stepFilter :: Lines -> Module -> Lines
+  }
 
 --------------------------------------------------------------------------------
 makeStep :: String -> (Lines -> Module -> Lines) -> Step
 makeStep = Step
+
+oldMakeStep :: String -> (Lines -> OldModule -> Lines) -> Step
+oldMakeStep = undefined

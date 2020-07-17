@@ -1,20 +1,19 @@
-module Language.Haskell.Stylish.Printer.ModuleHeader.Tests
+module Language.Haskell.Stylish.Step.ModuleHeader.Tests
   ( tests
   ) where
 
 --------------------------------------------------------------------------------
-import Test.Framework                 (Test, testGroup)
-import Test.Framework.Providers.HUnit (testCase)
-import Test.HUnit                     (Assertion, (@=?))
-import GHC.Stack                      (HasCallStack, withFrozenCallStack)
-import Prelude hiding                 (lines)
-
+import Test.Framework                                       (Test, testGroup)
+import Test.Framework.Providers.HUnit                       (testCase)
+import Test.HUnit                                           (Assertion, (@=?))
+import GHC.Stack                                            (HasCallStack, withFrozenCallStack)
+import Prelude                                              hiding (lines)
 
 --------------------------------------------------------------------------------
 import Language.Haskell.Stylish.Module
-import Language.Haskell.Stylish.Config (defaultConfig')
-import Language.Haskell.Stylish.Parse (parseModule)
-import Language.Haskell.Stylish.Printer.ModuleHeader (printModuleHeader)
+import Language.Haskell.Stylish.Tests.Util                  (testStep')
+import Language.Haskell.Stylish.Step.ModuleHeader           (step)
+import qualified Language.Haskell.Stylish.Step.ModuleHeader as ModuleHeader
 
 
 
@@ -289,11 +288,4 @@ ex12 = input `assertFormatted` output
 
 --------------------------------------------------------------------------------
 assertFormatted :: HasCallStack => Lines -> Lines -> Assertion
-assertFormatted input expected = withFrozenCallStack $ expected @=? parseAndFormat input
-  where
-    parseAndFormat lines =
-      case parseModule [] Nothing (unlines lines) of
-        Right parsedModule ->
-          printModuleHeader defaultConfig' lines parsedModule
-        Left err ->
-          error $ "parseAndFormat: Should've been able to parse input - " <> err
+assertFormatted input expected = withFrozenCallStack $ expected @=? testStep' (step ModuleHeader.Config) input

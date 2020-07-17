@@ -1,9 +1,9 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE LambdaCase #-}
-module Language.Haskell.Stylish.Printer.ModuleHeader
-  ( printModuleHeader
+module Language.Haskell.Stylish.Step.ModuleHeader
+  ( Config (..)
+  , step
   ) where
-
 
 --------------------------------------------------------------------------------
 import           ApiAnnotation                   (AnnotationComment(..), AnnKeywordId(..))
@@ -25,14 +25,20 @@ import           SrcLoc                          (srcSpanStartLine, srcSpanEndLi
 import           Util                            (notNull)
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Module
-import           Language.Haskell.Stylish.Config (Config'(..))
-import           Language.Haskell.Stylish.Printer
-import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.Block
+import           Language.Haskell.Stylish.Editor
+import           Language.Haskell.Stylish.Module
+import           Language.Haskell.Stylish.Printer
+import           Language.Haskell.Stylish.Step
 
-printModuleHeader :: Config' -> Lines -> Module -> Lines
-printModuleHeader cfg ls m =
+
+data Config = Config
+
+step :: Config -> Step
+step = makeStep "Module header" . printModuleHeader
+
+printModuleHeader :: Config -> Lines -> Module -> Lines
+printModuleHeader _ ls m =
   let
     header = moduleHeader m
     name = rawModuleName header
@@ -58,7 +64,7 @@ printModuleHeader cfg ls m =
       _ -> xs
 
     printedModuleHeader =
-      runPrinter cfg relevantComments (printHeader name exports haddocks)
+      runPrinter PrinterConfig relevantComments (printHeader name exports haddocks)
 
     unsafeGetStart = \case
       (L (RealSrcSpan s) _) -> srcSpanStartLine s

@@ -37,9 +37,10 @@ import           System.IO.Unsafe                (unsafePerformIO)
 import           ToolSettings                    (ToolSettings(..))
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Config
+--import           Language.Haskell.Stylish.Config
 import           Language.Haskell.Stylish.Module
 
+type Extensions = [String]
 
 --------------------------------------------------------------------------------
 -- | Filter out lines which use CPP macros

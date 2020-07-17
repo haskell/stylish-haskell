@@ -4,10 +4,6 @@
 module Language.Haskell.Stylish.Config
     ( Extensions
     , Config (..)
-    , Config' (..)
-    , defaultConfig'
-    , DeclPrinter (..)
-    , ImportsPrinter (..)
     , defaultConfigBytes
     , configFilePath
     , loadConfig
@@ -44,6 +40,8 @@ import           Language.Haskell.Stylish.Config.Internal
 import           Language.Haskell.Stylish.Step
 import qualified Language.Haskell.Stylish.Step.Data               as Data
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
+import qualified Language.Haskell.Stylish.Step.Imports'           as Imports'
+import qualified Language.Haskell.Stylish.Step.ModuleHeader       as ModuleHeader
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
 import qualified Language.Haskell.Stylish.Step.SimpleAlign        as SimpleAlign
 import qualified Language.Haskell.Stylish.Step.Squash             as Squash
@@ -65,24 +63,6 @@ data Config = Config
     , configNewline            :: IO.Newline
     , configCabal              :: Bool
     }
-
---------------------------------------------------------------------------------
-data Config' = Config'
-    { configDeclPrinter :: DeclPrinter
-    , configImportsPrinter :: ImportsPrinter
-    }
-
-data DeclPrinter
-  = DeclMinimizeDiffs
-
-data ImportsPrinter
-  = DeclMinimizeDiffsPostQualified
-
-defaultConfig' :: Config'
-defaultConfig' = Config'
-  { configDeclPrinter = DeclMinimizeDiffs
-  , configImportsPrinter = DeclMinimizeDiffsPostQualified
-  }
 
 --------------------------------------------------------------------------------
 instance FromJSON Config where
@@ -163,7 +143,8 @@ parseConfig _            = mzero
 
 --------------------------------------------------------------------------------
 catalog :: Map String (Config -> A.Object -> A.Parser Step)
-catalog = M.fromList
+catalog = M.fromList $
+  if False then
     [ ("imports",             parseImports)
     , ("records",             parseRecords)
     , ("language_pragmas",    parseLanguagePragmas)
@@ -172,6 +153,10 @@ catalog = M.fromList
     , ("tabs",                parseTabs)
     , ("trailing_whitespace", parseTrailingWhitespace)
     , ("unicode_syntax",      parseUnicodeSyntax)
+    ]
+  else
+    [ ("module_header", parseModuleHeader)
+    , ("imports",       parseImports')
     ]
 
 
@@ -193,6 +178,12 @@ parseEnum strs _   (Just k) = case lookup k strs of
     Nothing -> fail $ "Unknown option: " ++ k ++ ", should be one of: " ++
         intercalate ", " (map fst strs)
 
+--------------------------------------------------------------------------------
+parseModuleHeader :: Config -> A.Object -> A.Parser Step
+parseModuleHeader _ _
+  = pure
+  . ModuleHeader.step
+  $ ModuleHeader.Config
 
 --------------------------------------------------------------------------------
 parseSimpleAlign :: Config -> A.Object -> A.Parser Step
@@ -277,6 +268,13 @@ parseImports config o = Imports.step
         [ ("inherit", Imports.Inherit)
         , ("right_after", Imports.RightAfter)
         ]
+
+--------------------------------------------------------------------------------
+parseImports' :: Config -> A.Object -> A.Parser Step
+parseImports' _ _
+  = pure
+  . Imports'.step
+  $ Imports'.Config
 
 --------------------------------------------------------------------------------
 parseLanguagePragmas :: Config -> A.Object -> A.Parser Step

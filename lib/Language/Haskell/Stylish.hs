@@ -27,7 +27,6 @@ module Language.Haskell.Stylish
 
 --------------------------------------------------------------------------------
 import           Control.Monad                                    (foldM)
-import           Data.Function                                    ((&))
 import           System.Directory                                 (doesDirectoryExist,
                                                                    doesFileExist,
                                                                    listDirectory)
@@ -37,8 +36,6 @@ import           System.FilePath                                  (takeExtension
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Config
 import           Language.Haskell.Stylish.Parse
-import           Language.Haskell.Stylish.Printer.ModuleHeader    (printModuleHeader)
-import           Language.Haskell.Stylish.Printer.Imports         (printImports)
 import           Language.Haskell.Stylish.Step
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
@@ -94,26 +91,18 @@ unicodeSyntax = UnicodeSyntax.step
 
 --------------------------------------------------------------------------------
 runStep :: Extensions -> Maybe FilePath -> Lines -> Step -> Either String Lines
-runStep exts mfp ls _step
-  = parseModule exts mfp (unlines ls)
-  --stepFilter step ls <$> parseModule exts mfp (unlines ls)
-  & fmap printSteps
-  where
-    printSteps m =
-      printImports defaultConfig' (printModuleHeader defaultConfig' ls m) m
-
+runStep exts mfp ls step =
+  stepFilter step ls <$> parseModule exts mfp (unlines ls)
 
 --------------------------------------------------------------------------------
-runSteps :: Extensions -> Maybe FilePath -> [Step] -> Lines
-         -> Either String Lines
+runSteps ::
+     Extensions
+  -> Maybe FilePath
+  -> [Step]
+  -> Lines
+  -> Either String Lines
 runSteps exts mfp steps ls =
-  if False then foldM (runStep exts mfp) ls steps
-  else
-    parseModule exts mfp (unlines ls)
-      & fmap printSteps
-  where
-    printSteps m =
-      printImports defaultConfig' (printModuleHeader defaultConfig' ls m) m
+ foldM (runStep exts mfp) ls steps
 
 newtype ConfigPath = ConfigPath { unConfigPath :: FilePath }
 

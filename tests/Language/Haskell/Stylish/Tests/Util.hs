@@ -1,5 +1,6 @@
 module Language.Haskell.Stylish.Tests.Util
     ( testStep
+    , testStep'
     , withTestDirTree
     ) where
 
@@ -23,12 +24,18 @@ import           Language.Haskell.Stylish.Step
 
 --------------------------------------------------------------------------------
 testStep :: Step -> String -> String
-testStep = undefined
---testStep step str = case parseModule [] Nothing str of
---    Left err      -> error err
---    Right module' -> unlines $ stepFilter step ls module'
---  where
---    ls = lines str
+testStep step str = case parseModule [] Nothing str of
+    Left err      -> error err
+    Right module' -> unlines $ stepFilter step ls module'
+  where
+    ls = lines str
+
+testStep' :: Step -> Lines -> Lines
+testStep' step ls = case parseModule [] Nothing (unlines ls) of
+  Left err ->
+    error $ "parseAndFormat: Should've been able to parse input - " <> err
+  Right parsedModule ->
+    stepFilter step ls parsedModule
 
 
 --------------------------------------------------------------------------------

@@ -12,7 +12,6 @@ import Prelude hiding                 (lines)
 
 --------------------------------------------------------------------------------
 import Language.Haskell.Stylish.Module
-import Language.Haskell.Stylish.Config (defaultConfig')
 import Language.Haskell.Stylish.Parse (parseModule)
 import Language.Haskell.Stylish.Printer.Imports (printImports)
 
@@ -134,6 +133,6 @@ assertFormatted input expected = withFrozenCallStack $ expected @=? parseAndForm
     parseAndFormat lines =
       case parseModule [] Nothing (unlines lines) of
         Right parsedModule ->
-          printImports defaultConfig' lines parsedModule
+          printImports True lines parsedModule
         Left err ->
           error $ "parseAndFormat: Should've been able to parse input - " <> err

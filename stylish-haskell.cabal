@@ -32,10 +32,11 @@ Library
     Language.Haskell.Stylish.Module
     Language.Haskell.Stylish.Printer
     Language.Haskell.Stylish.Printer.Decl
-    Language.Haskell.Stylish.Printer.ModuleHeader
     Language.Haskell.Stylish.Printer.Imports
     Language.Haskell.Stylish.Step.Data
     Language.Haskell.Stylish.Step.Imports
+    Language.Haskell.Stylish.Step.Imports'
+    Language.Haskell.Stylish.Step.ModuleHeader
     Language.Haskell.Stylish.Step.LanguagePragmas
     Language.Haskell.Stylish.Step.SimpleAlign
     Language.Haskell.Stylish.Step.Squash
@@ -119,15 +120,16 @@ Test-suite stylish-haskell-tests
     Language.Haskell.Stylish.Parse.Tests
     Language.Haskell.Stylish.Printer
     Language.Haskell.Stylish.Printer.Decl
-    Language.Haskell.Stylish.Printer.ModuleHeader
     Language.Haskell.Stylish.Printer.Imports
     Language.Haskell.Stylish.Printer.Imports.Tests
-    Language.Haskell.Stylish.Printer.ModuleHeader.Tests
     Language.Haskell.Stylish.Step
     Language.Haskell.Stylish.Step.Imports
+    Language.Haskell.Stylish.Step.Imports'
     Language.Haskell.Stylish.Step.Imports.Tests
     Language.Haskell.Stylish.Step.Data
     Language.Haskell.Stylish.Step.Data.Tests
+    Language.Haskell.Stylish.Step.ModuleHeader
+    Language.Haskell.Stylish.Step.ModuleHeader.Tests
     Language.Haskell.Stylish.Step.LanguagePragmas
     Language.Haskell.Stylish.Step.LanguagePragmas.Tests
     Language.Haskell.Stylish.Step.SimpleAlign

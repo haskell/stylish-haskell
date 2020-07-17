@@ -420,11 +420,11 @@ prettyImportGroup columns align fileAlign longest imps =
 
 --------------------------------------------------------------------------------
 step :: Maybe Int -> Options -> Step
-step columns = makeStep "Imports" . step' columns
+step columns = oldMakeStep "Imports" . step' columns
 
 
 --------------------------------------------------------------------------------
-step' :: Maybe Int -> Options -> Lines -> Module -> Lines
+step' :: Maybe Int -> Options -> Lines -> OldModule -> Lines
 step' columns align ls (module', _) = applyChanges
     [ change block $ const $
         prettyImportGroup columns align fileAlign longest importGroup

@@ -4,11 +4,11 @@ module Language.Haskell.Stylish.Printer.Decl
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Module
-import           Language.Haskell.Stylish.Config (Config'(..))
+import           Language.Haskell.Stylish.Config (Config(..))
 --import           GHC.Hs.Decls
 --import           SrcLoc                          (Located, GenLocated(..))
 --import           GHC.Hs                          (GhcPs)
 
 --------------------------------------------------------------------------------
-printDecls :: Config' -> Lines -> Comments -> Decls -> Lines
-printDecls _ ls _ _ = ls
+printDecls :: Config -> Lines -> Module -> Lines
+printDecls _ ls _ = ls

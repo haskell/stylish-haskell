@@ -106,11 +106,11 @@ filterRedundant isRedundant' = snd . foldr filterRedundant' (S.empty, [])
 
 --------------------------------------------------------------------------------
 step :: Maybe Int -> Style -> Bool -> Bool -> String -> Step
-step = ((((makeStep "LanguagePragmas" .) .) .) .) . step'
+step = ((((oldMakeStep "LanguagePragmas" .) .) .) .) . step'
 
 
 --------------------------------------------------------------------------------
-step' :: Maybe Int -> Style -> Bool -> Bool -> String -> Lines -> Module -> Lines
+step' :: Maybe Int -> Style -> Bool -> Bool -> String -> Lines -> OldModule -> Lines
 step' columns style align removeRedundant lngPrefix ls (module', _)
     | null pragmas' = ls
     | otherwise     = applyChanges changes ls

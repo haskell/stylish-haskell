@@ -16,23 +16,19 @@ import           RdrName
 import qualified SrcLoc                          as GHC
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Config (Config'(..), ImportsPrinter(..))
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Printer
 
 --------------------------------------------------------------------------------
-printImports :: Config' -> Lines -> Module -> Lines
-printImports cfg@(Config' {configImportsPrinter = printer}) ls m =
+printImports :: cfg -> Lines -> Module -> Lines
+printImports _ ls m =
   if True then ls else
   -- FIXME add comments here
-  runPrinter cfg [] importPrinter
+  runPrinter PrinterConfig [] do
+    forM_ (sortImportDecls importList) \imp -> printPostQualified imp >> newline
   where
     imports = moduleImports m
     importList = rawImports imports
-
-    importPrinter = case printer of
-      DeclMinimizeDiffsPostQualified ->
-        forM_ (sortImportDecls importList) \imp -> printPostQualified imp >> newline
 
 --------------------------------------------------------------------------------
 printPostQualified :: LImportDecl GhcPs -> P ()

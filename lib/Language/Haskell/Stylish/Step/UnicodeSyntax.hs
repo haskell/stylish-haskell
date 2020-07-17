@@ -105,11 +105,11 @@ between (startRow, startCol) (endRow, endCol) needle =
 
 --------------------------------------------------------------------------------
 step :: Bool -> String -> Step
-step = (makeStep "UnicodeSyntax" .) . step'
+step = (oldMakeStep "UnicodeSyntax" .) . step'
 
 
 --------------------------------------------------------------------------------
-step' :: Bool -> String -> Lines -> Module -> Lines
+step' :: Bool -> String -> Lines -> OldModule -> Lines
 step' alp lg ls (module', _) = applyChanges changes ls
   where
     changes = (if alp then addLanguagePragma lg "UnicodeSyntax" module' else []) ++

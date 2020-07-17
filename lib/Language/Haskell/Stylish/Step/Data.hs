@@ -35,9 +35,9 @@ datas _                        = []
 type ChangeLine = Change String
 
 step :: Config -> Step
-step cfg = makeStep "Data" (step' cfg)
+step cfg = oldMakeStep "Data" (step' cfg)
 
-step' :: Config -> Lines -> Module -> Lines
+step' :: Config -> Lines -> OldModule -> Lines
 step' cfg ls (module', allComments) = applyChanges changes ls
   where
     datas' = datas $ fmap linesFromSrcSpan module'

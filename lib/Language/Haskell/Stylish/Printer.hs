@@ -6,6 +6,7 @@
 {-# LANGUAGE LambdaCase #-}
 module Language.Haskell.Stylish.Printer
   ( Printer(..)
+  , PrinterConfig(..)
   , PrinterState(..)
 
     -- * Alias
@@ -36,7 +37,6 @@ module Language.Haskell.Stylish.Printer
   ) where
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Config (Config')
 import           Language.Haskell.Stylish.Parse (baseDynFlags)
 
 --------------------------------------------------------------------------------
@@ -59,8 +59,10 @@ import           Prelude                         hiding (lines)
 type P = Printer
 type Lines = [String]
 
-newtype Printer a = Printer (ReaderT Config' (State PrinterState) a)
-  deriving (Applicative, Functor, Monad, MonadReader Config', MonadState PrinterState)
+newtype Printer a = Printer (ReaderT PrinterConfig (State PrinterState) a)
+  deriving (Applicative, Functor, Monad, MonadReader PrinterConfig, MonadState PrinterState)
+
+data PrinterConfig = PrinterConfig
 
 data PrinterState = PrinterState
   { lines :: Lines
@@ -70,7 +72,7 @@ data PrinterState = PrinterState
   }
   deriving stock (Generic)
 
-runPrinter :: Config' -> [RealLocated AnnotationComment] -> Printer a -> Lines
+runPrinter :: PrinterConfig -> [RealLocated AnnotationComment] -> Printer a -> Lines
 runPrinter cfg comments (Printer printer) =
   let
     PrinterState parsedLines _ startedLine _ = runReaderT printer cfg `execState` PrinterState [] 0 "" comments
