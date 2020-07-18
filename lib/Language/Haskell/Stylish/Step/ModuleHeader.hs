@@ -55,7 +55,7 @@ printModuleHeader _ ls m =
       & dropBeforeLocated name
 
     printedModuleHeader =
-      runPrinter PrinterConfig relevantComments (printHeader name exports haddocks)
+      runPrinter_ PrinterConfig relevantComments (printHeader name exports haddocks)
 
     getBlock loc =
       Block <$> fmap getStartLineUnsafe loc <*> fmap getEndLineUnsafe loc

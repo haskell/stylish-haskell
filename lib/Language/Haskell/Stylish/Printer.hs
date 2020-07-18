@@ -14,6 +14,7 @@ module Language.Haskell.Stylish.Printer
 
     -- * Functions to use the printer
   , runPrinter
+  , runPrinter_
 
     -- ** Combinators
   , comma
@@ -53,7 +54,8 @@ import           SrcLoc                          (srcSpanStartLine, srcSpanEndLi
 import           Control.Monad                   (forM_, replicateM, replicateM_)
 import           Control.Monad.Reader            (MonadReader, ReaderT(..))
 import           Control.Monad.State             (MonadState, State)
-import           Control.Monad.State             (execState, gets, modify)
+import           Control.Monad.State             (runState)
+import           Control.Monad.State             (gets, modify)
 import           Data.Foldable                   (find)
 import           Data.Functor                    ((<&>))
 import           Data.List                       (delete)
@@ -82,12 +84,15 @@ data PrinterState = PrinterState
   }
   deriving stock (Generic)
 
-runPrinter :: PrinterConfig -> [RealLocated AnnotationComment] -> Printer a -> Lines
+runPrinter :: PrinterConfig -> [RealLocated AnnotationComment] -> Printer a -> (a, Lines)
 runPrinter cfg comments (Printer printer) =
   let
-    PrinterState parsedLines _ startedLine _ = runReaderT printer cfg `execState` PrinterState [] 0 "" comments
+    (a, PrinterState parsedLines _ startedLine _) = runReaderT printer cfg `runState` PrinterState [] 0 "" comments
   in
-    parsedLines <> if startedLine == [] then [] else [startedLine]
+    (a, parsedLines <> if startedLine == [] then [] else [startedLine])
+
+runPrinter_ :: PrinterConfig -> [RealLocated AnnotationComment] -> Printer a -> Lines
+runPrinter_ cfg comments printer = snd (runPrinter cfg comments printer)
 
 putText :: String -> P ()
 putText txt = do

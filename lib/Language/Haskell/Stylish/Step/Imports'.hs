@@ -59,7 +59,7 @@ printImports _ ls m =
       = lastMaybe imports
       & fmap getEndLineUnsafe
 
-    printedImports = runPrinter PrinterConfig relevantComments do
+    printedImports = runPrinter_ PrinterConfig relevantComments do
       importsWithComments <- sortedAttachedComments imports
       forM_ (fmap (fmap sortImportDecls) importsWithComments) \(comments, importGroup) -> do
         forM_ comments \c -> putComment c >> newline
