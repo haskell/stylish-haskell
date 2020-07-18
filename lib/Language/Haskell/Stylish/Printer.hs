@@ -40,7 +40,7 @@ module Language.Haskell.Stylish.Printer
   ) where
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Parse  (baseDynFlags)
+import           Language.Haskell.Stylish.GHC (baseDynFlags)
 
 --------------------------------------------------------------------------------
 import           ApiAnnotation                   (AnnotationComment(..))

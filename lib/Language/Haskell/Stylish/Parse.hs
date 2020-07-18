@@ -1,9 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
-{-# OPTIONS_GHC -Wno-missing-fields #-}
 --------------------------------------------------------------------------------
 module Language.Haskell.Stylish.Parse
   ( parseModule
-  , baseDynFlags -- FIXME should be moved
   ) where
 
 
@@ -11,16 +9,10 @@ module Language.Haskell.Stylish.Parse
 import           Bag                             (bagToList)
 import           Data.Function                   ((&))
 import           Data.Maybe                      (fromMaybe, listToMaybe)
-import           DynFlags                        (Settings(..), defaultDynFlags)
 import qualified DynFlags                        as GHC
 import           FastString                      (mkFastString)
-import           FileSettings                    (FileSettings(..))
-import           GHC.Fingerprint                 (fingerprint0)
 import qualified GHC.Hs                          as GHC
 import qualified GHC.LanguageExtensions          as GHC
-import           GHC.Platform
-import           GHC.Version                     (cProjectVersion)
-import           GhcNameVersion                  (GhcNameVersion(..))
 import qualified HeaderInfo                      as GHC
 import qualified HscTypes                        as GHC
 import           Lexer                           (ParseResult(..))
@@ -28,16 +20,14 @@ import           Lexer                           (mkPState, unP)
 import qualified Lexer                           as GHC
 import qualified Panic                           as GHC
 import qualified Parser                          as GHC
-import           PlatformConstants               (PlatformConstants(..))
 import           SrcLoc                          (mkRealSrcLoc)
 import qualified SrcLoc                          as GHC
 import           StringBuffer                    (stringToStringBuffer)
 import qualified StringBuffer                    as GHC
 import           System.IO.Unsafe                (unsafePerformIO)
-import           ToolSettings                    (ToolSettings(..))
 
 --------------------------------------------------------------------------------
---import           Language.Haskell.Stylish.Config
+import           Language.Haskell.Stylish.GHC (baseDynFlags)
 import           Language.Haskell.Stylish.Module
 
 type Extensions = [String]
@@ -86,7 +76,7 @@ parseModule exts fp string =
       else s
 
     userExtensions =
-      fmap toLocatedExtensionFlag exts
+      fmap toLocatedExtensionFlag ("Haskell2010" : exts) -- FIXME: do we need `Haskell2010` here?
 
     toLocatedExtensionFlag flag
       = "-X" <> flag
@@ -107,37 +97,6 @@ parseModule exts fp string =
         parseState = mkPState flags (stringToStringBuffer str) (mkRealSrcLoc filename 1 1)
       in
         unP GHC.parseModule parseState
-
-baseDynFlags :: GHC.DynFlags
-baseDynFlags = defaultDynFlags fakeSettings llvmConfig
-  where
-    fakeSettings = GHC.Settings
-      { sGhcNameVersion = GhcNameVersion "stylish-haskell" cProjectVersion
-      , sFileSettings = FileSettings {}
-      , sToolSettings = ToolSettings
-        { toolSettings_opt_P_fingerprint = fingerprint0,
-          toolSettings_pgm_F = ""
-        }
-      , sPlatformConstants = PlatformConstants
-        { pc_DYNAMIC_BY_DEFAULT = False
-        , pc_WORD_SIZE = 8
-        }
-      , sTargetPlatform = Platform
-        { platformMini = PlatformMini
-          { platformMini_arch = ArchUnknown
-          , platformMini_os = OSUnknown
-          }
-        , platformWordSize = PW8
-        , platformUnregisterised = True
-        , platformHasIdentDirective = False
-        , platformHasSubsectionsViaSymbols = False
-        , platformIsCrossCompiling = False
-        }
-      , sPlatformMisc = PlatformMisc {}
-      , sRawSettings = []
-      }
-
-    llvmConfig = GHC.LlvmConfig [] []
 
 -- | Parse 'DynFlags' from the extra options
 --
