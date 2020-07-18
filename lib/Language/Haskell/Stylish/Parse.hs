@@ -13,6 +13,7 @@ import qualified DynFlags                        as GHC
 import           FastString                      (mkFastString)
 import qualified GHC.Hs                          as GHC
 import qualified GHC.LanguageExtensions          as GHC
+import qualified ErrUtils                        as GHC
 import qualified HeaderInfo                      as GHC
 import qualified HscTypes                        as GHC
 import           Lexer                           (ParseResult(..))
@@ -85,7 +86,7 @@ parseModule exts fp string =
     getParserStateErrors dynFlags state
       = GHC.getErrorMessages state dynFlags
       & bagToList
-      & fmap show
+      & fmap (\errMsg -> show (GHC.errMsgSpan errMsg) <> ": " <> show errMsg)
 
     filePath =
       fromMaybe "<interactive>" fp
