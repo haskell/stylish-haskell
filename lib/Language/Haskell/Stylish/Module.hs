@@ -9,6 +9,7 @@ module Language.Haskell.Stylish.Module
   , Lines
   , moduleHeader
   , moduleImports
+  , moduleImportGroups
   , makeModule
   , moduleDecls
   , moduleComments
@@ -24,15 +25,22 @@ module Language.Haskell.Stylish.Module
 
 --------------------------------------------------------------------------------
 import qualified ApiAnnotation                   as GHC
-import           Data.Maybe                      (mapMaybe)
+import           Data.Function                   ((&))
+import           Data.Maybe                      (listToMaybe, mapMaybe)
 import           Data.List                       (sort)
 import qualified Lexer                           as GHC
 import qualified GHC.Hs                          as GHC
 import           GHC.Hs.Extension                (GhcPs)
 import           GHC.Hs.Decls                    (LHsDecl)
 import           GHC.Hs.ImpExp                   (LImportDecl)
+import           SrcLoc                          (GenLocated(..), RealLocated)
+import           SrcLoc                          (srcSpanStartLine)
 import qualified SrcLoc                          as GHC
 import qualified Module                          as GHC
+import           Util                            (lastMaybe)
+
+--------------------------------------------------------------------------------
+import           Language.Haskell.Stylish.GHC
 
 --------------------------------------------------------------------------------
 type Lines = [String]
@@ -80,6 +88,26 @@ moduleComments = Comments . parsedComments
 
 moduleImports :: Module -> Imports
 moduleImports = Imports . GHC.hsmodImports . unLocated . parsedModule
+
+moduleImportGroups :: Module -> [Imports]
+moduleImportGroups m = go relevantComments imports
+  where
+    relevantComments
+      = moduleComments m
+      & rawComments
+      & dropBeforeLocated (listToMaybe imports)
+      & dropAfterLocated (lastMaybe imports)
+
+    imports = rawImports (moduleImports m)
+
+    go :: [RealLocated GHC.AnnotationComment] -> [LImportDecl GhcPs] -> [Imports]
+    go (L nextCommentPos _ : commentsRest) (imp : impRest) =
+      let
+        sameGroup = takeWhile (\i -> getStartLineUnsafe i < srcSpanStartLine nextCommentPos) impRest
+        rest = dropWhile (\i -> getStartLineUnsafe i <= srcSpanStartLine nextCommentPos) impRest
+      in
+        Imports (imp : sameGroup) : go commentsRest rest
+    go _comments imps = [Imports imps]
 
 moduleHeader :: Module -> ModuleHeader
 moduleHeader (Module _ _ (GHC.L _ m)) = ModuleHeader

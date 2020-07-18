@@ -30,6 +30,7 @@ tests = testGroup "Language.Haskell.Stylish.Printer.Imports"
   , testCase "Import constructor specific sorted" ex6
   , testCase "Imports step does not change rest of file" ex7
   , testCase "Imports respect groups" ex8
+  , testCase "Imports respects whitespace between groups" ex9
   ]
 
 --------------------------------------------------------------------------------
@@ -169,6 +170,28 @@ ex8 = input `assertFormatted` output
       ]
     output =
       [ "import B"
+      , "-- Group divisor"
+      , "import A (X)"
+      , "import A qualified as Y (Y)"
+      , "import C"
+      ]
+
+ex9 :: Assertion
+ex9 = input `assertFormatted` output
+  where
+    input =
+      [ "--------"
+      , "import B"
+      , ""
+      , "-- Group divisor"
+      , "import A (X)"
+      , "import C"
+      , "import A qualified as Y (Y)"
+      ]
+    output =
+      [ "--------"
+      , "import B"
+      , ""
       , "-- Group divisor"
       , "import A (X)"
       , "import A qualified as Y (Y)"

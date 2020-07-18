@@ -36,43 +36,46 @@ step = makeStep "Imports" . printImports
 
 --------------------------------------------------------------------------------
 printImports :: Config -> Lines -> Module -> Lines
-printImports _ ls m =
-  let
-    imports =
-      rawImports (moduleImports m)
+printImports _ ls m = formatForImportGroups ls (moduleImportGroups m)
 
-    relevantComments
-       = moduleComments m
-       & rawComments
-       & dropAfterLocated (lastMaybe imports)
-       & dropBeforeLocated (listToMaybe imports)
+formatForImportGroups :: Lines -> [Imports] -> Lines
+formatForImportGroups ls [] = ls
+formatForImportGroups ls (group : rest) = formatForImportGroups formattedGroup rest
+  where
+    formattedGroup :: Lines
+    formattedGroup =
+      let
+        imports =
+          rawImports group
 
-    importsBlock = Block
-      <$> importStart
-      <*> importEnd
+        relevantComments =
+          []
 
-    importStart
-      = listToMaybe imports
-      & fmap getStartLineUnsafe
+        importsBlock = Block
+          <$> importStart
+          <*> importEnd
 
-    importEnd
-      = lastMaybe imports
-      & fmap getEndLineUnsafe
+        importStart
+          = listToMaybe imports
+          & fmap getStartLineUnsafe
 
-    printedImports = runPrinter_ PrinterConfig relevantComments do
-      importsWithComments <- sortedAttachedComments imports
-      forM_ (fmap (fmap sortImportDecls) importsWithComments) \(comments, importGroup) -> do
-        forM_ comments \c -> putComment c >> newline
-        forM_ importGroup \imp -> printPostQualified imp >> newline
-  in
-    case importStart of
-      Just start ->
-        let
-          deletes = fmap delete $ toList importsBlock
-          additions = [insert start printedImports]
-        in
-          applyChanges (deletes <> additions) ls
-      Nothing -> ls
+        importEnd
+          = lastMaybe imports
+          & fmap getEndLineUnsafe
+
+        formatting = runPrinter_ PrinterConfig relevantComments do
+          importsWithComments <- sortedAttachedComments imports
+          forM_ importsWithComments \(_, importGroup) -> do
+            forM_ (sortImportDecls importGroup) \imp -> printPostQualified imp >> newline
+      in
+        case importStart of
+          Just start ->
+            let
+              deletes = fmap delete $ toList importsBlock
+              additions = [insert start formatting]
+            in
+              applyChanges (deletes <> additions) ls
+          Nothing -> ls
 
 --------------------------------------------------------------------------------
 printPostQualified :: LImportDecl GhcPs -> P ()
