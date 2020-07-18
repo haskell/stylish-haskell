@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
 --------------------------------------------------------------------------------
 module Language.Haskell.Stylish.Util
     ( nameToString
@@ -13,9 +12,6 @@ module Language.Haskell.Stylish.Util
     , wrapRest
     , wrapMaybe
     , wrapRestMaybe
-
-    , getStartLineUnsafe
-    , getEndLineUnsafe
 
     , withHead
     , withInit
@@ -33,8 +29,6 @@ import           Data.Maybe                    (fromMaybe, listToMaybe,
                                                 maybeToList)
 import           Data.Typeable                 (cast)
 import qualified Language.Haskell.Exts         as H
-import           SrcLoc                        (GenLocated(..), Located, SrcSpan(..))
-import           SrcLoc                        (srcSpanStartLine, srcSpanEndLine)
 
 
 --------------------------------------------------------------------------------
@@ -191,14 +185,3 @@ withInit f (x : xs) = f x : withInit f xs
 withTail :: (a -> a) -> [a] -> [a]
 withTail _ []       = []
 withTail f (x : xs) = x : map f xs
-
-getStartLineUnsafe :: Located a -> Int
-getStartLineUnsafe = \case
-  (L (RealSrcSpan s) _) -> srcSpanStartLine s
-  _ -> error "could not get start line of block"
-
-getEndLineUnsafe :: Located a -> Int
-getEndLineUnsafe = \case
-  (L (RealSrcSpan s) _) -> srcSpanEndLine s
-  _ -> error "could not get end line of block"
-

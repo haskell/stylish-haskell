@@ -27,7 +27,7 @@ import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Editor
-import           Language.Haskell.Stylish.Util (getStartLineUnsafe, getEndLineUnsafe)
+import           Language.Haskell.Stylish.GHC
 
 data Config = Config
 

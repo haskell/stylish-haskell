@@ -29,6 +29,7 @@ Library
 
   Exposed-modules:
     Language.Haskell.Stylish
+    Language.Haskell.Stylish.GHC
     Language.Haskell.Stylish.Module
     Language.Haskell.Stylish.Printer
     Language.Haskell.Stylish.Step.Data
@@ -113,6 +114,7 @@ Test-suite stylish-haskell-tests
     Language.Haskell.Stylish.Config.Internal
     Language.Haskell.Stylish.Config.Tests
     Language.Haskell.Stylish.Editor
+    Language.Haskell.Stylish.GHC
     Language.Haskell.Stylish.Module
     Language.Haskell.Stylish.Parse
     Language.Haskell.Stylish.Parse.Tests
