@@ -96,7 +96,7 @@ printPostQualified decl = do
   forM_ (ideclAs decl') \(L _ name) ->
     space >> putText "as" >> space >> putText (moduleNameString name)
 
-  when (isHiding decl') (space >> putText "hiding" >> space)
+  when (isHiding decl') (space >> putText "hiding")
 
   forM_ (snd <$> ideclHiding decl') \(L _ imports) ->
     let

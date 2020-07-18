@@ -31,6 +31,7 @@ tests = testGroup "Language.Haskell.Stylish.Printer.Imports"
   , testCase "Imports step does not change rest of file" ex7
   , testCase "Imports respect groups" ex8
   , testCase "Imports respects whitespace between groups" ex9
+  , testCase "Doesn't add extra space after 'hiding'" ex10
   ]
 
 --------------------------------------------------------------------------------
@@ -196,6 +197,18 @@ ex9 = input `assertFormatted` output
       , "import A (X)"
       , "import A qualified as Y (Y)"
       , "import C"
+      ]
+
+ex10 :: Assertion
+ex10 = input `assertFormatted` output
+  where
+    input =
+      [ "import B         hiding      (X)"
+      , "import A  hiding (X)"
+      ]
+    output =
+      [ "import A hiding (X)"
+      , "import B hiding (X)"
       ]
 
 --------------------------------------------------------------------------------
