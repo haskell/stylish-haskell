@@ -1,18 +1,24 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE LambdaCase #-}
 module Language.Haskell.Stylish.Module
-  ( Module
+  ( -- * Data types
+    Module
   , ModuleHeader
   , Imports
   , Decls
   , Comments
   , Lines
+  , makeModule
+
+    -- * Getters
   , moduleHeader
   , moduleImports
   , moduleImportGroups
-  , makeModule
   , moduleDecls
   , moduleComments
+
+    -- * Annotations
+  , lookupAnnotation
 
     -- * Internal API getters
   , rawComments
@@ -27,6 +33,8 @@ module Language.Haskell.Stylish.Module
 import qualified ApiAnnotation                   as GHC
 import           Data.Function                   ((&))
 import           Data.Maybe                      (listToMaybe, mapMaybe)
+import           Data.Map                        (Map)
+import qualified Data.Map                        as Map
 import           Data.List                       (sort)
 import qualified Lexer                           as GHC
 import qualified GHC.Hs                          as GHC
@@ -34,6 +42,7 @@ import           GHC.Hs.Extension                (GhcPs)
 import           GHC.Hs.Decls                    (LHsDecl)
 import           GHC.Hs.ImpExp                   (LImportDecl)
 import           SrcLoc                          (GenLocated(..), RealLocated)
+import           SrcLoc                          (RealSrcSpan(..), SrcSpan(..))
 import           SrcLoc                          (srcSpanStartLine)
 import qualified SrcLoc                          as GHC
 import qualified Module                          as GHC
@@ -51,6 +60,7 @@ type Lines = [String]
 data Module = Module
   { parsedComments :: [GHC.RealLocated GHC.AnnotationComment]
   , parsedAnnotations :: [(GHC.ApiAnnKey, [GHC.SrcSpan])]
+  , parsedAnnotSrcs :: Map RealSrcSpan [GHC.AnnKeywordId]
   , parsedModule :: GHC.Located (GHC.HsModule GhcPs)
   }
 
@@ -67,7 +77,7 @@ data ModuleHeader = ModuleHeader
   }
 
 makeModule :: GHC.PState -> GHC.Located (GHC.HsModule GHC.GhcPs) -> Module
-makeModule pstate = Module comments annotations
+makeModule pstate = Module comments annotations annotationMap
   where
     comments
       = sort
@@ -78,7 +88,17 @@ makeModule pstate = Module comments annotations
       GHC.L (GHC.RealSrcSpan s) e -> Just (GHC.L s e)
       GHC.L (GHC.UnhelpfulSpan _) _ -> Nothing
 
-    annotations = GHC.annotations pstate
+    annotations
+      = GHC.annotations pstate
+
+    annotationMap
+      = GHC.annotations pstate
+      & mapMaybe x
+      & Map.fromListWith (++)
+
+    x = \case
+      ((RealSrcSpan rspan, annot), _) -> Just (rspan, [annot])
+      _ -> Nothing
 
 moduleDecls :: Module -> Decls
 moduleDecls = Decls . GHC.hsmodDecls . unLocated . parsedModule
@@ -110,11 +130,15 @@ moduleImportGroups m = go relevantComments imports
     go _comments imps = [Imports imps]
 
 moduleHeader :: Module -> ModuleHeader
-moduleHeader (Module _ _ (GHC.L _ m)) = ModuleHeader
+moduleHeader (Module _ _ _ (GHC.L _ m)) = ModuleHeader
   { name = GHC.hsmodName m
   , exports = GHC.hsmodExports m
   , haddocks = GHC.hsmodHaddockModHeader m
   }
+
+lookupAnnotation :: GHC.SrcSpan -> Module -> [GHC.AnnKeywordId]
+lookupAnnotation (RealSrcSpan rspan) m = Map.findWithDefault [] rspan (parsedAnnotSrcs m)
+lookupAnnotation (UnhelpfulSpan _) _ = []
 
 unLocated :: GHC.Located a -> a
 unLocated (GHC.L _ a) = a

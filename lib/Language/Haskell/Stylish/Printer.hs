@@ -19,20 +19,21 @@ module Language.Haskell.Stylish.Printer
     -- ** Combinators
   , comma
   , dot
+  , getAnnot
+  , indent
   , newline
   , parenthesize
+  , peekNextCommentPos
   , prefix
   , putComment
   , putText
+  , removeCommentTo
+  , removeLineComment
   , sep
+  , sortedAttachedComments
   , space
   , spaces
   , suffix
-  , indent
-  , peekNextCommentPos
-  , removeLineComment
-  , removeCommentTo
-  , sortedAttachedComments
 
     -- ** Outputable helpers
   , showOutputable
@@ -43,7 +44,7 @@ module Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.GHC (baseDynFlags)
 
 --------------------------------------------------------------------------------
-import           ApiAnnotation                   (AnnotationComment(..))
+import           ApiAnnotation                   (AnnKeywordId, AnnotationComment(..))
 import           SrcLoc                          (GenLocated(..), RealLocated)
 import           SrcLoc                          (Located, SrcSpan(..))
 import           SrcLoc                          (srcSpanStartLine)
@@ -63,6 +64,7 @@ import qualified Outputable                      as GHC
 import           Prelude                         hiding (lines)
 
 --------------------------------------------------------------------------------
+import           Language.Haskell.Stylish.Module (Module, lookupAnnotation)
 
 type P = Printer
 type Lines = [String]
@@ -77,18 +79,19 @@ data PrinterState = PrinterState
   , linePos :: !Int
   , currentLine :: String
   , pendingComments :: [RealLocated AnnotationComment]
+  , parsedModule :: Module
   }
   deriving stock (Generic)
 
-runPrinter :: PrinterConfig -> [RealLocated AnnotationComment] -> Printer a -> (a, Lines)
-runPrinter cfg comments (Printer printer) =
+runPrinter :: PrinterConfig -> [RealLocated AnnotationComment] -> Module -> Printer a -> (a, Lines)
+runPrinter cfg comments m (Printer printer) =
   let
-    (a, PrinterState parsedLines _ startedLine _) = runReaderT printer cfg `runState` PrinterState [] 0 "" comments
+    (a, PrinterState parsedLines _ startedLine _ _) = runReaderT printer cfg `runState` PrinterState [] 0 "" comments m
   in
     (a, parsedLines <> if startedLine == [] then [] else [startedLine])
 
-runPrinter_ :: PrinterConfig -> [RealLocated AnnotationComment] -> Printer a -> Lines
-runPrinter_ cfg comments printer = snd (runPrinter cfg comments printer)
+runPrinter_ :: PrinterConfig -> [RealLocated AnnotationComment] -> Module -> Printer a -> Lines
+runPrinter_ cfg comments m printer = snd (runPrinter cfg comments m printer)
 
 putText :: String -> P ()
 putText txt = do
@@ -172,6 +175,9 @@ removeComment p = do
 
   modify \s -> s { pendingComments = newPendingComments }
   pure $ fmap (\(L _ c) -> c) foundComment
+
+getAnnot :: SrcSpan -> P [AnnKeywordId]
+getAnnot spn = gets (lookupAnnotation spn . parsedModule)
 
 peekNextCommentPos :: P (Maybe SrcSpan)
 peekNextCommentPos = do

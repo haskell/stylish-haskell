@@ -32,6 +32,7 @@ tests = testGroup "Language.Haskell.Stylish.Printer.Imports"
   , testCase "Imports respect groups" ex8
   , testCase "Imports respects whitespace between groups" ex9
   , testCase "Doesn't add extra space after 'hiding'" ex10
+  , testCase "Should be able to format symbolic imports" ex11
   ]
 
 --------------------------------------------------------------------------------
@@ -209,6 +210,18 @@ ex10 = input `assertFormatted` output
     output =
       [ "import A hiding (X)"
       , "import B hiding (X)"
+      ]
+
+ex11 :: Assertion
+ex11 = input `assertFormatted` output
+  where
+    input =
+      [ "import Data.Aeson ((.=))"
+      , "import A  hiding (X)"
+      ]
+    output =
+      [ "import A hiding (X)"
+      , "import Data.Aeson ((.=))"
       ]
 
 --------------------------------------------------------------------------------

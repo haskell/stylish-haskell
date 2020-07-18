@@ -1,4 +1,5 @@
 {-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE DoAndIfThenElse #-}
 {-# LANGUAGE LambdaCase #-}
 module Language.Haskell.Stylish.Step.Imports'
   ( Config (..)
@@ -6,6 +7,7 @@ module Language.Haskell.Stylish.Step.Imports'
   ) where
 
 --------------------------------------------------------------------------------
+import           ApiAnnotation                   (AnnKeywordId(..))
 import           Control.Monad                   (forM_, when)
 import           Data.Function                   ((&))
 import           Data.Foldable                   (toList)
@@ -36,11 +38,11 @@ step = makeStep "Imports" . printImports
 
 --------------------------------------------------------------------------------
 printImports :: Config -> Lines -> Module -> Lines
-printImports _ ls m = formatForImportGroups ls (moduleImportGroups m)
+printImports _ ls m = formatForImportGroups ls m (moduleImportGroups m)
 
-formatForImportGroups :: Lines -> [Imports] -> Lines
-formatForImportGroups ls [] = ls
-formatForImportGroups ls (group : rest) = formatForImportGroups formattedGroup rest
+formatForImportGroups :: Lines -> Module -> [Imports] -> Lines
+formatForImportGroups ls _m [] = ls
+formatForImportGroups ls m (group : rest) = formatForImportGroups formattedGroup m rest
   where
     formattedGroup :: Lines
     formattedGroup =
@@ -63,7 +65,7 @@ formatForImportGroups ls (group : rest) = formatForImportGroups formattedGroup r
           = lastMaybe imports
           & fmap getEndLineUnsafe
 
-        formatting = runPrinter_ PrinterConfig relevantComments do
+        formatting = runPrinter_ PrinterConfig relevantComments m do
           importsWithComments <- sortedAttachedComments imports
           forM_ importsWithComments \(_, importGroup) -> do
             forM_ (sortImportDecls importGroup) \imp -> printPostQualified imp >> newline
@@ -143,9 +145,15 @@ printIeWrappedName lie = unLocated lie & \case
   IEType n -> putText "type" >> space >> printRdrName n
 
 printRdrName :: Located RdrName -> P ()
-printRdrName (L _ n) = case n of
-  Unqual name ->
-    putText (showOutputable name)
+printRdrName (L pos n) = case n of
+  Unqual name -> do
+    annots <- getAnnot pos
+    if AnnOpenP `elem` annots then do
+      putText "("
+      putText (showOutputable name)
+      putText ")"
+    else
+      putText (showOutputable name)
   Qual modulePrefix name ->
     printModulePrefix modulePrefix >> dot >> putText (showOutputable name)
   Orig _ name ->
