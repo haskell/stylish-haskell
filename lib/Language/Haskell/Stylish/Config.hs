@@ -4,6 +4,7 @@
 module Language.Haskell.Stylish.Config
     ( Extensions
     , Config (..)
+    , ExitCodeBehavior (..)
     , defaultConfigBytes
     , configFilePath
     , loadConfig
@@ -62,7 +63,18 @@ data Config = Config
     , configLanguageExtensions :: [String]
     , configNewline            :: IO.Newline
     , configCabal              :: Bool
+    , configExitCode           :: ExitCodeBehavior
     }
+
+--------------------------------------------------------------------------------
+data ExitCodeBehavior
+  = NormalExitBehavior
+  | ErrorOnFormatExitBehavior
+  deriving (Eq)
+
+instance Show ExitCodeBehavior where
+  show NormalExitBehavior = "normal"
+  show ErrorOnFormatExitBehavior = "error_on_format"
 
 --------------------------------------------------------------------------------
 instance FromJSON Config where
@@ -127,6 +139,7 @@ parseConfig (A.Object o) = do
         <*> (o A..:? "language_extensions" A..!= [])
         <*> (o A..:? "newline"             >>= parseEnum newlines IO.nativeNewline)
         <*> (o A..:? "cabal"               A..!= True)
+        <*> (o A..:? "exit_code"           >>= parseEnum exitCodes NormalExitBehavior)
 
     -- Then fill in the steps based on the partial config we already have
     stepValues <- o A..: "steps" :: A.Parser [A.Value]
@@ -137,6 +150,10 @@ parseConfig (A.Object o) = do
         [ ("native", IO.nativeNewline)
         , ("lf",     IO.LF)
         , ("crlf",   IO.CRLF)
+        ]
+    exitCodes =
+        [ ("normal", NormalExitBehavior)
+        , ("error_on_format", ErrorOnFormatExitBehavior)
         ]
 parseConfig _            = mzero
 
