@@ -37,6 +37,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 24" case24
     , testCase "case 25" case25
     , testCase "case 26" case26
+    , testCase "case 27" case27
     ]
 
 case00 :: Assertion
@@ -568,6 +569,25 @@ case26 = expected @=? testStep (step indentIndentStyle) input
        , "      { a :: Int"
        , "      }"
        , "  deriving (FromJSON) via Bla Foo"
+       ]
+
+case27 :: Assertion
+case27 = expected @=? testStep (step sameIndentStyle { cBreakEnums = True }) input
+  where
+    input = unlines
+      [ "module Herp where"
+      , ""
+      , "data Foo = Foo | Bar | Baz deriving (Eq, Show)"
+      ]
+
+    expected = unlines
+       [ "module Herp where"
+       , ""
+       , "data Foo"
+       , "  = Foo"
+       , "  | Bar"
+       , "  | Baz"
+       , "  deriving (Eq, Show)"
        ]
 
 sameSameStyle :: Config

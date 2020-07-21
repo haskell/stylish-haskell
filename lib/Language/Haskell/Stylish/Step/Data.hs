@@ -112,13 +112,14 @@ formatDataDecl cfg m ls ldecl@(L _pos decl) =
       putName decl
 
       when (hasConstructors decl) do
-        case cEquals cfg of
-          _ | singleConstructor decl && not (cBreakSingleConstructors cfg) ->
+        case (cEquals cfg, cFirstField cfg) of
+          (_, Indent x) | isEnum decl && cBreakEnums cfg -> newline >> spaces x
+          (_, _) | singleConstructor decl && not (cBreakSingleConstructors cfg) ->
             space
-          Indent x
+          (Indent x, _)
             | isEnum decl && not (cBreakEnums cfg) -> space
             | otherwise -> newline >> spaces x
-          SameLine -> space
+          (SameLine, _) -> space
 
         putText "="
         space
@@ -132,12 +133,12 @@ formatDataDecl cfg m ls ldecl@(L _pos decl) =
             (consIndent lineLengthAfterEq)
             (fmap (putConstructor cfg lineLengthAfterEq) . dd_cons $ defn)
 
-        when (isEnum decl && not (cBreakEnums cfg) && hasDeriving decl) do
-          space
-
-        when (isRecord decl && hasDeriving decl) do
-          newline
-          spaces (cDeriving cfg)
+        when (hasDeriving decl) do
+          if isEnum decl && not (cBreakEnums cfg) then
+            space
+          else do
+            newline
+            spaces (cDeriving cfg)
 
         sep
           (newline >> spaces (cDeriving cfg))
