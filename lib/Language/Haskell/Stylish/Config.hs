@@ -173,9 +173,10 @@ catalog = M.fromList $
     ]
   else
     -- Done:
-    [ ("imports",       parseImports')
-    , ("module_header", parseModuleHeader)
-    , ("tabs",          parseTabs)
+    [ ("imports",             parseImports')
+    , ("module_header",       parseModuleHeader)
+    , ("records",             parseRecords)
+    , ("tabs",                parseTabs)
     , ("trailing_whitespace", parseTrailingWhitespace)
     ]
     -- To be ported:
