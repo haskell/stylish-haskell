@@ -165,13 +165,21 @@ putDeriving (L pos clause) = do
     L _ StockStrategy -> putText "stock" >> space
     L _ AnyclassStrategy -> putText "anyclass" >> space
     L _ NewtypeStrategy -> putText "newtype" >> space
-    L _ (ViaStrategy _x) -> error "via printing not enabled yet"
+    L _ (ViaStrategy _) -> pure ()
 
   putText "("
   sep
     (comma >> space)
     (fmap putOutputable (fmap hsib_body . unLocated . deriv_clause_tys $ clause))
   putText ")"
+
+  forM_ (deriv_clause_strategy clause) \case
+    L _ (ViaStrategy x) -> do
+      space
+      putText "via"
+      space
+      putOutputable x
+    _ -> pure ()
 
   putEolComment pos
 
