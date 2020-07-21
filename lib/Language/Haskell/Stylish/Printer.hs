@@ -2,6 +2,7 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE DoAndIfThenElse #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 module Language.Haskell.Stylish.Printer
@@ -20,14 +21,20 @@ module Language.Haskell.Stylish.Printer
   , comma
   , dot
   , getAnnot
+  , getCurrentLineLength
+  , getDocstrPrev
   , indent
   , newline
   , parenthesize
   , peekNextCommentPos
   , prefix
   , putComment
+  , putEolComment
+  , putOutputable
+  , putRdrName
   , putText
   , removeCommentTo
+  , removeCommentToEnd
   , removeLineComment
   , sep
   , sortedAttachedComments
@@ -44,10 +51,16 @@ module Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.GHC (baseDynFlags)
 
 --------------------------------------------------------------------------------
-import           ApiAnnotation                   (AnnKeywordId, AnnotationComment(..))
+import           ApiAnnotation                   (AnnKeywordId(..), AnnotationComment(..))
+import           Module                          (ModuleName, moduleNameString)
+import           RdrName                         (RdrName(..))
 import           SrcLoc                          (GenLocated(..), RealLocated)
 import           SrcLoc                          (Located, SrcSpan(..))
-import           SrcLoc                          (srcSpanStartLine)
+import           SrcLoc                          (srcSpanStartLine, srcSpanEndLine)
+import           Outputable                      (Outputable)
+import qualified Outputable                      as GHC
+
+--------------------------------------------------------------------------------
 import           Control.Monad                   (forM_, replicateM, replicateM_)
 import           Control.Monad.Reader            (MonadReader, ReaderT(..))
 import           Control.Monad.State             (MonadState, State)
@@ -55,12 +68,9 @@ import           Control.Monad.State             (runState)
 import           Control.Monad.State             (gets, modify)
 import           Data.Foldable                   (find)
 import           Data.Functor                    ((<&>))
-import           Data.List                       (delete)
+import           Data.List                       (delete, isPrefixOf)
 import           Data.List.NonEmpty              (NonEmpty(..))
 import qualified Data.List.NonEmpty              as NonEmpty
-import           GHC.Generics                    (Generic)
-import           Outputable                      (Outputable)
-import qualified Outputable                      as GHC
 import           Prelude                         hiding (lines)
 
 --------------------------------------------------------------------------------
@@ -81,7 +91,6 @@ data PrinterState = PrinterState
   , pendingComments :: [RealLocated AnnotationComment]
   , parsedModule :: Module
   }
-  deriving stock (Generic)
 
 runPrinter :: PrinterConfig -> [RealLocated AnnotationComment] -> Module -> Printer a -> (a, Lines)
 runPrinter cfg comments m (Printer printer) =
@@ -98,6 +107,9 @@ putText txt = do
   l <- gets currentLine
   modify \s -> s { currentLine = l <> txt }
 
+putOutputable :: Outputable a => a -> P ()
+putOutputable = putText . showOutputable
+
 putComment :: AnnotationComment -> P ()
 putComment = \case
   AnnLineComment s -> putText s
@@ -107,6 +119,58 @@ putComment = \case
   AnnDocSection _ s -> putText s
   AnnDocOptions s -> putText s
   AnnBlockComment s -> putText s
+
+-- | Given the current start line of 'SrcSpan', remove and put EOL comment for same line
+putEolComment :: SrcSpan -> P ()
+putEolComment = \case
+  RealSrcSpan rspan -> do
+    cmt <- removeComment \case
+      L rloc (AnnLineComment s) ->
+        and
+          [ srcSpanStartLine rspan == srcSpanStartLine rloc
+          , not ("-- ^" `isPrefixOf` s)
+          , not ("-- |" `isPrefixOf` s)
+          ]
+      _ -> False
+    forM_ cmt (\c -> space >> putComment c)
+  UnhelpfulSpan _ -> pure ()
+
+putRdrName :: Located RdrName -> P ()
+putRdrName (L pos n) = case n of
+  Unqual name -> do
+    annots <- getAnnot pos
+    if AnnOpenP `elem` annots then do
+      putText "("
+      putText (showOutputable name)
+      putText ")"
+    else if AnnBackquote `elem` annots then do
+      putText "`"
+      putText (showOutputable name)
+      putText "`"
+    else
+      putText (showOutputable name)
+  Qual modulePrefix name ->
+    putModulePrefix modulePrefix >> dot >> putText (showOutputable name)
+  Orig _ name ->
+    putText (showOutputable name)
+  Exact name ->
+    putText (showOutputable name)
+
+getDocstrPrev :: SrcSpan -> P (Maybe AnnotationComment)
+getDocstrPrev = \case
+  UnhelpfulSpan _ -> pure Nothing
+  RealSrcSpan rspan -> do
+    removeComment \case
+      L rloc (AnnLineComment s) ->
+        and
+          [ srcSpanStartLine rspan == srcSpanStartLine rloc
+          , "-- ^" `isPrefixOf` s
+          ]
+      _ -> False
+
+
+putModulePrefix :: ModuleName -> P ()
+putModulePrefix = putText . moduleNameString
 
 newline :: P ()
 newline = do
@@ -153,12 +217,22 @@ removeLineComment line =
   removeComment (\(L rloc _) -> srcSpanStartLine rloc == line)
 
 -- | Removes comments from the state up to 'line' and returns the ones that were removed
-removeCommentTo :: Int -> P [AnnotationComment]
-removeCommentTo line =
+removeCommentTo :: SrcSpan -> P [AnnotationComment]
+removeCommentTo = \case
+  UnhelpfulSpan _ -> pure []
+  RealSrcSpan rspan -> removeCommentTo' (srcSpanStartLine rspan)
+
+removeCommentToEnd :: SrcSpan -> P [AnnotationComment]
+removeCommentToEnd = \case
+  UnhelpfulSpan _ -> pure []
+  RealSrcSpan rspan -> removeCommentTo' (srcSpanEndLine rspan)
+
+removeCommentTo' :: Int -> P [AnnotationComment]
+removeCommentTo' line =
   removeComment (\(L rloc _) -> srcSpanStartLine rloc < line) >>= \case
     Nothing -> pure []
     Just c -> do
-      rest <- removeCommentTo line
+      rest <- removeCommentTo' line
       pure (c : rest)
 
 -- | Remove a comment from the state given predicate 'p'
@@ -179,6 +253,9 @@ removeComment p = do
 getAnnot :: SrcSpan -> P [AnnKeywordId]
 getAnnot spn = gets (lookupAnnotation spn . parsedModule)
 
+getCurrentLineLength :: P Int
+getCurrentLineLength = fmap length (gets currentLine)
+
 peekNextCommentPos :: P (Maybe SrcSpan)
 peekNextCommentPos = do
   gets pendingComments <&> \case
@@ -191,8 +268,8 @@ sortedAttachedComments origs = go origs <&> fmap sortGroup
     sortGroup = fmap (NonEmpty.sortBy compareOutputable)
 
     go :: [Located a] -> P [([AnnotationComment], NonEmpty (Located a))]
-    go (L (RealSrcSpan rloc) x : xs) = do
-      comments <- removeCommentTo (srcSpanStartLine rloc)
+    go (L rspan x : xs) = do
+      comments <- removeCommentTo rspan
       nextGroupStartM <- peekNextCommentPos
 
       let
@@ -203,6 +280,6 @@ sortedAttachedComments origs = go origs <&> fmap sortGroup
           dropWhile (\(L p _) -> p <= nextGroupStart) xs
 
       restGroups <- go (restOf nextGroupStartM)
-      pure $ (comments, L (RealSrcSpan rloc) x :| sameGroupOf nextGroupStartM) : restGroups
+      pure $ (comments, L rspan x :| sameGroupOf nextGroupStartM) : restGroups
 
     go _ = pure []

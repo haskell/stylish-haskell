@@ -229,7 +229,9 @@ parseRecords _ o = Data.step
         <$> (o A..: "equals" >>= parseIndent)
         <*> (o A..: "first_field" >>= parseIndent)
         <*> (o A..: "field_comment")
-        <*> (o A..: "deriving"))
+        <*> (o A..: "deriving")
+        <*> (o A..:? "break_enums" A..!= False)
+        <*> (o A..:? "break_single_constructors" A..!= True))
 
 
 parseIndent :: A.Value -> A.Parser Data.Indent

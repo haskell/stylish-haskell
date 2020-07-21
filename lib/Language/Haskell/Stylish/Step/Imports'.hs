@@ -7,7 +7,6 @@ module Language.Haskell.Stylish.Step.Imports'
   ) where
 
 --------------------------------------------------------------------------------
-import           ApiAnnotation                   (AnnKeywordId(..))
 import           Control.Monad                   (forM_, when)
 import           Data.Function                   ((&))
 import           Data.Foldable                   (toList)
@@ -15,11 +14,13 @@ import           Data.Maybe                      (listToMaybe)
 import           Data.List                       (sortBy)
 import           Data.List.NonEmpty              (NonEmpty)
 import qualified Data.List.NonEmpty              as NonEmpty
+
+--------------------------------------------------------------------------------
 import           GHC.Hs.Extension                (GhcPs)
 import qualified GHC.Hs.Extension                as GHC
 import           GHC.Hs.ImpExp
-import           Module                          (ModuleName, moduleNameString)
-import           RdrName
+import           Module                          (moduleNameString)
+import           RdrName                         (RdrName)
 import           Util                            (lastMaybe)
 import           SrcLoc                          (Located, GenLocated(..))
 
@@ -140,29 +141,9 @@ printImport = \case
 --------------------------------------------------------------------------------
 printIeWrappedName :: LIEWrappedName RdrName -> P ()
 printIeWrappedName lie = unLocated lie & \case
-  IEName n -> printRdrName n
-  IEPattern n -> putText "pattern" >> space >> printRdrName n
-  IEType n -> putText "type" >> space >> printRdrName n
-
-printRdrName :: Located RdrName -> P ()
-printRdrName (L pos n) = case n of
-  Unqual name -> do
-    annots <- getAnnot pos
-    if AnnOpenP `elem` annots then do
-      putText "("
-      putText (showOutputable name)
-      putText ")"
-    else
-      putText (showOutputable name)
-  Qual modulePrefix name ->
-    printModulePrefix modulePrefix >> dot >> putText (showOutputable name)
-  Orig _ name ->
-    putText (showOutputable name)
-  Exact name ->
-    putText (showOutputable name)
-
-printModulePrefix :: ModuleName -> P ()
-printModulePrefix = putText . moduleNameString
+  IEName n -> putRdrName n
+  IEPattern n -> putText "pattern" >> space >> putRdrName n
+  IEType n -> putText "type" >> space >> putRdrName n
 
 moduleName :: LImportDecl GhcPs -> String
 moduleName
@@ -181,9 +162,6 @@ isHiding :: ImportDecl GhcPs -> Bool
 isHiding
   = maybe False fst
   . ideclHiding
-
-unLocated :: Located a -> a
-unLocated (L _ a) = a
 
 sortImportList :: [LIE GhcPs] -> [LIE GhcPs]
 sortImportList = sortBy $ currycated \case

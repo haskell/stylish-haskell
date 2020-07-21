@@ -149,8 +149,6 @@ printExportList (L srcLoc exports) = do
 
   putText ")" >> space >> putText "where" >> attachEolCommentEnd srcLoc
   where
-    putOutputable = putText . showOutputable
-
     printExports :: [([AnnotationComment], NonEmpty (GHC.LIE GhcPs))] -> P ()
     printExports (([], firstInGroup :| groupRest) : rest) = do
       printExport firstInGroup

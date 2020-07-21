@@ -24,6 +24,7 @@ module Language.Haskell.Stylish.Module
   , rawComments
   , rawImports
   , rawModuleAnnotations
+  , rawModuleDecls
   , rawModuleExports
   , rawModuleHaddocks
   , rawModuleName
@@ -140,9 +141,6 @@ lookupAnnotation :: GHC.SrcSpan -> Module -> [GHC.AnnKeywordId]
 lookupAnnotation (RealSrcSpan rspan) m = Map.findWithDefault [] rspan (parsedAnnotSrcs m)
 lookupAnnotation (UnhelpfulSpan _) _ = []
 
-unLocated :: GHC.Located a -> a
-unLocated (GHC.L _ a) = a
-
 --------------------------------------------------------------------------------
 -- | Getter for internal components in imports newtype
 --
@@ -158,6 +156,9 @@ rawModuleExports = exports
 
 rawModuleHaddocks :: ModuleHeader -> Maybe GHC.LHsDocString
 rawModuleHaddocks = haddocks
+
+rawModuleDecls :: Decls -> [LHsDecl GhcPs]
+rawModuleDecls (Decls xs) = xs
 
 rawComments :: Comments -> [GHC.RealLocated GHC.AnnotationComment]
 rawComments (Comments xs) = xs

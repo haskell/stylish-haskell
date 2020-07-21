@@ -4,9 +4,11 @@
 module Language.Haskell.Stylish.GHC
   ( dropAfterLocated
   , dropBeforeLocated
+  , dropBeforeAndAfter
   , getEndLineUnsafe
   , getStartLineUnsafe
   , baseDynFlags
+  , unLocated
   ) where
 
 --------------------------------------------------------------------------------
@@ -45,6 +47,9 @@ dropBeforeLocated loc xs = case loc of
     filter (\(L x _) -> srcSpanStartLine rloc <= srcSpanEndLine x) xs
   _ -> xs
 
+dropBeforeAndAfter :: Located a -> [RealLocated b] -> [RealLocated b]
+dropBeforeAndAfter loc = dropBeforeLocated (Just loc) . dropAfterLocated (Just loc)
+
 baseDynFlags :: GHC.DynFlags
 baseDynFlags = defaultDynFlags fakeSettings llvmConfig
   where
@@ -76,3 +81,5 @@ baseDynFlags = defaultDynFlags fakeSettings llvmConfig
 
     llvmConfig = GHC.LlvmConfig [] []
 
+unLocated :: Located a -> a
+unLocated (L _ a) = a

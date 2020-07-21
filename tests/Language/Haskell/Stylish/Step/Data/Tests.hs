@@ -35,6 +35,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 22" case22
     , testCase "case 23" case23
     , testCase "case 24" case24
+    , testCase "case 25" case25
     ]
 
 case00 :: Assertion
@@ -165,13 +166,18 @@ case07 = expected @=? testStep (step sameSameStyle) input
     expected = input
 
 case08 :: Assertion
-case08 = input @=? testStep (step sameSameStyle) input
+case08 = expected @=? testStep (step sameSameStyle) input
   where
     input = unlines
       [ "module Herp where"
       , ""
       , "data Phantom a ="
       , "  Phantom"
+      ]
+    expected = unlines
+      [ "module Herp where"
+      , ""
+      , "data Phantom a = Phantom"
       ]
 
 case09 :: Assertion
@@ -333,7 +339,8 @@ case16 = expected @=? testStep (step indentIndentStyle) input
       , ""
       , "data Foo"
       , "  = Foo"
-      , "      { a :: Int -- ^ comment"
+      , "      { a :: Int"
+      , "        -- ^ comment"
       , "      }"
       ]
 
@@ -520,17 +527,40 @@ case24 = expected @=? testStep (step indentIndentStyle) input
        , "  deriving (ToJSON)"
        ]
 
+case25 :: Assertion
+case25 = expected @=? testStep (step indentIndentStyle { cBreakSingleConstructors = False }) input
+  where
+    input = unlines
+       [ "data Foo a"
+       , "  = Foo { a :: Int,"
+       , "          a2 :: String"
+       , "          -- ^ some haddock"
+       , "        }"
+       , "  deriving (Eq, Show)"
+       , "  deriving (ToJSON)"
+       ]
+
+    expected = unlines
+       [ "data Foo a = Foo"
+       , "  { a :: Int"
+       , "  , a2 :: String"
+       , "    -- ^ some haddock"
+       , "  }"
+       , "  deriving (Eq, Show)"
+       , "  deriving (ToJSON)"
+       ]
+
 sameSameStyle :: Config
-sameSameStyle = Config SameLine SameLine 2 2
+sameSameStyle = Config SameLine SameLine 2 2 False True
 
 sameIndentStyle :: Config
-sameIndentStyle = Config SameLine (Indent 2) 2 2
+sameIndentStyle = Config SameLine (Indent 2) 2 2 False True
 
 indentSameStyle :: Config
-indentSameStyle = Config (Indent 2) SameLine 2 2
+indentSameStyle = Config (Indent 2) SameLine 2 2 False True
 
 indentIndentStyle :: Config
-indentIndentStyle = Config (Indent 2) (Indent 2) 2 2
+indentIndentStyle = Config (Indent 2) (Indent 2) 2 2 False True
 
 indentIndentStyle4 :: Config
-indentIndentStyle4 = Config (Indent 4) (Indent 4) 4 4
+indentIndentStyle4 = Config (Indent 4) (Indent 4) 4 4 False True
