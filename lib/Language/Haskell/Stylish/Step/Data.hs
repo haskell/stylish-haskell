@@ -57,6 +57,8 @@ data Config = Config
       -- ^ Break enums by newlines and follow the above rules
     , cBreakSingleConstructors :: !Bool
       -- ^ Break single constructors when enabled, e.g. @Indent 2@ will not cause newline after @=@
+    , cVia                     :: !Indent
+      -- ^ Indentation between @via@ clause and start of deriving column start
     } deriving (Show)
 
 step :: Config -> Step
@@ -155,7 +157,7 @@ formatDataDecl cfg m ldecl@(L declPos decl) =
 
         sep
           (newline >> spaces (cDeriving cfg))
-          (fmap putDeriving . unLocated . dd_derivs $ defn)
+          (fmap (putDeriving cfg) . unLocated . dd_derivs $ defn)
 
     consIndent eqIndent = newline >> case (cEquals cfg, cFirstField cfg) of
       (SameLine, SameLine) -> spaces (eqIndent - 2)
@@ -170,8 +172,8 @@ data DataDecl = MkDataDecl
   , dataFixity :: LexicalFixity
   }
 
-putDeriving :: Located (HsDerivingClause GhcPs) -> P ()
-putDeriving (L pos clause) = do
+putDeriving :: Config -> Located (HsDerivingClause GhcPs) -> P ()
+putDeriving cfg (L pos clause) = do
   putText "deriving"
   space
 
@@ -188,11 +190,14 @@ putDeriving (L pos clause) = do
   putText ")"
 
   forM_ (deriv_clause_strategy clause) \case
-    L _ (ViaStrategy x) -> do
-      space
+    L _ (ViaStrategy tp) -> do
+      case cVia cfg of
+        SameLine -> space
+        Indent x -> newline >> spaces (x + cDeriving cfg)
+
       putText "via"
       space
-      putOutputable x
+      putOutputable tp
     _ -> pure ()
 
   putEolComment pos

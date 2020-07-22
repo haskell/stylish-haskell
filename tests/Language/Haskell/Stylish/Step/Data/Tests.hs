@@ -44,6 +44,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 31" case31
     , testCase "case 32" case32
     , testCase "case 33" case33
+    , testCase "case 34" case34
     ]
 
 case00 :: Assertion
@@ -738,17 +739,36 @@ case33 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       , "  = NonEmpty { unNonEmpty :: a }"
       ]
 
+case34 :: Assertion
+case34 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) input
+  where
+    input = unlines
+      [ "module Some.Types where"
+      , ""
+      , "newtype NonEmpty a = NonEmpty { unNonEmpty :: a }"
+      , "     deriving (ToJSON, FromJSON) via Something Magic (NonEmpty a)"
+      ]
+
+    expected = unlines
+      [ "module Some.Types where"
+      , ""
+      , "newtype NonEmpty a"
+      , "  = NonEmpty { unNonEmpty :: a }"
+      , "  deriving (ToJSON, FromJSON)"
+      , "    via Something Magic (NonEmpty a)"
+      ]
+
 sameSameStyle :: Config
-sameSameStyle = Config SameLine SameLine 2 2 False True
+sameSameStyle = Config SameLine SameLine 2 2 False True SameLine
 
 sameIndentStyle :: Config
-sameIndentStyle = Config SameLine (Indent 2) 2 2 False True
+sameIndentStyle = Config SameLine (Indent 2) 2 2 False True SameLine
 
 indentSameStyle :: Config
-indentSameStyle = Config (Indent 2) SameLine 2 2 False True
+indentSameStyle = Config (Indent 2) SameLine 2 2 False True SameLine
 
 indentIndentStyle :: Config
-indentIndentStyle = Config (Indent 2) (Indent 2) 2 2 False True
+indentIndentStyle = Config (Indent 2) (Indent 2) 2 2 False True SameLine
 
 indentIndentStyle4 :: Config
-indentIndentStyle4 = Config (Indent 4) (Indent 4) 4 4 False True
+indentIndentStyle4 = Config (Indent 4) (Indent 4) 4 4 False True SameLine
