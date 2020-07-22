@@ -22,7 +22,6 @@ module Language.Haskell.Stylish.Printer
   , dot
   , getAnnot
   , getCurrentLineLength
-  , getDocstrNext
   , getDocstrPrev
   , indent
   , newline
@@ -135,19 +134,6 @@ putEolComment = \case
       _ -> False
     forM_ cmt (\c -> space >> putComment c)
   UnhelpfulSpan _ -> pure ()
-
-getDocstrNext :: SrcSpan -> P (Maybe AnnotationComment)
-getDocstrNext = \case
-  UnhelpfulSpan _ -> pure Nothing
-  RealSrcSpan rspan -> do
-    removeComment \case
-      L rloc (AnnLineComment s) ->
-        and
-          [ srcSpanStartLine rspan + 1 == srcSpanStartLine rloc
-          , "-- |" `isPrefixOf` s
-          ]
-      _ -> False
-
 
 putRdrName :: Located RdrName -> P ()
 putRdrName (L pos n) = case n of

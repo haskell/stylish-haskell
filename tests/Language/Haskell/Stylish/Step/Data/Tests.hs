@@ -42,6 +42,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 29" case29
     , testCase "case 30" case30
     , testCase "case 31" case31
+    , testCase "case 32" case32
     ]
 
 case00 :: Assertion
@@ -670,7 +671,7 @@ case30 = expected @=? testStep (step sameIndentStyle { cBreakEnums = True }) inp
     input = unlines
       [ "data ReasonCode"
       , "  = MissingTenantId"
-      , "  -- TXN Errors:"
+      , "  -- Transaction errors:"
       , "  | TransactionDoesNotExist"
       , "  | TransactionAlreadyExists"
       , "  -- Engine errors:"
@@ -700,6 +701,24 @@ case31 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True }) i
       , "  -- | No logging, discards all messages"
       , "  | NoLogging"
       , "  deriving stock (Generic, Show)"
+      ]
+
+case32 :: Assertion
+case32 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True }) input
+  where
+    expected = input
+    input = unlines
+      [ "data RejectionReason"
+      , "  -- InvalidState"
+      , "  = CancellationFailed"
+      , "  | TotalAmountConfirmationInvalid"
+      , "  -- InvalidApiUsage"
+      , "  | AccessTokenNotActive"
+      , "  | VersionNotFound"
+      , "  -- ValidationFailed"
+      , "  | BankAccountExists"
+      , "  deriving stock (Generic, Show, Eq)"
+      , "  deriving (ToJSON, FromJSON) via SnakeCaseLowercaseEnumEncoding RejectionReason"
       ]
 
 sameSameStyle :: Config
