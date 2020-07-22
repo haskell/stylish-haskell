@@ -39,6 +39,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 26" case26
     , testCase "case 27" case27
     , testCase "case 28" case28
+    , testCase "case 29" case29
     ]
 
 case00 :: Assertion
@@ -591,11 +592,6 @@ case27 = expected @=? testStep (step sameIndentStyle { cBreakEnums = True }) inp
       , "  deriving (Eq, Show)"
       ]
 
--- This test case shows that if we edit multiple declarations, we fail to
--- properly replace them using the delete + add lines approach
---
--- Instead we most likely need to save the file between each decl and get new
--- positions
 case28 :: Assertion
 case28 = expected @=? testStep (step sameIndentStyle { cBreakEnums = True }) input
   where
@@ -647,6 +643,22 @@ case28 = expected @=? testStep (step sameIndentStyle { cBreakEnums = True }) inp
       , "  | Inactive"
       , "  deriving stock (Generic, Show, Eq, Enum, Bounded)"
       , "  deriving (ToJSON, FromJSON) via SnakeCaseCapsEnumEncoding MandateStatus"
+      ]
+
+case29 :: Assertion
+case29 = expected @=? testStep (step sameIndentStyle) input
+  where
+    input = unlines
+      [ "module Some.Types where"
+      , ""
+      , "data NonEmpty a"
+      , "  = a :| [a]"
+      ]
+
+    expected = unlines
+      [ "module Some.Types where"
+      , ""
+      , "data NonEmpty a = a :| [a]"
       ]
 
 sameSameStyle :: Config

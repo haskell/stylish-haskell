@@ -222,12 +222,19 @@ putConstructor cfg consIndent (L _ cons) = case cons of
   XConDecl x ->
     noExtCon x
   ConDeclH98{..} ->
-    putRdrName con_name >> case con_args of
-      InfixCon {} -> error "infix con"
+    case con_args of
+      InfixCon arg1 arg2 -> do
+        putOutputable arg1
+        space
+        putRdrName con_name
+        space
+        putOutputable arg2
       PrefixCon xs -> do
+        putRdrName con_name
         unless (null xs) space
         sep space (fmap putOutputable xs)
       RecCon (L recPos (L posFirst firstArg : args)) -> do
+        putRdrName con_name
         skipToBrace >> putText "{"
         bracePos <- getCurrentLineLength
         space
@@ -278,8 +285,6 @@ putConstructor cfg consIndent (L _ cons) = case cons of
 
 putNewtypeConstructor :: Config -> Located (ConDecl GhcPs) -> P ()
 putNewtypeConstructor _ (L _ cons) = case cons of
-  XConDecl x ->
-    noExtCon x
   ConDeclH98{..} ->
     putRdrName con_name >> case con_args of
       PrefixCon xs -> do
@@ -293,11 +298,22 @@ putNewtypeConstructor _ (L _ cons) = case cons of
         space
         putText "}"
       RecCon (L _ _args) ->
-        error "encountered newtype with several arguments"
+        error . mconcat $
+          [ "Language.Haskell.Stylish.Step.Data.putNewtypeConstructor: "
+          , "encountered newtype with several arguments"
+          ]
       InfixCon {} ->
-        error "infix newtype constructor"
+        error . mconcat $
+          [ "Language.Haskell.Stylish.Step.Data.putNewtypeConstructor: "
+          , "infix newtype constructor"
+          ]
+  XConDecl x ->
+    noExtCon x
   ConDeclGADT{} ->
-    error "GADT encountered in newtype"
+    error . mconcat $
+      [ "Language.Haskell.Stylish.Step.Data.putNewtypeConstructor: "
+      , "GADT encountered in newtype"
+      ]
 
 putConDeclField :: ConDeclField GhcPs -> P ()
 putConDeclField XConDeclField{} = pure ()
