@@ -14,7 +14,6 @@ import           Prelude                          hiding (init)
 --------------------------------------------------------------------------------
 import           Control.Monad                    (forM_, unless, when)
 import           Data.Function                    ((&))
-import           Data.List                        (foldl')
 import           Data.Maybe                       (listToMaybe, mapMaybe)
 
 --------------------------------------------------------------------------------
@@ -24,7 +23,7 @@ import           GHC.Hs.Decls                     (LHsDecl, HsDecl(..), HsDataDe
 import           GHC.Hs.Decls                     (TyClDecl(..), NewOrData(..))
 import           GHC.Hs.Decls                     (HsDerivingClause(..), DerivStrategy(..))
 import           GHC.Hs.Decls                     (ConDecl(..))
-import           GHC.Hs.Extension                 (GhcPs)
+import           GHC.Hs.Extension                 (GhcPs, noExtCon)
 import           GHC.Hs.Types                     (ConDeclField(..))
 import           GHC.Hs.Types                     (LHsQTyVars(..), HsTyVarBndr(..))
 import           GHC.Hs.Types                     (HsConDetails(..), HsImplicitBndrs(..))
@@ -61,10 +60,11 @@ data Config = Config
     } deriving (Show)
 
 step :: Config -> Step
-step cfg
-  = makeStep "Data"
-  $ \ls m -> foldl' (formatDataDecl cfg m) ls (dataDecls m)
+step cfg = makeStep "Data" \ls m -> applyChanges (changes m) ls
   where
+    changes :: Module -> [ChangeLine]
+    changes m = fmap (formatDataDecl cfg m) (dataDecls m)
+
     dataDecls :: Module -> [Located DataDecl]
     dataDecls
       = mapMaybe toDataDecl
@@ -87,13 +87,11 @@ step cfg
         }
       _ -> Nothing
 
-formatDataDecl :: Config -> Module -> Lines -> Located DataDecl -> Lines
-formatDataDecl cfg m ls ldecl@(L _pos decl) =
-  applyChanges
-    [ delete originalDeclBlock
-    , insert (getStartLineUnsafe ldecl) printedDecl
-    ]
-    ls
+type ChangeLine = Change String
+
+formatDataDecl :: Config -> Module -> Located DataDecl -> ChangeLine
+formatDataDecl cfg m ldecl@(L _pos decl) =
+  change originalDeclBlock (const printedDecl)
   where
     relevantComments :: [RealLocated AnnotationComment]
     relevantComments
@@ -128,6 +126,8 @@ formatDataDecl cfg m ls ldecl@(L _pos decl) =
 
         if isEnum decl && not (cBreakEnums cfg) then
           putUnbrokenEnum cfg decl
+        else if isNewtype decl then
+          forM_ (dd_cons defn) (putNewtypeConstructor cfg)
         else
           sep
             (consIndent lineLengthAfterEq)
@@ -217,8 +217,10 @@ putName decl@MkDataDecl{..} =
 
 putConstructor :: Config -> Int -> Located (ConDecl GhcPs) -> P ()
 putConstructor cfg consIndent (L _ cons) = case cons of
-  ConDeclGADT{} -> error "Stylish does not support GADTs yet, ConDeclGADT encountered"
-  XConDecl{} -> error "XConDecl"
+  ConDeclGADT{} ->
+    error "Stylish does not support GADTs yet, ConDeclGADT encountered"
+  XConDecl x ->
+    noExtCon x
   ConDeclH98{..} ->
     putRdrName con_name >> case con_args of
       InfixCon {} -> error "infix con"
@@ -274,6 +276,29 @@ putConstructor cfg consIndent (L _ cons) = case cons of
         (SameLine, Indent y) -> bracePos - 1 + y - 2
         (Indent x, SameLine) -> bracePos - 1 + x - 2
 
+putNewtypeConstructor :: Config -> Located (ConDecl GhcPs) -> P ()
+putNewtypeConstructor _ (L _ cons) = case cons of
+  XConDecl x ->
+    noExtCon x
+  ConDeclH98{..} ->
+    putRdrName con_name >> case con_args of
+      PrefixCon xs -> do
+        unless (null xs) space
+        sep space (fmap putOutputable xs)
+      RecCon (L _ [L _posFirst firstArg]) -> do
+        space
+        putText "{"
+        space
+        putConDeclField firstArg
+        space
+        putText "}"
+      RecCon (L _ _args) ->
+        error "encountered newtype with several arguments"
+      InfixCon {} ->
+        error "infix newtype constructor"
+  ConDeclGADT{} ->
+    error "GADT encountered in newtype"
+
 putConDeclField :: ConDeclField GhcPs -> P ()
 putConDeclField XConDeclField{} = pure ()
 putConDeclField ConDeclField{..} = do
@@ -301,14 +326,6 @@ isEnum = all isUnary . dd_cons . dataDefn
       L _ (ConDeclH98 {..}) -> case con_args of
         PrefixCon [] -> True
         _ -> False
-      _ -> False
-
-isRecord :: DataDecl -> Bool
-isRecord = any isRecord' . dd_cons . dataDefn
-  where
-    isRecord' :: Located (ConDecl GhcPs) -> Bool
-    isRecord' = \case
-      L _ ConDeclH98{con_args = RecCon {}} -> True
       _ -> False
 
 hasConstructors :: DataDecl -> Bool

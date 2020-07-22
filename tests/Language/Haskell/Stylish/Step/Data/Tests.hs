@@ -38,6 +38,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 25" case25
     , testCase "case 26" case26
     , testCase "case 27" case27
+    , testCase "case 28" case28
     ]
 
 case00 :: Assertion
@@ -581,14 +582,72 @@ case27 = expected @=? testStep (step sameIndentStyle { cBreakEnums = True }) inp
       ]
 
     expected = unlines
-       [ "module Herp where"
-       , ""
-       , "data Foo"
-       , "  = Foo"
-       , "  | Bar"
-       , "  | Baz"
-       , "  deriving (Eq, Show)"
-       ]
+      [ "module Herp where"
+      , ""
+      , "data Foo"
+      , "  = Foo"
+      , "  | Bar"
+      , "  | Baz"
+      , "  deriving (Eq, Show)"
+      ]
+
+-- This test case shows that if we edit multiple declarations, we fail to
+-- properly replace them using the delete + add lines approach
+--
+-- Instead we most likely need to save the file between each decl and get new
+-- positions
+case28 :: Assertion
+case28 = expected @=? testStep (step sameIndentStyle { cBreakEnums = True }) input
+  where
+    input = unlines
+      [ "module Some.Types where"
+      , ""
+      , "newtype BankCode = BankCode {"
+      , "    unBankCode :: Text"
+      , "  }"
+      , "  deriving stock (Generic, Eq, Show)"
+      , "  deriving anyclass (Newtype)"
+      , ""
+      , "newtype CheckDigit = CheckDigit { unCheckDigit :: Text }"
+      , "  deriving stock (Generic, Eq, Show)"
+      , "  deriving anyclass (Newtype)"
+      , ""
+      , "newtype WrappedInt = WrappedInt Int"
+      , "  deriving stock (Generic, Eq, Show)"
+      , "  deriving anyclass (Newtype)"
+      , ""
+      , "data MandateStatus"
+      , "  = Approved"
+      , "  | Failed"
+      , "  | UserCanceled"
+      , "  | Inactive"
+      , "  deriving stock (Generic, Show, Eq, Enum, Bounded)"
+      , "  deriving (ToJSON, FromJSON) via SnakeCaseCapsEnumEncoding MandateStatus"
+      ]
+
+    expected = unlines
+      [ "module Some.Types where"
+      , ""
+      , "newtype BankCode = BankCode { unBankCode :: Text }"
+      , "  deriving stock (Generic, Eq, Show)"
+      , "  deriving anyclass (Newtype)"
+      , ""
+      , "newtype CheckDigit = CheckDigit { unCheckDigit :: Text }"
+      , "  deriving stock (Generic, Eq, Show)"
+      , "  deriving anyclass (Newtype)"
+      , ""
+      , "newtype WrappedInt = WrappedInt Int"
+      , "  deriving stock (Generic, Eq, Show)"
+      , "  deriving anyclass (Newtype)"
+      , ""
+      , "data MandateStatus"
+      , "  = Approved"
+      , "  | Failed"
+      , "  | UserCanceled"
+      , "  | Inactive"
+      , "  deriving stock (Generic, Show, Eq, Enum, Bounded)"
+      , "  deriving (ToJSON, FromJSON) via SnakeCaseCapsEnumEncoding MandateStatus"
+      ]
 
 sameSameStyle :: Config
 sameSameStyle = Config SameLine SameLine 2 2 False True
