@@ -40,6 +40,8 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 27" case27
     , testCase "case 28" case28
     , testCase "case 29" case29
+    , testCase "case 30" case30
+    , testCase "case 31" case31
     ]
 
 case00 :: Assertion
@@ -659,6 +661,45 @@ case29 = expected @=? testStep (step sameIndentStyle) input
       [ "module Some.Types where"
       , ""
       , "data NonEmpty a = a :| [a]"
+      ]
+
+case30 :: Assertion
+case30 = expected @=? testStep (step sameIndentStyle { cBreakEnums = True }) input
+  where
+    expected = input
+    input = unlines
+      [ "data ReasonCode"
+      , "  = MissingTenantId"
+      , "  -- TXN Errors:"
+      , "  | TransactionDoesNotExist"
+      , "  | TransactionAlreadyExists"
+      , "  -- Engine errors:"
+      , "  | EnginePersistenceError"
+      , "  | EngineValidationError"
+      , "  -- | Transaction was created in Info mode"
+      , "  | RegisteredByNetworkEngine"
+      , "  -- | Transaction was created in Routing mode"
+      , "  | SentToNetworkEngine"
+      , "  -- Network connection reasons:"
+      , "  | SentToNetworkConnection"
+      , "  | ReceivedByNetworkConnection"
+      , "  | ValidatedByNetworkConnection"
+      ]
+
+
+case31 :: Assertion
+case31 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True }) input
+  where
+    expected = input
+    input = unlines
+      [ "data ConfiguredLogger"
+      , "  -- | Logs to file"
+      , "  = LogTo FilePath"
+      , "  -- | Logs to stdout"
+      , "  | LogToConsole"
+      , "  -- | No logging, discards all messages"
+      , "  | NoLogging"
+      , "  deriving stock (Generic, Show)"
       ]
 
 sameSameStyle :: Config

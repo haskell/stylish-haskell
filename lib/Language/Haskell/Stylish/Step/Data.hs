@@ -90,7 +90,7 @@ step cfg = makeStep "Data" \ls m -> applyChanges (changes m) ls
 type ChangeLine = Change String
 
 formatDataDecl :: Config -> Module -> Located DataDecl -> ChangeLine
-formatDataDecl cfg m ldecl@(L _pos decl) =
+formatDataDecl cfg m ldecl@(L declPos decl) =
   change originalDeclBlock (const printedDecl)
   where
     relevantComments :: [RealLocated AnnotationComment]
@@ -116,7 +116,10 @@ formatDataDecl cfg m ldecl@(L _pos decl) =
             space
           (Indent x, _)
             | isEnum decl && not (cBreakEnums cfg) -> space
-            | otherwise -> newline >> spaces x
+            | otherwise -> do
+              putEolComment declPos
+              newline >> spaces x
+              getDocstrNext declPos >>= mapM_ \c -> putComment c >> newline >> spaces x
           (SameLine, _) -> space
 
         putText "="
@@ -129,9 +132,19 @@ formatDataDecl cfg m ldecl@(L _pos decl) =
         else if isNewtype decl then
           forM_ (dd_cons defn) (putNewtypeConstructor cfg)
         else
-          sep
-            (consIndent lineLengthAfterEq)
-            (fmap (putConstructor cfg lineLengthAfterEq) . dd_cons $ defn)
+          case dd_cons defn of
+            [] -> pure ()
+            lcon@(L pos _) : consRest -> do
+              unless (cFirstField cfg == SameLine) do
+                removeCommentTo pos >>= mapM_ \c -> putComment c >> newline
+              putConstructor cfg lineLengthAfterEq lcon
+              forM_ consRest \con@(L conPos _) -> do
+                unless (cFirstField cfg == SameLine) do
+                  removeCommentTo conPos >>= mapM_ \c -> consIndent lineLengthAfterEq >> putComment c
+                consIndent lineLengthAfterEq
+                putText "|"
+                space
+                putConstructor cfg lineLengthAfterEq con
 
         when (hasDeriving decl) do
           if isEnum decl && not (cBreakEnums cfg) then
@@ -145,10 +158,10 @@ formatDataDecl cfg m ldecl@(L _pos decl) =
           (fmap putDeriving . unLocated . dd_derivs $ defn)
 
     consIndent eqIndent = newline >> case (cEquals cfg, cFirstField cfg) of
-      (SameLine, SameLine) -> spaces (eqIndent - 2) >> putText "|" >> space
-      (SameLine, Indent y) -> spaces (eqIndent + y - 4) >> putText "|" >> space
-      (Indent x, Indent _) -> spaces x >> putText "|" >> space
-      (Indent x, SameLine) -> spaces x >> putText "|" >> space
+      (SameLine, SameLine) -> spaces (eqIndent - 2)
+      (SameLine, Indent y) -> spaces (eqIndent + y - 4)
+      (Indent x, Indent _) -> spaces x
+      (Indent x, SameLine) -> spaces x
 
 data DataDecl = MkDataDecl
   { dataDeclName :: Located RdrName
