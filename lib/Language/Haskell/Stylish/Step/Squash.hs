@@ -10,8 +10,6 @@ module Language.Haskell.Stylish.Step.Squash
 --------------------------------------------------------------------------------
 import           Data.Maybe                      (mapMaybe)
 import qualified GHC.Hs                          as Hs
-import qualified GHC.Hs.Extension                as E
-import qualified GHC.Hs.Types                    as T
 import qualified SrcLoc                          as S
 
 
@@ -36,36 +34,24 @@ squash left right = do
           in [trimRight pre ++ " " ++ trimLeft post]
     else Nothing
 
-toRealSrcSpan :: S.SrcSpan -> Maybe S.RealSrcSpan
-toRealSrcSpan (S.RealSrcSpan s) = Just s
-toRealSrcSpan _                 = Nothing
-
 
 --------------------------------------------------------------------------------
-squashFieldDecl :: T.ConDeclField E.GhcPs -> Maybe (Change String)
-squashFieldDecl (T.ConDeclField _ names type' _)
+squashFieldDecl :: Hs.ConDeclField Hs.GhcPs -> Maybe (Change String)
+squashFieldDecl (Hs.ConDeclField _ names type' _)
   | null names = Nothing
   | otherwise  = squash (last names) type'
-squashFieldDecl (T.XConDeclField x) = E.noExtCon x
+squashFieldDecl (Hs.XConDeclField x) = Hs.noExtCon x
 
 
 --------------------------------------------------------------------------------
--- Utility: grab the body out of guarded RHSs if it's a single unguarded one.
-unguardedRhsBody :: Hs.GRHSs E.GhcPs a -> Maybe a
-unguardedRhsBody (Hs.GRHSs _ [grhs] _)
-    | Hs.GRHS _ [] body <- S.unLoc grhs = Just body
-unguardedRhsBody _ = Nothing
-
-
---------------------------------------------------------------------------------
-squashMatch :: Hs.Match E.GhcPs (Hs.LHsExpr E.GhcPs) -> Maybe (Change String)
+squashMatch :: Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> Maybe (Change String)
 squashMatch (Hs.Match _ (Hs.FunRhs name _ _) [] grhss) = do
     body <- unguardedRhsBody grhss
     squash name body
 squashMatch (Hs.Match _ _ pats grhss) = do
     body <- unguardedRhsBody grhss
     squash (last pats) body
-squashMatch (Hs.XMatch x) = E.noExtCon x
+squashMatch (Hs.XMatch x) = Hs.noExtCon x
 
 
 --------------------------------------------------------------------------------

@@ -11,10 +11,8 @@ module Language.Haskell.Stylish.Step
 --------------------------------------------------------------------------------
 import qualified Language.Haskell.Exts as H
 
-import qualified Lexer                 as L
 import qualified SrcLoc                as S
-import qualified GHC.Hs                as G
-import qualified GHC.Hs.Extension      as GE
+import qualified GHC.Hs                as Hs
 
 
 --------------------------------------------------------------------------------
@@ -26,7 +24,7 @@ type Lines = [String]
 type Module = (H.Module H.SrcSpanInfo, [H.Comment]) 
 
 -- | Concrete GHC module type
-type GHCModule = (S.Located (G.HsModule GE.GhcPs))
+type GHCModule = (S.Located (Hs.HsModule Hs.GhcPs))
 
 
 --------------------------------------------------------------------------------
