@@ -18,8 +18,16 @@ module Language.Haskell.Stylish.Util
     , withTail
     , withLast
 
+    , toRealSrcSpan
+
     , traceOutputtable
     , traceOutputtableM
+
+    , unguardedRhsBody
+
+    , getConDecls
+    , getConDeclDetails
+    , getLocRecs
     ) where
 
 
@@ -34,6 +42,9 @@ import           Data.Typeable                 (cast)
 import           Debug.Trace                   (trace)
 import qualified Language.Haskell.Exts         as H
 import qualified Outputable
+import qualified OccName                       as O
+import qualified GHC.Hs                        as Hs
+import qualified SrcLoc                        as S
 
 
 --------------------------------------------------------------------------------
@@ -45,12 +56,18 @@ nameToString :: H.Name l -> String
 nameToString (H.Ident _ str)  = str
 nameToString (H.Symbol _ str) = str
 
+-- MAYBE use Name
+nameToString' :: O.OccName -> String 
+nameToString' = O.occNameString
 
 --------------------------------------------------------------------------------
 isOperator :: H.Name l -> Bool
 isOperator = fromMaybe False
     . (fmap (not . isAlpha) . listToMaybe)
     . nameToString
+
+isOperator' :: O.OccName -> Bool
+isOperator' = O.isSymOcc
 
 --------------------------------------------------------------------------------
 indent :: Int -> String -> String
@@ -75,6 +92,15 @@ everything = G.everything (++) (maybeToList . cast)
 --------------------------------------------------------------------------------
 infoPoints :: H.SrcSpanInfo -> [((Int, Int), (Int, Int))]
 infoPoints = H.srcInfoPoints >>> map (H.srcSpanStart &&& H.srcSpanEnd)
+
+-- Info about just a RealSrcSpan
+infoRealSrcSpan :: S.RealSrcSpan -> ((Int,Int),(Int,Int))
+infoRealSrcSpan src = ((startLine, startCol),(endLine, endCol))
+  where
+    startLine = S.srcSpanStartLine src
+    startCol  = S.srcSpanStartCol  src
+    endLine   = S.srcSpanEndLine   src
+    endCol    = S.srcSpanEndCol    src
 
 
 --------------------------------------------------------------------------------
@@ -201,3 +227,41 @@ traceOutputtable title x =
 --------------------------------------------------------------------------------
 traceOutputtableM :: (Outputable.Outputable a, Monad m) => String -> a -> m ()
 traceOutputtableM title x = traceOutputtable title x $ pure ()
+
+
+--------------------------------------------------------------------------------
+-- take the (Maybe) RealSrcSpan out of the SrcSpan
+toRealSrcSpan :: S.SrcSpan -> Maybe S.RealSrcSpan
+toRealSrcSpan (S.RealSrcSpan s) = Just s
+toRealSrcSpan _                 = Nothing
+
+
+--------------------------------------------------------------------------------
+-- Utility: grab the body out of guarded RHSs if it's a single unguarded one.
+unguardedRhsBody :: Hs.GRHSs Hs.GhcPs a -> Maybe a
+unguardedRhsBody (Hs.GRHSs _ [grhs] _)
+    | Hs.GRHS _ [] body <- S.unLoc grhs = Just body
+unguardedRhsBody _ = Nothing
+
+
+--------------------------------------------------------------------------------
+-- get a list of un-located constructors
+getConDecls :: Hs.HsDataDefn Hs.GhcPs -> [Hs.ConDecl Hs.GhcPs]
+getConDecls d@(Hs.HsDataDefn _ _ _ _ _ cons _) = 
+  map S.unLoc $ Hs.dd_cons d
+getConDecls (Hs.XHsDataDefn x) = Hs.noExtCon x
+
+
+--------------------------------------------------------------------------------
+-- get Arguments from data Construction Declaration
+getConDeclDetails :: Hs.ConDecl Hs.GhcPs -> Hs.HsConDeclDetails Hs.GhcPs
+getConDeclDetails d@(Hs.ConDeclGADT _ _ _ _ _ _ _ _) = Hs.con_args d
+getConDeclDetails d@(Hs.ConDeclH98 _ _ _ _ _ _ _)    = Hs.con_args d
+getConDeclDetails (Hs.XConDecl x)                    = Hs.noExtCon x
+
+
+--------------------------------------------------------------------------------
+-- look for Record(s) in a list of Construction Declaration details
+getLocRecs :: [Hs.HsConDeclDetails Hs.GhcPs] -> [S.Located [Hs.LConDeclField Hs.GhcPs]]
+getLocRecs conDeclDetails =
+  [ rec | Hs.RecCon rec <- conDeclDetails ]
