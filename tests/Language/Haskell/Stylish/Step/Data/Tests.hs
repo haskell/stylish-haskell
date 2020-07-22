@@ -43,6 +43,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 30" case30
     , testCase "case 31" case31
     , testCase "case 32" case32
+    , testCase "case 33" case33
     ]
 
 case00 :: Assertion
@@ -719,6 +720,22 @@ case32 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True }) i
       , "  | BankAccountExists"
       , "  deriving stock (Generic, Show, Eq)"
       , "  deriving (ToJSON, FromJSON) via SnakeCaseLowercaseEnumEncoding RejectionReason"
+      ]
+
+case33 :: Assertion
+case33 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False }) input
+  where
+    input = unlines
+      [ "module Some.Types where"
+      , ""
+      , "newtype NonEmpty a = NonEmpty { unNonEmpty :: a }"
+      ]
+
+    expected = unlines
+      [ "module Some.Types where"
+      , ""
+      , "newtype NonEmpty a"
+      , "  = NonEmpty { unNonEmpty :: a }"
       ]
 
 sameSameStyle :: Config

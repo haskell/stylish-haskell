@@ -114,7 +114,7 @@ formatDataDecl cfg m ldecl@(L declPos decl) =
           (_, Indent x) | isEnum decl && cBreakEnums cfg -> do
             putEolComment declPos
             newline >> spaces x
-          (_, _) | singleConstructor decl && not (cBreakSingleConstructors cfg) ->
+          (_, _) | not (isNewtype decl) && singleConstructor decl && not (cBreakSingleConstructors cfg) ->
             space
           (Indent x, _)
             | isEnum decl && not (cBreakEnums cfg) -> space
