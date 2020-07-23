@@ -23,8 +23,8 @@ import           GHC.Hs.Decls                     (LHsDecl, HsDecl(..), HsDataDe
 import           GHC.Hs.Decls                     (TyClDecl(..), NewOrData(..))
 import           GHC.Hs.Decls                     (HsDerivingClause(..), DerivStrategy(..))
 import           GHC.Hs.Decls                     (ConDecl(..))
-import           GHC.Hs.Extension                 (GhcPs, noExtCon)
-import           GHC.Hs.Types                     (ConDeclField(..))
+import           GHC.Hs.Extension                 (GhcPs, NoExtField(..), noExtCon)
+import           GHC.Hs.Types                     (HsType(..), ConDeclField(..))
 import           GHC.Hs.Types                     (LHsQTyVars(..), HsTyVarBndr(..))
 import           GHC.Hs.Types                     (HsConDetails(..), HsImplicitBndrs(..))
 import           RdrName                          (RdrName)
@@ -342,7 +342,17 @@ putConDeclField ConDeclField{..} = do
   space
   putText "::"
   space
-  putOutputable cd_fld_type
+  putFieldType cd_fld_type
+
+putFieldType :: Located (HsType GhcPs) -> P ()
+putFieldType = \case
+  L _pos (HsFunTy NoExtField argTp funTp) -> do
+    putOutputable argTp
+    space
+    putText "->"
+    space
+    putFieldType funTp
+  other -> putOutputable other
 
 newOrData :: DataDecl -> String
 newOrData decl = if isNewtype decl then "newtype" else "data"

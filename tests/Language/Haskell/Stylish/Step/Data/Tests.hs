@@ -45,6 +45,8 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 32" case32
     , testCase "case 33" case33
     , testCase "case 34" case34
+    , testCase "case 35" case35
+    , testCase "case 36" case36
     ]
 
 case00 :: Assertion
@@ -756,6 +758,48 @@ case34 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) inpu
       , "  = NonEmpty { unNonEmpty :: a }"
       , "  deriving (ToJSON, FromJSON)"
       , "    via Something Magic (NonEmpty a)"
+      ]
+
+case35 :: Assertion
+case35 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False }) input
+  where
+    input = unlines
+      [ "module Some.Types where"
+      , ""
+      , "data Foo = Foo"
+      , "  { _transfer :: MonetaryAmount"
+      , "      -> TransactionId"
+      , "      -> m (Either CreditTransferError TransactionId)"
+      , "  }"
+      ]
+
+    expected = unlines
+      [ "module Some.Types where"
+      , ""
+      , "data Foo = Foo"
+      , "  { _transfer :: MonetaryAmount -> TransactionId -> m (Either CreditTransferError TransactionId)"
+      , "  }"
+      ]
+
+case36 :: Assertion
+case36 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False }) input
+  where
+    input = unlines
+      [ "module Some.Types where"
+      , ""
+      , "data Foo = Foo"
+      , "  { _transfer :: (a -> b)"
+      , "      -> TransactionId"
+      , "      -> m (Either CreditTransferError TransactionId)"
+      , "  }"
+      ]
+
+    expected = unlines
+      [ "module Some.Types where"
+      , ""
+      , "data Foo = Foo"
+      , "  { _transfer :: (a -> b) -> TransactionId -> m (Either CreditTransferError TransactionId)"
+      , "  }"
       ]
 
 sameSameStyle :: Config
