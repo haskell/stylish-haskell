@@ -55,6 +55,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 42" case42
     , testCase "case 43" case43
     , testCase "case 44" case44
+    , testCase "case 45" case45
     ]
 
 case00 :: Assertion
@@ -1004,6 +1005,26 @@ case44 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       , "        ]"
       , "        (UntaggedEncoded CreditTransfer)"
       ]
+    expected = unlines
+      [ "module X where"
+      , ""
+      , "data CreditTransfer = CreditTransfer"
+      , "  { amount :: Amount"
+      , "    -- ^ 1 <= amount <= 999_999_999_999"
+      , "  , date :: Day"
+      , "  , accountNumber :: Account"
+      , "  }"
+      , "  -- Note that the bcio name has \"transaction\""
+      , "  -- rather than \"transfer\""
+      , "  deriving stock (Show, Eq, Generic)"
+      , "  deriving (ToJSON, FromJSON)"
+      , "    via AddConstTextFields '[\"notification_type\" ':= \"credit_transaction\"] (UntaggedEncoded CreditTransfer)"
+      ]
+
+case45 :: Assertion
+case45 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False, cVia = Indent 2 }) input
+  where
+    input = expected
     expected = unlines
       [ "module X where"
       , ""

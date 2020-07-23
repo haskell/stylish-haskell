@@ -154,6 +154,8 @@ formatDataDecl cfg@Config{..} m ldecl@(L declPos decl) =
           if isEnum decl && not cBreakEnums then
             space
           else do
+            removeCommentTo (defn & dd_derivs & \(L pos _) -> pos) >>=
+              mapM_ \c -> newline >> spaces cDeriving >> putComment c
             newline
             spaces cDeriving
 
