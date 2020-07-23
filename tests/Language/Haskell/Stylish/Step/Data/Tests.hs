@@ -54,6 +54,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 41" case41
     , testCase "case 42" case42
     , testCase "case 43" case43
+    , testCase "case 44" case44
     ]
 
 case00 :: Assertion
@@ -974,6 +975,49 @@ case43 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       , "  -- | Kafka error received"
       , "  | KafkaIssue KafkaError"
       , "  deriving (Eq, Show)"
+      ]
+
+-- This test showcases a difficult to solve issue. If the comment is in a
+-- deriving clause, it's very hard to guess the correct position of the entire
+-- block. E.g. the deriving clause itself has the wrong position. However, if
+-- we look at all deriving clauses we know where they start and end.
+--
+-- This means that we've needed to make the decision to put all inline comments
+-- before the deriving clause itself
+case44 :: Assertion
+case44 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False, cVia = Indent 2 }) input
+  where
+    input = unlines
+      [ "module X where"
+      , ""
+      , " data CreditTransfer = CreditTransfer"
+      , "   { amount :: Amount -- ^ 1 <= amount <= 999_999_999_999"
+      , "   , date :: Day"
+      , "   , accountNumber :: Account"
+      , "   }"
+      , "   deriving stock (Show, Eq, Generic)"
+      , "   deriving (ToJSON, FromJSON) via"
+      , "     AddConstTextFields"
+      , "       '[\"notification_type\" ':= \"credit_transaction\""
+      , "         -- Note that the bcio name has \"transaction\""
+      , "         -- rather than \"transfer\""
+      , "        ]"
+      , "        (UntaggedEncoded CreditTransfer)"
+      ]
+    expected = unlines
+      [ "module X where"
+      , ""
+      , "data CreditTransfer = CreditTransfer"
+      , "  { amount :: Amount"
+      , "    -- ^ 1 <= amount <= 999_999_999_999"
+      , "  , date :: Day"
+      , "  , accountNumber :: Account"
+      , "  }"
+      , "  -- Note that the bcio name has \"transaction\""
+      , "  -- rather than \"transfer\""
+      , "  deriving stock (Show, Eq, Generic)"
+      , "  deriving (ToJSON, FromJSON)"
+      , "    via AddConstTextFields '[\"notification_type\" ':= \"credit_transaction\"] (UntaggedEncoded CreditTransfer)"
       ]
 
 sameSameStyle :: Config

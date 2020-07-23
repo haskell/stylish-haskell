@@ -30,6 +30,7 @@ module Language.Haskell.Stylish.Printer
   , putComment
   , putEolComment
   , putOutputable
+  , putAllSpanComments
   , putType
   , putRdrName
   , putText
@@ -117,6 +118,16 @@ putText txt = do
 -- | Print an 'Outputable'
 putOutputable :: Outputable a => a -> P ()
 putOutputable = putText . showOutputable
+
+putAllSpanComments :: P () -> SrcSpan -> P ()
+putAllSpanComments suff = \case
+  UnhelpfulSpan _ -> pure ()
+  RealSrcSpan rspan -> do
+    cmts <- removeComments \(L rloc _) ->
+      srcSpanStartLine rloc >= srcSpanStartLine rspan &&
+      srcSpanEndLine rloc <= srcSpanEndLine rspan
+
+    forM_ cmts (\c -> putComment c >> suff)
 
 -- | Print any comment
 putComment :: AnnotationComment -> P ()
@@ -324,6 +335,15 @@ removeCommentTo' line =
     Just c -> do
       rest <- removeCommentTo' line
       pure (c : rest)
+
+-- | Removes comments from the state while given predicate 'p' is true
+removeComments :: (RealLocated AnnotationComment -> Bool) -> P [AnnotationComment]
+removeComments p =
+  removeComment p >>= \case
+    Just c -> do
+      rest <- removeComments p
+      pure (c : rest)
+    Nothing -> pure []
 
 -- | Remove a comment from the state given predicate 'p'
 removeComment :: (RealLocated AnnotationComment -> Bool) -> P (Maybe AnnotationComment)

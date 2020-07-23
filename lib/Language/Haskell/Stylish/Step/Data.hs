@@ -14,6 +14,7 @@ import           Prelude                          hiding (init)
 --------------------------------------------------------------------------------
 import           Control.Monad                    (forM_, unless, when)
 import           Data.Function                    ((&))
+import           Data.Functor                     ((<&>))
 import           Data.Maybe                       (listToMaybe, mapMaybe)
 
 --------------------------------------------------------------------------------
@@ -92,7 +93,7 @@ step cfg = makeStep "Data" \ls m -> applyChanges (changes m) ls
 type ChangeLine = Change String
 
 formatDataDecl :: Config -> Module -> Located DataDecl -> ChangeLine
-formatDataDecl cfg m ldecl@(L declPos decl) =
+formatDataDecl cfg@Config{..} m ldecl@(L declPos decl) =
   change originalDeclBlock (const printedDecl)
   where
     relevantComments :: [RealLocated AnnotationComment]
@@ -112,14 +113,14 @@ formatDataDecl cfg m ldecl@(L declPos decl) =
       putName decl
 
       when (hasConstructors decl) do
-        case (cEquals cfg, cFirstField cfg) of
-          (_, Indent x) | isEnum decl && cBreakEnums cfg -> do
+        case (cEquals, cFirstField) of
+          (_, Indent x) | isEnum decl && cBreakEnums -> do
             putEolComment declPos
             newline >> spaces x
-          (_, _) | not (isNewtype decl) && singleConstructor decl && not (cBreakSingleConstructors cfg) ->
+          (_, _) | not (isNewtype decl) && singleConstructor decl && not cBreakSingleConstructors ->
             space
           (Indent x, _)
-            | isEnum decl && not (cBreakEnums cfg) -> space
+            | isEnum decl && not cBreakEnums -> space
             | otherwise -> do
               putEolComment declPos
               newline >> spaces x
@@ -127,7 +128,7 @@ formatDataDecl cfg m ldecl@(L declPos decl) =
 
         lineLengthAfterEq <- fmap (+2) getCurrentLineLength
 
-        if isEnum decl && not (cBreakEnums cfg) then
+        if isEnum decl && not cBreakEnums then
           putText "=" >> space >> putUnbrokenEnum cfg decl
         else if isNewtype decl then
           putText "=" >> space >> forM_ (dd_cons defn) (putNewtypeConstructor cfg)
@@ -135,13 +136,13 @@ formatDataDecl cfg m ldecl@(L declPos decl) =
           case dd_cons defn of
             [] -> pure ()
             lcon@(L pos _) : consRest -> do
-              unless (cFirstField cfg == SameLine || null consRest && not (cBreakSingleConstructors cfg)) do
+              unless (cFirstField == SameLine || null consRest && not cBreakSingleConstructors) do
                 removeCommentTo pos >>= mapM_ \c -> putComment c >> consIndent lineLengthAfterEq
               putText "="
               space
               putConstructor cfg lineLengthAfterEq lcon
               forM_ consRest \con@(L conPos _) -> do
-                unless (cFirstField cfg == SameLine) do
+                unless (cFirstField == SameLine) do
                   removeCommentTo conPos >>= mapM_ \c -> consIndent lineLengthAfterEq >> putComment c
                 consIndent lineLengthAfterEq
                 putText "|"
@@ -150,17 +151,17 @@ formatDataDecl cfg m ldecl@(L declPos decl) =
                 putEolComment conPos
 
         when (hasDeriving decl) do
-          if isEnum decl && not (cBreakEnums cfg) then
+          if isEnum decl && not cBreakEnums then
             space
           else do
             newline
-            spaces (cDeriving cfg)
+            spaces cDeriving
 
-        sep
-          (newline >> spaces (cDeriving cfg))
-          (fmap (putDeriving cfg) . unLocated . dd_derivs $ defn)
+        sep (newline >> spaces cDeriving) $ defn & dd_derivs & \(L pos ds) -> ds <&> \d -> do
+          putAllSpanComments (newline >> spaces cDeriving) pos
+          putDeriving cfg d
 
-    consIndent eqIndent = newline >> case (cEquals cfg, cFirstField cfg) of
+    consIndent eqIndent = newline >> case (cEquals, cFirstField) of
       (SameLine, SameLine) -> spaces (eqIndent - 2)
       (SameLine, Indent y) -> spaces (eqIndent + y - 4)
       (Indent x, Indent _) -> spaces x
