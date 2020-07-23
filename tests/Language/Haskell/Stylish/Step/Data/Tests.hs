@@ -48,6 +48,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 35" case35
     , testCase "case 36" case36
     , testCase "case 37" case37
+    , testCase "case 38" case38
     ]
 
 case00 :: Assertion
@@ -828,6 +829,40 @@ case37 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) inpu
       , "    via AddConstTextFields '[\"type0\" := \"undo\", \"type1\" := \"undo\", \"reversal_indicator\" := \"Undo\"] FlowDataDetails"
       ]
 
+case38 :: Assertion
+case38 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) input
+  where
+    input = unlines
+      [ "data Flat = Flat"
+      , "  { foo :: Int"
+      , "  , bar :: Text"
+      , "  , baz :: Double"
+      , "  , qux :: Bool"
+      , "  }"
+      , "  deriving stock (Generic, Show, Eq)"
+      , "  deriving (FromJSON, ToJSON)"
+      , "    via GenericEncoded"
+      , "      '[ FieldLabelModifier :="
+      , "        '[ \"foo\" ==> \"nestFoo#foo\""
+      , "         , \"bar\" ==> \"nestBar#bar\""
+      , "         , \"baz\" ==> \"nestFoo#baz\""
+      , "         ]"
+      , "       ]"
+      , "      Flat"
+      ]
+
+    expected = unlines
+      [ "data Flat"
+      , "  = Flat"
+      , "      { foo :: Int"
+      , "      , bar :: Text"
+      , "      , baz :: Double"
+      , "      , qux :: Bool"
+      , "      }"
+      , "  deriving stock (Generic, Show, Eq)"
+      , "  deriving (FromJSON, ToJSON)"
+      , "    via GenericEncoded '[FieldLabelModifier := '[\"foo\" ==> \"nestFoo#foo\", \"bar\" ==> \"nestBar#bar\", \"baz\" ==> \"nestFoo#baz\"]] Flat"
+      ]
 sameSameStyle :: Config
 sameSameStyle = Config SameLine SameLine 2 2 False True SameLine
 

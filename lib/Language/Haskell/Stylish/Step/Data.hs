@@ -371,6 +371,12 @@ putType = \case
       (comma >> space)
       (fmap putType xs)
     putText ")"
+  L _pos (HsOpTy NoExtField lhs op rhs) -> do
+    putType lhs
+    space
+    putRdrName op
+    space
+    putType rhs
   other -> putOutputable other
 
 newOrData :: DataDecl -> String
