@@ -147,6 +147,7 @@ formatDataDecl cfg m ldecl@(L declPos decl) =
                 putText "|"
                 space
                 putConstructor cfg lineLengthAfterEq con
+                putEolComment conPos
 
         when (hasDeriving decl) do
           if isEnum decl && not (cBreakEnums cfg) then

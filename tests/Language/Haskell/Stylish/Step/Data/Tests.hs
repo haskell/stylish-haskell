@@ -52,6 +52,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 39" case39
     , testCase "case 40" case40
     , testCase "case 41" case41
+    , testCase "case 42" case42
     ]
 
 case00 :: Assertion
@@ -942,6 +943,20 @@ case41 = expected @=? testStep (step indentIndentStyle) input
       , "  deriving (ToJSON, FromJSON) via IdiomaticWithDescription CallbackDesc Callback"
       , "  deriving (HasGen) via Generically Callback"
       , "  deriving (FromField) via JsonField Callback"
+      ]
+
+case42 :: Assertion
+case42 = expected @=? testStep (step indentIndentStyle) input
+  where
+    input = expected
+
+    expected = unlines
+      [ "module X where"
+      , ""
+      , "data SignupError"
+      , "  = IdempotencyConflict"
+      , "  | ValidationError Text -- TODO: might be a sumtype of possible error codes"
+      , "  deriving stock (Generic, Show, Eq)"
       ]
 
 sameSameStyle :: Config
