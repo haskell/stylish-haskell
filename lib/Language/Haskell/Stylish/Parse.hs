@@ -156,7 +156,7 @@ parseModuleHSE extraExts mfp string = do
     case H.parseModuleWithComments mode processed of
         H.ParseOk md -> return md
         err          -> Left $
-            "Language.Haskell.Stylish.Parse.parseModule: could not parse " ++
+            "Language.Haskell.Stylish.Parse.parseModuleHSE: could not parse " ++
             fp ++ ": " ++ show err
   where
     -- | Remove shebang lines
