@@ -23,8 +23,8 @@ import           GHC.Hs.Decls                     (LHsDecl, HsDecl(..), HsDataDe
 import           GHC.Hs.Decls                     (TyClDecl(..), NewOrData(..))
 import           GHC.Hs.Decls                     (HsDerivingClause(..), DerivStrategy(..))
 import           GHC.Hs.Decls                     (ConDecl(..))
-import           GHC.Hs.Extension                 (GhcPs, NoExtField(..), noExtCon)
-import           GHC.Hs.Types                     (HsType(..), ConDeclField(..))
+import           GHC.Hs.Extension                 (GhcPs, noExtCon)
+import           GHC.Hs.Types                     (ConDeclField(..))
 import           GHC.Hs.Types                     (LHsQTyVars(..), HsTyVarBndr(..))
 import           GHC.Hs.Types                     (HsConDetails(..), HsImplicitBndrs(..))
 import           RdrName                          (RdrName)
@@ -339,86 +339,20 @@ putNewtypeConstructor _ (L _ cons) = case cons of
       ]
 
 putConDeclField :: ConDeclField GhcPs -> P ()
-putConDeclField XConDeclField{} = pure ()
-putConDeclField ConDeclField{..} = do
-  sep
-    (comma >> space)
-    (fmap (putText . showOutputable) cd_fld_names)
-  space
-  putText "::"
-  space
-  putType cd_fld_type
-
-putType :: Located (HsType GhcPs) -> P ()
-putType ltp = case unLocated ltp of
-  HsFunTy NoExtField argTp funTp -> do
-    putOutputable argTp
-    space
-    putText "->"
-    space
-    putType funTp
-  HsAppTy NoExtField t1 t2 ->
-    putType t1 >> space >> putType t2
-  HsExplicitListTy NoExtField _ xs -> do
-    putText "'["
+putConDeclField = \case
+  ConDeclField{..} -> do
     sep
       (comma >> space)
-      (fmap putType xs)
-    putText "]"
-  HsExplicitTupleTy NoExtField xs -> do
-    putText "'("
-    sep
-      (comma >> space)
-      (fmap putType xs)
-    putText ")"
-  HsOpTy NoExtField lhs op rhs -> do
-    putType lhs
+      (fmap (putText . showOutputable) cd_fld_names)
     space
-    putRdrName op
+    putText "::"
     space
-    putType rhs
-  HsTyVar NoExtField _ rdrName ->
-    putRdrName rdrName
-  HsTyLit _ tp ->
-    putOutputable tp
-  HsParTy _ tp -> do
-    putText "("
-    putType tp
-    putText ")"
-  HsTupleTy NoExtField _ xs -> do
-    putText "("
-    sep
-      (comma >> space)
-      (fmap putType xs)
-    putText ")"
-  HsForAllTy NoExtField _ _ _ ->
-    putOutputable ltp
-  HsQualTy NoExtField _ _ ->
-    putOutputable ltp
-  HsAppKindTy _ _ _ ->
-    putOutputable ltp
-  HsListTy _ _ ->
-    putOutputable ltp
-  HsSumTy _ _ ->
-    putOutputable ltp
-  HsIParamTy _ _ _ ->
-    putOutputable ltp
-  HsKindSig _ _ _ ->
-    putOutputable ltp
-  HsStarTy _ _ ->
-    putOutputable ltp
-  HsSpliceTy _ _ ->
-    putOutputable ltp
-  HsDocTy _ _ _ ->
-    putOutputable ltp
-  HsBangTy _ _ _ ->
-    putOutputable ltp
-  HsRecTy _ _ ->
-    putOutputable ltp
-  HsWildCardTy _ ->
-    putOutputable ltp
-  XHsType _ ->
-    putOutputable ltp
+    putType cd_fld_type
+  XConDeclField{} ->
+    error . mconcat $
+      [ "Language.Haskell.Stylish.Step.Data.putConDeclField: "
+      , "XConDeclField encountered"
+      ]
 
 newOrData :: DataDecl -> String
 newOrData decl = if isNewtype decl then "newtype" else "data"

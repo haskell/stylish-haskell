@@ -31,6 +31,7 @@ module Language.Haskell.Stylish.Printer
   , putComment
   , putEolComment
   , putOutputable
+  , putType
   , putRdrName
   , putText
   , removeCommentTo
@@ -52,6 +53,8 @@ import           Language.Haskell.Stylish.GHC (baseDynFlags)
 
 --------------------------------------------------------------------------------
 import           ApiAnnotation                   (AnnKeywordId(..), AnnotationComment(..))
+import           GHC.Hs.Extension                (GhcPs, NoExtField(..))
+import           GHC.Hs.Types                    (HsType(..))
 import           Module                          (ModuleName, moduleNameString)
 import           RdrName                         (RdrName(..))
 import           SrcLoc                          (GenLocated(..), RealLocated)
@@ -75,6 +78,7 @@ import           Prelude                         hiding (lines)
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Module (Module, lookupAnnotation)
+import           Language.Haskell.Stylish.GHC    (unLocated)
 
 type P = Printer
 type Lines = [String]
@@ -174,6 +178,77 @@ getDocstrPrev = \case
 
 putModulePrefix :: ModuleName -> P ()
 putModulePrefix = putText . moduleNameString
+
+putType :: Located (HsType GhcPs) -> P ()
+putType ltp = case unLocated ltp of
+  HsFunTy NoExtField argTp funTp -> do
+    putOutputable argTp
+    space
+    putText "->"
+    space
+    putType funTp
+  HsAppTy NoExtField t1 t2 ->
+    putType t1 >> space >> putType t2
+  HsExplicitListTy NoExtField _ xs -> do
+    putText "'["
+    sep
+      (comma >> space)
+      (fmap putType xs)
+    putText "]"
+  HsExplicitTupleTy NoExtField xs -> do
+    putText "'("
+    sep
+      (comma >> space)
+      (fmap putType xs)
+    putText ")"
+  HsOpTy NoExtField lhs op rhs -> do
+    putType lhs
+    space
+    putRdrName op
+    space
+    putType rhs
+  HsTyVar NoExtField _ rdrName ->
+    putRdrName rdrName
+  HsTyLit _ tp ->
+    putOutputable tp
+  HsParTy _ tp -> do
+    putText "("
+    putType tp
+    putText ")"
+  HsTupleTy NoExtField _ xs -> do
+    putText "("
+    sep
+      (comma >> space)
+      (fmap putType xs)
+    putText ")"
+  HsForAllTy NoExtField _ _ _ ->
+    putOutputable ltp
+  HsQualTy NoExtField _ _ ->
+    putOutputable ltp
+  HsAppKindTy _ _ _ ->
+    putOutputable ltp
+  HsListTy _ _ ->
+    putOutputable ltp
+  HsSumTy _ _ ->
+    putOutputable ltp
+  HsIParamTy _ _ _ ->
+    putOutputable ltp
+  HsKindSig _ _ _ ->
+    putOutputable ltp
+  HsStarTy _ _ ->
+    putOutputable ltp
+  HsSpliceTy _ _ ->
+    putOutputable ltp
+  HsDocTy _ _ _ ->
+    putOutputable ltp
+  HsBangTy _ _ _ ->
+    putOutputable ltp
+  HsRecTy _ _ ->
+    putOutputable ltp
+  HsWildCardTy _ ->
+    putOutputable ltp
+  XHsType _ ->
+    putOutputable ltp
 
 newline :: P ()
 newline = do
