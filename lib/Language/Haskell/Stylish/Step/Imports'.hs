@@ -34,7 +34,7 @@ import           Language.Haskell.Stylish.GHC
 import           Language.Haskell.Stylish.Step.Imports (Options(..))
 
 step :: Options -> Step
-step = makeStep "Imports" . printImports
+step = makeStep "Imports (ghc-lib-parser)" . printImports
 
 --------------------------------------------------------------------------------
 printImports :: Options -> Lines -> Module -> Lines
