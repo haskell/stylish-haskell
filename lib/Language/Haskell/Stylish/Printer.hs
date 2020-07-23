@@ -147,6 +147,9 @@ putRdrName (L pos n) = case n of
       putText "`"
       putText (showOutputable name)
       putText "`"
+    else if AnnSimpleQuote `elem` annots then do
+      putText "'"
+      putText (showOutputable name)
     else
       putText (showOutputable name)
   Qual modulePrefix name ->
