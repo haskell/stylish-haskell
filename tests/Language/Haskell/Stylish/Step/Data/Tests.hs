@@ -47,6 +47,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 34" case34
     , testCase "case 35" case35
     , testCase "case 36" case36
+    , testCase "case 37" case37
     ]
 
 case00 :: Assertion
@@ -800,6 +801,31 @@ case36 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       , "data Foo = Foo"
       , "  { _transfer :: (a -> b) -> TransactionId -> m (Either CreditTransferError TransactionId)"
       , "  }"
+      ]
+
+case37 :: Assertion
+case37 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) input
+  where
+    input = unlines
+      [ "module Some.Types where"
+      , ""
+      , "newtype UndoFlowData"
+      , "  = UndoFlowData { flowDataDetails :: FlowDataDetails }"
+      , "  deriving stock (Generic, Eq, Show)"
+      , "  deriving (ToJSON, FromJSON)"
+      , "    via AddConstTextFields '[\"type0\" := \"undo\","
+      , "                             \"type1\" := \"undo\","
+      , "                     \"reversal_indicator\" := \"Undo\"] FlowDataDetails"
+      ]
+
+    expected = unlines
+      [ "module Some.Types where"
+      , ""
+      , "newtype UndoFlowData"
+      , "  = UndoFlowData { flowDataDetails :: FlowDataDetails }"
+      , "  deriving stock (Generic, Eq, Show)"
+      , "  deriving (ToJSON, FromJSON)"
+      , "    via AddConstTextFields '[\"type0\" := \"undo\", \"type1\" := \"undo\", \"reversal_indicator\" := \"Undo\"] FlowDataDetails"
       ]
 
 sameSameStyle :: Config

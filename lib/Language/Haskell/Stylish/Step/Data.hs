@@ -197,10 +197,15 @@ putDeriving cfg (L pos clause) = do
 
       putText "via"
       space
-      putOutputable tp
+      putType (getType tp)
     _ -> pure ()
 
   putEolComment pos
+
+  where
+    getType = \case
+      HsIB _ tp -> tp
+      XHsImplicitBndrs x -> noExtCon x
 
 putUnbrokenEnum :: Config -> DataDecl -> P ()
 putUnbrokenEnum cfg decl =
@@ -342,16 +347,30 @@ putConDeclField ConDeclField{..} = do
   space
   putText "::"
   space
-  putFieldType cd_fld_type
+  putType cd_fld_type
 
-putFieldType :: Located (HsType GhcPs) -> P ()
-putFieldType = \case
+putType :: Located (HsType GhcPs) -> P ()
+putType = \case
   L _pos (HsFunTy NoExtField argTp funTp) -> do
     putOutputable argTp
     space
     putText "->"
     space
-    putFieldType funTp
+    putType funTp
+  L _pos (HsAppTy NoExtField t1 t2) ->
+    putType t1 >> space >> putType t2
+  L _pos (HsExplicitListTy NoExtField _ xs) -> do
+    putText "'["
+    sep
+      (comma >> space)
+      (fmap putType xs)
+    putText "]"
+  L _pos (HsExplicitTupleTy NoExtField xs) -> do
+    putText "'("
+    sep
+      (comma >> space)
+      (fmap putType xs)
+    putText ")"
   other -> putOutputable other
 
 newOrData :: DataDecl -> String
