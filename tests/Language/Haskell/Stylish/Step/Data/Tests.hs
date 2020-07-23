@@ -49,6 +49,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 36" case36
     , testCase "case 37" case37
     , testCase "case 38" case38
+    , testCase "case 39" case39
     ]
 
 case00 :: Assertion
@@ -862,6 +863,40 @@ case38 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) inpu
       , "  deriving stock (Generic, Show, Eq)"
       , "  deriving (FromJSON, ToJSON)"
       , "    via GenericEncoded '[FieldLabelModifier := '[\"foo\" ==> \"nestFoo#foo\", \"bar\" ==> \"nestBar#bar\", \"baz\" ==> \"nestFoo#baz\"]] Flat"
+      ]
+
+case39 :: Assertion
+case39 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) input
+  where
+    input = unlines
+      [ "data CreditTransfer = CreditTransfer"
+      , "  { nestedCreditorInfo :: CreditorInfo"
+      , "  }"
+      , "  deriving stock (Show, Eq, Generic)"
+      , "  deriving (ToJSON, FromJSON) via"
+      , "    ( UntaggedEncoded NordeaCreditTransfer"
+      , "    & AddConstTextFields"
+      , "      '[ \"request_type\" ':= \"credit_transfer\""
+      , "       , \"provider\" ':= \"nordea\""
+      , "       ]"
+      , "    & FlattenFields '[\"nested_creditor_info\"]"
+      , "    & RenameKeys"
+      , "        '[ \"nested_creditor_info.creditor_agent_bic\" ==> \"creditor_agent_bic\""
+      , "         , \"nested_creditor_info.creditor_iban\" ==> \"creditor_iban\""
+      , "         , \"nested_creditor_info.creditor_name\" ==> \"creditor_name\""
+      , "         , \"nested_creditor_info.creditor_account\" ==> \"creditor_account\""
+      , "         ]"
+      , "    )"
+      ]
+
+    expected = unlines
+      [ "data CreditTransfer"
+      , "  = CreditTransfer"
+      , "      { nestedCreditorInfo :: CreditorInfo"
+      , "      }"
+      , "  deriving stock (Show, Eq, Generic)"
+      , "  deriving (ToJSON, FromJSON)"
+      , "    via (UntaggedEncoded NordeaCreditTransfer & AddConstTextFields '[\"request_type\" := \"credit_transfer\", \"provider\" := \"nordea\"] & FlattenFields '[\"nested_creditor_info\"] & RenameKeys '[\"nested_creditor_info.creditor_agent_bic\" ==> \"creditor_agent_bic\", \"nested_creditor_info.creditor_iban\" ==> \"creditor_iban\", \"nested_creditor_info.creditor_name\" ==> \"creditor_name\", \"nested_creditor_info.creditor_account\" ==> \"creditor_account\"])"
       ]
 sameSameStyle :: Config
 sameSameStyle = Config SameLine SameLine 2 2 False True SameLine

@@ -350,34 +350,75 @@ putConDeclField ConDeclField{..} = do
   putType cd_fld_type
 
 putType :: Located (HsType GhcPs) -> P ()
-putType = \case
-  L _pos (HsFunTy NoExtField argTp funTp) -> do
+putType ltp = case unLocated ltp of
+  HsFunTy NoExtField argTp funTp -> do
     putOutputable argTp
     space
     putText "->"
     space
     putType funTp
-  L _pos (HsAppTy NoExtField t1 t2) ->
+  HsAppTy NoExtField t1 t2 ->
     putType t1 >> space >> putType t2
-  L _pos (HsExplicitListTy NoExtField _ xs) -> do
+  HsExplicitListTy NoExtField _ xs -> do
     putText "'["
     sep
       (comma >> space)
       (fmap putType xs)
     putText "]"
-  L _pos (HsExplicitTupleTy NoExtField xs) -> do
+  HsExplicitTupleTy NoExtField xs -> do
     putText "'("
     sep
       (comma >> space)
       (fmap putType xs)
     putText ")"
-  L _pos (HsOpTy NoExtField lhs op rhs) -> do
+  HsOpTy NoExtField lhs op rhs -> do
     putType lhs
     space
     putRdrName op
     space
     putType rhs
-  other -> putOutputable other
+  HsTyVar NoExtField _ rdrName ->
+    putRdrName rdrName
+  HsTyLit _ tp ->
+    putOutputable tp
+  HsParTy _ tp -> do
+    putText "("
+    putType tp
+    putText ")"
+  HsTupleTy NoExtField _ xs -> do
+    putText "("
+    sep
+      (comma >> space)
+      (fmap putType xs)
+    putText ")"
+  HsForAllTy NoExtField _ _ _ ->
+    putOutputable ltp
+  HsQualTy NoExtField _ _ ->
+    putOutputable ltp
+  HsAppKindTy _ _ _ ->
+    putOutputable ltp
+  HsListTy _ _ ->
+    putOutputable ltp
+  HsSumTy _ _ ->
+    putOutputable ltp
+  HsIParamTy _ _ _ ->
+    putOutputable ltp
+  HsKindSig _ _ _ ->
+    putOutputable ltp
+  HsStarTy _ _ ->
+    putOutputable ltp
+  HsSpliceTy _ _ ->
+    putOutputable ltp
+  HsDocTy _ _ _ ->
+    putOutputable ltp
+  HsBangTy _ _ _ ->
+    putOutputable ltp
+  HsRecTy _ _ ->
+    putOutputable ltp
+  HsWildCardTy _ ->
+    putOutputable ltp
+  XHsType _ ->
+    putOutputable ltp
 
 newOrData :: DataDecl -> String
 newOrData decl = if isNewtype decl then "newtype" else "data"
