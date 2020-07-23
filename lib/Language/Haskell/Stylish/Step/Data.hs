@@ -219,7 +219,7 @@ putName decl@MkDataDecl{..} =
     forM_ firstTvar (\t -> putOutputable t >> space)
     putRdrName dataDeclName
     space
-    forM_ secondTvar (\t -> putOutputable t >> space)
+    forM_ secondTvar putOutputable
   else do
     putRdrName dataDeclName
     forM_ (hsq_explicit dataTypeVars) (\t -> space >> putOutputable t)

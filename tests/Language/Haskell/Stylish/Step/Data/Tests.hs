@@ -50,6 +50,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 37" case37
     , testCase "case 38" case38
     , testCase "case 39" case39
+    , testCase "case 40" case40
     ]
 
 case00 :: Assertion
@@ -898,6 +899,23 @@ case39 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) inpu
       , "  deriving (ToJSON, FromJSON)"
       , "    via (UntaggedEncoded NordeaCreditTransfer & AddConstTextFields '[\"request_type\" ':= \"credit_transfer\", \"provider\" ':= \"nordea\"] & FlattenFields '[\"nested_creditor_info\"] & RenameKeys '[\"nested_creditor_info.creditor_agent_bic\" ==> \"creditor_agent_bic\", \"nested_creditor_info.creditor_iban\" ==> \"creditor_iban\", \"nested_creditor_info.creditor_name\" ==> \"creditor_name\", \"nested_creditor_info.creditor_account\" ==> \"creditor_account\"])"
       ]
+
+case40 :: Assertion
+case40 = expected @=? testStep (step indentIndentStyle { cBreakSingleConstructors = False }) input
+  where
+    input = unlines
+      [ "module X where"
+      , ""
+      , "data a :==> b    ="
+      , "                  Arr a b"
+      ]
+
+    expected = unlines
+      [ "module X where"
+      , ""
+      , "data a :==> b = Arr a b"
+      ]
+
 sameSameStyle :: Config
 sameSameStyle = Config SameLine SameLine 2 2 False True SameLine
 
