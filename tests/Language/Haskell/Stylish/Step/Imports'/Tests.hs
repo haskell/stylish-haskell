@@ -12,9 +12,9 @@ import           Prelude                                hiding (lines)
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Module
+import           Language.Haskell.Stylish.Step.Imports (defaultOptions)
 import           Language.Haskell.Stylish.Step.Imports' (step)
 import           Language.Haskell.Stylish.Tests.Util    (testStep')
-import qualified Language.Haskell.Stylish.Step.Imports' as Imports
 
 
 
@@ -226,4 +226,4 @@ ex11 = input `assertFormatted` output
 
 --------------------------------------------------------------------------------
 assertFormatted :: HasCallStack => Lines -> Lines -> Assertion
-assertFormatted input expected = withFrozenCallStack $ expected @=? testStep' (step Imports.Config) input
+assertFormatted input expected = withFrozenCallStack $ expected @=? testStep' (step defaultOptions) input

@@ -2,7 +2,7 @@
 {-# LANGUAGE DoAndIfThenElse #-}
 {-# LANGUAGE LambdaCase #-}
 module Language.Haskell.Stylish.Step.Imports'
-  ( Config (..)
+  ( Options (..)
   , step
   ) where
 
@@ -31,14 +31,13 @@ import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.GHC
+import           Language.Haskell.Stylish.Step.Imports (Options(..))
 
-data Config = Config
-
-step :: Config -> Step
+step :: Options -> Step
 step = makeStep "Imports" . printImports
 
 --------------------------------------------------------------------------------
-printImports :: Config -> Lines -> Module -> Lines
+printImports :: Options -> Lines -> Module -> Lines
 printImports _ ls m = formatForImportGroups ls m (moduleImportGroups m)
 
 formatForImportGroups :: Lines -> Module -> [Imports] -> Lines

@@ -35,26 +35,28 @@ import           Language.Haskell.Stylish.Util
 
 --------------------------------------------------------------------------------
 data Options = Options
-    { importAlign    :: ImportAlign
-    , listAlign      :: ListAlign
-    , padModuleNames :: Bool
-    , longListAlign  :: LongListAlign
-    , emptyListAlign :: EmptyListAlign
-    , listPadding    :: ListPadding
-    , separateLists  :: Bool
-    , spaceSurround  :: Bool
+    { importAlign     :: ImportAlign
+    , listAlign       :: ListAlign
+    , padModuleNames  :: Bool
+    , longListAlign   :: LongListAlign
+    , emptyListAlign  :: EmptyListAlign
+    , listPadding     :: ListPadding
+    , separateLists   :: Bool
+    , spaceSurround   :: Bool
+    , useGhcLibParser :: Bool -- ^ if True, will use new printer
     } deriving (Eq, Show)
 
 defaultOptions :: Options
 defaultOptions = Options
-    { importAlign    = Global
-    , listAlign      = AfterAlias
-    , padModuleNames = True
-    , longListAlign  = Inline
-    , emptyListAlign = Inherit
-    , listPadding    = LPConstant 4
-    , separateLists  = True
-    , spaceSurround  = False
+    { importAlign     = Global
+    , listAlign       = AfterAlias
+    , padModuleNames  = True
+    , longListAlign   = Inline
+    , emptyListAlign  = Inherit
+    , listPadding     = LPConstant 4
+    , separateLists   = True
+    , spaceSurround   = False
+    , useGhcLibParser = False
     }
 
 data ListPadding

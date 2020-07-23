@@ -1,4 +1,5 @@
 --------------------------------------------------------------------------------
+{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 module Language.Haskell.Stylish.Config
@@ -161,8 +162,8 @@ parseConfig _            = mzero
 --------------------------------------------------------------------------------
 catalog :: Map String (Config -> A.Object -> A.Parser Step)
 catalog = M.fromList $
-  if False then
     [ ("imports",             parseImports)
+    , ("module_header",       parseModuleHeader)
     , ("records",             parseRecords)
     , ("language_pragmas",    parseLanguagePragmas)
     , ("simple_align",        parseSimpleAlign)
@@ -171,20 +172,6 @@ catalog = M.fromList $
     , ("trailing_whitespace", parseTrailingWhitespace)
     , ("unicode_syntax",      parseUnicodeSyntax)
     ]
-  else
-    -- Done:
-    [ ("imports",             parseImports')
-    , ("module_header",       parseModuleHeader)
-    , ("records",             parseRecords)
-    , ("tabs",                parseTabs)
-    , ("trailing_whitespace", parseTrailingWhitespace)
-    ]
-    -- To be ported:
-    --   * data (records)
-    --   * language_pragmas
-    --   * simple_align
-    --   * squash
-    --   * unicode_syntax
 
 
 --------------------------------------------------------------------------------
@@ -256,20 +243,26 @@ parseSquash _ _ = return Squash.step
 
 --------------------------------------------------------------------------------
 parseImports :: Config -> A.Object -> A.Parser Step
-parseImports config o = Imports.step
-    <$> pure (configColumns config)
-    <*> (Imports.Options
-        <$> (o A..:? "align" >>= parseEnum aligns (def Imports.importAlign))
-        <*> (o A..:? "list_align" >>= parseEnum listAligns (def Imports.listAlign))
-        <*> (o A..:? "pad_module_names" A..!= def Imports.padModuleNames)
-        <*> (o A..:? "long_list_align"
-            >>= parseEnum longListAligns (def Imports.longListAlign))
-        -- Note that padding has to be at least 1. Default is 4.
-        <*> (o A..:? "empty_list_align"
-            >>= parseEnum emptyListAligns (def Imports.emptyListAlign))
-        <*> o A..:? "list_padding" A..!= def Imports.listPadding
-        <*> o A..:? "separate_lists" A..!= def Imports.separateLists
-        <*> o A..:? "space_surround" A..!= def Imports.spaceSurround)
+parseImports config o = do
+  cfg <-
+    Imports.Options
+      <$> (o A..:? "align" >>= parseEnum aligns (def Imports.importAlign))
+      <*> (o A..:? "list_align" >>= parseEnum listAligns (def Imports.listAlign))
+      <*> (o A..:? "pad_module_names" A..!= def Imports.padModuleNames)
+      <*> (o A..:? "long_list_align" >>= parseEnum longListAligns (def Imports.longListAlign))
+      -- Note that padding has to be at least 1. Default is 4.
+      <*> (o A..:? "empty_list_align" >>= parseEnum emptyListAligns (def Imports.emptyListAlign))
+      <*> o A..:? "list_padding" A..!= def Imports.listPadding
+      <*> o A..:? "separate_lists" A..!= def Imports.separateLists
+      <*> o A..:? "space_surround" A..!= def Imports.spaceSurround
+      <*> o A..:? "ghc_lib_parser" A..!= False
+
+  pure
+    if Imports.useGhcLibParser cfg then
+      Imports'.step cfg
+    else
+      Imports.step (configColumns config) cfg
+
   where
     def f = f Imports.defaultOptions
 
@@ -298,13 +291,6 @@ parseImports config o = Imports.step
         [ ("inherit", Imports.Inherit)
         , ("right_after", Imports.RightAfter)
         ]
-
---------------------------------------------------------------------------------
-parseImports' :: Config -> A.Object -> A.Parser Step
-parseImports' _ _
-  = pure
-  . Imports'.step
-  $ Imports'.Config
 
 --------------------------------------------------------------------------------
 parseLanguagePragmas :: Config -> A.Object -> A.Parser Step

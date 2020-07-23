@@ -197,8 +197,11 @@ case07 = expected @=? testStep (step (Just 80) $ fromImportAlign File) input'
 
 --------------------------------------------------------------------------------
 case08 :: Assertion
-case08 = expected
-    @=? testStep (step (Just 80) $ Options Global WithAlias True Inline Inherit (LPConstant 4) True False) input
+case08 =
+  let
+    options = Options Global WithAlias True Inline Inherit (LPConstant 4) True False False
+  in
+    expected @=? testStep (step (Just 80) options) input
   where
     expected = unlines
         [ "module Herp where"
@@ -220,8 +223,11 @@ case08 = expected
 
 --------------------------------------------------------------------------------
 case08b :: Assertion
-case08b = expected
-    @=? testStep (step (Just 80) $ Options Global WithModuleName True Inline Inherit (LPConstant 4) True False) input
+case08b =
+  let
+    options = Options Global WithModuleName True Inline Inherit (LPConstant 4) True False False
+  in
+    expected @=? testStep (step (Just 80) options) input
   where
     expected = unlines
         ["module Herp where"
@@ -242,8 +248,11 @@ case08b = expected
 
 --------------------------------------------------------------------------------
 case09 :: Assertion
-case09 = expected
-    @=? testStep (step (Just 80) $ Options Global WithAlias True Multiline Inherit (LPConstant 4) True False) input
+case09 =
+  let
+    options = Options Global WithAlias True Multiline Inherit (LPConstant 4) True False False
+  in
+    expected @=? testStep (step (Just 80) options) input
   where
     expected = unlines
         [ "module Herp where"
@@ -276,8 +285,11 @@ case09 = expected
 
 --------------------------------------------------------------------------------
 case10 :: Assertion
-case10 = expected
-    @=? testStep (step (Just 40) $ Options Group WithAlias True Multiline Inherit (LPConstant 4) True False) input
+case10 =
+  let
+    options = Options Group WithAlias True Multiline Inherit (LPConstant 4) True False False
+  in
+    expected @=? testStep (step (Just 40) options) input
   where
     expected = unlines
         [ "module Herp where"
@@ -315,8 +327,11 @@ case10 = expected
 
 --------------------------------------------------------------------------------
 case11 :: Assertion
-case11 = expected
-    @=? testStep (step (Just 80) $ Options Group NewLine True Inline Inherit (LPConstant 4) True False) input
+case11 =
+  let
+    options = Options Group NewLine True Inline Inherit (LPConstant 4) True False False
+  in
+    expected @=? testStep (step (Just 80) options) input
   where
     expected = unlines
         [ "module Herp where"
@@ -342,8 +357,11 @@ case11 = expected
 
 
 case11b :: Assertion
-case11b = expected
-    @=? testStep (step (Just 80) $ Options Group WithModuleName True Inline Inherit (LPConstant 4) True False) input
+case11b =
+  let
+    options = Options Group WithModuleName True Inline Inherit (LPConstant 4) True False False
+  in
+    expected @=? testStep (step (Just 80) options) input
   where
     expected = unlines
         [ "module Herp where"
@@ -364,8 +382,11 @@ case11b = expected
 
 --------------------------------------------------------------------------------
 case12 :: Assertion
-case12 = expected
-    @=? testStep (step (Just 80) $ Options Group NewLine True Inline Inherit (LPConstant 2) True False) input'
+case12 =
+  let
+    options = Options Group NewLine True Inline Inherit (LPConstant 2) True False False
+  in
+    expected @=? testStep (step (Just 80) options) input'
   where
     input' = unlines
         [ "import Data.List (map)"
@@ -379,8 +400,11 @@ case12 = expected
 
 --------------------------------------------------------------------------------
 case12b :: Assertion
-case12b = expected
-    @=? testStep (step (Just 80) $ Options Group WithModuleName True Inline Inherit (LPConstant 2) True False) input'
+case12b =
+  let
+    options = Options Group WithModuleName True Inline Inherit (LPConstant 2) True False False
+  in
+    expected @=? testStep (step (Just 80) options) input'
   where
     input' = unlines
         [ "import Data.List (map)"
@@ -391,8 +415,11 @@ case12b = expected
 
 --------------------------------------------------------------------------------
 case13 :: Assertion
-case13 = expected
-    @=? testStep (step (Just 80) $ Options None WithAlias True InlineWithBreak Inherit (LPConstant 4) True False) input'
+case13 =
+  let
+    options = Options None WithAlias True InlineWithBreak Inherit (LPConstant 4) True False False
+  in
+    expected @=? testStep (step (Just 80) options) input'
   where
     input' = unlines
         [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
@@ -408,8 +435,11 @@ case13 = expected
 
 --------------------------------------------------------------------------------
 case13b :: Assertion
-case13b = expected
-    @=? testStep (step (Just 80) $ Options None WithModuleName True InlineWithBreak Inherit (LPConstant 4) True False) input'
+case13b =
+  let
+    options = Options None WithModuleName True InlineWithBreak Inherit (LPConstant 4) True False False
+  in
+    expected @=? testStep (step (Just 80) options) input'
   where
     input' = unlines
         [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
@@ -425,9 +455,11 @@ case13b = expected
 
 --------------------------------------------------------------------------------
 case14 :: Assertion
-case14 = expected
-    @=? testStep
-      (step (Just 80) $ Options None WithAlias True InlineWithBreak Inherit (LPConstant 10) True False) expected
+case14 =
+  let
+    options = Options None WithAlias True InlineWithBreak Inherit (LPConstant 10) True False False
+  in
+    expected @=? testStep (step (Just 80) options) expected
   where
     expected = unlines
         [ "import qualified Data.List as List (concat, map, null, reverse, tail, (++))"
@@ -436,8 +468,11 @@ case14 = expected
 
 --------------------------------------------------------------------------------
 case15 :: Assertion
-case15 = expected
-    @=? testStep (step (Just 80) $ Options None AfterAlias True Multiline Inherit (LPConstant 4) True False) input'
+case15 =
+  let
+    options = Options None AfterAlias True Multiline Inherit (LPConstant 4) True False False
+  in
+    expected @=? testStep (step (Just 80) options) input'
   where
     expected = unlines
         [ "import Data.Acid (AcidState)"
@@ -462,8 +497,11 @@ case15 = expected
 
 --------------------------------------------------------------------------------
 case16 :: Assertion
-case16 = expected
-    @=? testStep (step (Just 80) $ Options None AfterAlias True Multiline Inherit (LPConstant 4) False False) input'
+case16 =
+  let
+    options = Options None AfterAlias True Multiline Inherit (LPConstant 4) False False False
+  in
+    expected @=? testStep (step (Just 80) options) input'
   where
     expected = unlines
         [ "import Data.Acid (AcidState)"
@@ -486,8 +524,11 @@ case16 = expected
 
 --------------------------------------------------------------------------------
 case17 :: Assertion
-case17 = expected
-    @=? testStep (step (Just 80) $ Options None AfterAlias True Multiline Inherit (LPConstant 4) True False) input'
+case17 =
+  let
+    options = Options None AfterAlias True Multiline Inherit (LPConstant 4) True False False
+  in
+    expected @=? testStep (step (Just 80) options) input'
   where
     expected = unlines
         [ "import Control.Applicative (Applicative (pure, (<*>)))"
@@ -504,8 +545,11 @@ case17 = expected
 
 --------------------------------------------------------------------------------
 case18 :: Assertion
-case18 = expected @=? testStep
-    (step (Just 40) $ Options None AfterAlias True InlineToMultiline Inherit (LPConstant 4) True False) input'
+case18 =
+  let
+    options = Options None AfterAlias True InlineToMultiline Inherit (LPConstant 4) True False False
+  in
+    expected @=? testStep (step (Just 40) options) input'
   where
     expected = unlines
            ----------------------------------------
@@ -532,8 +576,11 @@ case18 = expected @=? testStep
 
 --------------------------------------------------------------------------------
 case19 :: Assertion
-case19 = expected @=? testStep
-    (step (Just 40) $ Options Global NewLine True InlineWithBreak RightAfter (LPConstant 17) True False) case19input
+case19 =
+  let
+    options = Options Global NewLine True InlineWithBreak RightAfter (LPConstant 17) True False False
+  in
+    expected @=? testStep (step (Just 40) options) case19input
   where
     expected = unlines
            ----------------------------------------
@@ -548,8 +595,11 @@ case19 = expected @=? testStep
 
 
 case19b :: Assertion
-case19b = expected @=? testStep
-    (step (Just 40) $ Options File NewLine True InlineWithBreak RightAfter (LPConstant 17) True False) case19input
+case19b =
+  let
+    options = Options File NewLine True InlineWithBreak RightAfter (LPConstant 17) True False False
+  in
+    expected @=? testStep (step (Just 40) options) case19input
   where
     expected = unlines
            ----------------------------------------
@@ -564,8 +614,11 @@ case19b = expected @=? testStep
 
 
 case19c :: Assertion
-case19c = expected @=? testStep
-    (step (Just 40) $ Options File NewLine True InlineWithBreak RightAfter LPModuleName True False) case19input
+case19c =
+  let
+    options = Options File NewLine True InlineWithBreak RightAfter LPModuleName True False False
+  in
+    expected @=? testStep (step (Just 40) options) case19input
   where
     expected = unlines
            ----------------------------------------
@@ -580,8 +633,11 @@ case19c = expected @=? testStep
 
 
 case19d :: Assertion
-case19d = expected @=? testStep
-    (step (Just 40) $ Options Global NewLine True InlineWithBreak RightAfter LPModuleName True False) case19input
+case19d =
+  let
+    options = Options Global NewLine True InlineWithBreak RightAfter LPModuleName True False False
+  in
+    expected @=? testStep (step (Just 40) options) case19input
   where
     expected = unlines
            ----------------------------------------
@@ -683,8 +739,11 @@ case22 = expected
 
 --------------------------------------------------------------------------------
 case23 :: Assertion
-case23 = expected
-    @=? testStep (step (Just 40) $ Options None AfterAlias False Inline Inherit (LPConstant 4) True True) input'
+case23 =
+  let
+    options = Options None AfterAlias False Inline Inherit (LPConstant 4) True True False
+  in
+    expected @=? testStep (step (Just 40) options) input'
   where
     expected = unlines
         [ "import Data.Acid ( AcidState )"
@@ -708,8 +767,11 @@ case23 = expected
 
 --------------------------------------------------------------------------------
 case23b :: Assertion
-case23b = expected
-    @=? testStep (step (Just 40) $ Options None WithModuleName False Inline Inherit (LPConstant 4) True True) input'
+case23b =
+  let
+    options = Options None WithModuleName False Inline Inherit (LPConstant 4) True True False
+  in
+    expected @=? testStep (step (Just 40) options) input'
   where
     expected = unlines
         [ "import Data.Acid ( AcidState )"
@@ -734,8 +796,11 @@ case23b = expected
 
 --------------------------------------------------------------------------------
 case24 :: Assertion
-case24 = expected
-    @=? testStep (step (Just 40) $ Options None AfterAlias False InlineWithBreak Inherit (LPConstant 4) True True) input'
+case24 =
+  let
+    options = Options None AfterAlias False InlineWithBreak Inherit (LPConstant 4) True True False
+  in
+    expected @=? testStep (step (Just 40) options) input'
   where
     expected = unlines
         [ "import Data.Acid ( AcidState )"
@@ -758,8 +823,11 @@ case24 = expected
 
 --------------------------------------------------------------------------------
 case25 :: Assertion
-case25 = expected
-    @=? testStep (step (Just 80) $ Options Group AfterAlias False Multiline Inherit (LPConstant 4) False False) input'
+case25 =
+  let
+    options = Options Group AfterAlias False Multiline Inherit (LPConstant 4) False False False
+  in
+    expected @=? testStep (step (Just 80) options) input'
   where
     expected = unlines
         [ "import Data.Acid (AcidState)"
