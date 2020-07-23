@@ -53,6 +53,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 40" case40
     , testCase "case 41" case41
     , testCase "case 42" case42
+    , testCase "case 43" case43
     ]
 
 case00 :: Assertion
@@ -957,6 +958,22 @@ case42 = expected @=? testStep (step indentIndentStyle) input
       , "  = IdempotencyConflict"
       , "  | ValidationError Text -- TODO: might be a sumtype of possible error codes"
       , "  deriving stock (Generic, Show, Eq)"
+      ]
+
+case43 :: Assertion
+case43 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False }) input
+  where
+    input = expected
+
+    expected = unlines
+      [ "module X where"
+      , ""
+      , "data CallbackResult"
+      , "  -- | Callback successfully sent"
+      , "  = Success"
+      , "  -- | Kafka error received"
+      , "  | KafkaIssue KafkaError"
+      , "  deriving (Eq, Show)"
       ]
 
 sameSameStyle :: Config

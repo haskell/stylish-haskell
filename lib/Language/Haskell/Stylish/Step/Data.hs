@@ -135,7 +135,7 @@ formatDataDecl cfg m ldecl@(L declPos decl) =
           case dd_cons defn of
             [] -> pure ()
             lcon@(L pos _) : consRest -> do
-              unless (cFirstField cfg == SameLine || length consRest == 1 && not (cBreakSingleConstructors cfg)) do
+              unless (cFirstField cfg == SameLine || null consRest && not (cBreakSingleConstructors cfg)) do
                 removeCommentTo pos >>= mapM_ \c -> putComment c >> consIndent lineLengthAfterEq
               putText "="
               space
