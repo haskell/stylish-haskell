@@ -141,7 +141,7 @@ attachEolCommentEnd = \case
 printExportList :: Located [GHC.LIE GhcPs] -> P ()
 printExportList (L srcLoc exports) = do
   newline
-  indent 2 (putText "(") >> when (notNull exports) space
+  spaces 2 >> putText "(" >> when (notNull exports) space
 
   exportsWithComments <- sortedAttachedComments exports
 

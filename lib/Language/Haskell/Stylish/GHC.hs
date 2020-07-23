@@ -5,10 +5,16 @@ module Language.Haskell.Stylish.GHC
   ( dropAfterLocated
   , dropBeforeLocated
   , dropBeforeAndAfter
+    -- * Unsafe getters
   , getEndLineUnsafe
   , getStartLineUnsafe
+    -- * Standard settings
   , baseDynFlags
+    -- * Positions
   , unLocated
+    -- * Outputable operators
+  , showOutputable
+  , compareOutputable
   ) where
 
 --------------------------------------------------------------------------------
@@ -24,6 +30,7 @@ import           SrcLoc                          (GenLocated(..), SrcSpan(..))
 import           SrcLoc                          (Located, RealLocated)
 import           SrcLoc                          (srcSpanStartLine, srcSpanEndLine)
 import           ToolSettings                    (ToolSettings(..))
+import qualified Outputable                      as GHC
 
 getStartLineUnsafe :: Located a -> Int
 getStartLineUnsafe = \case
@@ -83,3 +90,10 @@ baseDynFlags = defaultDynFlags fakeSettings llvmConfig
 
 unLocated :: Located a -> a
 unLocated (L _ a) = a
+
+showOutputable :: GHC.Outputable a => a -> String
+showOutputable = GHC.showPpr baseDynFlags
+
+compareOutputable :: GHC.Outputable a => a -> a -> Ordering
+compareOutputable i0 i1 = compare (showOutputable i0) (showOutputable i1)
+
