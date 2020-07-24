@@ -1,5 +1,8 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE TupleSections #-}
 module Language.Haskell.Stylish.Module
   ( -- * Data types
     Module
@@ -16,6 +19,7 @@ module Language.Haskell.Stylish.Module
   , moduleImportGroups
   , moduleDecls
   , moduleComments
+  , moduleLanguagePragmas
 
     -- * Annotations
   , lookupAnnotation
@@ -33,10 +37,14 @@ module Language.Haskell.Stylish.Module
 --------------------------------------------------------------------------------
 import qualified ApiAnnotation                   as GHC
 import           Data.Function                   ((&))
+import           Data.Functor                    ((<&>))
 import           Data.Maybe                      (listToMaybe, mapMaybe)
 import           Data.Map                        (Map)
 import qualified Data.Map                        as Map
 import           Data.List                       (sort)
+import           Data.List.NonEmpty              (NonEmpty, nonEmpty)
+import           Data.Text                       (Text)
+import qualified Data.Text                       as T
 import qualified Lexer                           as GHC
 import qualified GHC.Hs                          as GHC
 import           GHC.Hs.Extension                (GhcPs)
@@ -106,6 +114,24 @@ moduleDecls = Decls . GHC.hsmodDecls . unLocated . parsedModule
 
 moduleComments :: Module -> Comments
 moduleComments = Comments . parsedComments
+
+moduleLanguagePragmas :: Module -> [(RealSrcSpan, NonEmpty Text)]
+moduleLanguagePragmas = mapMaybe toLanguagePragma . parsedComments
+  where
+    toLanguagePragma :: RealLocated GHC.AnnotationComment -> Maybe (RealSrcSpan, NonEmpty Text)
+    toLanguagePragma = \case
+      L pos (GHC.AnnBlockComment s) ->
+        Just (T.pack s)
+          >>= T.stripPrefix "{-#"
+          >>= T.stripSuffix "#-}"
+          <&> T.strip
+          <&> T.splitAt 8 -- length "LANGUAGE" - 1
+          <&> fmap (T.splitOn ",")
+          <&> fmap (fmap T.strip)
+          <&> fmap (filter (not . T.null))
+          >>= (\(T.toUpper . T.strip -> lang, xs) -> (lang,) <$> nonEmpty xs)
+          >>= (\(lang, nel) -> if lang == "LANGUAGE" then Just (pos, nel) else Nothing)
+      _ -> Nothing
 
 moduleImports :: Module -> Imports
 moduleImports = Imports . GHC.hsmodImports . unLocated . parsedModule

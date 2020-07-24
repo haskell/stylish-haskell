@@ -1,3 +1,5 @@
+{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE OverloadedStrings #-}
 --------------------------------------------------------------------------------
 module Language.Haskell.Stylish.Step.LanguagePragmas
     ( Style (..)
@@ -8,13 +10,20 @@ module Language.Haskell.Stylish.Step.LanguagePragmas
 
 
 --------------------------------------------------------------------------------
+import           Data.List.NonEmpty              (NonEmpty, fromList, toList)
 import qualified Data.Set                        as S
+import           Data.Text                       (Text)
+import qualified Data.Text                       as T
 import qualified Language.Haskell.Exts           as H
 
+--------------------------------------------------------------------------------
+import           SrcLoc                          (RealSrcSpan)
+import           SrcLoc                          (srcSpanStartLine, srcSpanEndLine)
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Block
 import           Language.Haskell.Stylish.Editor
+import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
 
@@ -91,10 +100,10 @@ prettyPragmas lp cols _       align CompactLine = compactLinePragmas lp cols ali
 --------------------------------------------------------------------------------
 -- | Filter redundant (and duplicate) pragmas out of the groups. As a side
 -- effect, we also sort the pragmas in their group...
-filterRedundant :: (String -> Bool)
-                -> [(l, [String])]
-                -> [(l, [String])]
-filterRedundant isRedundant' = snd . foldr filterRedundant' (S.empty, [])
+filterRedundant :: (Text -> Bool)
+                -> [(l, NonEmpty Text)]
+                -> [(l, [Text])]
+filterRedundant isRedundant' = snd . foldr filterRedundant' (S.empty, []) . fmap (fmap toList)
   where
     filterRedundant' (l, xs) (known, zs)
         | S.null xs' = (known', zs)
@@ -106,26 +115,40 @@ filterRedundant isRedundant' = snd . foldr filterRedundant' (S.empty, [])
 
 --------------------------------------------------------------------------------
 step :: Maybe Int -> Style -> Bool -> Bool -> String -> Step
-step = ((((oldMakeStep "LanguagePragmas" .) .) .) .) . step'
+step = ((((makeStep "LanguagePragmas" .) .) .) .) . step'
 
 
 --------------------------------------------------------------------------------
-step' :: Maybe Int -> Style -> Bool -> Bool -> String -> Lines -> OldModule -> Lines
-step' columns style align removeRedundant lngPrefix ls (module', _)
-    | null pragmas' = ls
-    | otherwise     = applyChanges changes ls
+step' :: Maybe Int -> Style -> Bool -> Bool -> String -> Lines -> Module -> Lines
+step' columns style align removeRedundant lngPrefix ls m
+  | null languagePragmas = ls
+  | otherwise = applyChanges changes ls
   where
     isRedundant'
-        | removeRedundant = isRedundant module'
+        | removeRedundant = isRedundant m
         | otherwise       = const False
-    pragmas' = pragmas $ fmap linesFromSrcSpan module'
-    longest  = maximum $ map length $ snd =<< pragmas'
-    groups   = [(b, concat pgs) | (b, pgs) <- groupAdjacent pragmas']
-    changes  =
-        [ change b (const $ prettyPragmas lngPrefix columns longest align style pg)
-        | (b, pg) <- filterRedundant isRedundant' groups
-        ]
 
+    languagePragmas = moduleLanguagePragmas m
+
+    convertFstToBlock :: [(RealSrcSpan, a)] -> [(Block String, a)]
+    convertFstToBlock = fmap \(rspan, a) ->
+      (Block (srcSpanStartLine rspan) (srcSpanEndLine rspan), a)
+
+    groupAdjacent' =
+      fmap turnSndBackToNel . groupAdjacent . fmap (fmap toList)
+      where
+        turnSndBackToNel (a, bss) = (a, fromList . concat $ bss)
+
+    longest :: Int
+    longest  = maximum $ map T.length $ toList . snd =<< languagePragmas
+
+    groups :: [(Block String, NonEmpty Text)]
+    groups = [(b, pgs) | (b, pgs) <- groupAdjacent' (convertFstToBlock languagePragmas)]
+
+    changes =
+      [ change b (const $ prettyPragmas lngPrefix columns longest align style (fmap T.unpack pg))
+      | (b, pg) <- filterRedundant isRedundant' groups
+      ]
 
 --------------------------------------------------------------------------------
 -- | Add a LANGUAGE pragma to a module if it is not present already.
@@ -142,7 +165,7 @@ addLanguagePragma lg prag modu
 --------------------------------------------------------------------------------
 -- | Check if a language pragma is redundant. We can't do this for all pragmas,
 -- but we do a best effort.
-isRedundant :: H.Module H.SrcSpanInfo -> String -> Bool
+isRedundant :: Module -> Text -> Bool
 isRedundant m "ViewPatterns" = isRedundantViewPatterns m
 isRedundant m "BangPatterns" = isRedundantBangPatterns m
 isRedundant _ _              = False
@@ -150,13 +173,11 @@ isRedundant _ _              = False
 
 --------------------------------------------------------------------------------
 -- | Check if the ViewPatterns language pragma is redundant.
-isRedundantViewPatterns :: H.Module H.SrcSpanInfo -> Bool
-isRedundantViewPatterns m = null
-    [() | H.PViewPat {} <- everything m :: [H.Pat H.SrcSpanInfo]]
+isRedundantViewPatterns :: Module -> Bool
+isRedundantViewPatterns _ = False
 
 
 --------------------------------------------------------------------------------
 -- | Check if the BangPatterns language pragma is redundant.
-isRedundantBangPatterns :: H.Module H.SrcSpanInfo -> Bool
-isRedundantBangPatterns m = null
-    [() | H.PBangPat _ _ <- everything m :: [H.Pat H.SrcSpanInfo]]
+isRedundantBangPatterns :: Module -> Bool
+isRedundantBangPatterns _ = False
