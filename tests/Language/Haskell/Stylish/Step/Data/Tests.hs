@@ -56,6 +56,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 43" case43
     , testCase "case 44" case44
     , testCase "case 45" case45
+    , testCase "case 46" case46
     ]
 
 case00 :: Assertion
@@ -1039,6 +1040,24 @@ case45 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       , "  deriving stock (Show, Eq, Generic)"
       , "  deriving (ToJSON, FromJSON)"
       , "    via AddConstTextFields '[\"notification_type\" ':= \"credit_transaction\"] (UntaggedEncoded CreditTransfer)"
+      ]
+
+case46 :: Assertion
+case46 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False, cVia = Indent 2 }) input
+  where
+    input = expected
+    expected = unlines
+      [ "module X where"
+      , ""
+      , "-- | A format detailing which encoding to use for the settlement events"
+      , "data CallbackFormat"
+      , "  -- | The Avro schema is to be used"
+      , "  = AvroEngineEvent"
+      , "  deriving (Bounded, Enum, Generic, Eq, Show)"
+      , "  deriving (ToJSON, FromJSON)"
+      , "    via TypeTaggedWithDescription FormatDesc CallbackFormat"
+      , "  deriving (HasGen)"
+      , "    via EnumBounded CallbackFormat"
       ]
 
 sameSameStyle :: Config

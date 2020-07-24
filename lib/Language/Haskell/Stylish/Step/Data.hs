@@ -113,18 +113,20 @@ formatDataDecl cfg@Config{..} m ldecl@(L declPos decl) =
       putName decl
 
       when (hasConstructors decl) do
-        case (cEquals, cFirstField) of
+        breakLineBeforeEq <- case (cEquals, cFirstField) of
           (_, Indent x) | isEnum decl && cBreakEnums -> do
             putEolComment declPos
             newline >> spaces x
+            pure True
           (_, _) | not (isNewtype decl) && singleConstructor decl && not cBreakSingleConstructors ->
-            space
+            False <$ space
           (Indent x, _)
-            | isEnum decl && not cBreakEnums -> space
+            | isEnum decl && not cBreakEnums -> False <$ space
             | otherwise -> do
               putEolComment declPos
               newline >> spaces x
-          (SameLine, _) -> space
+              pure True
+          (SameLine, _) -> False <$ space
 
         lineLengthAfterEq <- fmap (+2) getCurrentLineLength
 
@@ -136,7 +138,7 @@ formatDataDecl cfg@Config{..} m ldecl@(L declPos decl) =
           case dd_cons defn of
             [] -> pure ()
             lcon@(L pos _) : consRest -> do
-              unless (cFirstField == SameLine || null consRest && not cBreakSingleConstructors) do
+              when breakLineBeforeEq do
                 removeCommentTo pos >>= mapM_ \c -> putComment c >> consIndent lineLengthAfterEq
               putText "="
               space
