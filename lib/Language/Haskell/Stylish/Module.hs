@@ -135,7 +135,7 @@ moduleLanguagePragmas = mapMaybe toLanguagePragma . parsedComments
           >>= T.stripPrefix "{-#"
           >>= T.stripSuffix "#-}"
           <&> T.strip
-          <&> T.splitAt 8 -- length "LANGUAGE" - 1
+          <&> T.splitAt 8 -- length "LANGUAGE"
           <&> fmap (T.splitOn ",")
           <&> fmap (fmap T.strip)
           <&> fmap (filter (not . T.null))
