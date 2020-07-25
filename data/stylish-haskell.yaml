@@ -42,6 +42,22 @@ steps:
   #
   #     # How many spaces to insert before "deriving" clause. Deriving clauses are always on separate lines.
   #     deriving: 2
+  #
+  #     # How many spaces to insert before "via" clause counted from indentation of deriving clause
+  #     # Possible values:
+  #     # - "same_line" -- "{" and first field goes on the same line as the data constructor.
+  #     # - "indent N" -- insert a new line and N spaces from the beginning of the data constructor
+  #     via: "indent 2"
+  #
+  #     # Wheter or not to break enums onto several lines
+  #     #
+  #     # Default: false
+  #     break_enums: false
+  #
+  #     # Whether or not to break single constructor data types before `=` sign
+  #     #
+  #     # Default: true
+  #     break_single_constructors: true
 
   # Align the right hand side of some elements.  This is quite conservative
   # and only applies to statements where each element occupies a single
@@ -202,6 +218,22 @@ steps:
       #
       # Default: false
       space_surround: false
+
+      # Enabling this argument will use the new GHC lib parsre to format imports.
+      #
+      # This currently assumes a few things, it will assume that you want post
+      # qualified imports. It is also not as feature complete as the old
+      # imports formatting.
+      #
+      # It does not remove redundant lines or merge lines. As such, the full
+      # feature scope is still pending.
+      #
+      # It _is_ however, a fine alternative if you are using features that are
+      # not parseable by haskell src extensions and you're comfortable with the
+      # presets.
+      #
+      # Default: false
+      ghc_lib_parser: false
 
   # Language pragmas
   - language_pragmas:
