@@ -115,6 +115,8 @@ putText txt = do
 putOutputable :: Outputable a => a -> P ()
 putOutputable = putText . showOutputable
 
+-- | Put all comments that has positions within 'SrcSpan' and separate by
+--   passed @P ()@
 putAllSpanComments :: P () -> SrcSpan -> P ()
 putAllSpanComments suff = \case
   UnhelpfulSpan _ -> pure ()
