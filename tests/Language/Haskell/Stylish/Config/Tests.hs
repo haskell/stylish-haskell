@@ -153,6 +153,7 @@ dotStylish = unlines $
   , "      first_field: \"indent 2\""
   , "      field_comment: 2"
   , "      deriving: 4"
+  , "      via: \"indent 2\""
   , "columns: 110"
   , "language_extensions:"
   , "  - TemplateHaskell"

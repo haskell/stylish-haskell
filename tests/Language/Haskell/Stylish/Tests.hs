@@ -49,6 +49,7 @@ case02 = withTestDirTree $ do
         , "      first_field: \"indent 2\""
         , "      field_comment: 2"
         , "      deriving: 2"
+        , "      via: \"indent 2\""
         ]
 
     actual <- format (Just $ ConfigPath "test-config.yaml") Nothing input
@@ -73,6 +74,7 @@ case03 = withTestDirTree $ do
         , "      first_field: \"same_line\""
         , "      field_comment: 2"
         , "      deriving: 2"
+        , "      via: \"indent 2\""
         ]
 
     actual <- format (Just $ ConfigPath "test-config.yaml") Nothing input
@@ -98,7 +100,7 @@ case04 = (@?= result) =<< format Nothing (Just fileLocation) input
     fileLocation = "directory/File.hs"
     input = "module Herp"
     result = Left $
-      "Language.Haskell.Stylish.Parse.parseModule: could not parse " <>
+      "Language.Haskell.Stylish.Parse.parseModuleHSE: could not parse " <>
       fileLocation <>
       ": ParseFailed (SrcLoc \"<unknown>.hs\" 2 1) \"Parse error: EOF\""
 
