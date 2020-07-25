@@ -1,5 +1,6 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 --------------------------------------------------------------------------------
 module Language.Haskell.Stylish.Step.LanguagePragmas
     ( Style (..)
@@ -17,6 +18,8 @@ import qualified Data.Text                       as T
 import qualified Language.Haskell.Exts           as H
 
 --------------------------------------------------------------------------------
+import           GHC.Hs.Extension                (GhcPs)
+import           GHC.Hs.Pat                      (Pat(BangPat, ViewPat))
 import           SrcLoc                          (RealSrcSpan)
 import           SrcLoc                          (srcSpanStartLine, srcSpanEndLine)
 
@@ -174,10 +177,20 @@ isRedundant _ _              = False
 --------------------------------------------------------------------------------
 -- | Check if the ViewPatterns language pragma is redundant.
 isRedundantViewPatterns :: Module -> Bool
-isRedundantViewPatterns _ = False
+isRedundantViewPatterns = null . queryModule getViewPat
+  where
+    getViewPat :: Pat GhcPs -> [()]
+    getViewPat = \case
+      ViewPat{} -> [()]
+      _ -> []
 
 
 --------------------------------------------------------------------------------
 -- | Check if the BangPatterns language pragma is redundant.
 isRedundantBangPatterns :: Module -> Bool
-isRedundantBangPatterns _ = False
+isRedundantBangPatterns = null . queryModule getBangPat
+  where
+    getBangPat :: Pat GhcPs -> [()]
+    getBangPat = \case
+      BangPat{} -> [()]
+      _ -> []

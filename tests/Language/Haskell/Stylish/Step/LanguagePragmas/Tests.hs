@@ -17,8 +17,10 @@ import Language.Haskell.Stylish.Tests.Util
 
 --------------------------------------------------------------------------------
 tests :: Test
-tests = testGroup "Language.Haskell.Stylish.Step.LanguagePragmas.Tests" $
+tests = testGroup "Language.Haskell.Stylish.Step.LanguagePragmas.Tests"
     [ testCase "case 01" case01
+    , testCase "case 02" case02
+    , testCase "case 03" case03
     , testCase "case 04" case04
     , testCase "case 05" case05
     , testCase "case 06" case06
@@ -28,12 +30,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.LanguagePragmas.Tests" $
     , testCase "case 10" case10
     , testCase "case 11" case11
     , testCase "case 12" case12
-    ] ++
-    if False then
-      [ testCase "case 02" case02
-      , testCase "case 03" case03
-      ]
-    else []
+    ]
 
 lANG :: String
 lANG = "LANGUAGE"
