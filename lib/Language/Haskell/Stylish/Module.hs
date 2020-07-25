@@ -20,6 +20,7 @@ module Language.Haskell.Stylish.Module
   , moduleDecls
   , moduleComments
   , moduleLanguagePragmas
+  , queryModule
 
     -- * Annotations
   , lookupAnnotation
@@ -38,6 +39,7 @@ module Language.Haskell.Stylish.Module
 import qualified ApiAnnotation                   as GHC
 import           Data.Function                   ((&))
 import           Data.Functor                    ((<&>))
+import           Data.Generics                   (Typeable, everything, mkQ)
 import           Data.Maybe                      (listToMaybe, mapMaybe)
 import           Data.Map                        (Map)
 import qualified Data.Map                        as Map
@@ -166,6 +168,10 @@ moduleHeader (Module _ _ _ (GHC.L _ m)) = ModuleHeader
 lookupAnnotation :: GHC.SrcSpan -> Module -> [GHC.AnnKeywordId]
 lookupAnnotation (RealSrcSpan rspan) m = Map.findWithDefault [] rspan (parsedAnnotSrcs m)
 lookupAnnotation (UnhelpfulSpan _) _ = []
+
+-- | Query the module AST using @f@
+queryModule :: Typeable a => (a -> [b]) -> Module -> [b]
+queryModule f = everything (++) (mkQ [] f) . parsedModule
 
 --------------------------------------------------------------------------------
 -- | Getter for internal components in imports newtype

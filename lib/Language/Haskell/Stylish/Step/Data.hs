@@ -15,12 +15,12 @@ import           Prelude                          hiding (init)
 import           Control.Monad                    (forM_, unless, when)
 import           Data.Function                    ((&))
 import           Data.Functor                     ((<&>))
-import           Data.Maybe                       (listToMaybe, mapMaybe)
+import           Data.Maybe                       (listToMaybe)
 
 --------------------------------------------------------------------------------
 import           ApiAnnotation                    (AnnotationComment)
 import           BasicTypes                       (LexicalFixity(..))
-import           GHC.Hs.Decls                     (LHsDecl, HsDecl(..), HsDataDefn(..))
+import           GHC.Hs.Decls                     (HsDecl(..), HsDataDefn(..))
 import           GHC.Hs.Decls                     (TyClDecl(..), NewOrData(..))
 import           GHC.Hs.Decls                     (HsDerivingClause(..), DerivStrategy(..))
 import           GHC.Hs.Decls                     (ConDecl(..))
@@ -69,26 +69,13 @@ step cfg = makeStep "Data" \ls m -> applyChanges (changes m) ls
     changes m = fmap (formatDataDecl cfg m) (dataDecls m)
 
     dataDecls :: Module -> [Located DataDecl]
-    dataDecls
-      = mapMaybe toDataDecl
-      . mapMaybe toTycl
-      . rawModuleDecls
-      . moduleDecls
-
-    toTycl :: LHsDecl GhcPs -> Maybe (Located (TyClDecl GhcPs))
-    toTycl = \case
-      L pos (TyClD _ tyClDecl) -> Just (L pos tyClDecl)
-      _ -> Nothing
-
-    toDataDecl :: Located (TyClDecl GhcPs) -> Maybe (Located DataDecl)
-    toDataDecl = \case
-      L pos (DataDecl _ name tvars fixity defn) -> Just . L pos $ MkDataDecl
+    dataDecls =
+      queryModule \(L pos (TyClD _ (DataDecl _ name tvars fixity defn))) -> pure . L pos $ MkDataDecl
         { dataDeclName = name
         , dataTypeVars = tvars
         , dataDefn = defn
         , dataFixity = fixity
         }
-      _ -> Nothing
 
 type ChangeLine = Change String
 
