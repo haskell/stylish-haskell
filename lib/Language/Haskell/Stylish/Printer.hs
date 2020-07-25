@@ -172,15 +172,15 @@ putRdrName (L pos n) = case n of
     else
       putText (showOutputable name)
   Qual modulePrefix name ->
-    putModulePrefix modulePrefix >> dot >> putText (showOutputable name)
+    putModuleName modulePrefix >> dot >> putText (showOutputable name)
   Orig _ name ->
     putText (showOutputable name)
   Exact name ->
     putText (showOutputable name)
 
 -- | Print module name
-putModulePrefix :: ModuleName -> P ()
-putModulePrefix = putText . moduleNameString
+putModuleName :: ModuleName -> P ()
+putModuleName = putText . moduleNameString
 
 -- | Print type
 putType :: Located (HsType GhcPs) -> P ()
