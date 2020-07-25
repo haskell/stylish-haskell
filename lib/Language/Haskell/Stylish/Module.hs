@@ -75,18 +75,23 @@ data Module = Module
   , parsedModule :: GHC.Located (GHC.HsModule GhcPs)
   }
 
+-- | Declarations in module
 newtype Decls = Decls [LHsDecl GhcPs]
 
-data Imports = Imports [LImportDecl GhcPs]
+-- | Imports in module
+newtype Imports = Imports [LImportDecl GhcPs]
 
-data Comments = Comments [GHC.RealLocated GHC.AnnotationComment]
+-- | Comments associated with module
+newtype Comments = Comments [GHC.RealLocated GHC.AnnotationComment]
 
+-- | A module header is its name, exports and haddock docstring
 data ModuleHeader = ModuleHeader
   { name :: Maybe (GHC.Located GHC.ModuleName)
   , exports :: Maybe (GHC.Located [GHC.LIE GhcPs])
   , haddocks :: Maybe GHC.LHsDocString
   }
 
+-- | Create a module from GHC internal representations
 makeModule :: GHC.PState -> GHC.Located (GHC.HsModule GHC.GhcPs) -> Module
 makeModule pstate = Module comments annotations annotationMap
   where
@@ -111,12 +116,15 @@ makeModule pstate = Module comments annotations annotationMap
       ((RealSrcSpan rspan, annot), _) -> Just (rspan, [annot])
       _ -> Nothing
 
+-- | Get all declarations in module
 moduleDecls :: Module -> Decls
 moduleDecls = Decls . GHC.hsmodDecls . unLocated . parsedModule
 
+-- | Get comments in module
 moduleComments :: Module -> Comments
 moduleComments = Comments . parsedComments
 
+-- | Get module language pragmas
 moduleLanguagePragmas :: Module -> [(RealSrcSpan, NonEmpty Text)]
 moduleLanguagePragmas = mapMaybe toLanguagePragma . parsedComments
   where
@@ -135,9 +143,11 @@ moduleLanguagePragmas = mapMaybe toLanguagePragma . parsedComments
           >>= (\(lang, nel) -> if lang == "LANGUAGE" then Just (pos, nel) else Nothing)
       _ -> Nothing
 
+-- | Get module imports
 moduleImports :: Module -> Imports
 moduleImports = Imports . GHC.hsmodImports . unLocated . parsedModule
 
+-- | Get groups of imports from module
 moduleImportGroups :: Module -> [Imports]
 moduleImportGroups m = go relevantComments imports
   where
@@ -158,6 +168,7 @@ moduleImportGroups m = go relevantComments imports
         Imports (imp : sameGroup) : go commentsRest rest
     go _comments imps = [Imports imps]
 
+-- | Get module header
 moduleHeader :: Module -> ModuleHeader
 moduleHeader (Module _ _ _ (GHC.L _ m)) = ModuleHeader
   { name = GHC.hsmodName m
@@ -165,7 +176,8 @@ moduleHeader (Module _ _ _ (GHC.L _ m)) = ModuleHeader
   , haddocks = GHC.hsmodHaddockModHeader m
   }
 
-lookupAnnotation :: GHC.SrcSpan -> Module -> [GHC.AnnKeywordId]
+-- | Query for annotations associated with a 'SrcSpan'
+lookupAnnotation :: SrcSpan -> Module -> [GHC.AnnKeywordId]
 lookupAnnotation (RealSrcSpan rspan) m = Map.findWithDefault [] rspan (parsedAnnotSrcs m)
 lookupAnnotation (UnhelpfulSpan _) _ = []
 
@@ -175,25 +187,29 @@ queryModule f = everything (++) (mkQ [] f) . parsedModule
 
 --------------------------------------------------------------------------------
 -- | Getter for internal components in imports newtype
---
---   /Note:/ this function might be
 rawImports :: Imports -> [LImportDecl GhcPs]
 rawImports (Imports xs) = xs
 
+-- | Getter for internal module name representation
 rawModuleName :: ModuleHeader -> Maybe (GHC.Located GHC.ModuleName)
 rawModuleName = name
 
+-- | Getter for internal module exports representation
 rawModuleExports :: ModuleHeader -> Maybe (GHC.Located [GHC.LIE GhcPs])
 rawModuleExports = exports
 
+-- | Getter for internal module haddocks representation
 rawModuleHaddocks :: ModuleHeader -> Maybe GHC.LHsDocString
 rawModuleHaddocks = haddocks
 
+-- | Getter for internal module decls representation
 rawModuleDecls :: Decls -> [LHsDecl GhcPs]
 rawModuleDecls (Decls xs) = xs
 
+-- | Getter for internal module comments representation
 rawComments :: Comments -> [GHC.RealLocated GHC.AnnotationComment]
 rawComments (Comments xs) = xs
 
+-- | Getter for internal module annotation representation
 rawModuleAnnotations :: Module -> [(GHC.ApiAnnKey, [GHC.SrcSpan])]
 rawModuleAnnotations = parsedAnnotations
