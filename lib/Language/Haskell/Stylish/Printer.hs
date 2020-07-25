@@ -42,10 +42,6 @@ module Language.Haskell.Stylish.Printer
   , space
   , spaces
   , suffix
-
-    -- ** Outputable helpers
-  , showOutputable
-  , compareOutputable
   ) where
 
 --------------------------------------------------------------------------------
