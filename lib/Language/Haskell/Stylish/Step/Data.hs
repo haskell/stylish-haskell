@@ -69,13 +69,14 @@ step cfg = makeStep "Data" \ls m -> applyChanges (changes m) ls
     changes m = fmap (formatDataDecl cfg m) (dataDecls m)
 
     dataDecls :: Module -> [Located DataDecl]
-    dataDecls =
-      queryModule \(L pos (TyClD _ (DataDecl _ name tvars fixity defn))) -> pure . L pos $ MkDataDecl
+    dataDecls = queryModule \case
+      L pos (TyClD _ (DataDecl _ name tvars fixity defn)) -> pure . L pos $ MkDataDecl
         { dataDeclName = name
         , dataTypeVars = tvars
         , dataDefn = defn
         , dataFixity = fixity
         }
+      _ -> []
 
 type ChangeLine = Change String
 
