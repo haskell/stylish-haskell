@@ -24,8 +24,9 @@ import           GHC.Hs.Decls                     (HsDecl(..), HsDataDefn(..))
 import           GHC.Hs.Decls                     (TyClDecl(..), NewOrData(..))
 import           GHC.Hs.Decls                     (HsDerivingClause(..), DerivStrategy(..))
 import           GHC.Hs.Decls                     (ConDecl(..))
-import           GHC.Hs.Extension                 (GhcPs, noExtCon)
-import           GHC.Hs.Types                     (ConDeclField(..))
+import           GHC.Hs.Extension                 (GhcPs, NoExtField(..), noExtCon)
+import           GHC.Hs.Types                     (ConDeclField(..), HsContext)
+import           GHC.Hs.Types                     (HsType(..), ForallVisFlag(..))
 import           GHC.Hs.Types                     (LHsQTyVars(..), HsTyVarBndr(..))
 import           GHC.Hs.Types                     (HsConDetails(..), HsImplicitBndrs(..))
 import           RdrName                          (RdrName)
@@ -60,6 +61,8 @@ data Config = Config
       -- ^ Break single constructors when enabled, e.g. @Indent 2@ will not cause newline after @=@
     , cVia                     :: !Indent
       -- ^ Indentation between @via@ clause and start of deriving column start
+    , cCurriedContext          :: !Bool
+      -- ^ If true, use curried context. E.g: @allValues :: Enum a => Bounded a => Proxy a -> [a]@
     } deriving (Show)
 
 step :: Config -> Step
@@ -100,6 +103,8 @@ formatDataDecl cfg@Config{..} m ldecl@(L declPos decl) =
       space
       putName decl
 
+      when (isGADT decl) (space >> putText "where")
+
       when (hasConstructors decl) do
         breakLineBeforeEq <- case (cEquals, cFirstField) of
           (_, Indent x) | isEnum decl && cBreakEnums -> do
@@ -128,15 +133,21 @@ formatDataDecl cfg@Config{..} m ldecl@(L declPos decl) =
             lcon@(L pos _) : consRest -> do
               when breakLineBeforeEq do
                 removeCommentTo pos >>= mapM_ \c -> putComment c >> consIndent lineLengthAfterEq
-              putText "="
-              space
+
+              unless
+                (isGADT decl)
+                (putText "=" >> space)
+
               putConstructor cfg lineLengthAfterEq lcon
               forM_ consRest \con@(L conPos _) -> do
                 unless (cFirstField == SameLine) do
                   removeCommentTo conPos >>= mapM_ \c -> consIndent lineLengthAfterEq >> putComment c
                 consIndent lineLengthAfterEq
-                putText "|"
-                space
+
+                unless
+                  (isGADT decl)
+                  (putText "|" >> space)
+
                 putConstructor cfg lineLengthAfterEq con
                 putEolComment conPos
 
@@ -234,18 +245,51 @@ putName decl@MkDataDecl{..} =
 
 putConstructor :: Config -> Int -> Located (ConDecl GhcPs) -> P ()
 putConstructor cfg consIndent (L _ cons) = case cons of
-  ConDeclGADT{} ->
-    error "Stylish does not support GADTs yet, ConDeclGADT encountered"
+  ConDeclGADT{..} -> do
+    -- Put argument to constructor first:
+    case con_args of
+      PrefixCon _ -> do
+        sep
+          (comma >> space)
+          (fmap putRdrName con_names)
+
+      InfixCon arg1 arg2 -> do
+        putType arg1
+        space
+        forM_ con_names putRdrName
+        space
+        putType arg2
+      RecCon _ ->
+        error . mconcat $
+          [ "Language.Haskell.Stylish.Step.Data.putConstructor: "
+          , "encountered a GADT with record constructors, not supported yet"
+          ]
+
+    -- Put type of constructor:
+    space
+    putText "::"
+    space
+
+    when (unLocated con_forall) do
+      putText "forall"
+      space
+      sep space (fmap putOutputable $ hsq_explicit con_qvars)
+      dot
+      space
+
+    forM_ con_mb_cxt (putContext cfg . unLocated)
+    putType con_res_ty
+
   XConDecl x ->
     noExtCon x
   ConDeclH98{..} ->
     case con_args of
       InfixCon arg1 arg2 -> do
-        putOutputable arg1
+        putType arg1
         space
         putRdrName con_name
         space
-        putOutputable arg2
+        putType arg2
       PrefixCon xs -> do
         putRdrName con_name
         unless (null xs) space
@@ -262,7 +306,7 @@ putConstructor cfg consIndent (L _ cons) = case cons of
           removeCommentTo posFirst >>= mapM_ \c -> putComment c >> sepDecl bracePos
 
         -- Put first decl field
-        putConDeclField firstArg
+        putConDeclField cfg firstArg
         unless (cFirstField cfg == SameLine) (putEolComment posFirst)
 
         -- Put tail decl fields
@@ -272,7 +316,7 @@ putConstructor cfg consIndent (L _ cons) = case cons of
             spaces (cFieldComment cfg) >> putComment c >> sepDecl bracePos
           comma
           space
-          putConDeclField arg
+          putConDeclField cfg arg
           putEolComment pos
 
         -- Print docstr after final field
@@ -301,7 +345,7 @@ putConstructor cfg consIndent (L _ cons) = case cons of
         (Indent x, SameLine) -> bracePos - 1 + x - 2
 
 putNewtypeConstructor :: Config -> Located (ConDecl GhcPs) -> P ()
-putNewtypeConstructor _ (L _ cons) = case cons of
+putNewtypeConstructor cfg (L _ cons) = case cons of
   ConDeclH98{..} ->
     putRdrName con_name >> case con_args of
       PrefixCon xs -> do
@@ -311,7 +355,7 @@ putNewtypeConstructor _ (L _ cons) = case cons of
         space
         putText "{"
         space
-        putConDeclField firstArg
+        putConDeclField cfg firstArg
         space
         putText "}"
       RecCon (L _ _args) ->
@@ -332,24 +376,59 @@ putNewtypeConstructor _ (L _ cons) = case cons of
       , "GADT encountered in newtype"
       ]
 
-putConDeclField :: ConDeclField GhcPs -> P ()
-putConDeclField = \case
+putContext :: Config -> HsContext GhcPs -> P ()
+putContext Config{..} = suffix (space >> putText "=>" >> space) . \case
+  [L _ (HsParTy _ tp)] | cCurriedContext ->
+    putType tp
+  [ctx] ->
+    putType ctx
+  ctxs | cCurriedContext ->
+    sep (space >> putText "=>" >> space) (fmap putType ctxs)
+  ctxs ->
+    parenthesize $ sep (comma >> space) (fmap putType ctxs)
+
+putConDeclField :: Config -> ConDeclField GhcPs -> P ()
+putConDeclField cfg = \case
   ConDeclField{..} -> do
     sep
       (comma >> space)
-      (fmap (putText . showOutputable) cd_fld_names)
+      (fmap putOutputable cd_fld_names)
     space
     putText "::"
     space
-    putType cd_fld_type
+    putType' cfg cd_fld_type
   XConDeclField{} ->
     error . mconcat $
       [ "Language.Haskell.Stylish.Step.Data.putConDeclField: "
       , "XConDeclField encountered"
       ]
 
+-- | A variant of 'putType' that takes 'cCurriedContext' into account
+putType' :: Config -> Located (HsType GhcPs) -> P ()
+putType' cfg = \case
+  L _ (HsForAllTy NoExtField vis bndrs tp) -> do
+    putText "forall"
+    space
+    sep space (fmap putOutputable bndrs)
+    putText
+      if vis == ForallVis then "->"
+      else "."
+    space
+    putType' cfg tp
+  L _ (HsQualTy NoExtField ctx tp) -> do
+    putContext cfg (unLocated ctx)
+    putType' cfg tp
+  other -> putType other
+
 newOrData :: DataDecl -> String
 newOrData decl = if isNewtype decl then "newtype" else "data"
+
+isGADT :: DataDecl -> Bool
+isGADT = any isGADTCons . dd_cons . dataDefn
+  where
+    isGADTCons = \case
+      L _ (ConDeclGADT {}) -> True
+      _ -> False
 
 isNewtype :: DataDecl -> Bool
 isNewtype = (== NewType) . dd_ND . dataDefn

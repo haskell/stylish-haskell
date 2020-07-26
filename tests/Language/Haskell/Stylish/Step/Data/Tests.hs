@@ -57,6 +57,12 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 44" case44
     , testCase "case 45" case45
     , testCase "case 46" case46
+    , testCase "case 47" case47
+    , testCase "case 48" case48
+    , testCase "case 49" case49
+    , testCase "case 50" case50
+    , testCase "case 51" case51
+    , testCase "case 52" case52
     ]
 
 case00 :: Assertion
@@ -1060,17 +1066,113 @@ case46 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       , "    via EnumBounded CallbackFormat"
       ]
 
+case47 :: Assertion
+case47 = expected @=? testStep (step indentIndentStyle) input
+  where
+    input = expected
+    expected = unlines
+      [ "module X where"
+      , ""
+      , "-- | A GADT example"
+      , "data T a where"
+      , "  D1 :: Int -> T String"
+      , "  D2 :: T Bool"
+      , "  D3 :: (a, a) -> T [a]"
+      ]
+
+case48 :: Assertion
+case48 = expected @=? testStep (step indentIndentStyle) input
+  where
+    input = expected
+    expected = unlines
+      [ "module X where"
+      , ""
+      , "-- | A GADT example"
+      , "data T a where"
+      , "  D1 :: Int -> T String"
+      , "  D2 :: T Bool"
+      , "  D3 :: forall a. (Eq a, Bounded a) => (a, a) -> T [a]"
+      ]
+
+case49 :: Assertion
+case49 = expected @=? testStep (step indentIndentStyle) input
+  where
+    input = expected
+    expected = unlines
+      [ "module X where"
+      , ""
+      , "-- | A GADT example"
+      , "data T a where"
+      , "  D1 :: Int -> T String"
+      , "  D2 :: T Bool"
+      , "  D3 :: forall a. (Eq a) => (a, a) -> T [a]"
+      ]
+
+case50 :: Assertion
+case50 = expected @=? testStep (step indentIndentStyle { cCurriedContext = True }) input
+  where
+    input = expected
+    expected = unlines
+      [ "module X where"
+      , ""
+      , "-- | A GADT example"
+      , "data T a where"
+      , "  D1 :: Int -> T String"
+      , "  D2 :: T Bool"
+      , "  D3 :: forall a. Eq a => (a, a) -> T [a]"
+      ]
+
+case51 :: Assertion
+case51 = expected @=? testStep (step indentIndentStyle { cCurriedContext = True }) input
+  where
+    input = unlines
+      [ "module X where"
+      , ""
+      , "-- | A GADT example"
+      , "data T a where"
+      , "  D1 :: Int -> T String"
+      , "  D2 :: T Bool"
+      , "  D3 :: forall a. (Eq a) => (a, a) -> T [a]"
+      ]
+    expected = unlines
+      [ "module X where"
+      , ""
+      , "-- | A GADT example"
+      , "data T a where"
+      , "  D1 :: Int -> T String"
+      , "  D2 :: T Bool"
+      , "  D3 :: forall a. Eq a => (a, a) -> T [a]"
+      ]
+
+case52 :: Assertion
+case52 = expected @=? testStep (step indentIndentStyle { cBreakSingleConstructors = False, cCurriedContext = True }) input
+  where
+    input = unlines
+      [ "module X where"
+      , ""
+      , "data Foo = Foo"
+      , "  { foo :: forall a b. (Eq a, Bounded b) => a -> b -> [(a, b)]"
+      , "  }"
+      ]
+    expected = unlines
+      [ "module X where"
+      , ""
+      , "data Foo = Foo"
+      , "  { foo :: forall a b. Eq a => Bounded b => a -> b -> [(a, b)]"
+      , "  }"
+      ]
+
 sameSameStyle :: Config
-sameSameStyle = Config SameLine SameLine 2 2 False True SameLine
+sameSameStyle = Config SameLine SameLine 2 2 False True SameLine False
 
 sameIndentStyle :: Config
-sameIndentStyle = Config SameLine (Indent 2) 2 2 False True SameLine
+sameIndentStyle = Config SameLine (Indent 2) 2 2 False True SameLine False
 
 indentSameStyle :: Config
-indentSameStyle = Config (Indent 2) SameLine 2 2 False True SameLine
+indentSameStyle = Config (Indent 2) SameLine 2 2 False True SameLine False
 
 indentIndentStyle :: Config
-indentIndentStyle = Config (Indent 2) (Indent 2) 2 2 False True SameLine
+indentIndentStyle = Config (Indent 2) (Indent 2) 2 2 False True SameLine False
 
 indentIndentStyle4 :: Config
-indentIndentStyle4 = Config (Indent 4) (Indent 4) 4 4 False True SameLine
+indentIndentStyle4 = Config (Indent 4) (Indent 4) 4 4 False True SameLine False

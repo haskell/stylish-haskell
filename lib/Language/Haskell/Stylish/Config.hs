@@ -220,7 +220,8 @@ parseRecords _ o = Data.step
         <*> (o A..: "deriving")
         <*> (o A..:? "break_enums" A..!= False)
         <*> (o A..:? "break_single_constructors" A..!= True)
-        <*> (o A..: "via" >>= parseIndent))
+        <*> (o A..: "via" >>= parseIndent)
+        <*> (o A..:? "curried_context" A..!= False))
 
 
 parseIndent :: A.Value -> A.Parser Data.Indent

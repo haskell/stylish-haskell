@@ -65,6 +65,15 @@ steps:
   #     #
   #     # Default: true
   #     break_single_constructors: true
+  #
+  #     # Whether or not to curry constraints on function.
+  #     #
+  #     # E.g: @allValues :: Enum a => Bounded a => Proxy a -> [a]@
+  #     #
+  #     # Instead of @allValues :: (Enum a, Bounded a) => Proxy a -> [a]@
+  #     #
+  #     # Default: false
+  #     curried_context: false
 
   # Align the right hand side of some elements.  This is quite conservative
   # and only applies to statements where each element occupies a single
