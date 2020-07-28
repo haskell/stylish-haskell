@@ -161,7 +161,7 @@ parseConfig _            = mzero
 
 --------------------------------------------------------------------------------
 catalog :: Map String (Config -> A.Object -> A.Parser Step)
-catalog = M.fromList $
+catalog = M.fromList
     [ ("imports",             parseImports)
     , ("module_header",       parseModuleHeader)
     , ("records",             parseRecords)
