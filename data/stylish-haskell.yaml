@@ -235,7 +235,7 @@ steps:
       # Default: false
       space_surround: false
 
-      # Enabling this argument will use the new GHC lib parsre to format imports.
+      # Enabling this argument will use the new GHC lib parse to format imports.
       #
       # This currently assumes a few things, it will assume that you want post
       # qualified imports. It is also not as feature complete as the old
