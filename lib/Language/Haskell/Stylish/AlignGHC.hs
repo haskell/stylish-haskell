@@ -69,10 +69,10 @@ align maxColumns alignment
   where
     exceedsColumns i = case maxColumns of
       Nothing -> False
-      Just c  -> i < c
+      Just c  -> i > c
 
     -- The longest thing in the left column
-    longestLeft = maximum $ map (S.srcSpanStartLine . aLeft) alignment
+    longestLeft = maximum $ map (S.srcSpanEndCol . aLeft) alignment
 
     -- The longest thing in the right column
     longestRight = maximum

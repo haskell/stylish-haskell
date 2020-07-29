@@ -42,6 +42,7 @@ import qualified Language.Haskell.Stylish.Step.Data               as Data
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
 import qualified Language.Haskell.Stylish.Step.SimpleAlign        as SimpleAlign
+import qualified Language.Haskell.Stylish.Step.SimpleAlignGHC     as SimpleAlignGHC
 import qualified Language.Haskell.Stylish.Step.Squash             as Squash
 import qualified Language.Haskell.Stylish.Step.Tabs               as Tabs
 import qualified Language.Haskell.Stylish.Step.TrailingWhitespace as TrailingWhitespace
@@ -175,9 +176,9 @@ parseEnum strs _   (Just k) = case lookup k strs of
 
 --------------------------------------------------------------------------------
 parseSimpleAlign :: Config -> A.Object -> A.Parser Step
-parseSimpleAlign c o = SimpleAlign.step
+parseSimpleAlign c o = SimpleAlignGHC.step
     <$> pure (configColumns c)
-    <*> (SimpleAlign.Config
+    <*> (SimpleAlignGHC.Config
         <$> withDef SimpleAlign.cCases            "cases"
         <*> withDef SimpleAlign.cTopLevelPatterns "top_level_patterns"
         <*> withDef SimpleAlign.cRecords          "records")

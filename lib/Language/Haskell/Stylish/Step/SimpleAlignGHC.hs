@@ -79,7 +79,10 @@ matchToAlignable (S.L matchLoc (Hs.Match _ (Hs.FunRhs name _ _) pats grhss)) = d
     , aRight     = fromSrcSpanToReal $ S.getLoc body
     , aRightLead = length "= "
     }
-matchToAlignable (S.L _ (Hs.Match _ _ _ _)) = Nothing
+-- NOTE(jaspervdj): We need a case here for when `notFun` is not a `Hs.FunRhs`
+-- if we want to be able to align `case` statements.  This is also where we
+-- could pass in the the `cCases` flag.
+matchToAlignable (S.L _ (Hs.Match _ notFun _ _)) = Nothing
 
 fieldDeclToAlignable :: S.Located (Hs.ConDeclField Hs.GhcPs) -> Maybe (Alignable S.RealSrcSpan)
 fieldDeclToAlignable (S.L _ (Hs.XConDeclField x)) = Hs.noExtCon x

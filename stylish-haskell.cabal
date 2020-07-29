@@ -33,6 +33,7 @@ Library
     Language.Haskell.Stylish.Step.Imports
     Language.Haskell.Stylish.Step.LanguagePragmas
     Language.Haskell.Stylish.Step.SimpleAlign
+    Language.Haskell.Stylish.Step.SimpleAlignGHC
     Language.Haskell.Stylish.Step.Squash
     Language.Haskell.Stylish.Step.Tabs
     Language.Haskell.Stylish.Step.TrailingWhitespace
@@ -40,6 +41,7 @@ Library
 
   Other-modules:
     Language.Haskell.Stylish.Align
+    Language.Haskell.Stylish.AlignGHC
     Language.Haskell.Stylish.Block
     Language.Haskell.Stylish.Config
     Language.Haskell.Stylish.Config.Cabal
