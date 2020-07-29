@@ -1,4 +1,6 @@
 {-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ViewPatterns #-}
@@ -24,6 +26,7 @@ module Language.Haskell.Stylish.Module
 
     -- * Imports
   , canMergeImport
+  , mergeModuleImport
 
     -- * Annotations
   , lookupAnnotation
@@ -45,7 +48,7 @@ import           Data.Generics                   (Typeable, everything, mkQ)
 import           Data.Maybe                      (listToMaybe, mapMaybe)
 import           Data.Map                        (Map)
 import qualified Data.Map                        as Map
-import           Data.List                       (sort)
+import           Data.List                       (nubBy, sort)
 import           Data.List.NonEmpty              (NonEmpty, nonEmpty)
 import           Data.Text                       (Text)
 import qualified Data.Text                       as T
@@ -57,7 +60,7 @@ import           GHC.Hs                          (ImportDecl(..), ImportDeclQual
 import qualified GHC.Hs                          as GHC
 import           GHC.Hs.Extension                (GhcPs)
 import           GHC.Hs.Decls                    (LHsDecl)
-import           GHC.Hs.ImpExp                   (LImportDecl)
+import           Outputable                      (Outputable)
 import           SrcLoc                          (GenLocated(..), RealLocated)
 import           SrcLoc                          (RealSrcSpan(..), SrcSpan(..))
 import           SrcLoc                          (Located, srcSpanStartLine)
@@ -86,16 +89,17 @@ newtype Decls = Decls [LHsDecl GhcPs]
 
 -- | Import declaration in module
 newtype Import = Import { unImport :: ImportDecl GhcPs }
+  deriving newtype (Outputable)
 
 -- | Returns true if the two import declarations can be merged
 canMergeImport :: Import -> Import -> Bool
 canMergeImport (Import i0) (Import i1) = and $ fmap (\f -> f i0 i1)
-  [ (==) `on` ideclName
+  [ (==) `on` unLocated . ideclName
   , (==) `on` ideclPkgQual
   , (==) `on` ideclSource
   , hasMergableQualified `on` ideclQualified
   , (==) `on` ideclImplicit
-  , (==) `on` ideclAs
+  , (==) `on` fmap unLocated . ideclAs
   , (==) `on` fmap fst . ideclHiding -- same 'hiding' flags
   ]
   where
@@ -110,7 +114,7 @@ instance Eq Import where
 
 instance Ord Import where
   compare (Import i0) (Import i1) =
-    ideclName i0 `compare` ideclName i1 <>
+    ideclName i0 `compareOutputable` ideclName i1 <>
     compareOutputable i0 i1
 
 -- | Comments associated with module
@@ -204,6 +208,30 @@ moduleImportGroups m = go relevantComments imports
         (imp : sameGroup) : go commentsRest rest
     go _comments imps = [imps]
 
+-- | Merge two import declarations, keeping positions from the first
+--
+--   As alluded, this highlights an issue with merging imports. The GHC
+--   annotation comments aren't attached to any particular AST node. This
+--   means that right now, we're manually reconstructing the attachment. By
+--   merging two import declarations, we lose that mapping.
+--
+--   It's not really a big deal if we consider that people don't usually
+--   comment imports themselves. It _is_ however, systemic and it'd be better
+--   if we processed comments beforehand and attached them to all AST nodes in
+--   our own representation.
+mergeModuleImport :: Located Import -> Located Import -> Located Import
+mergeModuleImport (L p0 (Import i0)) (L _p1 (Import i1)) =
+  L p0 $ Import i0 { ideclHiding = newImportNames }
+  where
+    newImportNames =
+      case (ideclHiding i0, ideclHiding i1) of
+        (Just (b, L p imps0), Just (_, L _ imps1)) -> Just (b, L p (imps0 `merge` imps1))
+        (Nothing, Nothing) -> Nothing
+        (Just x, Nothing) -> Just x
+        (Nothing, Just x) -> Just x
+    merge xs ys
+      = nubBy ((==) `on` showOutputable) (xs ++ ys)
+
 -- | Get module header
 moduleHeader :: Module -> ModuleHeader
 moduleHeader (Module _ _ _ (GHC.L _ m)) = ModuleHeader
@@ -223,8 +251,8 @@ queryModule f = everything (++) (mkQ [] f) . parsedModule
 
 --------------------------------------------------------------------------------
 -- | Getter for internal components in imports newtype
-rawImport :: Located Import -> LImportDecl GhcPs
-rawImport (L pos (Import i)) = L pos i
+rawImport :: Import -> ImportDecl GhcPs
+rawImport (Import i) = i
 
 -- | Getter for internal module name representation
 rawModuleName :: ModuleHeader -> Maybe (GHC.Located GHC.ModuleName)

@@ -20,7 +20,7 @@ import           Language.Haskell.Stylish.Tests.Util      (testStep')
 
 --------------------------------------------------------------------------------
 tests :: Test
-tests = testGroup "Language.Haskell.Stylish.Printer.Imports"
+tests = testGroup "Language.Haskell.Stylish.Step.ImportsGHC"
   [ testCase "Hello world" ex0
   , testCase "Sorted simple" ex1
   , testCase "Sorted import lists" ex2
@@ -33,6 +33,7 @@ tests = testGroup "Language.Haskell.Stylish.Printer.Imports"
   , testCase "Imports respects whitespace between groups" ex9
   , testCase "Doesn't add extra space after 'hiding'" ex10
   , testCase "Should be able to format symbolic imports" ex11
+  , testCase "Able to merge equivalent imports" ex12
   ]
 
 --------------------------------------------------------------------------------
@@ -217,6 +218,19 @@ ex11 = input `assertFormatted` output
   where
     input =
       [ "import Data.Aeson ((.=))"
+      , "import A  hiding (X)"
+      ]
+    output =
+      [ "import A hiding (X)"
+      , "import Data.Aeson ((.=))"
+      ]
+
+ex12 :: Assertion
+ex12 = input `assertFormatted` output
+  where
+    input =
+      [ "import Data.Aeson ((.=))"
+      , "import Data.Aeson ((.=))"
       , "import A  hiding (X)"
       ]
     output =

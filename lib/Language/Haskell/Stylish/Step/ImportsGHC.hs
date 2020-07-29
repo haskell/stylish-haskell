@@ -12,7 +12,7 @@ import           Data.Function                   ((&))
 import           Data.Foldable                   (toList)
 import           Data.Maybe                      (listToMaybe)
 import           Data.List                       (sortBy)
-import           Data.List.NonEmpty              (NonEmpty)
+import           Data.List.NonEmpty              (NonEmpty(..))
 import qualified Data.List.NonEmpty              as NonEmpty
 
 --------------------------------------------------------------------------------
@@ -47,9 +47,6 @@ formatForImportGroups ls m (group : rest) = formatForImportGroups formattedGroup
     formattedGroup :: Lines
     formattedGroup =
       let
-        imports =
-          fmap rawImport group
-
         relevantComments =
           []
 
@@ -58,17 +55,21 @@ formatForImportGroups ls m (group : rest) = formatForImportGroups formattedGroup
           <*> importEnd
 
         importStart
-          = listToMaybe imports
+          = listToMaybe group
           & fmap getStartLineUnsafe
 
         importEnd
-          = lastMaybe imports
+          = lastMaybe group
           & fmap getEndLineUnsafe
 
         formatting = runPrinter_ PrinterConfig relevantComments m do
-          importsWithComments <- sortedAttachedComments imports
-          forM_ importsWithComments \(_, importGroup) -> do
-            forM_ (sortImportDecls importGroup) \imp -> printPostQualified imp >> newline
+          importsWithComments <- sortedAttachedComments group
+          forM_ importsWithComments \(_, rawGroup) -> do
+            let
+              importGroup
+                = NonEmpty.sortWith unLocated rawGroup
+                & mergeImports
+            forM_ importGroup \imp -> printPostQualified imp >> newline
       in
         case importStart of
           Just start ->
@@ -80,16 +81,16 @@ formatForImportGroups ls m (group : rest) = formatForImportGroups formattedGroup
           Nothing -> ls
 
 --------------------------------------------------------------------------------
-printPostQualified :: LImportDecl GhcPs -> P ()
-printPostQualified decl = do
+printPostQualified :: Located Import -> P ()
+printPostQualified (L _ decl) = do
   let
-    decl' = unLocated decl
+    decl' = rawImport decl
 
   putText "import" >> space
 
-  when (ideclSource decl') (putText "{-# SOURCE #-}" >> space)
+  when (isSource decl) (putText "{-# SOURCE #-}" >> space)
 
-  when (ideclSafe decl') (putText "safe" >> space)
+  when (isSafe decl) (putText "safe" >> space)
 
   putText (moduleName decl)
 
@@ -98,7 +99,7 @@ printPostQualified decl = do
   forM_ (ideclAs decl') \(L _ name) ->
     space >> putText "as" >> space >> putText (moduleNameString name)
 
-  when (isHiding decl') (space >> putText "hiding")
+  when (isHiding decl) (space >> putText "hiding")
 
   forM_ (snd <$> ideclHiding decl') \(L _ imports) ->
     let
@@ -144,23 +145,45 @@ printIeWrappedName lie = unLocated lie & \case
   IEPattern n -> putText "pattern" >> space >> putRdrName n
   IEType n -> putText "type" >> space >> putRdrName n
 
-moduleName :: LImportDecl GhcPs -> String
+mergeImports :: NonEmpty (Located Import) -> NonEmpty (Located Import)
+mergeImports (x :| []) = x :| []
+mergeImports (h :| (t : ts))
+  | canMergeImport (unLocated h) (unLocated t) = mergeImports (mergeModuleImport h t :| ts)
+  | otherwise = h :| mergeImportsTail (t : ts)
+  where
+    mergeImportsTail (x : y : ys)
+      | canMergeImport (unLocated x) (unLocated y) = mergeImportsTail ((mergeModuleImport x y) : ys)
+      | otherwise = x : mergeImportsTail (y : ys)
+    mergeImportsTail xs = xs
+
+moduleName :: Import -> String
 moduleName
   = moduleNameString
   . unLocated
   . ideclName
-  . unLocated
+  . rawImport
 
-isQualified :: LImportDecl GhcPs -> Bool
+isQualified :: Import -> Bool
 isQualified
   = (/=) NotQualified
   . ideclQualified
-  . unLocated
+  . rawImport
 
-isHiding :: ImportDecl GhcPs -> Bool
+isHiding :: Import -> Bool
 isHiding
   = maybe False fst
   . ideclHiding
+  . rawImport
+
+isSource :: Import -> Bool
+isSource
+  = ideclSource
+  . rawImport
+
+isSafe :: Import -> Bool
+isSafe
+  = ideclSafe
+  . rawImport
 
 sortImportList :: [LIE GhcPs] -> [LIE GhcPs]
 sortImportList = sortBy $ currycated \case
@@ -188,11 +211,6 @@ sortImportList = sortBy $ currycated \case
   (_, IEThingWith _ _ _ _ _) -> LT
 
   _ -> EQ
-
-sortImportDecls :: NonEmpty (LImportDecl GhcPs) -> NonEmpty (LImportDecl GhcPs)
-sortImportDecls = NonEmpty.sortBy $ currycated \(a0, a1) ->
-  compareOutputable (ideclName a0) (ideclName a1) <>
-  compareOutputable a0 a1
 
 currycated :: ((a, b) -> c) -> (Located a -> Located b -> c)
 currycated f = \(L _ a) (L _ b) -> f (a, b)
