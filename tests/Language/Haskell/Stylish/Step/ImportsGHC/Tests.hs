@@ -1,20 +1,20 @@
-module Language.Haskell.Stylish.Step.Imports'.Tests
+module Language.Haskell.Stylish.Step.ImportsGHC.Tests
   ( tests
   ) where
 
 --------------------------------------------------------------------------------
-import           Test.Framework                         (Test, testGroup)
-import           Test.Framework.Providers.HUnit         (testCase)
-import           Test.HUnit                             (Assertion, (@=?))
-import           GHC.Stack                              (HasCallStack, withFrozenCallStack)
-import           Prelude                                hiding (lines)
+import           Test.Framework                           (Test, testGroup)
+import           Test.Framework.Providers.HUnit           (testCase)
+import           Test.HUnit                               (Assertion, (@=?))
+import           GHC.Stack                                (HasCallStack, withFrozenCallStack)
+import           Prelude                                  hiding (lines)
 
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Module
-import           Language.Haskell.Stylish.Step.Imports (defaultOptions)
-import           Language.Haskell.Stylish.Step.Imports' (step)
-import           Language.Haskell.Stylish.Tests.Util    (testStep')
+import           Language.Haskell.Stylish.Step.Imports    (defaultOptions)
+import           Language.Haskell.Stylish.Step.ImportsGHC (step)
+import           Language.Haskell.Stylish.Tests.Util      (testStep')
 
 
 

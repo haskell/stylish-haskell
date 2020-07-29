@@ -1,7 +1,7 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DoAndIfThenElse #-}
 {-# LANGUAGE LambdaCase #-}
-module Language.Haskell.Stylish.Step.Imports'
+module Language.Haskell.Stylish.Step.ImportsGHC
   ( Options (..)
   , step
   ) where

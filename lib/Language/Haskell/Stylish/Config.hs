@@ -42,7 +42,7 @@ import           Language.Haskell.Stylish.Config.Internal
 import           Language.Haskell.Stylish.Step
 import qualified Language.Haskell.Stylish.Step.Data               as Data
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
-import qualified Language.Haskell.Stylish.Step.Imports'           as Imports'
+import qualified Language.Haskell.Stylish.Step.ImportsGHC         as ImportsGHC
 import qualified Language.Haskell.Stylish.Step.ModuleHeader       as ModuleHeader
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
 import qualified Language.Haskell.Stylish.Step.SimpleAlign        as SimpleAlign
@@ -260,7 +260,7 @@ parseImports config o = do
 
   pure
     if Imports.useGhcLibParser cfg then
-      Imports'.step cfg
+      ImportsGHC.step cfg
     else
       Imports.step (configColumns config) cfg
 

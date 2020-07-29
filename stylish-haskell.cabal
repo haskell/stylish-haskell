@@ -34,7 +34,7 @@ Library
     Language.Haskell.Stylish.Printer
     Language.Haskell.Stylish.Step.Data
     Language.Haskell.Stylish.Step.Imports
-    Language.Haskell.Stylish.Step.Imports'
+    Language.Haskell.Stylish.Step.ImportsGHC
     Language.Haskell.Stylish.Step.ModuleHeader
     Language.Haskell.Stylish.Step.LanguagePragmas
     Language.Haskell.Stylish.Step.SimpleAlign
@@ -121,9 +121,9 @@ Test-suite stylish-haskell-tests
     Language.Haskell.Stylish.Printer
     Language.Haskell.Stylish.Step
     Language.Haskell.Stylish.Step.Imports
-    Language.Haskell.Stylish.Step.Imports'
+    Language.Haskell.Stylish.Step.ImportsGHC
     Language.Haskell.Stylish.Step.Imports.Tests
-    Language.Haskell.Stylish.Step.Imports'.Tests
+    Language.Haskell.Stylish.Step.ImportsGHC.Tests
     Language.Haskell.Stylish.Step.Data
     Language.Haskell.Stylish.Step.Data.Tests
     Language.Haskell.Stylish.Step.ModuleHeader
