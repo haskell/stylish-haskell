@@ -18,6 +18,9 @@ module Language.Haskell.Stylish.GHC
   ) where
 
 --------------------------------------------------------------------------------
+import           Data.Function (on)
+
+--------------------------------------------------------------------------------
 import           DynFlags                        (Settings(..), defaultDynFlags)
 import qualified DynFlags                        as GHC
 import           FileSettings                    (FileSettings(..))
@@ -95,5 +98,4 @@ showOutputable :: GHC.Outputable a => a -> String
 showOutputable = GHC.showPpr baseDynFlags
 
 compareOutputable :: GHC.Outputable a => a -> a -> Ordering
-compareOutputable i0 i1 = compare (showOutputable i0) (showOutputable i1)
-
+compareOutputable = compare `on` showOutputable
