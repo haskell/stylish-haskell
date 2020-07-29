@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 --------------------------------------------------------------------------------
 module Main
     ( main
@@ -7,13 +8,16 @@ module Main
 --------------------------------------------------------------------------------
 import           Control.Monad            (forM_, unless, when)
 import qualified Data.ByteString.Char8    as BC8
---import           Data.Monoid              ((<>))
 import           Data.Version             (showVersion)
 import qualified Options.Applicative      as OA
 import           System.Exit              (exitFailure)
 import qualified System.IO                as IO
 import qualified System.IO.Strict         as IO.Strict
 
+--------------------------------------------------------------------------------
+#if __GLASGOW_HASKELL__ < 808
+import           Data.Monoid              ((<>))
+#endif
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish
