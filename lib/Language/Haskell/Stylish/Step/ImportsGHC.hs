@@ -40,7 +40,7 @@ step = makeStep "Imports (ghc-lib-parser)" . printImports
 printImports :: Options -> Lines -> Module -> Lines
 printImports _ ls m = formatForImportGroups ls m (moduleImportGroups m)
 
-formatForImportGroups :: Lines -> Module -> [Imports] -> Lines
+formatForImportGroups :: Lines -> Module -> [[Located Import]] -> Lines
 formatForImportGroups ls _m [] = ls
 formatForImportGroups ls m (group : rest) = formatForImportGroups formattedGroup m rest
   where
@@ -48,7 +48,7 @@ formatForImportGroups ls m (group : rest) = formatForImportGroups formattedGroup
     formattedGroup =
       let
         imports =
-          rawImports group
+          fmap rawImport group
 
         relevantComments =
           []
