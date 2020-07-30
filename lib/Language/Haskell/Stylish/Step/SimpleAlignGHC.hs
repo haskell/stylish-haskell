@@ -9,8 +9,10 @@ module Language.Haskell.Stylish.Step.SimpleAlignGHC
 
 --------------------------------------------------------------------------------
 import           Data.Maybe                      (maybeToList, fromJust)
+import           Data.List                       (foldl')
 import qualified GHC.Hs                          as Hs
 import qualified SrcLoc                          as S
+import           Debug.Trace                     (traceM)
 
 
 --------------------------------------------------------------------------------
@@ -66,9 +68,8 @@ records modu =
 
 
 matchToAlignable :: S.Located (Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)) -> Maybe (Alignable S.RealSrcSpan)
-matchToAlignable (S.L _ (Hs.XMatch x)) = Hs.noExtCon x
-matchToAlignable (S.L _ (Hs.Match _ _ [] _)) = Nothing
 matchToAlignable (S.L matchLoc (Hs.Match _ (Hs.FunRhs name _ _) pats grhss)) = do
+  traceM "Match case"
   let patsLocs = map S.getLoc pats
       nameLoc  = S.getLoc name
       left     = last (nameLoc : patsLocs)
@@ -79,10 +80,23 @@ matchToAlignable (S.L matchLoc (Hs.Match _ (Hs.FunRhs name _ _) pats grhss)) = d
     , aRight     = fromSrcSpanToReal $ S.getLoc body
     , aRightLead = length "= "
     }
--- NOTE(jaspervdj): We need a case here for when `notFun` is not a `Hs.FunRhs`
--- if we want to be able to align `case` statements.  This is also where we
--- could pass in the the `cCases` flag.
-matchToAlignable (S.L _ (Hs.Match _ notFun _ _)) = Nothing
+matchToAlignable (S.L matchLoc m@(Hs.Match _ Hs.CaseAlt pats grhss)) = do
+  body <- unguardedRhsBody grhss
+  traceM "Alt case"
+  let patsLocs = map S.getLoc pats
+      pat      = last patsLocs
+      guards   = getGuards m
+      guardsLocs = map S.getLoc guards
+  Just $ Alignable
+    { aContainer = fromSrcSpanToReal matchLoc
+    , aLeft      = fromSrcSpanToReal $ foldl' S.combineSrcSpans pat guardsLocs
+    , aRight     = fromSrcSpanToReal $ S.getLoc body
+    , aRightLead = length "-> "
+    }
+matchToAlignable (S.L _ (Hs.Match _ _ [] _)) = Nothing
+matchToAlignable (S.L _ (Hs.Match _ _ _ _ )) = Nothing
+matchToAlignable (S.L _ (Hs.XMatch x))       = Hs.noExtCon x
+
 
 fieldDeclToAlignable :: S.Located (Hs.ConDeclField Hs.GhcPs) -> Maybe (Alignable S.RealSrcSpan)
 fieldDeclToAlignable (S.L _ (Hs.XConDeclField x)) = Hs.noExtCon x
@@ -105,12 +119,13 @@ step maxColumns config = makeStep "Cases" . Right $ \ls module' ->
 
         configured :: [Change String]
         configured = concat $
-          [changes tlpats matchToAlignable | cTopLevelPatterns config] 
+          [changes tlpats matchToAlignable | cTopLevelPatterns config || cCases config] 
                     ++
 
           [changes records fieldDeclToAlignable | cRecords config]
 
     in applyChanges configured ls
+       
 
 -- TODO find a better way to handle failure
 fromSrcSpanToReal :: S.SrcSpan -> S.RealSrcSpan

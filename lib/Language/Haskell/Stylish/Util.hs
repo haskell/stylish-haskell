@@ -28,6 +28,8 @@ module Language.Haskell.Stylish.Util
     , getConDecls
     , getConDeclDetails
     , getLocRecs
+
+    , getGuards
     ) where
 
 
@@ -247,7 +249,7 @@ unguardedRhsBody _ = Nothing
 --------------------------------------------------------------------------------
 -- get a list of un-located constructors
 getConDecls :: Hs.HsDataDefn Hs.GhcPs -> [Hs.ConDecl Hs.GhcPs]
-getConDecls d@(Hs.HsDataDefn _ _ _ _ _ cons _) = 
+getConDecls d@(Hs.HsDataDefn _ _ _ _ _ _cons _) = 
   map S.unLoc $ Hs.dd_cons d
 getConDecls (Hs.XHsDataDefn x) = Hs.noExtCon x
 
@@ -265,3 +267,26 @@ getConDeclDetails (Hs.XConDecl x)                    = Hs.noExtCon x
 getLocRecs :: [Hs.HsConDeclDetails Hs.GhcPs] -> [S.Located [Hs.LConDeclField Hs.GhcPs]]
 getLocRecs conDeclDetails =
   [ rec | Hs.RecCon rec <- conDeclDetails ]
+
+
+--------------------------------------------------------------------------------
+-- get guards in a guarded rhs of a Match
+getGuards :: Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> [Hs.GuardLStmt Hs.GhcPs]
+getGuards (Hs.Match _ _ _ grhss) = 
+  let
+    lgrhs = getLocGRHS grhss -- []
+    grhs  = map S.unLoc lgrhs
+  in
+    concatMap getGuardLStmts grhs
+getGuards (Hs.XMatch x) = Hs.noExtCon x
+
+
+getLocGRHS :: Hs.GRHSs Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> [Hs.LGRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)]
+getLocGRHS (Hs.GRHSs _ guardeds _) = guardeds
+getLocGRHS (Hs.XGRHSs x)           = Hs.noExtCon x
+
+
+getGuardLStmts :: Hs.GRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> [Hs.GuardLStmt Hs.GhcPs]
+getGuardLStmts (Hs.GRHS _ guards _) = guards
+getGuardLStmts (Hs.XGRHS x)         = Hs.noExtCon x
+
