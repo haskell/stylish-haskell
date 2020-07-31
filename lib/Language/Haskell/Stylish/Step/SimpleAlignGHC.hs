@@ -8,7 +8,7 @@ module Language.Haskell.Stylish.Step.SimpleAlignGHC
 
 
 --------------------------------------------------------------------------------
-import           Data.Maybe                      (maybeToList, fromJust)
+import           Data.Maybe                      (maybeToList)
 import           Data.List                       (foldl')
 import qualified GHC.Hs                          as Hs
 import qualified SrcLoc                          as S
@@ -73,11 +73,13 @@ matchToAlignable (S.L matchLoc (Hs.Match _ (Hs.FunRhs name _ _) pats grhss)) = d
       nameLoc  = S.getLoc name
       left     = last (nameLoc : patsLocs)
       bodyLoc  = S.getLoc body
-  traceOutputtableM "body loc" bodyLoc
+  matchPos <- toRealSrcSpan matchLoc
+  leftPos  <- toRealSrcSpan left
+  bodyPos  <- toRealSrcSpan bodyLoc
   Just $ Alignable
-    { aContainer = fromSrcSpanToReal matchLoc
-    , aLeft      = fromSrcSpanToReal left
-    , aRight     = fromSrcSpanToReal bodyLoc
+    { aContainer = matchPos
+    , aLeft      = leftPos
+    , aRight     = bodyPos
     , aRightLead = length "= "
     }
 matchToAlignable (S.L _ (Hs.Match _ _ [] _)) = Nothing
@@ -86,27 +88,35 @@ matchToAlignable (S.L _ (Hs.XMatch x))       = Hs.noExtCon x
 
 caseToAlignable :: S.Located (Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)) -> Maybe (Alignable S.RealSrcSpan)  
 caseToAlignable (S.L matchLoc m@(Hs.Match _ Hs.CaseAlt pats grhss)) = do
-  body <- rhsBody grhss
   let patsLocs   = map S.getLoc pats
       pat        = last patsLocs
       guards     = getGuards m
       guardsLocs = map S.getLoc guards
+      left       = foldl' S.combineSrcSpans pat guardsLocs
+  body     <- rhsBody grhss
+  matchPos <- toRealSrcSpan matchLoc
+  leftPos  <- toRealSrcSpan left
+  rightPos <- toRealSrcSpan $ S.getLoc body
   Just $ Alignable
-    { aContainer = fromSrcSpanToReal matchLoc
-    , aLeft      = fromSrcSpanToReal $ foldl' S.combineSrcSpans pat guardsLocs
-    , aRight     = fromSrcSpanToReal $ S.getLoc body
+    { aContainer = matchPos
+    , aLeft      = leftPos
+    , aRight     = rightPos
     , aRightLead = length "-> "
     }
 caseToAlignable (S.L _ (Hs.XMatch x))       = Hs.noExtCon x
-caseToAlignable (S.L _ (Hs.Match _ _ _ _)) = Nothing
+caseToAlignable (S.L _ (Hs.Match _ _ _ _))  = Nothing
 
 
 fieldDeclToAlignable :: S.Located (Hs.ConDeclField Hs.GhcPs) -> Maybe (Alignable S.RealSrcSpan)
 fieldDeclToAlignable (S.L _ (Hs.XConDeclField x)) = Hs.noExtCon x
-fieldDeclToAlignable (S.L matchLoc (Hs.ConDeclField _ names ty _)) = Just $ Alignable
-    { aContainer = fromSrcSpanToReal matchLoc
-    , aLeft      = fromSrcSpanToReal $ S.getLoc $ last names
-    , aRight     = fromSrcSpanToReal $ S.getLoc ty
+fieldDeclToAlignable (S.L matchLoc (Hs.ConDeclField _ names ty _)) = do
+  matchPos <- toRealSrcSpan matchLoc
+  leftPos  <- toRealSrcSpan $ S.getLoc $ last names
+  tyPos    <- toRealSrcSpan $ S.getLoc ty
+  Just $ Alignable
+    { aContainer = matchPos
+    , aLeft      = leftPos
+    , aRight     = tyPos
     , aRightLead = length ":: "
     }
 
@@ -125,9 +135,4 @@ step maxColumns config = makeStep "Cases" . Right $ \ls module' ->
           [changes records fieldDeclToAlignable | cRecords config] ++
           [changes everything caseToAlignable | cCases config]
     in applyChanges configured ls
-       
-
--- TODO find a better way to handle failure
-fromSrcSpanToReal :: S.SrcSpan -> S.RealSrcSpan
-fromSrcSpanToReal = fromJust . toRealSrcSpan
 
