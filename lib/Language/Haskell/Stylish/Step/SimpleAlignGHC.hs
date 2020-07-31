@@ -68,24 +68,38 @@ records modu =
 
 
 matchToAlignable :: S.Located (Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)) -> Maybe (Alignable S.RealSrcSpan)
-matchToAlignable (S.L matchLoc (Hs.Match _ (Hs.FunRhs name _ _) pats grhss)) = do
+matchToAlignable m@(S.L matchLoc (Hs.Match _ foo@(Hs.FunRhs name _ _) pats grhss)) = do
+  body <- unguardedRhsBody grhss  -- (Hs.LHsExpr Hs.GhcPs)
   traceM "Match case"
+  --traceOutputtableM "match" m
+  --traceOutputtableM "function" foo
+  --traceOutputtableM "pats" pats
+  --traceOutputtableM "match loc" matchLoc
+  --traceOutputtableM "body" body
   let patsLocs = map S.getLoc pats
       nameLoc  = S.getLoc name
       left     = last (nameLoc : patsLocs)
-  body <- unguardedRhsBody grhss
+      bodyLoc  = S.getLoc body
+  traceOutputtableM "body loc" bodyLoc
   Just $ Alignable
     { aContainer = fromSrcSpanToReal matchLoc
     , aLeft      = fromSrcSpanToReal left
-    , aRight     = fromSrcSpanToReal $ S.getLoc body
+    , aRight     = fromSrcSpanToReal bodyLoc
     , aRightLead = length "= "
     }
-matchToAlignable (S.L matchLoc m@(Hs.Match _ Hs.CaseAlt pats grhss)) = do
-  body <- unguardedRhsBody grhss
+matchToAlignable (S.L _ (Hs.Match _ _ [] _)) = Nothing
+matchToAlignable (S.L _ (Hs.Match _ _ _ _ )) = Nothing
+matchToAlignable (S.L _ (Hs.XMatch x))       = Hs.noExtCon x
+
+caseToAlignable :: S.Located (Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)) -> Maybe (Alignable S.RealSrcSpan)  
+caseToAlignable (S.L matchLoc m@(Hs.Match _ Hs.CaseAlt pats grhss)) = do
   traceM "Alt case"
-  let patsLocs = map S.getLoc pats
-      pat      = last patsLocs
-      guards   = getGuards m
+  traceOutputtableM "match" m
+  body <- unguardedRhsBody grhss
+  traceOutputtableM "body" body
+  let patsLocs   = map S.getLoc pats
+      pat        = last patsLocs
+      guards     = getGuards m
       guardsLocs = map S.getLoc guards
   Just $ Alignable
     { aContainer = fromSrcSpanToReal matchLoc
@@ -93,9 +107,8 @@ matchToAlignable (S.L matchLoc m@(Hs.Match _ Hs.CaseAlt pats grhss)) = do
     , aRight     = fromSrcSpanToReal $ S.getLoc body
     , aRightLead = length "-> "
     }
-matchToAlignable (S.L _ (Hs.Match _ _ [] _)) = Nothing
-matchToAlignable (S.L _ (Hs.Match _ _ _ _ )) = Nothing
-matchToAlignable (S.L _ (Hs.XMatch x))       = Hs.noExtCon x
+caseToAlignable (S.L _ (Hs.XMatch x))       = Hs.noExtCon x
+caseToAlignable (S.L _ (Hs.Match _ _ _ _)) = Nothing
 
 
 fieldDeclToAlignable :: S.Located (Hs.ConDeclField Hs.GhcPs) -> Maybe (Alignable S.RealSrcSpan)
@@ -119,10 +132,9 @@ step maxColumns config = makeStep "Cases" . Right $ \ls module' ->
 
         configured :: [Change String]
         configured = concat $
-          [changes tlpats matchToAlignable | cTopLevelPatterns config || cCases config] 
-                    ++
-
-          [changes records fieldDeclToAlignable | cRecords config]
+          [changes tlpats matchToAlignable | cTopLevelPatterns config] ++
+          [changes records fieldDeclToAlignable | cRecords config] ++
+	  [changes everything caseToAlignable | cCases config]
 
     in applyChanges configured ls
        
