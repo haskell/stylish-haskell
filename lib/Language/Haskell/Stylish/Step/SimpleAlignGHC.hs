@@ -87,7 +87,7 @@ matchToAlignable (S.L _ (Hs.Match _ _ _ _ )) = Nothing
 matchToAlignable (S.L _ (Hs.XMatch x))       = Hs.noExtCon x
 
 caseToAlignable :: S.Located (Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)) -> Maybe (Alignable S.RealSrcSpan)  
-caseToAlignable (S.L matchLoc m@(Hs.Match _ Hs.CaseAlt pats grhss)) = do
+caseToAlignable (S.L matchLoc m@(Hs.Match _ Hs.CaseAlt pats@(_ : _) grhss)) = do
   let patsLocs   = map S.getLoc pats
       pat        = last patsLocs
       guards     = getGuards m
