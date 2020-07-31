@@ -24,6 +24,7 @@ module Language.Haskell.Stylish.Util
     , traceOutputtableM
 
     , unguardedRhsBody
+    , rhsBody
 
     , getConDecls
     , getConDeclDetails
@@ -245,6 +246,12 @@ unguardedRhsBody (Hs.GRHSs _ [grhs] _)
     | Hs.GRHS _ [] body <- S.unLoc grhs = Just body
 unguardedRhsBody _ = Nothing
 
+
+-- Utility: grab the body out of guarded RHSs
+rhsBody :: Hs.GRHSs Hs.GhcPs a -> Maybe a
+rhsBody (Hs.GRHSs _ [grhs] _)
+    | Hs.GRHS _ _ body <- S.unLoc grhs = Just body
+rhsBody _ = Nothing
 
 --------------------------------------------------------------------------------
 -- get a list of un-located constructors

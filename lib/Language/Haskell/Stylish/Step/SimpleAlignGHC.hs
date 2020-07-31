@@ -95,7 +95,7 @@ caseToAlignable :: S.Located (Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)) -> Maybe 
 caseToAlignable (S.L matchLoc m@(Hs.Match _ Hs.CaseAlt pats grhss)) = do
   traceM "Alt case"
   traceOutputtableM "match" m
-  body <- unguardedRhsBody grhss
+  body <- rhsBody grhss
   traceOutputtableM "body" body
   let patsLocs   = map S.getLoc pats
       pat        = last patsLocs
