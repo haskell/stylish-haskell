@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- 0.11.0.3 (2020-08-02)
+    * Set default-language to Haskell2010
+
 - 0.11.0.2 (2020-08-02)
     * Bump `Cabal-version` to 1.10
 
