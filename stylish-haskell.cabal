@@ -24,8 +24,9 @@ Extra-source-files:
   data/stylish-haskell.yaml
 
 Library
-  Hs-source-dirs: lib
-  Ghc-options:    -Wall
+  Hs-source-dirs:   lib
+  Ghc-options:      -Wall
+  Default-language: Haskell2010
 
   Exposed-modules:
     Language.Haskell.Stylish
@@ -69,9 +70,10 @@ Library
     HsYAML           >=0.2.0   && < 0.3
 
 Executable stylish-haskell
-  Ghc-options:    -Wall
-  Hs-source-dirs: src
-  Main-is:        Main.hs
+  Ghc-options:      -Wall
+  Hs-source-dirs:   src
+  Main-is:          Main.hs
+  Default-language: Haskell2010
 
   Build-depends:
     stylish-haskell,
@@ -93,10 +95,11 @@ Executable stylish-haskell
     HsYAML           >=0.2.0   && < 0.3
 
 Test-suite stylish-haskell-tests
-  Ghc-options:    -Wall
-  Hs-source-dirs: tests lib
-  Main-is:        TestSuite.hs
-  Type:           exitcode-stdio-1.0
+  Ghc-options:      -Wall
+  Hs-source-dirs:   tests lib
+  Main-is:          TestSuite.hs
+  Type:             exitcode-stdio-1.0
+  Default-language: Haskell2010
 
   Other-modules:
     Language.Haskell.Stylish
