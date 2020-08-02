@@ -1,5 +1,9 @@
 # CHANGELOG
 
+- 0.11.0.1
+    * Bump `aeson` upper bound to 1.6
+    * Bump `Cabal` upper bound to 3.3
+
 - 0.11.0.0 (2020-02-24)
     * Disable record formatting by default
     * Allow more customization for record formatting (by Maxim Koltsov)

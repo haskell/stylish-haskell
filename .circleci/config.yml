@@ -12,7 +12,7 @@ workflows:
 jobs:
   build:
     docker:
-      - image: 'haskell:8.6'
+      - image: 'haskell:8.8'
 
     steps:
       - checkout
