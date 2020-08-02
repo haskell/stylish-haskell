@@ -11,6 +11,41 @@ packages:
       sha256: 8e5bc885533431db9bf75e9609f6b80b56ab0c289a903d701f8628e78322afd0
   original:
     hackage: haskell-src-exts-1.23.0
+- completed:
+    hackage: aeson-1.5.2.0@sha256:d00c7aa51969b2849550e4dee14c9ce188504d55ed8d7f734ce9f6976db452f6,6786
+    pantry-tree:
+      size: 39758
+      sha256: 992b01282d72e4db664289db69a846a4ec675379ca96824ba902a7541104d409
+  original:
+    hackage: aeson-1.5.2.0
+- completed:
+    hackage: Cabal-3.2.0.0@sha256:d0d7a1f405f25d0000f5ddef684838bc264842304fd4e7f80ca92b997b710874,27320
+    pantry-tree:
+      size: 40963
+      sha256: b122f2d76dc82a350d3986fa0cbc4ecf9c3bb4f9c598ccbfb3b2bfdde02f3698
+  original:
+    hackage: Cabal-3.2.0.0
+- completed:
+    hackage: HsYAML-aeson-0.2.0.0@sha256:b58e8587d480f8c29e4cb4f61ad6ab5d74195d31340e6e8c317ac4d13b65c469,1861
+    pantry-tree:
+      size: 234
+      sha256: 8a181cdb027e2862fd54cb47d0ff91a45126ab4cd2080083128e800c5fa2635b
+  original:
+    hackage: HsYAML-aeson-0.2.0.0@rev:2
+- completed:
+    hackage: HsYAML-0.2.1.0@sha256:6e63cbc919543c5a837040f063e96fe0a4e43bef8ab3c057cef8f122396fdc2d,5469
+    pantry-tree:
+      size: 1340
+      sha256: 77d9299977dfbc7836cbbcb51fe890bb70d485d9dd89a3bbe54822635faa8108
+  original:
+    hackage: HsYAML-0.2.1.0@rev:1
+- completed:
+    hackage: these-1.1.1.1@sha256:3b63a3942f1da4ff97786221e3c654b969b54d570fef2cf4db97da4ea26a36cc,2609
+    pantry-tree:
+      size: 351
+      sha256: 9dbf8c39e2962926d5fb2c7bffba5e3407fed67a581ef60e2eaf3cb0c5778074
+  original:
+    hackage: these-1.1.1.1
 snapshots:
 - completed:
     size: 491387
