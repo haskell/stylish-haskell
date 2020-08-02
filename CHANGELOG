@@ -1,6 +1,6 @@
 # CHANGELOG
 
-- 0.11.0.1
+- 0.11.0.1 (2020-08-02)
     * Bump `aeson` upper bound to 1.6
     * Bump `Cabal` upper bound to 3.3
 
