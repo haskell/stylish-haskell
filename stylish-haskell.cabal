@@ -9,7 +9,7 @@ Maintainer:    Jasper Van der Jeugt <m@jaspervdj.be>
 Copyright:     2012 Jasper Van der Jeugt
 Category:      Language
 Build-type:    Simple
-Cabal-version: >= 1.8
+Cabal-version: >= 1.10
 
 Description:
     A Haskell code prettifier. For more information, see:

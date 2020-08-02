@@ -9,3 +9,5 @@ extra-deps:
 - 'HsYAML-aeson-0.2.0.0@rev:2'
 - 'HsYAML-0.2.1.0@rev:1'
 - 'these-1.1.1.1'
+
+save-hackage-creds: false
