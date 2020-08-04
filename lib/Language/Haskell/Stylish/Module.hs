@@ -5,9 +5,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 module Language.Haskell.Stylish.Module
   ( -- * Data types
-    Module
+    Module (..)
   , ModuleHeader
   , Import
   , Decls
@@ -52,6 +53,7 @@ import           Data.List                       (nubBy, sort)
 import           Data.List.NonEmpty              (NonEmpty, nonEmpty)
 import           Data.Text                       (Text)
 import qualified Data.Text                       as T
+import           Data.Data                       (Data)
 
 --------------------------------------------------------------------------------
 import qualified ApiAnnotation                   as GHC
@@ -82,7 +84,7 @@ data Module = Module
   , parsedAnnotations :: [(GHC.ApiAnnKey, [GHC.SrcSpan])]
   , parsedAnnotSrcs :: Map RealSrcSpan [GHC.AnnKeywordId]
   , parsedModule :: GHC.Located (GHC.HsModule GhcPs)
-  }
+  } deriving (Data)
 
 -- | Declarations in module
 newtype Decls = Decls [LHsDecl GhcPs]

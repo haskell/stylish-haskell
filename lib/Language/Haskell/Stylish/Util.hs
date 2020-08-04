@@ -17,6 +17,20 @@ module Language.Haskell.Stylish.Util
     , withInit
     , withTail
     , withLast
+
+    , toRealSrcSpan
+
+    , traceOutputtable
+    , traceOutputtableM
+
+    , unguardedRhsBody
+    , rhsBody
+
+    , getConDecls
+    , getConDeclDetails
+    , getLocRecs
+
+    , getGuards
     ) where
 
 
@@ -28,7 +42,11 @@ import qualified Data.Generics                 as G
 import           Data.Maybe                    (fromMaybe, listToMaybe,
                                                 maybeToList)
 import           Data.Typeable                 (cast)
+import           Debug.Trace                   (trace)
 import qualified Language.Haskell.Exts         as H
+import qualified Outputable
+import qualified GHC.Hs                        as Hs
+import qualified SrcLoc                        as S
 
 
 --------------------------------------------------------------------------------
@@ -185,3 +203,80 @@ withInit f (x : xs) = f x : withInit f xs
 withTail :: (a -> a) -> [a] -> [a]
 withTail _ []       = []
 withTail f (x : xs) = x : map f xs
+
+
+--------------------------------------------------------------------------------
+traceOutputtable :: Outputable.Outputable a => String -> a -> b -> b
+traceOutputtable title x =
+    trace (title ++ ": " ++ (Outputable.showSDocUnsafe $ Outputable.ppr x))
+
+
+--------------------------------------------------------------------------------
+traceOutputtableM :: (Outputable.Outputable a, Monad m) => String -> a -> m ()
+traceOutputtableM title x = traceOutputtable title x $ pure ()
+
+
+--------------------------------------------------------------------------------
+-- take the (Maybe) RealSrcSpan out of the SrcSpan
+toRealSrcSpan :: S.SrcSpan -> Maybe S.RealSrcSpan
+toRealSrcSpan (S.RealSrcSpan s) = Just s
+toRealSrcSpan _                 = Nothing
+
+
+--------------------------------------------------------------------------------
+-- Utility: grab the body out of guarded RHSs if it's a single unguarded one.
+unguardedRhsBody :: Hs.GRHSs Hs.GhcPs a -> Maybe a
+unguardedRhsBody (Hs.GRHSs _ [grhs] _)
+    | Hs.GRHS _ [] body <- S.unLoc grhs = Just body
+unguardedRhsBody _ = Nothing
+
+
+-- Utility: grab the body out of guarded RHSs
+rhsBody :: Hs.GRHSs Hs.GhcPs a -> Maybe a
+rhsBody (Hs.GRHSs _ [grhs] _)
+    | Hs.GRHS _ _ body <- S.unLoc grhs = Just body
+rhsBody _ = Nothing
+
+--------------------------------------------------------------------------------
+-- get a list of un-located constructors
+getConDecls :: Hs.HsDataDefn Hs.GhcPs -> [Hs.ConDecl Hs.GhcPs]
+getConDecls d@(Hs.HsDataDefn _ _ _ _ _ _cons _) = 
+  map S.unLoc $ Hs.dd_cons d
+getConDecls (Hs.XHsDataDefn x) = Hs.noExtCon x
+
+
+--------------------------------------------------------------------------------
+-- get Arguments from data Construction Declaration
+getConDeclDetails :: Hs.ConDecl Hs.GhcPs -> Hs.HsConDeclDetails Hs.GhcPs
+getConDeclDetails d@(Hs.ConDeclGADT _ _ _ _ _ _ _ _) = Hs.con_args d
+getConDeclDetails d@(Hs.ConDeclH98 _ _ _ _ _ _ _)    = Hs.con_args d
+getConDeclDetails (Hs.XConDecl x)                    = Hs.noExtCon x
+
+
+--------------------------------------------------------------------------------
+-- look for Record(s) in a list of Construction Declaration details
+getLocRecs :: [Hs.HsConDeclDetails Hs.GhcPs] -> [S.Located [Hs.LConDeclField Hs.GhcPs]]
+getLocRecs conDeclDetails =
+  [ rec | Hs.RecCon rec <- conDeclDetails ]
+
+
+--------------------------------------------------------------------------------
+-- get guards in a guarded rhs of a Match
+getGuards :: Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> [Hs.GuardLStmt Hs.GhcPs]
+getGuards (Hs.Match _ _ _ grhss) = 
+  let
+    lgrhs = getLocGRHS grhss -- []
+    grhs  = map S.unLoc lgrhs
+  in
+    concatMap getGuardLStmts grhs
+getGuards (Hs.XMatch x) = Hs.noExtCon x
+
+
+getLocGRHS :: Hs.GRHSs Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> [Hs.LGRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)]
+getLocGRHS (Hs.GRHSs _ guardeds _) = guardeds
+getLocGRHS (Hs.XGRHSs x)           = Hs.noExtCon x
+
+
+getGuardLStmts :: Hs.GRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> [Hs.GuardLStmt Hs.GhcPs]
+getGuardLStmts (Hs.GRHS _ guards _) = guards
+getGuardLStmts (Hs.XGRHS x)         = Hs.noExtCon x
