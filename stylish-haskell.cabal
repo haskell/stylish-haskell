@@ -144,7 +144,7 @@ Test-suite stylish-haskell-tests
     aeson            >= 0.6    && < 1.6,
     base             >= 4.8    && < 5,
     bytestring       >= 0.9    && < 0.11,
-    Cabal            >= 2.4    && < 3.1,
+    Cabal            >= 2.4    && < 3.3,
     containers       >= 0.3    && < 0.7,
     directory        >= 1.2.3  && < 1.4,
     filepath         >= 1.1    && < 1.5,
