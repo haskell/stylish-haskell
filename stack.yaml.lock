@@ -5,13 +5,6 @@
 
 packages:
 - completed:
-    hackage: haskell-src-exts-1.23.0@sha256:1bb9f7e97d569e56973133cb075fdcc1bfd11f90d94b035b5cf44814bb39a73d,4541
-    pantry-tree:
-      size: 97804
-      sha256: 8e5bc885533431db9bf75e9609f6b80b56ab0c289a903d701f8628e78322afd0
-  original:
-    hackage: haskell-src-exts-1.23.0
-- completed:
     hackage: aeson-1.5.2.0@sha256:d00c7aa51969b2849550e4dee14c9ce188504d55ed8d7f734ce9f6976db452f6,6786
     pantry-tree:
       size: 39758
@@ -39,16 +32,9 @@ packages:
       sha256: 77d9299977dfbc7836cbbcb51fe890bb70d485d9dd89a3bbe54822635faa8108
   original:
     hackage: HsYAML-0.2.1.0@rev:1
-- completed:
-    hackage: these-1.1.1.1@sha256:3b63a3942f1da4ff97786221e3c654b969b54d570fef2cf4db97da4ea26a36cc,2609
-    pantry-tree:
-      size: 351
-      sha256: 9dbf8c39e2962926d5fb2c7bffba5e3407fed67a581ef60e2eaf3cb0c5778074
-  original:
-    hackage: these-1.1.1.1
 snapshots:
 - completed:
-    size: 491387
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/15/6.yaml
-    sha256: 8d81505a6de861e167a58534ab62330afb75bfa108735c7db1204f7ef2a39d79
-  original: lts-15.6
+    size: 532380
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/9.yaml
+    sha256: 14a7cec114424e4286adde73364438927a553ed248cc50f069a30a67e3ee1e69
+  original: lts-16.9
