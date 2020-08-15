@@ -1,5 +1,8 @@
 resolver: lts-16.9
 
+# Specifying `-split-sections` in this way propagates the setting to all
+# dependencies as well. The effect of this is a 50%-60% reduction in final
+# binary size, with effectively no additional compilation time cost.
 ghc-options:
   $everything: -split-sections
 
