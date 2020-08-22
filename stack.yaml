@@ -1,15 +1,9 @@
-resolver: lts-16.9
+resolver: nightly-2020-08-22
 
 # Specifying `-split-sections` in this way propagates the setting to all
 # dependencies as well. The effect of this is a 50%-60% reduction in final
 # binary size, with effectively no additional compilation time cost.
 ghc-options:
   $everything: -split-sections
-
-extra-deps:
-- 'aeson-1.5.2.0'
-- 'Cabal-3.2.0.0'
-- 'HsYAML-aeson-0.2.0.0@rev:2'
-- 'HsYAML-0.2.1.0@rev:1'
 
 save-hackage-creds: false
