@@ -263,12 +263,14 @@ parseImports config o = do
 
   pure
     if Imports.useGhcLibParser cfg then
-      ImportsGHC.step cfg
+      ImportsGHC.step columns cfg
     else
-      Imports.step (configColumns config) cfg
+      Imports.step columns cfg
 
   where
     def f = f Imports.defaultOptions
+
+    columns = configColumns config
 
     aligns =
         [ ("global", Imports.Global)

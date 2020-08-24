@@ -240,4 +240,5 @@ ex12 = input `assertFormatted` output
 
 --------------------------------------------------------------------------------
 assertFormatted :: HasCallStack => Lines -> Lines -> Assertion
-assertFormatted input expected = withFrozenCallStack $ expected @=? testStep' (step defaultOptions) input
+assertFormatted input expected =
+  withFrozenCallStack $ expected @=? testStep' (step Nothing defaultOptions) input

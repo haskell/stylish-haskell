@@ -33,12 +33,12 @@ import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.GHC
 import           Language.Haskell.Stylish.Step.Imports (Options(..))
 
-step :: Options -> Step
-step = makeStep "Imports (ghc-lib-parser)" . printImports
+step :: Maybe Int -> Options -> Step
+step columns = makeStep "Imports (ghc-lib-parser)" . printImports columns
 
 --------------------------------------------------------------------------------
-printImports :: Options -> Lines -> Module -> Lines
-printImports _ ls m = formatForImportGroups ls m (moduleImportGroups m)
+printImports :: Maybe Int -> Options -> Lines -> Module -> Lines
+printImports _ _ ls m = formatForImportGroups ls m (moduleImportGroups m)
 
 formatForImportGroups :: Lines -> Module -> [[Located Import]] -> Lines
 formatForImportGroups ls _m [] = ls
