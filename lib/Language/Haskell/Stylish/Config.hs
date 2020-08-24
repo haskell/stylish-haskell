@@ -212,7 +212,7 @@ parseSimpleAlign c o = SimpleAlign.step
 
 --------------------------------------------------------------------------------
 parseRecords :: Config -> A.Object -> A.Parser Step
-parseRecords _ o = Data.step
+parseRecords c o = Data.step
     <$> (Data.Config
         <$> (o A..: "equals" >>= parseIndent)
         <*> (o A..: "first_field" >>= parseIndent)
@@ -221,8 +221,11 @@ parseRecords _ o = Data.step
         <*> (o A..:? "break_enums" A..!= False)
         <*> (o A..:? "break_single_constructors" A..!= True)
         <*> (o A..: "via" >>= parseIndent)
-        <*> (o A..:? "curried_context" A..!= False))
-
+        <*> (o A..:? "curried_context" A..!= False)
+        <*> pure configMaxColumns)
+  where
+    configMaxColumns =
+      maybe Data.NoMaxColumns Data.MaxColumns (configColumns c)
 
 parseIndent :: A.Value -> A.Parser Data.Indent
 parseIndent = A.withText "Indent" $ \t ->

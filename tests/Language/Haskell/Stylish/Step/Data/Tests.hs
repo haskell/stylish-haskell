@@ -63,6 +63,8 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 50" case50
     , testCase "case 51" case51
     , testCase "case 52" case52
+    , testCase "case 53" case53
+    , testCase "case 54" case54
     ]
 
 case00 :: Assertion
@@ -648,15 +650,15 @@ case28 = expected @=? testStep (step sameIndentStyle { cBreakEnums = True }) inp
       [ "module Some.Types where"
       , ""
       , "newtype BankCode = BankCode { unBankCode :: Text }"
-      , "  deriving stock (Generic, Eq, Show)"
+      , "  deriving stock (Eq, Generic, Show)"
       , "  deriving anyclass (Newtype)"
       , ""
       , "newtype CheckDigit = CheckDigit { unCheckDigit :: Text }"
-      , "  deriving stock (Generic, Eq, Show)"
+      , "  deriving stock (Eq, Generic, Show)"
       , "  deriving anyclass (Newtype)"
       , ""
       , "newtype WrappedInt = WrappedInt Int"
-      , "  deriving stock (Generic, Eq, Show)"
+      , "  deriving stock (Eq, Generic, Show)"
       , "  deriving anyclass (Newtype)"
       , ""
       , "data MandateStatus"
@@ -664,8 +666,8 @@ case28 = expected @=? testStep (step sameIndentStyle { cBreakEnums = True }) inp
       , "  | Failed"
       , "  | UserCanceled"
       , "  | Inactive"
-      , "  deriving stock (Generic, Show, Eq, Enum, Bounded)"
-      , "  deriving (ToJSON, FromJSON) via SnakeCaseCapsEnumEncoding MandateStatus"
+      , "  deriving stock (Bounded, Enum, Eq, Generic, Show)"
+      , "  deriving (FromJSON, ToJSON) via SnakeCaseCapsEnumEncoding MandateStatus"
       ]
 
 case29 :: Assertion
@@ -737,8 +739,8 @@ case32 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True }) i
       , "  | VersionNotFound"
       , "  -- ValidationFailed"
       , "  | BankAccountExists"
-      , "  deriving stock (Generic, Show, Eq)"
-      , "  deriving (ToJSON, FromJSON) via SnakeCaseLowercaseEnumEncoding RejectionReason"
+      , "  deriving stock (Eq, Generic, Show)"
+      , "  deriving (FromJSON, ToJSON) via SnakeCaseLowercaseEnumEncoding RejectionReason"
       ]
 
 case33 :: Assertion
@@ -772,7 +774,7 @@ case34 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) inpu
       , ""
       , "newtype NonEmpty a"
       , "  = NonEmpty { unNonEmpty :: a }"
-      , "  deriving (ToJSON, FromJSON)"
+      , "  deriving (FromJSON, ToJSON)"
       , "    via Something Magic (NonEmpty a)"
       ]
 
@@ -838,8 +840,8 @@ case37 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) inpu
       , ""
       , "newtype UndoFlowData"
       , "  = UndoFlowData { flowDataDetails :: FlowDataDetails }"
-      , "  deriving stock (Generic, Eq, Show)"
-      , "  deriving (ToJSON, FromJSON)"
+      , "  deriving stock (Eq, Generic, Show)"
+      , "  deriving (FromJSON, ToJSON)"
       , "    via AddConstTextFields '[\"type0\" := \"undo\", \"type1\" := \"undo\", \"reversal_indicator\" := \"Undo\"] FlowDataDetails"
       ]
 
@@ -873,7 +875,7 @@ case38 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) inpu
       , "      , baz :: Double"
       , "      , qux :: Bool"
       , "      }"
-      , "  deriving stock (Generic, Show, Eq)"
+      , "  deriving stock (Eq, Generic, Show)"
       , "  deriving (FromJSON, ToJSON)"
       , "    via GenericEncoded '[FieldLabelModifier := '[\"foo\" ==> \"nestFoo#foo\", \"bar\" ==> \"nestBar#bar\", \"baz\" ==> \"nestFoo#baz\"]] Flat"
       ]
@@ -907,8 +909,8 @@ case39 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) inpu
       , "  = CreditTransfer"
       , "      { nestedCreditorInfo :: CreditorInfo"
       , "      }"
-      , "  deriving stock (Show, Eq, Generic)"
-      , "  deriving (ToJSON, FromJSON)"
+      , "  deriving stock (Eq, Generic, Show)"
+      , "  deriving (FromJSON, ToJSON)"
       , "    via (UntaggedEncoded NordeaCreditTransfer & AddConstTextFields '[\"request_type\" ':= \"credit_transfer\", \"provider\" ':= \"nordea\"] & FlattenFields '[\"nested_creditor_info\"] & RenameKeys '[\"nested_creditor_info.creditor_agent_bic\" ==> \"creditor_agent_bic\", \"nested_creditor_info.creditor_iban\" ==> \"creditor_iban\", \"nested_creditor_info.creditor_name\" ==> \"creditor_name\", \"nested_creditor_info.creditor_account\" ==> \"creditor_account\"])"
       ]
 
@@ -949,8 +951,8 @@ case41 = expected @=? testStep (step indentIndentStyle) input
       , "      , callbackFormat :: CallbackFormat"
       , "        -- ^ The format used to send these updates"
       , "      }"
-      , "  deriving stock (Generic, Eq, Show)"
-      , "  deriving (ToJSON, FromJSON) via IdiomaticWithDescription CallbackDesc Callback"
+      , "  deriving stock (Eq, Generic, Show)"
+      , "  deriving (FromJSON, ToJSON) via IdiomaticWithDescription CallbackDesc Callback"
       , "  deriving (HasGen) via Generically Callback"
       , "  deriving (FromField) via JsonField Callback"
       ]
@@ -966,7 +968,7 @@ case42 = expected @=? testStep (step indentIndentStyle) input
       , "data SignupError"
       , "  = IdempotencyConflict"
       , "  | ValidationError Text -- TODO: might be a sumtype of possible error codes"
-      , "  deriving stock (Generic, Show, Eq)"
+      , "  deriving stock (Eq, Generic, Show)"
       ]
 
 case43 :: Assertion
@@ -1003,8 +1005,8 @@ case44 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       , "   , date :: Day"
       , "   , accountNumber :: Account"
       , "   }"
-      , "   deriving stock (Show, Eq, Generic)"
-      , "   deriving (ToJSON, FromJSON) via"
+      , "   deriving stock (Eq, Generic, Show)"
+      , "   deriving (FromJSON, ToJSON) via"
       , "     AddConstTextFields"
       , "       '[\"notification_type\" ':= \"credit_transaction\""
       , "         -- Note that the bcio name has \"transaction\""
@@ -1023,8 +1025,8 @@ case44 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       , "  }"
       , "  -- Note that the bcio name has \"transaction\""
       , "  -- rather than \"transfer\""
-      , "  deriving stock (Show, Eq, Generic)"
-      , "  deriving (ToJSON, FromJSON)"
+      , "  deriving stock (Eq, Generic, Show)"
+      , "  deriving (FromJSON, ToJSON)"
       , "    via AddConstTextFields '[\"notification_type\" ':= \"credit_transaction\"] (UntaggedEncoded CreditTransfer)"
       ]
 
@@ -1043,8 +1045,8 @@ case45 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       , "  }"
       , "  -- Note that the bcio name has \"transaction\""
       , "  -- rather than \"transfer\""
-      , "  deriving stock (Show, Eq, Generic)"
-      , "  deriving (ToJSON, FromJSON)"
+      , "  deriving stock (Eq, Generic, Show)"
+      , "  deriving (FromJSON, ToJSON)"
       , "    via AddConstTextFields '[\"notification_type\" ':= \"credit_transaction\"] (UntaggedEncoded CreditTransfer)"
       ]
 
@@ -1059,8 +1061,8 @@ case46 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       , "data CallbackFormat"
       , "  -- | The Avro schema is to be used"
       , "  = AvroEngineEvent"
-      , "  deriving (Bounded, Enum, Generic, Eq, Show)"
-      , "  deriving (ToJSON, FromJSON)"
+      , "  deriving (Bounded, Enum, Eq, Generic, Show)"
+      , "  deriving (FromJSON, ToJSON)"
       , "    via TypeTaggedWithDescription FormatDesc CallbackFormat"
       , "  deriving (HasGen)"
       , "    via EnumBounded CallbackFormat"
@@ -1162,17 +1164,53 @@ case52 = expected @=? testStep (step indentIndentStyle { cBreakSingleConstructor
       , "  }"
       ]
 
+case53 :: Assertion
+case53 = expected @=? testStep (step indentIndentStyle { cMaxColumns = MaxColumns 80 }) input
+  where
+    input = unlines
+      [ "newtype Foo m a"
+      , "  = Foo (m a)"
+      , "  deriving newtype (Functor, Applicative, Monad, MonadError, MonadCatch, Foldable, Monoid)"
+      ]
+    expected = unlines
+      [ "newtype Foo m a"
+      , "  = Foo (m a)"
+      , "  deriving newtype"
+      , "    ( Applicative"
+      , "    , Foldable"
+      , "    , Functor"
+      , "    , Monad"
+      , "    , MonadCatch"
+      , "    , MonadError"
+      , "    , Monoid"
+      , "    )"
+      ]
+
+case54 :: Assertion
+case54 = expected @=? testStep (step indentIndentStyle { cMaxColumns = MaxColumns 80 }) input
+  where
+    input = unlines
+      [ "newtype Foo m a"
+      , "  = Foo (m a)"
+      , "  deriving newtype (Functor, Applicative, Monad)"
+      ]
+    expected = unlines
+      [ "newtype Foo m a"
+      , "  = Foo (m a)"
+      , "  deriving newtype (Applicative, Functor, Monad)"
+      ]
+
 sameSameStyle :: Config
-sameSameStyle = Config SameLine SameLine 2 2 False True SameLine False
+sameSameStyle = Config SameLine SameLine 2 2 False True SameLine False NoMaxColumns
 
 sameIndentStyle :: Config
-sameIndentStyle = Config SameLine (Indent 2) 2 2 False True SameLine False
+sameIndentStyle = Config SameLine (Indent 2) 2 2 False True SameLine False NoMaxColumns
 
 indentSameStyle :: Config
-indentSameStyle = Config (Indent 2) SameLine 2 2 False True SameLine False
+indentSameStyle = Config (Indent 2) SameLine 2 2 False True SameLine False NoMaxColumns
 
 indentIndentStyle :: Config
-indentIndentStyle = Config (Indent 2) (Indent 2) 2 2 False True SameLine False
+indentIndentStyle = Config (Indent 2) (Indent 2) 2 2 False True SameLine False NoMaxColumns
 
 indentIndentStyle4 :: Config
-indentIndentStyle4 = Config (Indent 4) (Indent 4) 4 4 False True SameLine False
+indentIndentStyle4 = Config (Indent 4) (Indent 4) 4 4 False True SameLine False NoMaxColumns

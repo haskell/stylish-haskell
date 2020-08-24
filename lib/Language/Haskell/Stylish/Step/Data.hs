@@ -1,10 +1,12 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DoAndIfThenElse #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE RecordWildCards #-}
 module Language.Haskell.Stylish.Step.Data
   ( Config(..)
   , Indent(..)
+  , MaxColumns(..)
   , step
   ) where
 
@@ -15,6 +17,7 @@ import           Prelude                          hiding (init)
 import           Control.Monad                    (forM_, unless, when)
 import           Data.Function                    ((&))
 import           Data.Functor                     ((<&>))
+import           Data.List                        (sortBy)
 import           Data.Maybe                       (listToMaybe)
 
 --------------------------------------------------------------------------------
@@ -46,6 +49,11 @@ data Indent
     | Indent !Int
   deriving (Show, Eq)
 
+data MaxColumns
+  = MaxColumns !Int
+  | NoMaxColumns
+  deriving (Show, Eq)
+
 data Config = Config
     { cEquals                  :: !Indent
       -- ^ Indent between type constructor and @=@ sign (measured from column 0)
@@ -63,6 +71,7 @@ data Config = Config
       -- ^ Indentation between @via@ clause and start of deriving column start
     , cCurriedContext          :: !Bool
       -- ^ If true, use curried context. E.g: @allValues :: Enum a => Bounded a => Proxy a -> [a]@
+    , cMaxColumns              :: !MaxColumns
     } deriving (Show)
 
 step :: Config -> Step
@@ -178,27 +187,25 @@ data DataDecl = MkDataDecl
   }
 
 putDeriving :: Config -> Located (HsDerivingClause GhcPs) -> P ()
-putDeriving cfg (L pos clause) = do
+putDeriving Config{..} (L pos clause) = do
   putText "deriving"
-  space
 
   forM_ (deriv_clause_strategy clause) \case
-    L _ StockStrategy -> putText "stock" >> space
-    L _ AnyclassStrategy -> putText "anyclass" >> space
-    L _ NewtypeStrategy -> putText "newtype" >> space
+    L _ StockStrategy -> space >> putText "stock"
+    L _ AnyclassStrategy -> space >> putText "anyclass"
+    L _ NewtypeStrategy -> space >> putText "newtype"
     L _ (ViaStrategy _) -> pure ()
 
-  putText "("
-  sep
-    (comma >> space)
-    (fmap putOutputable (fmap hsib_body . unLocated . deriv_clause_tys $ clause))
-  putText ")"
+  putCond
+    withinColumns
+    oneLinePrint
+    multilinePrint
 
   forM_ (deriv_clause_strategy clause) \case
     L _ (ViaStrategy tp) -> do
-      case cVia cfg of
+      case cVia of
         SameLine -> space
-        Indent x -> newline >> spaces (x + cDeriving cfg)
+        Indent x -> newline >> spaces (x + cDeriving)
 
       putText "via"
       space
@@ -211,6 +218,56 @@ putDeriving cfg (L pos clause) = do
     getType = \case
       HsIB _ tp -> tp
       XHsImplicitBndrs x -> noExtCon x
+
+    withinColumns PrinterState{currentLine} =
+      case cMaxColumns of
+        MaxColumns maxCols -> length currentLine <= maxCols
+        NoMaxColumns -> True
+
+    oneLinePrint = do
+      space
+      putText "("
+      sep
+        (comma >> space)
+        (fmap putOutputable tys)
+      putText ")"
+
+    multilinePrint = do
+      newline
+      spaces indentation
+      putText "("
+
+      forM_ headTy \t ->
+        space >> putOutputable t
+
+      forM_ tailTy \t -> do
+        newline
+        spaces indentation
+        comma
+        space
+        putOutputable t
+
+      newline
+      spaces indentation
+      putText ")"
+
+    indentation =
+      cDeriving + case cFirstField of
+        Indent x -> x
+        SameLine -> 0
+
+    tys
+      = clause
+      & deriv_clause_tys
+      & unLocated
+      & sortBy compareOutputable
+      & fmap hsib_body
+
+    headTy =
+      listToMaybe tys
+
+    tailTy =
+      drop 1 tys
 
 putUnbrokenEnum :: Config -> DataDecl -> P ()
 putUnbrokenEnum cfg decl =

@@ -31,6 +31,7 @@ module Language.Haskell.Stylish.Printer
   , putEolComment
   , putOutputable
   , putAllSpanComments
+  , putCond
   , putType
   , putRdrName
   , putText
@@ -63,7 +64,7 @@ import           Control.Monad                   (forM_, replicateM_)
 import           Control.Monad.Reader            (MonadReader, ReaderT(..))
 import           Control.Monad.State             (MonadState, State)
 import           Control.Monad.State             (runState)
-import           Control.Monad.State             (gets, modify)
+import           Control.Monad.State             (get, gets, modify, put)
 import           Data.Foldable                   (find)
 import           Data.Functor                    ((<&>))
 import           Data.List                       (delete, isPrefixOf)
@@ -86,11 +87,11 @@ data PrinterConfig = PrinterConfig
 
 -- | State of printer
 data PrinterState = PrinterState
-  { lines :: Lines
+  { lines :: !Lines
   , linePos :: !Int
-  , currentLine :: String
-  , pendingComments :: [RealLocated AnnotationComment]
-  , parsedModule :: Module
+  , currentLine :: !String
+  , pendingComments :: ![RealLocated AnnotationComment]
+  , parsedModule :: !Module
   }
 
 -- | Run printer to get printed lines out of module as well as return value of monad
@@ -110,6 +111,15 @@ putText :: String -> P ()
 putText txt = do
   l <- gets currentLine
   modify \s -> s { currentLine = l <> txt }
+
+-- | Check condition post action, and use fallback if false
+putCond :: (PrinterState -> Bool) -> P b -> P b -> P b
+putCond p action fallback = do
+  prevState <- get
+  res <- action
+  currState <- get
+  if p currState then pure res
+  else put prevState >> fallback
 
 -- | Print an 'Outputable'
 putOutputable :: Outputable a => a -> P ()
