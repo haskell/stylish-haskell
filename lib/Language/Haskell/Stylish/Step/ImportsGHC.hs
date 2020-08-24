@@ -38,11 +38,13 @@ step columns = makeStep "Imports (ghc-lib-parser)" . printImports columns
 
 --------------------------------------------------------------------------------
 printImports :: Maybe Int -> Options -> Lines -> Module -> Lines
-printImports _ _ ls m = formatForImportGroups ls m (moduleImportGroups m)
+printImports maxCols _ ls m =
+  formatForImportGroups maxCols ls m (moduleImportGroups m)
 
-formatForImportGroups :: Lines -> Module -> [[Located Import]] -> Lines
-formatForImportGroups ls _m [] = ls
-formatForImportGroups ls m (group : rest) = formatForImportGroups formattedGroup m rest
+formatForImportGroups :: Maybe Int -> Lines -> Module -> [[Located Import]] -> Lines
+formatForImportGroups _maxCols ls _m [] = ls
+formatForImportGroups maxCols ls m (group : rest) =
+  formatForImportGroups maxCols formattedGroup m rest
   where
     formattedGroup :: Lines
     formattedGroup =
@@ -69,7 +71,7 @@ formatForImportGroups ls m (group : rest) = formatForImportGroups formattedGroup
               importGroup
                 = NonEmpty.sortWith unLocated rawGroup
                 & mergeImports
-            forM_ importGroup \imp -> printPostQualified imp >> newline
+            forM_ importGroup \imp -> printPostQualified maxCols imp >> newline
       in
         case importStart of
           Just start ->
@@ -81,8 +83,8 @@ formatForImportGroups ls m (group : rest) = formatForImportGroups formattedGroup
           Nothing -> ls
 
 --------------------------------------------------------------------------------
-printPostQualified :: Located Import -> P ()
-printPostQualified (L _ decl) = do
+printPostQualified :: Maybe Int -> Located Import -> P ()
+printPostQualified maxCols (L _ decl) = do
   let
     decl' = rawImport decl
 
@@ -101,15 +103,41 @@ printPostQualified (L _ decl) = do
 
   when (isHiding decl) (space >> putText "hiding")
 
+  -- Since we might need to output the import module name several times, we
+  -- need to save it to a variable:
+  importDecl <- fmap putText getCurrentLine
+
   forM_ (snd <$> ideclHiding decl') \(L _ imports) ->
     let
       printedImports =
         fmap (printImport . unLocated) (sortImportList imports)
 
-      separated =
-        sep (comma >> space)
-    in
-      space >> parenthesize (separated printedImports)
+      impHead =
+        listToMaybe printedImports
+
+      impTail =
+        drop 1 printedImports
+    in do
+      forM_ impHead \printedImport -> do
+        space
+        putText "("
+        printedImport
+
+      forM_ impTail \printedImport -> do
+        len <- getCurrentLineLength
+        if maybe False (len >=) maxCols then do
+          putText ")"
+          newline
+          importDecl
+          space
+          putText "("
+        else do
+          comma
+          space
+
+        printedImport
+
+      forM_ impHead \_ -> putText ")"
 
 --------------------------------------------------------------------------------
 printImport :: IE GhcPs -> P ()

@@ -34,6 +34,8 @@ tests = testGroup "Language.Haskell.Stylish.Step.ImportsGHC"
   , testCase "Doesn't add extra space after 'hiding'" ex10
   , testCase "Should be able to format symbolic imports" ex11
   , testCase "Able to merge equivalent imports" ex12
+  , testCase "Obeys max columns setting" ex13
+  , testCase "Obeys max columns setting with two in each" ex14
   ]
 
 --------------------------------------------------------------------------------
@@ -238,7 +240,42 @@ ex12 = input `assertFormatted` output
       , "import Data.Aeson ((.=))"
       ]
 
+ex13 :: Assertion
+ex13 = input `assertFormattedCols` output
+  where
+    assertFormattedCols =
+      assertFormatted' (Just 10)
+    input =
+      [ "import Foo (A, B, C, D)"
+      , "import A  hiding (X)"
+      ]
+    output =
+      [ "import A hiding (X)"
+      , "import Foo (A)"
+      , "import Foo (B)"
+      , "import Foo (C)"
+      , "import Foo (D)"
+      ]
+
+ex14 :: Assertion
+ex14 = input `assertFormattedCols` output
+  where
+    assertFormattedCols =
+      assertFormatted' (Just 16)
+    input =
+      [ "import Foo (A, B, C, D)"
+      , "import A  hiding (X)"
+      ]
+    output =
+      [ "import A hiding (X)"
+      , "import Foo (A, B)"
+      , "import Foo (C, D)"
+      ]
+
 --------------------------------------------------------------------------------
 assertFormatted :: HasCallStack => Lines -> Lines -> Assertion
-assertFormatted input expected =
-  withFrozenCallStack $ expected @=? testStep' (step Nothing defaultOptions) input
+assertFormatted = withFrozenCallStack $ assertFormatted' Nothing
+
+assertFormatted' :: HasCallStack => Maybe Int -> Lines -> Lines -> Assertion
+assertFormatted' maxColumns input expected =
+  withFrozenCallStack $ expected @=? testStep' (step maxColumns defaultOptions) input

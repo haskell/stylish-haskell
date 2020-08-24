@@ -21,6 +21,7 @@ module Language.Haskell.Stylish.Printer
   , comma
   , dot
   , getAnnot
+  , getCurrentLine
   , getCurrentLineLength
   , getDocstrPrev
   , newline
@@ -372,9 +373,13 @@ removeComment p = do
 getAnnot :: SrcSpan -> P [AnnKeywordId]
 getAnnot spn = gets (lookupAnnotation spn . parsedModule)
 
+-- | Get current line
+getCurrentLine :: P String
+getCurrentLine = gets currentLine
+
 -- | Get current line length
 getCurrentLineLength :: P Int
-getCurrentLineLength = fmap length (gets currentLine)
+getCurrentLineLength = fmap length getCurrentLine
 
 -- | Peek at the next comment in the state
 peekNextCommentPos :: P (Maybe SrcSpan)
