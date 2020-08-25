@@ -38,49 +38,37 @@ step columns = makeStep "Imports (ghc-lib-parser)" . printImports columns
 
 --------------------------------------------------------------------------------
 printImports :: Maybe Int -> Options -> Lines -> Module -> Lines
-printImports maxCols _ ls m =
-  formatForImportGroups maxCols ls m (moduleImportGroups m)
-
-formatForImportGroups :: Maybe Int -> Lines -> Module -> [[Located Import]] -> Lines
-formatForImportGroups _maxCols ls _m [] = ls
-formatForImportGroups maxCols ls m (group : rest) =
-  formatForImportGroups maxCols formattedGroup m rest
+printImports maxCols _ ls m = applyChanges changes ls
   where
-    formattedGroup :: Lines
-    formattedGroup =
-      let
-        relevantComments =
-          []
+    changes = concatMap (formatGroup maxCols m) (moduleImportGroups m)
 
-        importsBlock = Block
-          <$> importStart
-          <*> importEnd
+formatGroup :: Maybe Int -> Module -> [Located Import] -> [Change String]
+formatGroup _maxCols _m _imports@[] = []
+formatGroup maxCols m imports@(impHead : impTail) = do
+  let
+    newLines = formatImports maxCols (impHead :| impTail) m
 
-        importStart
-          = listToMaybe group
-          & fmap getStartLineUnsafe
+  toList $ fmap (\block -> change block (const newLines)) (importBlock imports)
 
-        importEnd
-          = lastMaybe group
-          & fmap getEndLineUnsafe
+importBlock :: [Located a] -> Maybe (Block String)
+importBlock group = Block <$> importStart <*> importEnd
+  where
+    importStart
+      = listToMaybe group
+      & fmap getStartLineUnsafe
 
-        formatting = runPrinter_ PrinterConfig relevantComments m do
-          importsWithComments <- sortedAttachedComments group
-          forM_ importsWithComments \(_, rawGroup) -> do
-            let
-              importGroup
-                = NonEmpty.sortWith unLocated rawGroup
-                & mergeImports
-            forM_ importGroup \imp -> printPostQualified maxCols imp >> newline
-      in
-        case importStart of
-          Just start ->
-            let
-              deletes = fmap delete $ toList importsBlock
-              additions = [insert start formatting]
-            in
-              applyChanges (deletes <> additions) ls
-          Nothing -> ls
+    importEnd
+      = lastMaybe group
+      & fmap getEndLineUnsafe
+
+formatImports :: Maybe Int -> NonEmpty (Located Import) -> Module -> Lines
+formatImports maxCols rawGroup m = runPrinter_ PrinterConfig [] m do
+  let
+    group
+      = NonEmpty.sortWith unLocated rawGroup
+      & mergeImports
+
+  forM_ group \imp -> printPostQualified maxCols imp >> newline
 
 --------------------------------------------------------------------------------
 printPostQualified :: Maybe Int -> Located Import -> P ()

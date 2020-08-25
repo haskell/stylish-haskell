@@ -5,16 +5,15 @@ module Language.Haskell.Stylish.Step.ImportsGHC.Tests
 --------------------------------------------------------------------------------
 import           Test.Framework                           (Test, testGroup)
 import           Test.Framework.Providers.HUnit           (testCase)
-import           Test.HUnit                               (Assertion, (@=?))
+import           Test.HUnit                               (Assertion)
 import           GHC.Stack                                (HasCallStack, withFrozenCallStack)
 import           Prelude                                  hiding (lines)
-
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Step.Imports    (defaultOptions)
 import           Language.Haskell.Stylish.Step.ImportsGHC (step)
-import           Language.Haskell.Stylish.Tests.Util      (testStep')
+import           Language.Haskell.Stylish.Tests.Util      (testStep', (@=??))
 
 
 
@@ -36,6 +35,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.ImportsGHC"
   , testCase "Able to merge equivalent imports" ex12
   , testCase "Obeys max columns setting" ex13
   , testCase "Obeys max columns setting with two in each" ex14
+  , testCase "Respects multiple groups" ex15
   ]
 
 --------------------------------------------------------------------------------
@@ -272,10 +272,88 @@ ex14 = input `assertFormattedCols` output
       , "import Foo (C, D)"
       ]
 
---------------------------------------------------------------------------------
+ex15 :: Assertion
+ex15 = input `assertFormattedCols` output
+  where
+    assertFormattedCols =
+      assertFormatted' (Just 100)
+    input =
+      [ "module Custom.Prelude"
+      , "  ( LazyByteString"
+      , "  , UUID"
+      , "  , decodeUtf8Lenient"
+      , "  , error"
+      , "  , headMay"
+      , "  , module X"
+      , "  , nextRandomUUID"
+      , "  , onChars"
+      , "  , proxyOf"
+      , "  , show"
+      , "  , showStr"
+      , "  , toLazyByteString"
+      , "  , toStrictByteString"
+      , "  , type (~>)"
+      , "  , uuidToText"
+      , "  ) where"
+      , ""
+      , "--------------------------------------------------------------------------------"
+      , "import Prelude as X hiding ((!!), appendFile, error, foldl, head, putStrLn, readFile, show, tail, take, unlines, unwords, words, writeFile)"
+      , "import Prelude qualified"
+      , ""
+      , "--------------------------------------------------------------------------------"
+      , "import Control.Lens as X ((%~), (&), (.~), (?~), (^.), (^?), _Left, _Right, over, preview, set, to, view)"
+      , "import Control.Lens.Extras as X (is)"
+      , ""
+      , "--------------------------------------------------------------------------------"
+      , "import Control.Applicative as X ((<|>))"
+      , "import Control.Monad as X ((<=<), (>=>), guard, unless, when)"
+      , "import Control.Monad.Except as X (ExceptT (..), MonadError (..), liftEither, runExceptT, withExceptT)"
+      , "import Control.Monad.IO.Unlift as X"
+      , "import Control.Monad.Reader as X (MonadReader (..), ReaderT (..), asks)"
+      , "import Control.Monad.Trans.Class as X (MonadTrans (lift))"
+      , "--------------------------------------------------------------------------------"
+      ]
+    output =
+     [ "module Custom.Prelude"
+     , "  ( LazyByteString"
+     , "  , UUID"
+     , "  , decodeUtf8Lenient"
+     , "  , error"
+     , "  , headMay"
+     , "  , module X"
+     , "  , nextRandomUUID"
+     , "  , onChars"
+     , "  , proxyOf"
+     , "  , show"
+     , "  , showStr"
+     , "  , toLazyByteString"
+     , "  , toStrictByteString"
+     , "  , type (~>)"
+     , "  , uuidToText"
+     , "  ) where"
+     , ""
+     , "--------------------------------------------------------------------------------"
+     , "import Prelude as X hiding ((!!), appendFile, error, foldl, head, putStrLn, readFile, show, tail, take)"
+     , "import Prelude as X hiding (unlines, unwords, words, writeFile)"
+     , "import Prelude qualified"
+     , ""
+     , "--------------------------------------------------------------------------------"
+     , "import Control.Lens as X ((%~), (&), (.~), (?~), (^.), (^?), _Left, _Right, over, preview, set, to, view)"
+     , "import Control.Lens.Extras as X (is)"
+     , ""
+     , "--------------------------------------------------------------------------------"
+     , "import Control.Applicative as X ((<|>))"
+     , "import Control.Monad as X ((<=<), (>=>), guard, unless, when)"
+     , "import Control.Monad.Except as X (ExceptT (..), MonadError (..), liftEither, runExceptT, withExceptT)"
+     , "import Control.Monad.IO.Unlift as X"
+     , "import Control.Monad.Reader as X (MonadReader (..), ReaderT (..), asks)"
+     , "import Control.Monad.Trans.Class as X (MonadTrans (lift))"
+     , "--------------------------------------------------------------------------------"
+     ]
+
 assertFormatted :: HasCallStack => Lines -> Lines -> Assertion
 assertFormatted = withFrozenCallStack $ assertFormatted' Nothing
 
 assertFormatted' :: HasCallStack => Maybe Int -> Lines -> Lines -> Assertion
 assertFormatted' maxColumns input expected =
-  withFrozenCallStack $ expected @=? testStep' (step maxColumns defaultOptions) input
+  withFrozenCallStack $ expected @=?? testStep' (step maxColumns defaultOptions) input
