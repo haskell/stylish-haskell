@@ -1,12 +1,16 @@
+{-# LANGUAGE BlockArguments #-}
 module Language.Haskell.Stylish.Tests.Util
     ( testStep
     , testStep'
     , withTestDirTree
+    , (@=??)
     ) where
 
 
 --------------------------------------------------------------------------------
 import           Control.Exception              (bracket, try)
+import           Control.Monad.Writer           (execWriter, tell)
+import           Data.List                      (intercalate)
 import           System.Directory               (createDirectory,
                                                  getCurrentDirectory,
                                                  getTemporaryDirectory,
@@ -15,6 +19,7 @@ import           System.Directory               (createDirectory,
 import           System.FilePath                ((</>))
 import           System.IO.Error                (isAlreadyExistsError)
 import           System.Random                  (randomIO)
+import           Test.HUnit                     (Assertion, assertFailure)
 
 
 --------------------------------------------------------------------------------
@@ -68,3 +73,15 @@ withTestDirTree action = bracket
         setCurrentDirectory current *>
         removeDirectoryRecursive temp)
     (\(_, temp) -> setCurrentDirectory temp *> action)
+
+(@=??) :: Lines -> Lines -> Assertion
+expected @=?? actual =
+  if expected == actual then pure ()
+  else assertFailure $ intercalate "\n" $ execWriter do
+    tell ["Expected:"]
+    printLines expected
+    tell ["Got:"]
+    printLines actual
+  where
+    printLines =
+      mapM_ \line -> tell ["  " <> line]
