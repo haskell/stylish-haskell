@@ -113,7 +113,7 @@ printPostQualified maxCols (L _ decl) = do
 
       forM_ impTail \printedImport -> do
         len <- getCurrentLineLength
-        if maybe False (len >=) maxCols then do
+        if canSplit len then do
           putText ")"
           newline
           importDecl
@@ -126,6 +126,13 @@ printPostQualified maxCols (L _ decl) = do
         printedImport
 
       forM_ impHead \_ -> putText ")"
+  where
+    canSplit len = and
+      [ -- If the max cols have been surpassed, split:
+        maybe False (len >=) maxCols
+        -- Splitting a 'hiding' import changes the scope, don't split hiding:
+      , not (isHiding decl)
+      ]
 
 --------------------------------------------------------------------------------
 printImport :: IE GhcPs -> P ()
