@@ -36,6 +36,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.ImportsGHC"
   , testCase "Obeys max columns setting" ex13
   , testCase "Obeys max columns setting with two in each" ex14
   , testCase "Respects multiple groups" ex15
+  , testCase "Doesn't delete nullary imports" ex16
   ]
 
 --------------------------------------------------------------------------------
@@ -349,6 +350,22 @@ ex15 = input `assertFormattedCols` output
       , "import Control.Monad.Reader as X (MonadReader (..), ReaderT (..), asks)"
       , "import Control.Monad.Trans.Class as X (MonadTrans (lift))"
       , "--------------------------------------------------------------------------------"
+      ]
+
+ex16 :: Assertion
+ex16 = input `assertFormatted` output
+  where
+    input =
+      [ "module Foo where"
+      , ""
+      , "import B ()"
+      , "import A ()"
+      ]
+    output =
+      [ "module Foo where"
+      , ""
+      , "import A ()"
+      , "import B ()"
       ]
 
 assertFormatted :: HasCallStack => Lines -> Lines -> Assertion

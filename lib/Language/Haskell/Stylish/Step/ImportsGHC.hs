@@ -106,10 +106,10 @@ printPostQualified maxCols (L _ decl) = do
       impTail =
         drop 1 printedImports
     in do
-      forM_ impHead \printedImport -> do
-        space
-        putText "("
-        printedImport
+      space
+      putText "("
+
+      forM_ impHead id
 
       forM_ impTail \printedImport -> do
         len <- getCurrentLineLength
@@ -125,7 +125,7 @@ printPostQualified maxCols (L _ decl) = do
 
         printedImport
 
-      forM_ impHead \_ -> putText ")"
+      putText ")"
   where
     canSplit len = and
       [ -- If the max cols have been surpassed, split:
