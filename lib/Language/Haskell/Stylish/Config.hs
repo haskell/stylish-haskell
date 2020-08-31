@@ -259,7 +259,7 @@ parseImports config o = do
       <*> o A..:? "list_padding" A..!= def Imports.listPadding
       <*> o A..:? "separate_lists" A..!= def Imports.separateLists
       <*> o A..:? "space_surround" A..!= def Imports.spaceSurround
-      <*> o A..:? "ghc_lib_parser" A..!= False
+      <*> o A..:? "ghc_lib_parser" A..!= True
 
   pure
     if Imports.useGhcLibParser cfg then

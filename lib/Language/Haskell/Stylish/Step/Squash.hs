@@ -17,6 +17,7 @@ import qualified SrcLoc                          as S
 import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
+import           Language.Haskell.Stylish.Module
 
 
 --------------------------------------------------------------------------------

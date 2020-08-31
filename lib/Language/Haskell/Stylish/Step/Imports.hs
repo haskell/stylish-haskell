@@ -84,10 +84,10 @@ data EmptyListAlign
     deriving (Eq, Show)
 
 data LongListAlign
-    = Inline
-    | InlineWithBreak
-    | InlineToMultiline
-    | Multiline
+    = Inline -- inline
+    | InlineWithBreak -- new_line
+    | InlineToMultiline -- new_line_multiline
+    | Multiline -- multiline
     deriving (Eq, Show)
 
 

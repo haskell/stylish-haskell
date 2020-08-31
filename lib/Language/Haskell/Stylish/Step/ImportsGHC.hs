@@ -1,6 +1,7 @@
-{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE BlockArguments  #-}
 {-# LANGUAGE DoAndIfThenElse #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase      #-}
+{-# LANGUAGE RecordWildCards #-}
 module Language.Haskell.Stylish.Step.ImportsGHC
   ( Options (..)
   , step
@@ -31,22 +32,23 @@ import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.GHC
-import           Language.Haskell.Stylish.Step.Imports (Options(..))
+import           Language.Haskell.Stylish.Step.Imports hiding (step)
+
 
 step :: Maybe Int -> Options -> Step
 step columns = makeStep "Imports (ghc-lib-parser)" . printImports columns
 
 --------------------------------------------------------------------------------
 printImports :: Maybe Int -> Options -> Lines -> Module -> Lines
-printImports maxCols _ ls m = applyChanges changes ls
+printImports maxCols align ls m = applyChanges changes ls
   where
-    changes = concatMap (formatGroup maxCols m) (moduleImportGroups m)
+    changes = concatMap (formatGroup maxCols align m) (moduleImportGroups m)
 
-formatGroup :: Maybe Int -> Module -> [Located Import] -> [Change String]
-formatGroup _maxCols _m _imports@[] = []
-formatGroup maxCols m imports@(impHead : impTail) = do
+formatGroup :: Maybe Int -> Options -> Module -> [Located Import] -> [Change String]
+formatGroup _maxCols _align _m _imports@[] = []
+formatGroup maxCols align m imports@(impHead : impTail) = do
   let
-    newLines = formatImports maxCols (impHead :| impTail) m
+    newLines = formatImports maxCols align (impHead :| impTail) m
 
   toList $ fmap (\block -> change block (const newLines)) (importBlock imports)
 
@@ -61,20 +63,41 @@ importBlock group = Block <$> importStart <*> importEnd
       = lastMaybe group
       & fmap getEndLineUnsafe
 
-formatImports :: Maybe Int -> NonEmpty (Located Import) -> Module -> Lines
-formatImports maxCols rawGroup m = runPrinter_ PrinterConfig [] m do
-  let
+formatImports :: Maybe Int -> Options -> NonEmpty (Located Import) -> Module -> Lines
+formatImports maxCols align rawGroup m = runPrinter_ PrinterConfig [] m do
+  let 
+     
     group
       = NonEmpty.sortWith unLocated rawGroup
       & mergeImports
 
-  forM_ group \imp -> printPostQualified maxCols imp >> newline
+    unLocatedGroup = fmap unLocated $ toList group
+
+    anyQual = any isQualified unLocatedGroup
+
+    fileAlign = case importAlign align of
+      File -> anyQual
+      _    -> False
+ 
+    align' = importAlign align
+    padModuleNames' = padModuleNames align
+    padNames = align' /= None && padModuleNames'
+    padQual  = case align' of
+      Global -> True
+      File   -> fileAlign
+      Group  -> anyQual
+      None   -> False
+        
+    longest = longestImport unLocatedGroup
+
+  forM_ group \imp -> printQualified maxCols align padQual padNames longest imp >> newline
 
 --------------------------------------------------------------------------------
-printPostQualified :: Maybe Int -> Located Import -> P ()
-printPostQualified maxCols (L _ decl) = do
+printQualified :: Maybe Int -> Options -> Bool -> Bool -> Int -> Located Import -> P ()
+printQualified maxCols Options{..} padQual padNames longest (L _ decl) = do
   let
-    decl' = rawImport decl
+    decl'        = rawImport decl
+    listPadding' = listPaddingValue (6 + 1 + qualifiedLength) listPadding
 
   putText "import" >> space
 
@@ -82,14 +105,18 @@ printPostQualified maxCols (L _ decl) = do
 
   when (isSafe decl) (putText "safe" >> space)
 
+  when (isQualified decl) (putText "qualified" >> space)
+
+  padQualified decl padQual
+
   putText (moduleName decl)
 
-  when (isQualified decl) (space >> putText "qualified")
+  padImportsList decl padNames longest
 
   forM_ (ideclAs decl') \(L _ name) ->
     space >> putText "as" >> space >> putText (moduleNameString name)
 
-  when (isHiding decl) (space >> putText "hiding")
+  when (isHiding decl) (space >> putText "hiding") 
 
   -- Since we might need to output the import module name several times, we
   -- need to save it to a variable:
@@ -97,8 +124,8 @@ printPostQualified maxCols (L _ decl) = do
 
   forM_ (snd <$> ideclHiding decl') \(L _ imports) ->
     let
-      printedImports =
-        fmap (printImport . unLocated) (sortImportList imports)
+      printedImports = -- [P ()]
+        fmap ((printImport Options{..}) . unLocated) (sortImportList imports)
 
       impHead =
         listToMaybe printedImports
@@ -108,12 +135,14 @@ printPostQualified maxCols (L _ decl) = do
     in do
       space
       putText "("
+      
+      when spaceSurround space
 
       forM_ impHead id
 
       forM_ impTail \printedImport -> do
         len <- getCurrentLineLength
-        if canSplit len then do
+        if canSplit (len) then do
           putText ")"
           newline
           importDecl
@@ -124,7 +153,8 @@ printPostQualified maxCols (L _ decl) = do
           space
 
         printedImport
-
+       
+      when spaceSurround space
       putText ")"
   where
     canSplit len = and
@@ -134,31 +164,40 @@ printPostQualified maxCols (L _ decl) = do
       , not (isHiding decl)
       ]
 
+    qualifiedDecl | isQualified decl = ["qualified"]
+                  | padQual          =
+                    if isSource decl
+                    then []
+                    else if isSafe decl
+                         then ["    "]
+                         else ["         "]
+                  | otherwise        = []
+    qualifiedLength = if null qualifiedDecl then 0 else 1 + sum (map length qualifiedDecl)    
+
 --------------------------------------------------------------------------------
-printImport :: IE GhcPs -> P ()
-printImport = \case
-  IEVar _ name ->
+printImport :: Options -> IE GhcPs -> P ()
+printImport Options{..} (IEVar _ name) = do
     printIeWrappedName name
-  IEThingAbs _ name ->
+printImport _ (IEThingAbs _ name) = do
     printIeWrappedName name
-  IEThingAll _ name -> do
+printImport _ (IEThingAll _ name) = do
     printIeWrappedName name
     space
     putText "(..)"
-  IEModuleContents _ (L _ m) ->
+printImport _ (IEModuleContents _ (L _ m)) = do
     putText (moduleNameString m)
-  IEThingWith _ name _wildcard imps _ -> do
+printImport Options{..} (IEThingWith _ name _wildcard imps _) = do
     printIeWrappedName name
-    space
+    when separateLists space
     parenthesize $
       sep (comma >> space) (printIeWrappedName <$> sortBy compareOutputable imps)
-  IEGroup _ _ _ ->
+printImport _ (IEGroup _ _ _ ) =
     error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEGroup'"
-  IEDoc _ _ ->
+printImport _ (IEDoc _ _) =
     error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEDoc'"
-  IEDocNamed _ _ ->
+printImport _ (IEDocNamed _ _) =
     error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEDocNamed'"
-  XIE ext ->
+printImport _ (XIE ext) =
     GHC.noExtCon ext
 
 --------------------------------------------------------------------------------
@@ -186,6 +225,37 @@ moduleName
   . ideclName
   . rawImport
 
+
+--------------------------------------------------------------------------------
+longestImport :: [Import] -> Int
+longestImport = maximum . map importLength
+
+-- computes length till module name
+importLength :: Import -> Int
+importLength i =
+  let
+    srcLength  | isSource i = length "{# SOURCE #}"
+               | otherwise  = 0
+    qualLength = length "qualified"
+    nameLength = length $ moduleName i
+  in
+    srcLength + qualLength + nameLength
+
+--------------------------------------------------------------------------------
+padQualified :: Import -> Bool -> P ()
+padQualified i padQual = do
+  let pads = length "qualified"
+  if padQual && not (isQualified i)
+  then (putText $ replicate pads ' ') >> space
+  else pure ()
+
+padImportsList :: Import -> Bool -> Int -> P ()
+padImportsList i padNames longest = do
+  let diff = longest - importLength i
+  if padNames
+  then putText $ replicate diff ' '
+  else pure ()
+                   
 isQualified :: Import -> Bool
 isQualified
   = (/=) NotQualified
@@ -237,3 +307,9 @@ sortImportList = sortBy $ currycated \case
 
 currycated :: ((a, b) -> c) -> (Located a -> Located b -> c)
 currycated f = \(L _ a) (L _ b) -> f (a, b)
+
+--------------------------------------------------------------------------------
+listPaddingValue :: Int -> ListPadding -> Int
+listPaddingValue _ (LPConstant n) = n
+listPaddingValue n LPModuleName   = n
+

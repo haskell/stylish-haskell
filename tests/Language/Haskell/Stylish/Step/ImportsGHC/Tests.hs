@@ -48,8 +48,8 @@ ex0 = input `assertFormatted` output
       , "import A"
       ]
     output =
-      [ "import A"
-      , "import B"
+      [ "import           A"
+      , "import           B"
       ]
 
 ex1 :: Assertion
@@ -59,15 +59,15 @@ ex1 = input `assertFormatted` output
       [ "import B"
       , "import A"
       , "import C"
-      , "import A qualified"
-      , "import B qualified as X"
+      , "import qualified A"
+      , "import qualified B as X"
       ]
     output =
-      [ "import A"
-      , "import A qualified"
-      , "import B"
-      , "import B qualified as X"
-      , "import C"
+      [ "import           A"
+      , "import qualified A"
+      , "import           B"
+      , "import qualified B as X"
+      , "import           C"
       ]
 
 ex2 :: Assertion
@@ -77,13 +77,13 @@ ex2 = input `assertFormatted` output
       [ "import B"
       , "import A (X)"
       , "import C"
-      , "import A qualified as Y (Y)"
+      , "import qualified A as Y (Y)"
       ]
     output =
-      [ "import A (X)"
-      , "import A qualified as Y (Y)"
-      , "import B"
-      , "import C"
+      [ "import           A (X)"
+      , "import qualified A as Y (Y)"
+      , "import           B"
+      , "import           C"
       ]
 
 ex3 :: Assertion
@@ -94,16 +94,16 @@ ex3 = input `assertFormatted` output
       , "import A (X, Z, Y)"
       , "import C"
       , "import qualified A as A0 (b, Y, a)"
-      , "import D qualified as D0 (Y, b, a)"
-      , "import E qualified as E0 (b, a, Y)"
+      , "import qualified D as D0 (Y, b, a)"
+      , "import qualified E as E0 (b, a, Y)"
       ]
     output =
-      [ "import A (X, Y, Z)"
-      , "import A qualified as A0 (Y, a, b)"
-      , "import B"
-      , "import C"
-      , "import D qualified as D0 (Y, a, b)"
-      , "import E qualified as E0 (Y, a, b)"
+      [ "import           A (X, Y, Z)"
+      , "import qualified A as A0 (Y, a, b)"
+      , "import           B"
+      , "import           C"
+      , "import qualified D as D0 (Y, a, b)"
+      , "import qualified E as E0 (Y, a, b)"
       ]
 
 ex4 :: Assertion
@@ -113,7 +113,7 @@ ex4 = input `assertFormatted` output
       [ "import A (X, Z(..), Y)"
       ]
     output =
-      [ "import A (X, Y, Z (..))"
+      [ "import           A (X, Y, Z (..))"
       ]
 
 ex5 :: Assertion
@@ -123,7 +123,7 @@ ex5 = input `assertFormatted` output
       [ "import A (X, Z(Z), Y)"
       ]
     output =
-      [ "import A (X, Y, Z (Z))"
+      [ "import           A (X, Y, Z (Z))"
       ]
 
 ex6 :: Assertion
@@ -133,7 +133,7 @@ ex6 = input `assertFormatted` output
       [ "import A (X, Z(X, Z, Y), Y)"
       ]
     output =
-      [ "import A (X, Y, Z (X, Y, Z))"
+      [ "import           A (X, Y, Z (X, Y, Z))"
       ]
 
 ex7 :: Assertion
@@ -145,20 +145,20 @@ ex7 = input `assertFormatted` output
       , "import A (X, Z, Y)"
       , "import C"
       , "import qualified A as A0 (b, Y, a)"
-      , "import D qualified as D0 (Y, b, a)"
-      , "import E qualified as E0 (b, a, Y)"
+      , "import qualified D as D0 (Y, b, a)"
+      , "import qualified E as E0 (b, a, Y)"
       , "-- hello"
       , "foo :: Int"
       , "foo = 1"
       ]
     output =
       [ "module Foo (tests) where"
-      , "import A (X, Y, Z)"
-      , "import A qualified as A0 (Y, a, b)"
-      , "import B"
-      , "import C"
-      , "import D qualified as D0 (Y, a, b)"
-      , "import E qualified as E0 (Y, a, b)"
+      , "import           A (X, Y, Z)"
+      , "import qualified A as A0 (Y, a, b)"
+      , "import           B"
+      , "import           C"
+      , "import qualified D as D0 (Y, a, b)"
+      , "import qualified E as E0 (Y, a, b)"
       , "-- hello"
       , "foo :: Int"
       , "foo = 1"
@@ -172,14 +172,14 @@ ex8 = input `assertFormatted` output
       , "-- Group divisor"
       , "import A (X)"
       , "import C"
-      , "import A qualified as Y (Y)"
+      , "import qualified  A as Y (Y)"
       ]
     output =
-      [ "import B"
+      [ "import           B"
       , "-- Group divisor"
-      , "import A (X)"
-      , "import A qualified as Y (Y)"
-      , "import C"
+      , "import           A (X)"
+      , "import qualified A as Y (Y)"
+      , "import           C"
       ]
 
 ex9 :: Assertion
@@ -192,16 +192,16 @@ ex9 = input `assertFormatted` output
       , "-- Group divisor"
       , "import A (X)"
       , "import C"
-      , "import A qualified as Y (Y)"
+      , "import qualified A as Y (Y)"
       ]
     output =
       [ "--------"
-      , "import B"
+      , "import           B"
       , ""
       , "-- Group divisor"
-      , "import A (X)"
-      , "import A qualified as Y (Y)"
-      , "import C"
+      , "import           A (X)"
+      , "import qualified A as Y (Y)"
+      , "import           C"
       ]
 
 ex10 :: Assertion
@@ -212,8 +212,8 @@ ex10 = input `assertFormatted` output
       , "import A  hiding (X)"
       ]
     output =
-      [ "import A hiding (X)"
-      , "import B hiding (X)"
+      [ "import           A hiding (X)"
+      , "import           B hiding (X)"
       ]
 
 ex11 :: Assertion
@@ -224,8 +224,8 @@ ex11 = input `assertFormatted` output
       , "import A  hiding (X)"
       ]
     output =
-      [ "import A hiding (X)"
-      , "import Data.Aeson ((.=))"
+      [ "import           A          hiding (X)"
+      , "import           Data.Aeson ((.=))"
       ]
 
 ex12 :: Assertion
@@ -237,8 +237,8 @@ ex12 = input `assertFormatted` output
       , "import A  hiding (X)"
       ]
     output =
-      [ "import A hiding (X)"
-      , "import Data.Aeson ((.=))"
+      [ "import           A          hiding (X)"
+      , "import           Data.Aeson ((.=))"
       ]
 
 ex13 :: Assertion
@@ -251,26 +251,26 @@ ex13 = input `assertFormattedCols` output
       , "import A  hiding (X)"
       ]
     output =
-      [ "import A hiding (X)"
-      , "import Foo (A)"
-      , "import Foo (B)"
-      , "import Foo (C)"
-      , "import Foo (D)"
+      [ "import           A   hiding (X)"
+      , "import           Foo (A)"
+      , "import           Foo (B)"
+      , "import           Foo (C)"
+      , "import           Foo (D)"
       ]
 
 ex14 :: Assertion
 ex14 = input `assertFormattedCols` output
   where
     assertFormattedCols =
-      assertFormatted' (Just 16)
+      assertFormatted' (Just 25)
     input =
       [ "import Foo (A, B, C, D)"
       , "import A  hiding (X)"
       ]
     output =
-      [ "import A hiding (X)"
-      , "import Foo (A, B)"
-      , "import Foo (C, D)"
+      [ "import           A   hiding (X)"
+      , "import           Foo (A, B)"
+      , "import           Foo (C, D)"
       ]
 
 ex15 :: Assertion
@@ -299,7 +299,7 @@ ex15 = input `assertFormattedCols` output
       , ""
       , "--------------------------------------------------------------------------------"
       , "import Prelude as X hiding ((!!), appendFile, error, foldl, head, putStrLn, readFile, show, tail, take, unlines, unwords, words, writeFile)"
-      , "import Prelude qualified"
+      , "import qualified Prelude"
       , ""
       , "--------------------------------------------------------------------------------"
       , "import Control.Lens as X ((%~), (&), (.~), (?~), (^.), (^?), _Left, _Right, iat, over, preview, sans, set, to, view)"
@@ -334,21 +334,22 @@ ex15 = input `assertFormattedCols` output
       , "  ) where"
       , ""
       , "--------------------------------------------------------------------------------"
-      , "import Prelude as X hiding ((!!), appendFile, error, foldl, head, putStrLn, readFile, show, tail, take, unlines, unwords, words, writeFile)"
-      , "import Prelude qualified"
+      , "import           Prelude as X hiding ((!!), appendFile, error, foldl, head, putStrLn, readFile, show, tail, take, unlines, unwords, words, writeFile)"
+      , "import qualified Prelude"
       , ""
       , "--------------------------------------------------------------------------------"
-      , "import Control.Lens as X ((%~), (&), (.~), (?~), (^.), (^?), _Left, _Right, iat, over, preview, sans)"
-      , "import Control.Lens as X (set, to, view)"
-      , "import Control.Lens.Extras as X (is)"
+      , "import           Control.Lens        as X ((%~), (&), (.~), (?~), (^.), (^?), _Left, _Right, iat, over)"
+      , "import           Control.Lens        as X (preview, sans, set, to, view)"
+      , "import           Control.Lens.Extras as X (is)"
       , ""
       , "--------------------------------------------------------------------------------"
-      , "import Control.Applicative as X ((<|>))"
-      , "import Control.Monad as X ((<=<), (>=>), guard, unless, when)"
-      , "import Control.Monad.Except as X (ExceptT (..), MonadError (..), liftEither, runExceptT, withExceptT)"
-      , "import Control.Monad.IO.Unlift as X"
-      , "import Control.Monad.Reader as X (MonadReader (..), ReaderT (..), asks)"
-      , "import Control.Monad.Trans.Class as X (MonadTrans (lift))"
+      , "import           Control.Applicative       as X ((<|>))"
+      , "import           Control.Monad             as X ((<=<), (>=>), guard, unless, when)"
+      , "import           Control.Monad.Except      as X (ExceptT (..), MonadError (..), liftEither, runExceptT)"
+      , "import           Control.Monad.Except      as X (withExceptT)"
+      , "import           Control.Monad.IO.Unlift   as X"
+      , "import           Control.Monad.Reader      as X (MonadReader (..), ReaderT (..), asks)"
+      , "import           Control.Monad.Trans.Class as X (MonadTrans (lift))"
       , "--------------------------------------------------------------------------------"
       ]
 
@@ -358,14 +359,14 @@ ex16 = input `assertFormatted` output
     input =
       [ "module Foo where"
       , ""
-      , "import B ()"
-      , "import A ()"
+      , "import           B ()"
+      , "import           A ()"
       ]
     output =
       [ "module Foo where"
       , ""
-      , "import A ()"
-      , "import B ()"
+      , "import           A ()"
+      , "import           B ()"
       ]
 
 assertFormatted :: HasCallStack => Lines -> Lines -> Assertion
