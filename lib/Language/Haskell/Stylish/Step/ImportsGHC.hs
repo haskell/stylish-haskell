@@ -11,8 +11,9 @@ module Language.Haskell.Stylish.Step.ImportsGHC
 import           Control.Monad                   (forM_, when)
 import           Data.Function                   ((&))
 import           Data.Foldable                   (toList)
-import           Data.Maybe                      (listToMaybe)
-import           Data.List                       (sortBy)
+import           Data.Ord                        (comparing)
+import           Data.Maybe                      (isJust, listToMaybe)
+import           Data.List                       (sortBy, isPrefixOf)
 import           Data.List.NonEmpty              (NonEmpty(..))
 import qualified Data.List.NonEmpty              as NonEmpty
 
@@ -23,7 +24,8 @@ import           GHC.Hs.ImpExp
 import           Module                          (moduleNameString)
 import           RdrName                         (RdrName)
 import           Util                            (lastMaybe)
-import           SrcLoc                          (Located, GenLocated(..))
+import           SrcLoc                          (Located, GenLocated(..), unLoc)
+
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Block
@@ -42,7 +44,8 @@ step columns = makeStep "Imports (ghc-lib-parser)" . printImports columns
 printImports :: Maybe Int -> Options -> Lines -> Module -> Lines
 printImports maxCols align ls m = applyChanges changes ls
   where
-    changes = concatMap (formatGroup maxCols align m) (moduleImportGroups m)
+    groups = moduleImportGroups m
+    changes = concatMap (formatGroup maxCols align m) groups
 
 formatGroup :: Maybe Int -> Options -> Module -> [Located Import] -> [Change String]
 formatGroup _maxCols _align _m _imports@[] = []
@@ -111,7 +114,10 @@ printQualified maxCols Options{..} padQual padNames longest (L _ decl) = do
 
   putText (moduleName decl)
 
-  padImportsList decl padNames longest
+  -- Only print spaces if something follows.
+  when (isJust (ideclAs decl') || isHiding decl ||
+          not (null $ ideclHiding decl')) $
+      padImportsList decl padNames longest
 
   forM_ (ideclAs decl') \(L _ name) ->
     space >> putText "as" >> space >> putText (moduleNameString name)
@@ -279,34 +285,23 @@ isSafe
   . rawImport
 
 sortImportList :: [LIE GhcPs] -> [LIE GhcPs]
-sortImportList = sortBy $ currycated \case
-  (IEVar _ n0, IEVar _ n1) -> compareOutputable n0 n1
+sortImportList = sortBy compareImportLIE
 
-  (IEThingAbs _ n0, IEThingAbs _ n1) -> compareOutputable n0 n1
-  (IEThingAbs _ n0, IEThingAll _ n1) -> compareOutputable n0 n1
-  (IEThingAbs _ n0, IEThingWith _ n1 _ _ _) -> compareOutputable n0 n1 <> LT
 
-  (IEThingAll _ n0, IEThingAll _ n1) -> compareOutputable n0 n1
-  (IEThingAll _ n0, IEThingAbs _ n1) -> compareOutputable n0 n1
-  (IEThingAll _ n0, IEThingWith _ n1 _ _ _) -> compareOutputable n0 n1 <> LT
+--------------------------------------------------------------------------------
+-- | The implementation is a bit hacky to get proper sorting for input specs:
+-- constructors first, followed by functions, and then operators.
+compareImportLIE :: LIE GhcPs -> LIE GhcPs -> Ordering
+compareImportLIE = comparing $ key . unLoc
+  where
+    key :: IE GhcPs -> (Int, Bool, String)
+    key (IEVar _ n)             = let o = showOutputable n in
+                                  (1, "(" `isPrefixOf` o, o)
+    key (IEThingAbs _ n)        = (0, False, showOutputable n)
+    key (IEThingAll _ n)        = (0, False, showOutputable n)
+    key (IEThingWith _ n _ _ _) = (0, False, showOutputable n)
+    key _                       = (2, False, "")
 
-  (IEThingWith _ n0 _ _ _, IEThingWith _ n1 _ _ _) -> compareOutputable n0 n1
-  (IEThingWith _ n0 _ _ _, IEThingAll _ n1) -> compareOutputable n0 n1 <> GT
-  (IEThingWith _ n0 _ _ _, IEThingAbs _ n1) -> compareOutputable n0 n1 <> GT
-
-  (IEVar _ _, _) -> GT
-  (_, IEVar _ _) -> LT
-  (IEThingAbs _ _, _) -> GT
-  (_, IEThingAbs _ _) -> LT
-  (IEThingAll _ _, _) -> GT
-  (_, IEThingAll _ _) -> LT
-  (IEThingWith _ _ _ _ _, _) -> GT
-  (_, IEThingWith _ _ _ _ _) -> LT
-
-  _ -> EQ
-
-currycated :: ((a, b) -> c) -> (Located a -> Located b -> c)
-currycated f = \(L _ a) (L _ b) -> f (a, b)
 
 --------------------------------------------------------------------------------
 listPaddingValue :: Int -> ListPadding -> Int
