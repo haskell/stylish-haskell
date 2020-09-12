@@ -1,4 +1,5 @@
 --------------------------------------------------------------------------------
+{-# LANGUAGE PatternGuards #-}
 module Language.Haskell.Stylish.Util
     ( nameToString
     , isOperator

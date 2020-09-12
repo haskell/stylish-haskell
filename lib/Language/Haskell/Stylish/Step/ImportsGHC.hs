@@ -96,8 +96,8 @@ formatImports maxCols align rawGroup m = runPrinter_ PrinterConfig [] m do
 printQualified :: Maybe Int -> Options -> Bool -> Bool -> Int -> Located Import -> P ()
 printQualified maxCols Options{..} padQual padNames longest (L _ decl) = do
   let
-    decl'        = rawImport decl
-    listPadding' = listPaddingValue (6 + 1 + qualifiedLength) listPadding
+    decl'         = rawImport decl
+    _listPadding' = listPaddingValue (6 + 1 + qualifiedLength) listPadding
 
   putText "import" >> space
 
