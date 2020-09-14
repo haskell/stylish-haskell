@@ -46,7 +46,7 @@ module Language.Haskell.Stylish.Module
 import           Data.Function                   ((&), on)
 import           Data.Functor                    ((<&>))
 import           Data.Generics                   (Typeable, everything, mkQ)
-import           Data.Maybe                      (listToMaybe, mapMaybe)
+import           Data.Maybe                      (mapMaybe)
 import           Data.Map                        (Map)
 import qualified Data.Map                        as Map
 import           Data.List                       (nubBy, sort)
@@ -65,10 +65,9 @@ import           GHC.Hs.Decls                    (LHsDecl)
 import           Outputable                      (Outputable)
 import           SrcLoc                          (GenLocated(..), RealLocated)
 import           SrcLoc                          (RealSrcSpan(..), SrcSpan(..))
-import           SrcLoc                          (Located, srcSpanStartLine)
+import           SrcLoc                          (Located)
 import qualified SrcLoc                          as GHC
 import qualified Module                          as GHC
-import           Util                            (lastMaybe)
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.GHC
@@ -191,24 +190,19 @@ moduleImports m
 
 -- | Get groups of imports from module
 moduleImportGroups :: Module -> [[Located Import]]
-moduleImportGroups m = go relevantComments imports
+moduleImportGroups = go [] Nothing . moduleImports
   where
-    relevantComments
-      = moduleComments m
-      & rawComments
-      & dropBeforeLocated (listToMaybe imports)
-      & dropAfterLocated (lastMaybe imports)
-
-    imports = moduleImports m
-
-    go :: [RealLocated GHC.AnnotationComment] -> [Located Import] -> [[Located Import]]
-    go (L nextCommentPos _ : commentsRest) (imp : impRest) =
-      let
-        sameGroup = takeWhile (\i -> getStartLineUnsafe i < srcSpanStartLine nextCommentPos) impRest
-        rest = dropWhile (\i -> getStartLineUnsafe i <= srcSpanStartLine nextCommentPos) impRest
-      in
-        (imp : sameGroup) : go commentsRest rest
-    go _comments imps = [imps]
+    -- Run through all imports (assume they are sorted already in order of
+    -- appearance in the file) and group the ones that are on consecutive
+    -- lines.
+    go  :: [Located Import] -> Maybe Int -> [Located Import]
+        -> [[Located Import]]
+    go acc _             []              = if null acc then [] else [acc]
+    go acc mbCurrentLine (imp : impRest) =
+        let l2 = getStartLineUnsafe imp in
+        case mbCurrentLine of
+            Just l1 | l1 + 1 < l2 -> acc : go [imp] (Just l2) impRest
+            _                     -> go (acc ++ [imp]) (Just l2) impRest
 
 -- | Merge two import declarations, keeping positions from the first
 --
