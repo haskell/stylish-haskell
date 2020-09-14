@@ -1,5 +1,5 @@
 Name:          stylish-haskell
-Version:       0.11.0.0
+Version:       0.11.0.3
 Synopsis:      Haskell code prettifier
 Homepage:      https://github.com/jaspervdj/stylish-haskell
 License:       BSD3
@@ -9,7 +9,7 @@ Maintainer:    Jasper Van der Jeugt <m@jaspervdj.be>
 Copyright:     2012 Jasper Van der Jeugt
 Category:      Language
 Build-type:    Simple
-Cabal-version: >= 1.8
+Cabal-version: >= 1.10
 
 Description:
     A Haskell code prettifier. For more information, see:
@@ -24,8 +24,9 @@ Extra-source-files:
   data/stylish-haskell.yaml
 
 Library
-  Hs-source-dirs: lib
-  Ghc-options:    -Wall
+  Hs-source-dirs:   lib
+  Ghc-options:      -Wall
+  Default-language: Haskell2010
 
   Exposed-modules:
     Language.Haskell.Stylish
@@ -57,10 +58,10 @@ Library
     Paths_stylish_haskell
 
   Build-depends:
-    aeson            >= 0.6    && < 1.5,
+    aeson            >= 0.6    && < 1.6,
     base             >= 4.8    && < 5,
     bytestring       >= 0.9    && < 0.11,
-    Cabal            >= 2.4    && < 3.1,
+    Cabal            >= 2.4    && < 3.3,
     containers       >= 0.3    && < 0.7,
     directory        >= 1.2.3  && < 1.4,
     filepath         >= 1.1    && < 1.5,
@@ -68,26 +69,30 @@ Library
     haskell-src-exts >= 1.18   && < 1.24,
     ghc-lib-parser   >= 8.10   && < 8.12,
     mtl              >= 2.0    && < 2.3,
-    semigroups       >= 0.18   && < 0.20,
     syb              >= 0.3    && < 0.8,
     text             >= 1.2    && < 1.3,
     HsYAML-aeson     >=0.2.0   && < 0.3,
     HsYAML           >=0.2.0   && < 0.3
+  
+  if impl(ghc < 8.0)
+    Build-depends:
+      semigroups     >= 0.18   && < 0.20
 
 Executable stylish-haskell
-  Ghc-options:    -Wall
-  Hs-source-dirs: src
-  Main-is:        Main.hs
+  Ghc-options:      -Wall
+  Hs-source-dirs:   src
+  Main-is:          Main.hs
+  Default-language: Haskell2010
 
   Build-depends:
     stylish-haskell,
-    strict               >= 0.3  && < 0.4,
+    strict               >= 0.3  && < 0.5,
     optparse-applicative >= 0.12 && < 0.16,
     -- Copied from regular dependencies...
-    aeson            >= 0.6    && < 1.5,
+    aeson            >= 0.6    && < 1.6,
     base             >= 4.8    && < 5,
     bytestring       >= 0.9    && < 0.11,
-    Cabal            >= 2.4    && < 3.1,
+    Cabal            >= 2.4    && < 3.3,
     containers       >= 0.3    && < 0.7,
     directory        >= 1.2.3  && < 1.4,
     filepath         >= 1.1    && < 1.5,
@@ -100,10 +105,11 @@ Executable stylish-haskell
     HsYAML           >=0.2.0   && < 0.3
 
 Test-suite stylish-haskell-tests
-  Ghc-options:    -Wall
-  Hs-source-dirs: tests lib
-  Main-is:        TestSuite.hs
-  Type:           exitcode-stdio-1.0
+  Ghc-options:      -Wall
+  Hs-source-dirs:   tests lib
+  Main-is:          TestSuite.hs
+  Type:             exitcode-stdio-1.0
+  Default-language: Haskell2010
 
   Other-modules:
     Language.Haskell.Stylish
@@ -152,10 +158,10 @@ Test-suite stylish-haskell-tests
     test-framework-hunit >= 0.2 && < 0.4,
     random               >= 1.1,
     -- Copied from regular dependencies...
-    aeson            >= 0.6    && < 1.5,
+    aeson            >= 0.6    && < 1.6,
     base             >= 4.8    && < 5,
     bytestring       >= 0.9    && < 0.11,
-    Cabal            >= 2.4    && < 3.1,
+    Cabal            >= 2.4    && < 3.3,
     containers       >= 0.3    && < 0.7,
     directory        >= 1.2.3  && < 1.4,
     filepath         >= 1.1    && < 1.5,

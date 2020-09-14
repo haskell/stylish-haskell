@@ -1,5 +1,15 @@
 # CHANGELOG
 
+- 0.11.0.3 (2020-08-02)
+    * Set default-language to Haskell2010
+
+- 0.11.0.2 (2020-08-02)
+    * Bump `Cabal-version` to 1.10
+
+- 0.11.0.1 (2020-08-02)
+    * Bump `aeson` upper bound to 1.6
+    * Bump `Cabal` upper bound to 3.3
+
 - 0.11.0.0 (2020-02-24)
     * Disable record formatting by default
     * Allow more customization for record formatting (by Maxim Koltsov)
