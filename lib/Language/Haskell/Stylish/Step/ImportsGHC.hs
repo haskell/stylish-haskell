@@ -23,7 +23,6 @@ import qualified GHC.Hs.Extension                as GHC
 import           GHC.Hs.ImpExp
 import           Module                          (moduleNameString)
 import           RdrName                         (RdrName)
-import           Util                            (lastMaybe)
 import           SrcLoc                          (Located, GenLocated(..), unLoc)
 
 
@@ -45,29 +44,29 @@ printImports :: Maybe Int -> Options -> Lines -> Module -> Lines
 printImports maxCols align ls m = applyChanges changes ls
   where
     groups = moduleImportGroups m
-    changes = concatMap (formatGroup maxCols align m) groups
+    moduleLongestImport = longestImport . fmap unLoc $ concatMap toList groups
+    changes = map (formatGroup maxCols align m moduleLongestImport) groups
 
-formatGroup :: Maybe Int -> Options -> Module -> [Located Import] -> [Change String]
-formatGroup _maxCols _align _m _imports@[] = []
-formatGroup maxCols align m imports@(impHead : impTail) = do
-  let
-    newLines = formatImports maxCols align (impHead :| impTail) m
+formatGroup
+    :: Maybe Int -> Options -> Module -> Int -> NonEmpty (Located Import)
+    -> Change String
+formatGroup maxCols options m moduleLongestImport imports =
+    let newLines = formatImports maxCols options m moduleLongestImport imports in
+    change (importBlock imports) (const newLines)
 
-  toList $ fmap (\block -> change block (const newLines)) (importBlock imports)
+importBlock :: NonEmpty (Located a) -> Block String
+importBlock group = Block
+    (getStartLineUnsafe $ NonEmpty.head group)
+    (getEndLineUnsafe   $ NonEmpty.last group)
 
-importBlock :: [Located a] -> Maybe (Block String)
-importBlock group = Block <$> importStart <*> importEnd
-  where
-    importStart
-      = listToMaybe group
-      & fmap getStartLineUnsafe
-
-    importEnd
-      = lastMaybe group
-      & fmap getEndLineUnsafe
-
-formatImports :: Maybe Int -> Options -> NonEmpty (Located Import) -> Module -> Lines
-formatImports maxCols align rawGroup m = runPrinter_ PrinterConfig [] m do
+formatImports
+    :: Maybe Int  -- ^ Max columns.
+    -> Options    -- ^ Options.
+    -> Module     -- ^ Module.
+    -> Int        -- ^ Longest import in module.
+    -> NonEmpty (Located Import) -> Lines
+formatImports maxCols options m moduleLongestImport rawGroup =
+  runPrinter_ PrinterConfig [] m do
   let 
      
     group
@@ -78,22 +77,26 @@ formatImports maxCols align rawGroup m = runPrinter_ PrinterConfig [] m do
 
     anyQual = any isQualified unLocatedGroup
 
-    fileAlign = case importAlign align of
+    fileAlign = case importAlign options of
       File -> anyQual
       _    -> False
  
-    align' = importAlign align
-    padModuleNames' = padModuleNames align
+    align' = importAlign options
+    padModuleNames' = padModuleNames options
     padNames = align' /= None && padModuleNames'
     padQual  = case align' of
       Global -> True
       File   -> fileAlign
       Group  -> anyQual
       None   -> False
-        
-    longest = longestImport unLocatedGroup
 
-  forM_ group \imp -> printQualified maxCols align padQual padNames longest imp >> newline
+    longest = case align' of
+        Global -> moduleLongestImport
+        File   -> moduleLongestImport
+        Group  -> longestImport unLocatedGroup
+        None   -> 0
+
+  forM_ group \imp -> printQualified maxCols options padQual padNames longest imp >> newline
 
 --------------------------------------------------------------------------------
 printQualified :: Maybe Int -> Options -> Bool -> Bool -> Int -> Located Import -> P ()
@@ -233,8 +236,8 @@ moduleName
 
 
 --------------------------------------------------------------------------------
-longestImport :: [Import] -> Int
-longestImport = maximum . map importLength
+longestImport :: (Foldable f, Functor f) => f Import -> Int
+longestImport xs = if null xs then 0 else maximum $ fmap importLength xs
 
 -- computes length till module name
 importLength :: Import -> Int

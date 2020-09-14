@@ -50,7 +50,7 @@ import           Data.Maybe                      (mapMaybe)
 import           Data.Map                        (Map)
 import qualified Data.Map                        as Map
 import           Data.List                       (nubBy, sort)
-import           Data.List.NonEmpty              (NonEmpty, nonEmpty)
+import           Data.List.NonEmpty              (NonEmpty (..), nonEmpty)
 import           Data.Text                       (Text)
 import qualified Data.Text                       as T
 import           Data.Data                       (Data)
@@ -189,20 +189,23 @@ moduleImports m
   & fmap \(L pos i) -> L pos (Import i)
 
 -- | Get groups of imports from module
-moduleImportGroups :: Module -> [[Located Import]]
+moduleImportGroups :: Module -> [NonEmpty (Located Import)]
 moduleImportGroups = go [] Nothing . moduleImports
   where
     -- Run through all imports (assume they are sorted already in order of
     -- appearance in the file) and group the ones that are on consecutive
     -- lines.
     go  :: [Located Import] -> Maybe Int -> [Located Import]
-        -> [[Located Import]]
-    go acc _             []              = if null acc then [] else [acc]
+        -> [NonEmpty (Located Import)]
+    go acc _        []                   = ne acc
     go acc mbCurrentLine (imp : impRest) =
         let l2 = getStartLineUnsafe imp in
         case mbCurrentLine of
-            Just l1 | l1 + 1 < l2 -> acc : go [imp] (Just l2) impRest
+            Just l1 | l1 + 1 < l2 -> ne acc ++ go [imp] (Just l2) impRest
             _                     -> go (acc ++ [imp]) (Just l2) impRest
+
+    ne []       = []
+    ne (x : xs) = [x :| xs]
 
 -- | Merge two import declarations, keeping positions from the first
 --
