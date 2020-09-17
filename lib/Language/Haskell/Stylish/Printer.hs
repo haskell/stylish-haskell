@@ -44,6 +44,9 @@ module Language.Haskell.Stylish.Printer
   , space
   , spaces
   , suffix
+
+    -- ** Advanced combinators
+  , wrapping
   ) where
 
 --------------------------------------------------------------------------------
@@ -62,7 +65,7 @@ import           Outputable                      (Outputable)
 
 --------------------------------------------------------------------------------
 import           Control.Monad                   (forM_, replicateM_)
-import           Control.Monad.Reader            (MonadReader, ReaderT(..))
+import           Control.Monad.Reader            (MonadReader, ReaderT(..), asks)
 import           Control.Monad.State             (MonadState, State)
 import           Control.Monad.State             (runState)
 import           Control.Monad.State             (get, gets, modify, put)
@@ -85,6 +88,8 @@ newtype Printer a = Printer (ReaderT PrinterConfig (State PrinterState) a)
 
 -- | Configuration for printer, currently empty
 data PrinterConfig = PrinterConfig
+    { columns :: !(Maybe Int)
+    }
 
 -- | State of printer
 data PrinterState = PrinterState
@@ -410,3 +415,29 @@ sortedAttachedComments origs = go origs <&> fmap sortGroup
       pure $ (comments, L rspan x :| sameGroupOf nextGroupStartM) : restGroups
 
     go _ = pure []
+
+wrapping
+    :: P a  -- ^ First printer to run
+    -> P a  -- ^ Printer to run if first printer violates max columns
+    -> P a  -- ^ Result of either the first or the second printer
+wrapping p1 p2 = do
+    maxCols <- asks columns
+    case maxCols of
+        -- No wrapping
+        Nothing -> p1
+        Just c  -> do
+            s0 <- get
+            x <- p1
+            s1 <- get
+            if length (currentLine s1) <= c
+                -- No need to wrap
+                then pure x
+                else do
+                    put s0
+                    y <- p2
+                    s2 <- get
+                    if length (currentLine s1) == length (currentLine s2)
+                        -- Wrapping didn't help!
+                        then put s1 >> pure x
+                        -- Wrapped
+                        else pure y

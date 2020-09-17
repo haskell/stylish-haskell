@@ -107,7 +107,13 @@ formatDataDecl cfg@Config{..} m ldecl@(L declPos decl) =
     originalDeclBlock =
       Block (getStartLineUnsafe ldecl) (getEndLineUnsafe ldecl)
 
-    printedDecl = runPrinter_ PrinterConfig relevantComments m do
+    printerConfig = PrinterConfig
+      { columns = case cMaxColumns of
+          NoMaxColumns -> Nothing
+          MaxColumns n -> Just n
+      }
+
+    printedDecl = runPrinter_ printerConfig relevantComments m do
       putText (newOrData decl)
       space
       putName decl

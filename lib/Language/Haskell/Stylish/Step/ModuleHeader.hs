@@ -54,8 +54,9 @@ printModuleHeader _ ls m =
       & dropAfterLocated exports
       & dropBeforeLocated name
 
-    printedModuleHeader =
-      runPrinter_ PrinterConfig relevantComments m (printHeader name exports haddocks)
+    -- TODO: pass max columns?
+    printedModuleHeader = runPrinter_ (PrinterConfig Nothing) relevantComments
+        m (printHeader name exports haddocks)
 
     getBlock loc =
       Block <$> fmap getStartLineUnsafe loc <*> fmap getEndLineUnsafe loc

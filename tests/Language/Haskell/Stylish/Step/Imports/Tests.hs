@@ -12,6 +12,7 @@ import           Test.HUnit                     (Assertion, (@=?))
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Step.Imports
+import qualified Language.Haskell.Stylish.Step.ImportsGHC as GHC
 import           Language.Haskell.Stylish.Tests.Util
 
 
@@ -83,9 +84,9 @@ input = unlines
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testStep (step (Just 80) $ fromImportAlign Global) input
+case01 = expected @=? testStep' (GHC.step (Just 80) $ fromImportAlign Global) (lines input)
   where
-    expected = unlines
+    expected =
         [ "module Herp where"
         , ""
         , "import           Control.Monad"

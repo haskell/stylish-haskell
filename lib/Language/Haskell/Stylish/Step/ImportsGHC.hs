@@ -66,7 +66,7 @@ formatImports
     -> Int        -- ^ Longest import in module.
     -> NonEmpty (Located Import) -> Lines
 formatImports maxCols options m moduleLongestImport rawGroup =
-  runPrinter_ PrinterConfig [] m do
+  runPrinter_ (PrinterConfig maxCols) [] m do
   let 
      
     group
@@ -96,11 +96,11 @@ formatImports maxCols options m moduleLongestImport rawGroup =
         Group  -> longestImport unLocatedGroup
         None   -> 0
 
-  forM_ group \imp -> printQualified maxCols options padQual padNames longest imp >> newline
+  forM_ group \imp -> printQualified options padQual padNames longest imp >> newline
 
 --------------------------------------------------------------------------------
-printQualified :: Maybe Int -> Options -> Bool -> Bool -> Int -> Located Import -> P ()
-printQualified maxCols Options{..} padQual padNames longest (L _ decl) = do
+printQualified :: Options -> Bool -> Bool -> Int -> Located Import -> P ()
+printQualified Options{..} padQual padNames longest (L _ decl) = do
   let
     decl'         = rawImport decl
     _listPadding' = listPaddingValue (6 + 1 + qualifiedLength) listPadding
@@ -150,28 +150,26 @@ printQualified maxCols Options{..} padQual padNames longest (L _ decl) = do
       forM_ impHead id
 
       forM_ impTail \printedImport -> do
-        len <- getCurrentLineLength
-        if canSplit (len) then do
+
+        wrapping (comma >> space >> printedImport) $ do
           putText ")"
           newline
           importDecl
           space
           putText "("
-        else do
-          comma
-          space
-
-        printedImport
+          printedImport
        
       when spaceSurround space
       putText ")"
   where
+      {-
     canSplit len = and
       [ -- If the max cols have been surpassed, split:
         maybe False (len >=) maxCols
         -- Splitting a 'hiding' import changes the scope, don't split hiding:
       , not (isHiding decl)
       ]
+      -}
 
     qualifiedDecl | isQualified decl = ["qualified"]
                   | padQual          =
