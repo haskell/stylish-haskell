@@ -8,14 +8,15 @@ module Language.Haskell.Stylish.Step.ImportsGHC
   ) where
 
 --------------------------------------------------------------------------------
-import           Control.Monad                   (forM_, when)
+import           Control.Monad                   (forM_, when, unless)
 import           Data.Function                   ((&))
 import           Data.Foldable                   (toList)
 import           Data.Ord                        (comparing)
-import           Data.Maybe                      (isJust, listToMaybe)
+import           Data.Maybe                      (isJust)
 import           Data.List                       (sortBy, isPrefixOf)
 import           Data.List.NonEmpty              (NonEmpty(..))
 import qualified Data.List.NonEmpty              as NonEmpty
+
 
 --------------------------------------------------------------------------------
 import           GHC.Hs.Extension                (GhcPs)
@@ -34,6 +35,7 @@ import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.GHC
 import           Language.Haskell.Stylish.Step.Imports hiding (step)
+import           Language.Haskell.Stylish.Util
 
 
 step :: Maybe Int -> Options -> Step
@@ -125,42 +127,42 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
   forM_ (ideclAs decl') \(L _ name) ->
     space >> putText "as" >> space >> putText (moduleNameString name)
 
-  when (isHiding decl) (space >> putText "hiding") 
+  when (isHiding decl) (space >> putText "hiding")
 
   -- Since we might need to output the import module name several times, we
   -- need to save it to a variable:
-  importDecl <- fmap putText getCurrentLine
+  repeatedImportDecl <- fmap putText getCurrentLine
 
   forM_ (snd <$> ideclHiding decl') \(L _ imports) ->
     let
       printedImports = -- [P ()]
         fmap ((printImport Options{..}) . unLocated) (sortImportList imports)
 
-      impHead =
-        listToMaybe printedImports
-
-      impTail =
-        drop 1 printedImports
     in do
       space
-      putText "("
-      
-      when spaceSurround space
 
-      forM_ impHead id
+      if null printedImports then do
+        putText "()"
+      else do
+        putText "("
+        when spaceSurround space
+        forM_ (flagEnds printedImports) $ \(imp, isFirst, isLast) -> do
+          wrapping
+            (do
+              unless isFirst space
+              imp
+              if isLast then putText ")" else comma)
+            (do
+              modifyCurrentLine . withLast $ \c -> if c == ',' then ')' else c
+              newline
+              repeatedImportDecl
+              space
+              putText "("
+              imp
+              if isLast then putText ")" else comma)
 
-      forM_ impTail \printedImport -> do
-
-        wrapping (comma >> space >> printedImport) $ do
-          putText ")"
-          newline
-          importDecl
-          space
-          putText "("
-          printedImport
-       
-      when spaceSurround space
-      putText ")"
+      -- when spaceSurround space
+      -- putText ")"
   where
       {-
     canSplit len = and
@@ -179,7 +181,8 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
                          then ["    "]
                          else ["         "]
                   | otherwise        = []
-    qualifiedLength = if null qualifiedDecl then 0 else 1 + sum (map length qualifiedDecl)    
+    qualifiedLength = if null qualifiedDecl then 0 else 1 + sum (map length qualifiedDecl)
+
 
 --------------------------------------------------------------------------------
 printImport :: Options -> IE GhcPs -> P ()

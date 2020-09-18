@@ -1,5 +1,6 @@
 --------------------------------------------------------------------------------
 {-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE LambdaCase    #-}
 module Language.Haskell.Stylish.Util
     ( nameToString
     , isOperator
@@ -14,10 +15,12 @@ module Language.Haskell.Stylish.Util
     , wrapMaybe
     , wrapRestMaybe
 
+    -- * Extra list functions
     , withHead
     , withInit
     , withTail
     , withLast
+    , flagEnds
 
     , toRealSrcSpan
 
@@ -200,10 +203,26 @@ withInit _ []       = []
 withInit _ [x]      = [x]
 withInit f (x : xs) = f x : withInit f xs
 
+
 --------------------------------------------------------------------------------
 withTail :: (a -> a) -> [a] -> [a]
 withTail _ []       = []
 withTail f (x : xs) = x : map f xs
+
+
+
+--------------------------------------------------------------------------------
+-- | Utility for traversing through a list and knowing when you're at the
+-- first and last element.
+flagEnds :: [a] -> [(a, Bool, Bool)]
+flagEnds = \case
+    [] -> []
+    [x] -> [(x, True, True)]
+    x : y : zs -> (x, True, False) : go (y : zs)
+  where
+    go (x : y : zs) = (x, False, False) : go (y : zs)
+    go [x]          = [(x, False, True)]
+    go []           = []
 
 
 --------------------------------------------------------------------------------

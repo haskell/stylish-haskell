@@ -46,6 +46,7 @@ module Language.Haskell.Stylish.Printer
   , suffix
 
     -- ** Advanced combinators
+  , modifyCurrentLine
   , wrapping
   ) where
 
@@ -415,6 +416,11 @@ sortedAttachedComments origs = go origs <&> fmap sortGroup
       pure $ (comments, L rspan x :| sameGroupOf nextGroupStartM) : restGroups
 
     go _ = pure []
+
+modifyCurrentLine :: (String -> String) -> P ()
+modifyCurrentLine f = do
+    s0 <- get
+    put s0 {currentLine = f $ currentLine s0}
 
 wrapping
     :: P a  -- ^ First printer to run

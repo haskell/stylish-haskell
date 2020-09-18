@@ -262,7 +262,7 @@ ex14 :: Assertion
 ex14 = input `assertFormattedCols` output
   where
     assertFormattedCols =
-      assertFormatted' (Just 26)
+      assertFormatted' (Just 27)
     input =
       [ "import Foo (A, B, C, D)"
       , "import A  hiding (X)"
