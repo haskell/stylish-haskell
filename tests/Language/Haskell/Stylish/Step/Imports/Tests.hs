@@ -106,9 +106,9 @@ case01 = expected @=? testStep' (GHC.step (Just 80) $ fromImportAlign Global) (l
 
 --------------------------------------------------------------------------------
 case02 :: Assertion
-case02 = expected @=? testStep (step (Just 80) $ fromImportAlign Group) input
+case02 = expected @=? testStep' (GHC.step (Just 80) $ fromImportAlign Group) (lines input)
   where
-    expected = unlines
+    expected =
         [ "module Herp where"
         , ""
         , "import           Control.Monad"
@@ -127,9 +127,9 @@ case02 = expected @=? testStep (step (Just 80) $ fromImportAlign Group) input
 
 --------------------------------------------------------------------------------
 case03 :: Assertion
-case03 = expected @=? testStep (step (Just 80) $ fromImportAlign None) input
+case03 = expected @=? testStep' (GHC.step (Just 80) $ fromImportAlign None) (lines input)
   where
-    expected = unlines
+    expected =
         [ "module Herp where"
         , ""
         , "import Control.Monad"
@@ -148,13 +148,13 @@ case03 = expected @=? testStep (step (Just 80) $ fromImportAlign None) input
 
 --------------------------------------------------------------------------------
 case04 :: Assertion
-case04 = expected @=? testStep (step (Just 80) $ fromImportAlign Global) input'
+case04 = expected @=? testStep' (GHC.step (Just 80) $ fromImportAlign Global) (lines input')
   where
     input' =
         "import Data.Aeson.Types (object, typeMismatch, FromJSON(..)," ++
         "ToJSON(..), Value(..), parseEither, (.!=), (.:), (.:?), (.=))"
 
-    expected = unlines
+    expected =
         [ "import           Data.Aeson.Types (FromJSON (..), ToJSON (..), Value (..),"
         , "                                   object, parseEither, typeMismatch, (.!=),"
         , "                                   (.:), (.:?), (.=))"
@@ -163,17 +163,17 @@ case04 = expected @=? testStep (step (Just 80) $ fromImportAlign Global) input'
 
 --------------------------------------------------------------------------------
 case05 :: Assertion
-case05 = input' @=? testStep (step (Just 80) $ fromImportAlign Group) input'
+case05 = input' @=? testStep' (GHC.step (Just 80) $ fromImportAlign Group) input'
   where
-    input' = "import Distribution.PackageDescription.Configuration " ++
-        "(finalizePackageDescription)\n"
+    input' = ["import Distribution.PackageDescription.Configuration " ++
+        "(finalizePackageDescription)"]
 
 
 --------------------------------------------------------------------------------
 case06 :: Assertion
-case06 = input' @=? testStep (step (Just 80) $ fromImportAlign File) input'
+case06 = input' @=? testStep' (GHC.step (Just 80) $ fromImportAlign File) input'
   where
-    input' = unlines
+    input' =
         [ "import Bar.Qux"
         , "import Foo.Bar"
         ]
@@ -181,15 +181,15 @@ case06 = input' @=? testStep (step (Just 80) $ fromImportAlign File) input'
 
 --------------------------------------------------------------------------------
 case07 :: Assertion
-case07 = expected @=? testStep (step (Just 80) $ fromImportAlign File) input'
+case07 = expected @=? testStep' (GHC.step (Just 80) $ fromImportAlign File) input'
   where
-    input' = unlines
+    input' =
         [ "import Bar.Qux"
         , ""
         , "import qualified Foo.Bar"
         ]
 
-    expected = unlines
+    expected =
         [ "import           Bar.Qux"
         , ""
         , "import qualified Foo.Bar"

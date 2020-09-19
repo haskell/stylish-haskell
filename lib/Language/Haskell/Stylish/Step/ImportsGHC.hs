@@ -47,13 +47,18 @@ printImports maxCols align ls m = applyChanges changes ls
   where
     groups = moduleImportGroups m
     moduleLongestImport = longestImport . fmap unLoc $ concatMap toList groups
-    changes = map (formatGroup maxCols align m moduleLongestImport) groups
+    moduleAnyQual = any isQualified . fmap unLoc $ concatMap toList groups
+    changes = do
+        group <- groups
+        pure $ formatGroup maxCols align m
+            moduleLongestImport moduleAnyQual group
 
 formatGroup
-    :: Maybe Int -> Options -> Module -> Int -> NonEmpty (Located Import)
-    -> Change String
-formatGroup maxCols options m moduleLongestImport imports =
-    let newLines = formatImports maxCols options m moduleLongestImport imports in
+    :: Maybe Int -> Options -> Module -> Int -> Bool
+    -> NonEmpty (Located Import) -> Change String
+formatGroup maxCols options m moduleLongestImport moduleAnyQual imports =
+    let newLines = formatImports maxCols options m
+            moduleLongestImport moduleAnyQual imports in
     change (importBlock imports) (const newLines)
 
 importBlock :: NonEmpty (Located a) -> Block String
@@ -66,8 +71,9 @@ formatImports
     -> Options    -- ^ Options.
     -> Module     -- ^ Module.
     -> Int        -- ^ Longest import in module.
+    -> Bool       -- ^ Qualified import is present in module.
     -> NonEmpty (Located Import) -> Lines
-formatImports maxCols options m moduleLongestImport rawGroup =
+formatImports maxCols options m moduleLongestImport moduleAnyQual rawGroup =
   runPrinter_ (PrinterConfig maxCols) [] m do
   let 
      
@@ -79,16 +85,12 @@ formatImports maxCols options m moduleLongestImport rawGroup =
 
     anyQual = any isQualified unLocatedGroup
 
-    fileAlign = case importAlign options of
-      File -> anyQual
-      _    -> False
- 
     align' = importAlign options
     padModuleNames' = padModuleNames options
     padNames = align' /= None && padModuleNames'
     padQual  = case align' of
       Global -> True
-      File   -> fileAlign
+      File   -> moduleAnyQual
       Group  -> anyQual
       None   -> False
 
