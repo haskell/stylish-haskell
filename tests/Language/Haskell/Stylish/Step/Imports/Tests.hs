@@ -202,9 +202,9 @@ case08 =
   let
     options = Options Global WithAlias True Inline Inherit (LPConstant 4) True False False
   in
-    expected @=? testStep (step (Just 80) options) input
+    expected @=? testStep' (GHC.step (Just 80) options) (lines input)
   where
-    expected = unlines
+    expected =
         [ "module Herp where"
         , ""
         , "import           Control.Monad"
@@ -228,9 +228,9 @@ case08b =
   let
     options = Options Global WithModuleName True Inline Inherit (LPConstant 4) True False False
   in
-    expected @=? testStep (step (Just 80) options) input
+    expected @=? testStep' (GHC.step (Just 80) options) (lines input)
   where
-    expected = unlines
+    expected =
         ["module Herp where"
         , ""
         , "import           Control.Monad"
@@ -253,9 +253,9 @@ case09 =
   let
     options = Options Global WithAlias True Multiline Inherit (LPConstant 4) True False False
   in
-    expected @=? testStep (step (Just 80) options) input
+    expected @=? testStep' (step (Just 80) options) (lines input)
   where
-    expected = unlines
+    expected =
         [ "module Herp where"
         , ""
         , "import           Control.Monad"
@@ -387,13 +387,13 @@ case12 =
   let
     options = Options Group NewLine True Inline Inherit (LPConstant 2) True False False
   in
-    expected @=? testStep (step (Just 80) options) input'
+    expected @=? testStep' (step (Just 80) options) input'
   where
-    input' = unlines
+    input' =
         [ "import Data.List (map)"
         ]
 
-    expected = unlines
+    expected =
         [ "import Data.List"
         , "  (map)"
         ]
@@ -405,11 +405,9 @@ case12b =
   let
     options = Options Group WithModuleName True Inline Inherit (LPConstant 2) True False False
   in
-    expected @=? testStep (step (Just 80) options) input'
+    expected @=? testStep' (GHC.step (Just 80) options) input'
   where
-    input' = unlines
-        [ "import Data.List (map)"
-        ]
+    input' =  ["import Data.List (map)"]
 
     expected = input'
 

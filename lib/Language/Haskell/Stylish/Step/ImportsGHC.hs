@@ -162,7 +162,8 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
           (do
             case listAlign of
                 -- In 'Repeat' mode, end lines with ')' rather than ','.
-                Repeat -> modifyCurrentLine . withLast $ \c -> if c == ',' then ')' else c
+                Repeat | not isFirst -> modifyCurrentLine . withLast $
+                    \c -> if c == ',' then ')' else c
                 _ -> pure ()
             newline
             putText wrapPrefix
