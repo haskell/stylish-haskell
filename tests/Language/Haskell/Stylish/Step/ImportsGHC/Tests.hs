@@ -11,7 +11,7 @@ import           Prelude                                  hiding (lines)
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Module
-import           Language.Haskell.Stylish.Step.Imports    (defaultOptions)
+import           Language.Haskell.Stylish.Step.Imports    (Options (..), defaultOptions, ListAlign (..))
 import           Language.Haskell.Stylish.Step.ImportsGHC (step)
 import           Language.Haskell.Stylish.Tests.Util      (testStep', (@=??))
 
@@ -374,4 +374,8 @@ assertFormatted = withFrozenCallStack $ assertFormatted' Nothing
 
 assertFormatted' :: HasCallStack => Maybe Int -> Lines -> Lines -> Assertion
 assertFormatted' maxColumns input expected =
-  withFrozenCallStack $ expected @=?? testStep' (step maxColumns defaultOptions) input
+  withFrozenCallStack $ expected @=?? testStep' (step maxColumns felixOptions) input
+  where
+    felixOptions = defaultOptions
+        { listAlign = Repeat
+        }

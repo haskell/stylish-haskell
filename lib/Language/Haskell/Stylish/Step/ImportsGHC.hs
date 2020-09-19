@@ -117,6 +117,7 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
 
   padQualified decl padQual
 
+  moduleNamePosition <- length <$> getCurrentLine
   putText (moduleName decl)
 
   -- Only print spaces if something follows.
@@ -124,42 +125,47 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
           not (null $ ideclHiding decl')) $
       padImportsList decl padNames longest
 
+  beforeAliasPosition <- length <$> getCurrentLine
   forM_ (ideclAs decl') \(L _ name) ->
     space >> putText "as" >> space >> putText (moduleNameString name)
+  afterAliasPosition <- length <$> getCurrentLine
 
   when (isHiding decl) (space >> putText "hiding")
 
-  -- Since we might need to output the import module name several times, we
-  -- need to save it to a variable:
-  repeatedImportDecl <- fmap putText getCurrentLine
+  case snd <$> ideclHiding decl' of
+    Nothing            -> pure ()
+    Just (L _ [])      -> putText " ()"
+    Just (L _ imports) -> do
+      let printedImports = -- [P ()]
+            fmap ((printImport Options{..}) . unLocated) (sortImportList imports)
+      putText " ("
 
-  forM_ (snd <$> ideclHiding decl') \(L _ imports) ->
-    let
-      printedImports = -- [P ()]
-        fmap ((printImport Options{..}) . unLocated) (sortImportList imports)
+      -- Since we might need to output the import module name several times, we
+      -- need to save it to a variable:
+      let offset = case listPadding of LPConstant n -> n; LPModuleName -> 0
+      wrapPrefix <- case listAlign of
+          AfterAlias -> pure $ replicate (afterAliasPosition + 2) ' '
+          WithAlias -> pure $ replicate (beforeAliasPosition + 1) ' '
+          Repeat -> getCurrentLine
+          WithModuleName -> pure $ replicate (moduleNamePosition + offset) ' '
+          NewLine -> pure $ replicate offset ' '
 
-    in do
-      space
-
-      if null printedImports then do
-        putText "()"
-      else do
-        putText "("
-        when spaceSurround space
-        forM_ (flagEnds printedImports) $ \(imp, isFirst, isLast) -> do
-          wrapping
-            (do
-              unless isFirst space
-              imp
-              if isLast then putText ")" else comma)
-            (do
-              modifyCurrentLine . withLast $ \c -> if c == ',' then ')' else c
-              newline
-              repeatedImportDecl
-              space
-              putText "("
-              imp
-              if isLast then putText ")" else comma)
+      when spaceSurround space
+      forM_ (flagEnds printedImports) $ \(imp, isFirst, isLast) -> do
+        wrapping
+          (do
+            unless isFirst space
+            imp
+            if isLast then putText ")" else comma)
+          (do
+            case listAlign of
+                -- In 'Repeat' mode, end lines with ')' rather than ','.
+                Repeat -> modifyCurrentLine . withLast $ \c -> if c == ',' then ')' else c
+                _ -> pure ()
+            newline
+            putText wrapPrefix
+            imp
+            if isLast then putText ")" else comma)
 
       -- when spaceSurround space
       -- putText ")"

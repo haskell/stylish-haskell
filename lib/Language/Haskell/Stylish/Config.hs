@@ -284,6 +284,7 @@ parseImports config o = do
         , ("with_module_name",  Imports.WithModuleName)
         , ("with_alias",        Imports.WithAlias)
         , ("after_alias",       Imports.AfterAlias)
+        , ("repeat",            Imports.Repeat)
         ]
 
     longListAligns =

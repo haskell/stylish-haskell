@@ -133,6 +133,11 @@ steps:
       #   > import qualified Data.List      as List
       #   >     (concat, foldl, foldr, head, init, last, length)
       #
+      # - repeat: Repeat the module name to align the import list.
+      #
+      #   > import qualified Data.List      as List (concat, foldl, foldr, head)
+      #   > import qualified Data.List      as List (init, last, length)
+      #
       # Default: after_alias
       list_align: after_alias
 

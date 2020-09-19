@@ -76,6 +76,7 @@ data ListAlign
     | WithModuleName
     | WithAlias
     | AfterAlias
+    | Repeat
     deriving (Eq, Show)
 
 data EmptyListAlign
@@ -293,7 +294,9 @@ prettyImport columns Options{..} padQualified padName longest imp
         . withLast (++ (maybeSpace ++ ")"))
 
     inlineWrapper = case listAlign of
+        -- Treat repeat as newline, code will be deleted anyway.
         NewLine        -> (paddedNoSpecBase :) . wrapRestMaybe columns listPadding'
+        Repeat         -> (paddedNoSpecBase :) . wrapRestMaybe columns listPadding'
         WithModuleName -> wrapMaybe columns paddedBase (withModuleNameBaseLength + 4)
         WithAlias      -> wrapMaybe columns paddedBase (inlineBaseLength + 1)
         -- Add 1 extra space to ensure same padding as in original code.
