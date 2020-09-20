@@ -162,6 +162,7 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
             if isLast then putText ")" else comma >> space)
           -- Put everything on a separate line.
           (forM_ printedImports $ \(imp, isFirst, isLast) -> do
+            when isFirst $ modifyCurrentLine trimRight  -- We added some spaces.
             newline
             putOffset
             if isFirst then putText "( " else putText ", "

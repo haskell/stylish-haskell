@@ -290,9 +290,9 @@ case10 =
   let
     options = Options Group WithAlias True Multiline Inherit (LPConstant 4) True False False
   in
-    expected @=? testStep (step (Just 40) options) input
+    expected @=? testStep' (GHC.step (Just 40) options) (lines input)
   where
-    expected = unlines
+    expected =
         [ "module Herp where"
         , ""
         , "import           Control.Monad"
