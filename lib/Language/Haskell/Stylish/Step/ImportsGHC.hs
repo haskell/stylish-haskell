@@ -153,7 +153,8 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
           NewLine -> pure $ replicate offset ' '
 
       when spaceSurround space
-      forM_ (flagEnds printedImports) $ \(imp, isFirst, isLast) -> do
+      forM_ (flagEnds printedImports) $ \(imp, isFirst, isLast) ->
+        patchForRepeatHiding $
         wrapping
           (do
             unless isFirst space
@@ -181,6 +182,12 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
       , not (isHiding decl)
       ]
       -}
+
+    -- We cannot wrap/repeat 'hiding' imports since then we would get multiple
+    -- imports hiding different things.
+    patchForRepeatHiding = case listAlign of
+        Repeat | isHiding decl -> withColumns Nothing
+        _                      -> id
 
     qualifiedDecl | isQualified decl = ["qualified"]
                   | padQual          =

@@ -46,6 +46,7 @@ module Language.Haskell.Stylish.Printer
   , suffix
 
     -- ** Advanced combinators
+  , withColumns
   , modifyCurrentLine
   , wrapping
   ) where
@@ -66,7 +67,7 @@ import           Outputable                      (Outputable)
 
 --------------------------------------------------------------------------------
 import           Control.Monad                   (forM_, replicateM_)
-import           Control.Monad.Reader            (MonadReader, ReaderT(..), asks)
+import           Control.Monad.Reader            (MonadReader, ReaderT(..), asks, local)
 import           Control.Monad.State             (MonadState, State)
 import           Control.Monad.State             (runState)
 import           Control.Monad.State             (get, gets, modify, put)
@@ -447,3 +448,6 @@ wrapping p1 p2 = do
                         then put s1 >> pure x
                         -- Wrapped
                         else pure y
+
+withColumns :: Maybe Int -> P a -> P a
+withColumns c = local $ \pc -> pc {columns = c}
