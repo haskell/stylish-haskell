@@ -253,7 +253,7 @@ case09 =
   let
     options = Options Global WithAlias True Multiline Inherit (LPConstant 4) True False False
   in
-    expected @=? testStep' (step (Just 80) options) (lines input)
+    expected @=? testStep' (GHC.step (Just 80) options) (lines input)
   where
     expected =
         [ "module Herp where"

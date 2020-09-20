@@ -8,7 +8,7 @@ module Language.Haskell.Stylish.Step.ImportsGHC
   ) where
 
 --------------------------------------------------------------------------------
-import           Control.Monad                   (forM_, when, unless)
+import           Control.Monad                   (forM_, when)
 import           Data.Function                   ((&))
 import           Data.Foldable                   (toList)
 import           Data.Ord                        (comparing)
@@ -138,38 +138,53 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
     Nothing            -> pure ()
     Just (L _ [])      -> putText " ()"
     Just (L _ imports) -> do
-      let printedImports = -- [P ()]
+      let printedImports = flagEnds $ -- [P ()]
             fmap ((printImport Options{..}) . unLocated) (sortImportList imports)
-      putText " ("
 
       -- Since we might need to output the import module name several times, we
       -- need to save it to a variable:
       let offset = case listPadding of LPConstant n -> n; LPModuleName -> 0
+          putOffset = putText $ replicate offset ' '
       wrapPrefix <- case listAlign of
-          AfterAlias -> pure $ replicate (afterAliasPosition + 2) ' '
-          WithAlias -> pure $ replicate (beforeAliasPosition + 1) ' '
-          Repeat -> getCurrentLine
-          WithModuleName -> pure $ replicate (moduleNamePosition + offset) ' '
-          NewLine -> pure $ replicate offset ' '
+        AfterAlias -> pure $ replicate (afterAliasPosition + 2) ' '
+        WithAlias -> pure $ replicate (beforeAliasPosition + 1) ' '
+        Repeat -> fmap (++ " (") getCurrentLine
+        WithModuleName -> pure $ replicate (moduleNamePosition + offset) ' '
+        NewLine -> pure $ replicate offset ' '
 
       when spaceSurround space
-      forM_ (flagEnds printedImports) $ \(imp, isFirst, isLast) ->
-        patchForRepeatHiding $
-        wrapping
-          (do
-            unless isFirst space
+      case longListAlign of
+        Multiline -> wrapping
+          -- Try to put everything on one line.
+          (forM_ printedImports $ \(imp, isFirst, isLast) -> do
+            when isFirst $ putText " ("
             imp
-            if isLast then putText ")" else comma)
-          (do
-            case listAlign of
-                -- In 'Repeat' mode, end lines with ')' rather than ','.
-                Repeat | not isFirst -> modifyCurrentLine . withLast $
-                    \c -> if c == ',' then ')' else c
-                _ -> pure ()
+            if isLast then putText ")" else comma >> space)
+          -- Put everything on a separate line.
+          (forM_ printedImports $ \(imp, isFirst, isLast) -> do
             newline
-            putText wrapPrefix
+            putOffset
+            if isFirst then putText "( " else putText ", "
             imp
-            if isLast then putText ")" else comma)
+            when isLast $ newline >> putOffset >> putText ")")
+
+        Inline -> forM_ printedImports $ \(imp, isFirst, isLast) ->
+          patchForRepeatHiding $ wrapping
+            (do
+              if isFirst then putText " (" else space
+              imp
+              if isLast then putText ")" else comma)
+            (do
+              case listAlign of
+                  -- In 'Repeat' mode, end lines with ')' rather than ','.
+                  Repeat | not isFirst -> modifyCurrentLine . withLast $
+                      \c -> if c == ',' then ')' else c
+                  _ -> pure ()
+              newline
+              putText wrapPrefix
+              imp
+              if isLast then putText ")" else comma)
+        _ -> error $ "TODO: " ++ show longListAlign
 
       -- when spaceSurround space
       -- putText ")"
