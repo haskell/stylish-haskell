@@ -134,17 +134,22 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
 
   when (isHiding decl) (space >> putText "hiding")
 
+  let offset = case listPadding of LPConstant n -> n; LPModuleName -> 0
+      putOffset = putText $ replicate offset ' '
+
   case snd <$> ideclHiding decl' of
     Nothing            -> pure ()
-    Just (L _ [])      -> putText " ()"
+    Just (L _ [])      -> case listAlign of
+      -- Should we remove this exception?
+      NewLine ->
+          modifyCurrentLine trimRight >> newline >> putOffset >> putText "()"
+      _ -> space >> putText "()"
     Just (L _ imports) -> do
       let printedImports = flagEnds $ -- [P ()]
             fmap ((printImport Options{..}) . unLocated) (sortImportList imports)
 
       -- Since we might need to output the import module name several times, we
       -- need to save it to a variable:
-      let offset = case listPadding of LPConstant n -> n; LPModuleName -> 0
-          putOffset = putText $ replicate offset ' '
       wrapPrefix <- case listAlign of
         AfterAlias -> pure $ replicate (afterAliasPosition + 2) ' '
         WithAlias -> pure $ replicate (beforeAliasPosition + 1) ' '
@@ -172,7 +177,13 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
         Inline -> forM_ printedImports $ \(imp, isFirst, isLast) ->
           patchForRepeatHiding $ wrapping
             (do
-              if isFirst then putText " (" else space
+              if isFirst
+                  then case listAlign of
+                      NewLine -> do
+                          modifyCurrentLine trimRight
+                          newline >> putOffset >> putText "("
+                      _       -> putText " ("
+                  else space
               imp
               if isLast then putText ")" else comma)
             (do

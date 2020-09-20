@@ -186,15 +186,16 @@ case06 = input' @=? testStep' (GHC.step (Just 80) $ fromImportAlign File) input'
 
 --------------------------------------------------------------------------------
 case07 :: Assertion
-case07 = expected @=? testStep' (GHC.step (Just 80) $ fromImportAlign File) input'
+case07 =
+    expected @=? testSnippet (GHC.step (Just 80) $ fromImportAlign File) input'
   where
-    input' =
+    input' = Snippet
         [ "import Bar.Qux"
         , ""
         , "import qualified Foo.Bar"
         ]
 
-    expected =
+    expected = Snippet
         [ "import           Bar.Qux"
         , ""
         , "import qualified Foo.Bar"
@@ -207,9 +208,9 @@ case08 =
   let
     options = Options Global WithAlias True Inline Inherit (LPConstant 4) True False False
   in
-    expected @=? testStep' (GHC.step (Just 80) options) (lines input)
+    expected @=? testSnippet (GHC.step (Just 80) options) inputSnippet
   where
-    expected =
+    expected = Snippet
         [ "module Herp where"
         , ""
         , "import           Control.Monad"
@@ -233,9 +234,9 @@ case08b =
   let
     options = Options Global WithModuleName True Inline Inherit (LPConstant 4) True False False
   in
-    expected @=? testStep' (GHC.step (Just 80) options) (lines input)
+    expected @=? testSnippet (GHC.step (Just 80) options) inputSnippet
   where
-    expected =
+    expected = Snippet
         ["module Herp where"
         , ""
         , "import           Control.Monad"
@@ -258,9 +259,9 @@ case09 =
   let
     options = Options Global WithAlias True Multiline Inherit (LPConstant 4) True False False
   in
-    expected @=? testStep' (GHC.step (Just 80) options) (lines input)
+    expected @=? testSnippet (GHC.step (Just 80) options) inputSnippet
   where
-    expected =
+    expected = Snippet
         [ "module Herp where"
         , ""
         , "import           Control.Monad"
@@ -295,9 +296,9 @@ case10 =
   let
     options = Options Group WithAlias True Multiline Inherit (LPConstant 4) True False False
   in
-    expected @=? testStep' (GHC.step (Just 40) options) (lines input)
+    expected @=? testSnippet (GHC.step (Just 40) options) inputSnippet
   where
-    expected =
+    expected = Snippet
         [ "module Herp where"
         , ""
         , "import           Control.Monad"
