@@ -182,20 +182,20 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
                 void wprefix
                 imp
                 if end then putText ")" else comma)
+          -- Put everything on a separate line.
+          printAsMultiLine = forM_ printedImports $ \(imp, start, end) -> do
+            when start $ modifyCurrentLine trimRight  -- We added some spaces.
+            newline
+            putOffset
+            if start then putText "( " else putText ", "
+            imp
+            when end $ newline >> putOffset >> putText ")"
 
       when spaceSurround space
       case longListAlign of
         Multiline -> wrapping
           (space >> printAsSingleLine)
-          -- Put everything on a separate line.
-          (forM_ printedImports $ \(imp, isFirst, isLast) -> do
-            when isFirst $ modifyCurrentLine trimRight  -- We added some spaces.
-            newline
-            putOffset
-            if isFirst then putText "( " else putText ", "
-            imp
-            when isLast $ newline >> putOffset >> putText ")")
-
+          printAsMultiLine
         Inline | NewLine <- listAlign -> do
           modifyCurrentLine trimRight
           newline >> putOffset >> printAsInlineWrapping (putText wrapPrefix)
@@ -205,8 +205,13 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
           (do
             modifyCurrentLine trimRight
             newline >> putOffset >> printAsInlineWrapping putOffset)
-
-        _ -> error $ "TODO: " ++ show longListAlign
+        InlineToMultiline -> wrapping
+          (space >> printAsSingleLine)
+          (wrapping
+            (do
+              modifyCurrentLine trimRight
+              newline >> putOffset >> printAsSingleLine)
+            printAsMultiLine)
 
       -- when spaceSurround space
       -- putText ")"

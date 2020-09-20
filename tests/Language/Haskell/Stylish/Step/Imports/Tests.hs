@@ -555,9 +555,9 @@ case18 =
   let
     options = Options None AfterAlias True InlineToMultiline Inherit (LPConstant 4) True False False
   in
-    expected @=? testStep (step (Just 40) options) input'
+    expected @=? testSnippet (GHC.step (Just 40) options) input'
   where
-    expected = unlines
+    expected = Snippet
            ----------------------------------------
         [ "import Data.Foo as Foo (Bar, Baz, Foo)"
         , ""
@@ -571,7 +571,7 @@ case18 =
         , "    )"
         ]
 
-    input' = unlines
+    input' = Snippet
         [ "import Data.Foo as Foo (Bar, Baz, Foo)"
         , ""
         , "import Data.Identity (Identity (Identity, runIdentity))"
