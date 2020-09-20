@@ -369,9 +369,9 @@ case11b =
   let
     options = Options Group WithModuleName True Inline Inherit (LPConstant 4) True False False
   in
-    expected @=? testStep (step (Just 80) options) input
+    expected @=? testSnippet (GHC.step (Just 80) options) inputSnippet
   where
-    expected = unlines
+    expected = Snippet
         [ "module Herp where"
         , ""
         , "import           Control.Monad"
@@ -394,13 +394,13 @@ case12 =
   let
     options = Options Group NewLine True Inline Inherit (LPConstant 2) True False False
   in
-    expected @=? testStep' (step (Just 80) options) input'
+    expected @=? testSnippet (GHC.step (Just 80) options) input'
   where
-    input' =
+    input' = Snippet
         [ "import Data.List (map)"
         ]
 
-    expected =
+    expected = Snippet
         [ "import Data.List"
         , "  (map)"
         ]
@@ -425,14 +425,14 @@ case13 =
   let
     options = Options None WithAlias True InlineWithBreak Inherit (LPConstant 4) True False False
   in
-    expected @=? testStep (step (Just 80) options) input'
+    expected @=? testSnippet (GHC.step (Just 80) options) input'
   where
-    input' = unlines
+    input' = Snippet
         [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
         , "    last, length, map, null, reverse, tail, (++))"
         ]
 
-    expected = unlines
+    expected = Snippet
         [ "import qualified Data.List as List"
         , "    (concat, foldl, foldr, head, init, last, length, map, null, reverse, tail,"
         , "    (++))"

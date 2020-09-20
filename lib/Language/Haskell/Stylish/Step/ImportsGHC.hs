@@ -157,14 +157,40 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
         WithModuleName -> pure $ replicate (moduleNamePosition + offset) ' '
         NewLine -> pure $ replicate offset ' '
 
+      let -- Try to put everything on one line.
+          printAsSingleLine = forM_ printedImports $ \(imp, start, end) -> do
+            when start $ putText "("
+            imp
+            if end then putText ")" else comma >> space
+
+          -- Try to put everything one by one, wrapping if that fails.
+          printAsInlineWrapping = forM_ printedImports $ \(imp, start, end) ->
+            patchForRepeatHiding $ wrapping
+              (do
+                if start
+                    then case listAlign of
+                        NewLine -> do
+                            modifyCurrentLine trimRight
+                            newline >> putOffset >> putText "("
+                        _       -> putText " ("
+                    else space
+                imp
+                if end then putText ")" else comma)
+              (do
+                case listAlign of
+                    -- In 'Repeat' mode, end lines with ')' rather than ','.
+                    Repeat | not start -> modifyCurrentLine . withLast $
+                        \c -> if c == ',' then ')' else c
+                    _ -> pure ()
+                newline
+                putText wrapPrefix
+                imp
+                if end then putText ")" else comma)
+
       when spaceSurround space
       case longListAlign of
         Multiline -> wrapping
-          -- Try to put everything on one line.
-          (forM_ printedImports $ \(imp, isFirst, isLast) -> do
-            when isFirst $ putText " ("
-            imp
-            if isLast then putText ")" else comma >> space)
+          (space >> printAsSingleLine)
           -- Put everything on a separate line.
           (forM_ printedImports $ \(imp, isFirst, isLast) -> do
             when isFirst $ modifyCurrentLine trimRight  -- We added some spaces.
@@ -174,28 +200,11 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
             imp
             when isLast $ newline >> putOffset >> putText ")")
 
-        Inline -> forM_ printedImports $ \(imp, isFirst, isLast) ->
-          patchForRepeatHiding $ wrapping
-            (do
-              if isFirst
-                  then case listAlign of
-                      NewLine -> do
-                          modifyCurrentLine trimRight
-                          newline >> putOffset >> putText "("
-                      _       -> putText " ("
-                  else space
-              imp
-              if isLast then putText ")" else comma)
-            (do
-              case listAlign of
-                  -- In 'Repeat' mode, end lines with ')' rather than ','.
-                  Repeat | not isFirst -> modifyCurrentLine . withLast $
-                      \c -> if c == ',' then ')' else c
-                  _ -> pure ()
-              newline
-              putText wrapPrefix
-              imp
-              if isLast then putText ")" else comma)
+        Inline -> printAsInlineWrapping
+        InlineWithBreak -> do
+          newline
+          printAsInlineWrapping
+
         _ -> error $ "TODO: " ++ show longListAlign
 
       -- when spaceSurround space
