@@ -8,7 +8,7 @@ module Language.Haskell.Stylish.Step.ImportsGHC
   ) where
 
 --------------------------------------------------------------------------------
-import           Control.Monad                   (forM_, when)
+import           Control.Monad                   (forM_, when, void)
 import           Data.Function                   ((&))
 import           Data.Foldable                   (toList)
 import           Data.Ord                        (comparing)
@@ -164,16 +164,11 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
             if end then putText ")" else comma >> space
 
           -- Try to put everything one by one, wrapping if that fails.
-          printAsInlineWrapping = forM_ printedImports $ \(imp, start, end) ->
+          printAsInlineWrapping wprefix = forM_ printedImports $
+            \(imp, start, end) ->
             patchForRepeatHiding $ wrapping
               (do
-                if start
-                    then case listAlign of
-                        NewLine -> do
-                            modifyCurrentLine trimRight
-                            newline >> putOffset >> putText "("
-                        _       -> putText " ("
-                    else space
+                if start then putText "(" else space
                 imp
                 if end then putText ")" else comma)
               (do
@@ -183,7 +178,7 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
                         \c -> if c == ',' then ')' else c
                     _ -> pure ()
                 newline
-                putText wrapPrefix
+                void wprefix
                 imp
                 if end then putText ")" else comma)
 
@@ -200,10 +195,13 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
             imp
             when isLast $ newline >> putOffset >> putText ")")
 
-        Inline -> printAsInlineWrapping
+        Inline | NewLine <- listAlign -> do
+          modifyCurrentLine trimRight
+          newline >> putOffset >> printAsInlineWrapping (putText wrapPrefix)
+        Inline -> space >> printAsInlineWrapping (putText wrapPrefix)
         InlineWithBreak -> do
-          newline
-          printAsInlineWrapping
+          modifyCurrentLine trimRight
+          newline >> putOffset >> printAsInlineWrapping putOffset
 
         _ -> error $ "TODO: " ++ show longListAlign
 
