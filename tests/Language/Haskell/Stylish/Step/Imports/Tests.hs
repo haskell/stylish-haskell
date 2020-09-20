@@ -445,14 +445,14 @@ case13b =
   let
     options = Options None WithModuleName True InlineWithBreak Inherit (LPConstant 4) True False False
   in
-    expected @=? testStep (step (Just 80) options) input'
+    expected @=? testSnippet (GHC.step (Just 80) options) input'
   where
-    input' = unlines
+    input' = Snippet
         [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
         , "    last, length, map, null, reverse, tail, (++))"
         ]
 
-    expected = unlines
+    expected = Snippet
         [ "import qualified Data.List as List"
         , "    (concat, foldl, foldr, head, init, last, length, map, null, reverse, tail,"
         , "    (++))"
@@ -465,9 +465,9 @@ case14 =
   let
     options = Options None WithAlias True InlineWithBreak Inherit (LPConstant 10) True False False
   in
-    expected @=? testStep (step (Just 80) options) expected
+    expected @=? testSnippet (GHC.step (Just 80) options) expected
   where
-    expected = unlines
+    expected = Snippet
         [ "import qualified Data.List as List (concat, map, null, reverse, tail, (++))"
         ]
 

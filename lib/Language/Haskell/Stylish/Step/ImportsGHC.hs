@@ -199,9 +199,11 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
           modifyCurrentLine trimRight
           newline >> putOffset >> printAsInlineWrapping (putText wrapPrefix)
         Inline -> space >> printAsInlineWrapping (putText wrapPrefix)
-        InlineWithBreak -> do
-          modifyCurrentLine trimRight
-          newline >> putOffset >> printAsInlineWrapping putOffset
+        InlineWithBreak -> wrapping
+          (space >> printAsSingleLine)
+          (do
+            modifyCurrentLine trimRight
+            newline >> putOffset >> printAsInlineWrapping putOffset)
 
         _ -> error $ "TODO: " ++ show longListAlign
 
