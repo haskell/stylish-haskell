@@ -140,11 +140,12 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
 
   case snd <$> ideclHiding decl' of
     Nothing            -> pure ()
-    Just (L _ [])      -> case listAlign of
-      -- Should we remove this exception?
-      NewLine ->
+    Just (L _ [])      -> case emptyListAlign of
+      RightAfter -> modifyCurrentLine trimRight >> space >> putText "()"
+      Inherit -> case listAlign of
+        NewLine ->
           modifyCurrentLine trimRight >> newline >> putOffset >> putText "()"
-      _ -> space >> putText "()"
+        _ -> space >> putText "()"
     Just (L _ imports) -> do
       let printedImports = flagEnds $ -- [P ()]
             fmap ((printImport Options{..}) . unLocated) (sortImportList imports)

@@ -586,9 +586,9 @@ case19 =
   let
     options = Options Global NewLine True InlineWithBreak RightAfter (LPConstant 17) True False False
   in
-    expected @=? testStep (step (Just 40) options) case19input
+    expected @=? testSnippet (GHC.step (Just 40) options) case19input
   where
-    expected = unlines
+    expected = Snippet
            ----------------------------------------
         [ "import           Prelude ()"
         , "import           Prelude.Compat hiding"
@@ -605,9 +605,9 @@ case19b =
   let
     options = Options File NewLine True InlineWithBreak RightAfter (LPConstant 17) True False False
   in
-    expected @=? testStep (step (Just 40) options) case19input
+    expected @=? testSnippet (step (Just 40) options) case19input
   where
-    expected = unlines
+    expected = Snippet
            ----------------------------------------
         [ "import Prelude ()"
         , "import Prelude.Compat hiding"
@@ -624,9 +624,9 @@ case19c =
   let
     options = Options File NewLine True InlineWithBreak RightAfter LPModuleName True False False
   in
-    expected @=? testStep (step (Just 40) options) case19input
+    expected @=? testSnippet (step (Just 40) options) case19input
   where
-    expected = unlines
+    expected = Snippet
            ----------------------------------------
         [ "import Prelude ()"
         , "import Prelude.Compat hiding"
@@ -643,9 +643,9 @@ case19d =
   let
     options = Options Global NewLine True InlineWithBreak RightAfter LPModuleName True False False
   in
-    expected @=? testStep (step (Just 40) options) case19input
+    expected @=? testSnippet (step (Just 40) options) case19input
   where
-    expected = unlines
+    expected = Snippet
            ----------------------------------------
         [ "import           Prelude ()"
         , "import           Prelude.Compat hiding"
@@ -657,13 +657,13 @@ case19d =
         ]
 
 
-case19input :: String
-case19input = unlines
-        [ "import Prelude.Compat hiding (foldMap)"
-        , "import Prelude ()"
-        , ""
-        , "import Data.List (foldl', intercalate, intersperse)"
-        ]
+case19input :: Snippet
+case19input = Snippet
+    [ "import Prelude.Compat hiding (foldMap)"
+    , "import Prelude ()"
+    , ""
+    , "import Data.List (foldl', intercalate, intersperse)"
+    ]
 
 
 --------------------------------------------------------------------------------
