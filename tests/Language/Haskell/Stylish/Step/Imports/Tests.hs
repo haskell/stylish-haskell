@@ -64,6 +64,11 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
 
 
 --------------------------------------------------------------------------------
+inputSnippet :: Snippet
+inputSnippet = Snippet $ lines input
+
+
+--------------------------------------------------------------------------------
 input :: String
 input = unlines
     [ "module Herp where"
@@ -84,9 +89,9 @@ input = unlines
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testStep' (GHC.step (Just 80) $ fromImportAlign Global) (lines input)
+case01 = expected @=? testSnippet (GHC.step (Just 80) $ fromImportAlign Global) inputSnippet
   where
-    expected =
+    expected = Snippet
         [ "module Herp where"
         , ""
         , "import           Control.Monad"
@@ -106,9 +111,9 @@ case01 = expected @=? testStep' (GHC.step (Just 80) $ fromImportAlign Global) (l
 
 --------------------------------------------------------------------------------
 case02 :: Assertion
-case02 = expected @=? testStep' (GHC.step (Just 80) $ fromImportAlign Group) (lines input)
+case02 = expected @=? testSnippet (GHC.step (Just 80) $ fromImportAlign Group) inputSnippet
   where
-    expected =
+    expected = Snippet
         [ "module Herp where"
         , ""
         , "import           Control.Monad"
@@ -127,9 +132,9 @@ case02 = expected @=? testStep' (GHC.step (Just 80) $ fromImportAlign Group) (li
 
 --------------------------------------------------------------------------------
 case03 :: Assertion
-case03 = expected @=? testStep' (GHC.step (Just 80) $ fromImportAlign None) (lines input)
+case03 = expected @=? testSnippet (GHC.step (Just 80) $ fromImportAlign None) inputSnippet
   where
-    expected =
+    expected = Snippet
         [ "module Herp where"
         , ""
         , "import Control.Monad"
@@ -148,13 +153,13 @@ case03 = expected @=? testStep' (GHC.step (Just 80) $ fromImportAlign None) (lin
 
 --------------------------------------------------------------------------------
 case04 :: Assertion
-case04 = expected @=? testStep' (GHC.step (Just 80) $ fromImportAlign Global) (lines input')
+case04 = expected @=? testSnippet (GHC.step (Just 80) $ fromImportAlign Global) input'
   where
-    input' =
+    input' = Snippet $ pure $
         "import Data.Aeson.Types (object, typeMismatch, FromJSON(..)," ++
         "ToJSON(..), Value(..), parseEither, (.!=), (.:), (.:?), (.=))"
 
-    expected =
+    expected = Snippet
         [ "import           Data.Aeson.Types (FromJSON (..), ToJSON (..), Value (..),"
         , "                                   object, parseEither, typeMismatch, (.!=),"
         , "                                   (.:), (.:?), (.=))"
@@ -163,9 +168,9 @@ case04 = expected @=? testStep' (GHC.step (Just 80) $ fromImportAlign Global) (l
 
 --------------------------------------------------------------------------------
 case05 :: Assertion
-case05 = input' @=? testStep' (GHC.step (Just 80) $ fromImportAlign Group) input'
+case05 = input' @=? testSnippet (GHC.step (Just 80) $ fromImportAlign Group) input'
   where
-    input' = ["import Distribution.PackageDescription.Configuration " ++
+    input' = Snippet ["import Distribution.PackageDescription.Configuration " ++
         "(finalizePackageDescription)"]
 
 
@@ -326,15 +331,16 @@ case10 =
         ]
 
 
+
 --------------------------------------------------------------------------------
 case11 :: Assertion
 case11 =
   let
     options = Options Group NewLine True Inline Inherit (LPConstant 4) True False False
   in
-    expected @=? testStep (step (Just 80) options) input
+    expected @=? testSnippet (GHC.step (Just 80) options) inputSnippet
   where
-    expected = unlines
+    expected = Snippet
         [ "module Herp where"
         , ""
         , "import           Control.Monad"

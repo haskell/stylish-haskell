@@ -2,6 +2,8 @@
 module Language.Haskell.Stylish.Tests.Util
     ( testStep
     , testStep'
+    , Snippet (..)
+    , testSnippet
     , withTestDirTree
     , (@=??)
     ) where
@@ -41,8 +43,25 @@ testStep s str = case s of
   where
     ls = lines str
 
+
+--------------------------------------------------------------------------------
 testStep' :: Step -> Lines -> Lines
 testStep' s ls = lines $ testStep s (unlines ls)
+
+
+--------------------------------------------------------------------------------
+-- | 'Lines' that show as a normal string.
+newtype Snippet = Snippet {unSnippet :: Lines} deriving (Eq)
+
+
+--------------------------------------------------------------------------------
+instance Show Snippet where show = unlines . unSnippet
+
+
+--------------------------------------------------------------------------------
+testSnippet :: Step -> Snippet -> Snippet
+testSnippet s = Snippet . lines . testStep s . unlines . unSnippet
+
 
 --------------------------------------------------------------------------------
 -- | Create a temporary directory with a randomised name built from the template
