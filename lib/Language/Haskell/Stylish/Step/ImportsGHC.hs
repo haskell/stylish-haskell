@@ -9,11 +9,12 @@ module Language.Haskell.Stylish.Step.ImportsGHC
 
 --------------------------------------------------------------------------------
 import           Control.Monad                   (forM_, when, void)
+import           Data.Char                       (isUpper)
 import           Data.Function                   ((&))
 import           Data.Foldable                   (toList)
 import           Data.Ord                        (comparing)
 import           Data.Maybe                      (isJust)
-import           Data.List                       (sortBy, isPrefixOf)
+import           Data.List                       (sortBy, sortOn)
 import           Data.List.NonEmpty              (NonEmpty(..))
 import qualified Data.List.NonEmpty              as NonEmpty
 
@@ -252,7 +253,7 @@ printImport Options{..} (IEThingWith _ name _wildcard imps _) = do
     printIeWrappedName name
     when separateLists space
     parenthesize $
-      sep (comma >> space) (printIeWrappedName <$> sortBy compareOutputable imps)
+      sep (comma >> space) (printIeWrappedName <$> imps)
 printImport _ (IEGroup _ _ _ ) =
     error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEGroup'"
 printImport _ (IEDoc _ _) =
@@ -341,22 +342,30 @@ isSafe
   . rawImport
 
 sortImportList :: [LIE GhcPs] -> [LIE GhcPs]
-sortImportList = sortBy compareImportLIE
+sortImportList = map (fmap sortInner) . sortBy compareImportLIE
+ where
+  compareImportLIE :: LIE GhcPs -> LIE GhcPs -> Ordering
+  compareImportLIE = comparing $ ieKey . unLoc
 
+  sortInner :: IE GhcPs -> IE GhcPs
+  sortInner = \case
+    IEThingWith x n w ns fs -> IEThingWith x n w (sortOn nameKey ns) fs
+    ie                      -> ie
 
---------------------------------------------------------------------------------
--- | The implementation is a bit hacky to get proper sorting for input specs:
--- constructors first, followed by functions, and then operators.
-compareImportLIE :: LIE GhcPs -> LIE GhcPs -> Ordering
-compareImportLIE = comparing $ key . unLoc
-  where
-    key :: IE GhcPs -> (Int, Bool, String)
-    key (IEVar _ n)             = let o = showOutputable n in
-                                  (1, "(" `isPrefixOf` o, o)
-    key (IEThingAbs _ n)        = (0, False, showOutputable n)
-    key (IEThingAll _ n)        = (0, False, showOutputable n)
-    key (IEThingWith _ n _ _ _) = (0, False, showOutputable n)
-    key _                       = (2, False, "")
+  -- | The implementation is a bit hacky to get proper sorting for input specs:
+  -- constructors first, followed by functions, and then operators.
+  ieKey :: IE GhcPs -> (Int, String)
+  ieKey = \case
+    IEVar _ n             -> nameKey n
+    IEThingAbs _ n        -> nameKey n
+    IEThingAll _ n        -> nameKey n
+    IEThingWith _ n _ _ _ -> nameKey n
+    _                     -> (2, "")
+
+  nameKey n = case showOutputable n of
+    o@('(' : _)             -> (2 :: Int, o)
+    o@(o0 : _) | isUpper o0 -> (0, o)
+    o                       -> (1, o)
 
 
 --------------------------------------------------------------------------------

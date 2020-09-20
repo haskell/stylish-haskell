@@ -478,9 +478,9 @@ case15 =
   let
     options = Options None AfterAlias True Multiline Inherit (LPConstant 4) True False False
   in
-    expected @=? testStep (step (Just 80) options) input'
+    expected @=? testSnippet (GHC.step (Just 80) options) input'
   where
-    expected = unlines
+    expected = Snippet
         [ "import Data.Acid (AcidState)"
         , "import qualified Data.Acid as Acid"
         , "    ( closeAcidState"
@@ -492,7 +492,7 @@ case15 =
         , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (bar, foo)"
         ]
 
-    input' = unlines
+    input' = Snippet
         [ "import Data.Acid (AcidState)"
         , "import qualified Data.Acid as Acid (closeAcidState, createCheckpoint, openLocalStateFrom)"
         , "import Data.Default.Class (Default (def))"
@@ -507,9 +507,9 @@ case16 =
   let
     options = Options None AfterAlias True Multiline Inherit (LPConstant 4) False False False
   in
-    expected @=? testStep (step (Just 80) options) input'
+    expected @=? testSnippet (GHC.step (Just 80) options) input'
   where
-    expected = unlines
+    expected = Snippet
         [ "import Data.Acid (AcidState)"
         , "import Data.Default.Class (Default(def))"
         , ""
@@ -518,7 +518,7 @@ case16 =
         , "import Data.Foo (Foo(Bar, Foo), Goo(Goo))"
         ]
 
-    input' = unlines
+    input' = Snippet
         [ "import Data.Acid (AcidState)"
         , "import Data.Default.Class (Default(def))"
         , ""
@@ -534,15 +534,15 @@ case17 =
   let
     options = Options None AfterAlias True Multiline Inherit (LPConstant 4) True False False
   in
-    expected @=? testStep (step (Just 80) options) input'
+    expected @=? testSnippet (GHC.step (Just 80) options) input'
   where
-    expected = unlines
+    expected = Snippet
         [ "import Control.Applicative (Applicative (pure, (<*>)))"
         , ""
         , "import Data.Identity (Identity (Identity, runIdentity))"
         ]
 
-    input' = unlines
+    input' = Snippet
         [ "import Control.Applicative (Applicative ((<*>),pure))"
         , ""
         , "import Data.Identity (Identity (runIdentity,Identity))"
