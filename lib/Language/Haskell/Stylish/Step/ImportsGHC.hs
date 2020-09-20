@@ -135,8 +135,10 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
 
   when (isHiding decl) (space >> putText "hiding")
 
-  let offset = case listPadding of LPConstant n -> n; LPModuleName -> 0
-      putOffset = putText $ replicate offset ' '
+  let putOffset = putText $ replicate offset ' '
+      offset = case listPadding of
+        LPConstant n -> n
+        LPModuleName -> moduleNamePosition
 
   case snd <$> ideclHiding decl' of
     Nothing            -> pure ()

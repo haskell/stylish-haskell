@@ -605,13 +605,12 @@ case19b =
   let
     options = Options File NewLine True InlineWithBreak RightAfter (LPConstant 17) True False False
   in
-    expected @=? testSnippet (step (Just 40) options) case19input
+    expected @=? testSnippet (GHC.step (Just 40) options) case19input
   where
     expected = Snippet
            ----------------------------------------
         [ "import Prelude ()"
-        , "import Prelude.Compat hiding"
-        , "                 (foldMap)"
+        , "import Prelude.Compat hiding (foldMap)"
         , ""
         , "import Data.List"
         , "                 (foldl', intercalate,"
@@ -643,7 +642,7 @@ case19d =
   let
     options = Options Global NewLine True InlineWithBreak RightAfter LPModuleName True False False
   in
-    expected @=? testSnippet (step (Just 40) options) case19input
+    expected @=? testSnippet (GHC.step (Just 40) options) case19input
   where
     expected = Snippet
            ----------------------------------------
