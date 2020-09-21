@@ -717,9 +717,9 @@ case21 = expected
 --------------------------------------------------------------------------------
 case22 :: Assertion
 case22 = expected
-    @=? testStep (step (Just 80) defaultOptions) input'
+    @=? testSnippet (step (Just 80) defaultOptions) input'
   where
-    expected = unlines
+    expected = Snippet
         [ "{-# LANGUAGE PackageImports #-}"
         , "import           A"
         , "import           \"blah\" A"
@@ -728,7 +728,7 @@ case22 = expected
         , "import           \"foo\" B  (shortName, someLongName, someLongerName,"
         , "                           theLongestNameYet)"
         ]
-    input' = unlines
+    input' = Snippet
         [ "{-# LANGUAGE PackageImports #-}"
         , "import A"
         , "import \"foo\" A"

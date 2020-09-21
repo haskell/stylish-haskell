@@ -11,12 +11,14 @@ module Language.Haskell.Stylish.Step.ImportsGHC
 import           Control.Monad                   (forM_, when, void)
 import           Data.Char                       (isUpper)
 import           Data.Function                   ((&))
+import           Data.Functor                    (($>))
 import           Data.Foldable                   (toList)
 import           Data.Ord                        (comparing)
 import           Data.Maybe                      (isJust)
 import           Data.List                       (sortBy, sortOn)
 import           Data.List.NonEmpty              (NonEmpty(..))
 import qualified Data.List.NonEmpty              as NonEmpty
+import qualified Data.Map                        as Map
 import qualified Data.Set                        as Set
 
 
@@ -359,8 +361,21 @@ isSafe
 -- * Removes duplicates from import lists.
 prepareImportList :: [LIE GhcPs] -> [LIE GhcPs]
 prepareImportList =
-  nubOn showOutputable . map (fmap prepareInner) . sortBy compareImportLIE
+  sortBy compareImportLIE . map (fmap prepareInner) .
+  concatMap (toList . snd) . Map.toAscList . mergeByName
  where
+  mergeByName :: [LIE GhcPs] -> Map.Map RdrName (NonEmpty (LIE GhcPs))
+  mergeByName imports0 = Map.fromListWith
+    -- Note that ideally every NonEmpty will just have a single entry and we
+    -- will be able to merge everything into that entry.  Exotic imports can
+    -- mess this up, though.  So they end up in the tail of the list.
+    (\(x :| xs) (y :| ys) -> case ieMerge (unLocated x) (unLocated y) of
+      Just z -> (x $> z) :| (xs ++ ys)  -- Keep source from `x`
+      Nothing -> x :| (xs ++ y : ys))
+    [(ieName $ unLocated imp, imp :| []) | imp <- imports0]
+
+  -- | TODO: get rid off this by adding a properly sorting newtype around
+  -- 'RdrName'.
   compareImportLIE :: LIE GhcPs -> LIE GhcPs -> Ordering
   compareImportLIE = comparing $ ieKey . unLoc
 
@@ -385,6 +400,26 @@ prepareImportList =
     o@('(' : _)             -> (2 :: Int, o)
     o@(o0 : _) | isUpper o0 -> (0, o)
     o                       -> (1, o)
+
+  -- Merge two import items, assuming they have the same name.
+  ieMerge :: IE GhcPs -> IE GhcPs -> Maybe (IE GhcPs)
+  ieMerge l@(IEVar _ _)      _                  = Just l
+  ieMerge _                  r@(IEVar _ _)      = Just r
+  ieMerge (IEThingAbs _ _)   r                  = Just r
+  ieMerge l                  (IEThingAbs _ _)   = Just l
+  ieMerge l@(IEThingAll _ _) _                  = Just l
+  ieMerge _                  r@(IEThingAll _ _) = Just r
+  ieMerge (IEThingWith x0 n0 w0 ns0 []) (IEThingWith _ _ w1 ns1 [])
+    | w0 /= w1  = Nothing
+    | otherwise = Just $
+        -- TODO: sort the `ns0 ++ ns1`?
+        IEThingWith x0 n0 w0 (nubOn (unwrapName . unLocated) $ ns0 ++ ns1) []
+  ieMerge _ _ = Nothing
+
+  unwrapName :: IEWrappedName n -> n
+  unwrapName (IEName n)    = unLocated n
+  unwrapName (IEPattern n) = unLocated n
+  unwrapName (IEType n)    = unLocated n
 
 
 --------------------------------------------------------------------------------
