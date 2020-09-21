@@ -717,7 +717,7 @@ case21 = expected
 --------------------------------------------------------------------------------
 case22 :: Assertion
 case22 = expected
-    @=? testSnippet (step (Just 80) defaultOptions) input'
+    @=? testSnippet (GHC.step (Just 80) defaultOptions) input'
   where
     expected = Snippet
         [ "{-# LANGUAGE PackageImports #-}"

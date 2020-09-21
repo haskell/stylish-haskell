@@ -23,6 +23,9 @@ import qualified Data.Set                        as Set
 
 
 --------------------------------------------------------------------------------
+import           BasicTypes                      (StringLiteral (..),
+                                                  SourceText (..))
+import qualified FastString                      as FS
 import           GHC.Hs.Extension                (GhcPs)
 import qualified GHC.Hs.Extension                as GHC
 import           GHC.Hs.ImpExp
@@ -117,6 +120,7 @@ printQualified Options{..} padNames stats (L _ decl) = do
     _         -> pure ()
 
   moduleNamePosition <- length <$> getCurrentLine
+  forM_ (ideclPkgQual decl') $ \pkg -> putText (stringLiteral pkg) >> space
   putText (moduleName decl)
 
   -- Only print spaces if something follows.
@@ -320,9 +324,22 @@ importStats :: Import -> ImportStats
 importStats i =
     ImportStats (importModuleNameLength i) (isSource i) (isQualified i) (isSafe i)
 
--- computes length till module name
+-- Computes length till module name, includes package name.
+-- TODO: this should reuse code with the printer
 importModuleNameLength :: Import -> Int
-importModuleNameLength = length . moduleName
+importModuleNameLength imp =
+    (case ideclPkgQual (rawImport imp) of
+        Nothing -> 0
+        Just sl -> 1 + length (stringLiteral sl)) +
+    (length $ moduleName imp)
+
+
+--------------------------------------------------------------------------------
+stringLiteral :: StringLiteral -> String
+stringLiteral sl = case sl_st sl of
+    NoSourceText -> FS.unpackFS $ sl_fs sl
+    SourceText s -> s
+
 
 --------------------------------------------------------------------------------
 isQualified :: Import -> Bool

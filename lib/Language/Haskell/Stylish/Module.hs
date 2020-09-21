@@ -116,6 +116,8 @@ instance Eq Import where
 instance Ord Import where
   compare (Import i0) (Import i1) =
     ideclName i0 `compareOutputable` ideclName i1 <>
+    fmap showOutputable (ideclPkgQual i0) `compare`
+        fmap showOutputable (ideclPkgQual i1) <>
     compareOutputable i0 i1
 
 -- | Comments associated with module
