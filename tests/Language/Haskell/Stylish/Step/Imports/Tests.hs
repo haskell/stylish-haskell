@@ -623,13 +623,12 @@ case19c =
   let
     options = Options File NewLine True InlineWithBreak RightAfter LPModuleName True False False
   in
-    expected @=? testSnippet (step (Just 40) options) case19input
+    expected @=? testSnippet (GHC.step (Just 40) options) case19input
   where
     expected = Snippet
            ----------------------------------------
         [ "import Prelude ()"
-        , "import Prelude.Compat hiding"
-        , "       (foldMap)"
+        , "import Prelude.Compat hiding (foldMap)"
         , ""
         , "import Data.List"
         , "       (foldl', intercalate,"
@@ -687,9 +686,9 @@ case20 = expected
 --------------------------------------------------------------------------------
 case21 :: Assertion
 case21 = expected
-    @=? testStep (step (Just 80) defaultOptions) input'
+    @=? testSnippet (GHC.step (Just 80) defaultOptions) input'
   where
-    expected = unlines
+    expected = Snippet
         [ "{-# LANGUAGE ExplicitNamespaces #-}"
         , "import           X1 (A, B, C)"
         , "import           X2 (A, B, C)"
@@ -701,7 +700,7 @@ case21 = expected
         , "import           X8 (type (+), (+))"
         , "import           X9 hiding (x, y, z)"
         ]
-    input' = unlines
+    input' = Snippet
         [ "{-# LANGUAGE ExplicitNamespaces #-}"
         , "import X1 (A, B, A, C, A, B, A)"
         , "import X2 (C(), B(), A())"

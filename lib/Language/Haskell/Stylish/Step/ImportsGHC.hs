@@ -17,6 +17,7 @@ import           Data.Maybe                      (isJust)
 import           Data.List                       (sortBy, sortOn)
 import           Data.List.NonEmpty              (NonEmpty(..))
 import qualified Data.List.NonEmpty              as NonEmpty
+import qualified Data.Set                        as Set
 
 
 --------------------------------------------------------------------------------
@@ -150,7 +151,8 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
         _ -> space >> putText "()"
     Just (L _ imports) -> do
       let printedImports = flagEnds $ -- [P ()]
-            fmap ((printImport Options{..}) . unLocated) (sortImportList imports)
+            fmap ((printImport Options{..}) . unLocated)
+            (prepareImportList imports)
 
       -- Since we might need to output the import module name several times, we
       -- need to save it to a variable:
@@ -349,16 +351,25 @@ isSafe
   = ideclSafe
   . rawImport
 
-sortImportList :: [LIE GhcPs] -> [LIE GhcPs]
-sortImportList = map (fmap sortInner) . sortBy compareImportLIE
+--------------------------------------------------------------------------------
+-- | Cleans up an import item list.
+--
+-- * Sorts import items.
+-- * Sort inner import lists, e.g. `import Control.Monad (Monad (return, join))`
+-- * Removes duplicates from import lists.
+prepareImportList :: [LIE GhcPs] -> [LIE GhcPs]
+prepareImportList =
+  nubOn showOutputable . map (fmap prepareInner) . sortBy compareImportLIE
  where
   compareImportLIE :: LIE GhcPs -> LIE GhcPs -> Ordering
   compareImportLIE = comparing $ ieKey . unLoc
 
-  sortInner :: IE GhcPs -> IE GhcPs
-  sortInner = \case
+  prepareInner :: IE GhcPs -> IE GhcPs
+  prepareInner = \case
+    -- Simplify `A ()` to `A`.
+    IEThingWith x n NoIEWildcard [] [] -> IEThingAbs x n
     IEThingWith x n w ns fs -> IEThingWith x n w (sortOn nameKey ns) fs
-    ie                      -> ie
+    ie -> ie
 
   -- | The implementation is a bit hacky to get proper sorting for input specs:
   -- constructors first, followed by functions, and then operators.
@@ -381,3 +392,14 @@ listPaddingValue :: Int -> ListPadding -> Int
 listPaddingValue _ (LPConstant n) = n
 listPaddingValue n LPModuleName   = n
 
+
+--------------------------------------------------------------------------------
+nubOn :: Ord k => (a -> k) -> [a] -> [a]
+nubOn f = go Set.empty
+ where
+  go _   []              = []
+  go acc (x : xs)
+    | y `Set.member` acc = go acc xs
+    | otherwise          = x : go (Set.insert y acc) xs
+   where
+    y = f x
