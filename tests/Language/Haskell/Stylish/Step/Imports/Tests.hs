@@ -667,15 +667,15 @@ case19input = Snippet
 --------------------------------------------------------------------------------
 case20 :: Assertion
 case20 = expected
-    @=? testStep (step (Just 80) defaultOptions) input'
+    @=? testSnippet (GHC.step (Just 80) defaultOptions) input'
   where
-    expected = unlines
-        [ "import {-# SOURCE #-} Data.ByteString as BS"
-        , "import qualified Data.Map        as Map"
-        , "import           Data.Set        (empty)"
+    expected = Snippet
+        [ "import {-# SOURCE #-}           Data.ByteString as BS"
+        , "import                qualified Data.Map        as Map"
+        , "import                          Data.Set        (empty)"
         , "import {-# SOURCE #-} qualified Data.Text       as T"
         ]
-    input' = unlines
+    input' = Snippet
         [ "import {-# SOURCE #-}    Data.ByteString as BS"
         , "import {-# SOURCE #-} qualified Data.Text as T"
         , "import qualified   Data.Map as Map"

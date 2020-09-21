@@ -50,19 +50,16 @@ printImports :: Maybe Int -> Options -> Lines -> Module -> Lines
 printImports maxCols align ls m = applyChanges changes ls
   where
     groups = moduleImportGroups m
-    moduleLongestImport = longestImport . fmap unLoc $ concatMap toList groups
-    moduleAnyQual = any isQualified . fmap unLoc $ concatMap toList groups
+    moduleStats = foldMap importStats . fmap unLoc $ concatMap toList groups
     changes = do
         group <- groups
-        pure $ formatGroup maxCols align m
-            moduleLongestImport moduleAnyQual group
+        pure $ formatGroup maxCols align m moduleStats group
 
 formatGroup
-    :: Maybe Int -> Options -> Module -> Int -> Bool
+    :: Maybe Int -> Options -> Module -> ImportStats
     -> NonEmpty (Located Import) -> Change String
-formatGroup maxCols options m moduleLongestImport moduleAnyQual imports =
-    let newLines = formatImports maxCols options m
-            moduleLongestImport moduleAnyQual imports in
+formatGroup maxCols options m moduleStats imports =
+    let newLines = formatImports maxCols options m moduleStats imports in
     change (importBlock imports) (const newLines)
 
 importBlock :: NonEmpty (Located a) -> Block String
@@ -71,13 +68,12 @@ importBlock group = Block
     (getEndLineUnsafe   $ NonEmpty.last group)
 
 formatImports
-    :: Maybe Int  -- ^ Max columns.
-    -> Options    -- ^ Options.
-    -> Module     -- ^ Module.
-    -> Int        -- ^ Longest import in module.
-    -> Bool       -- ^ Qualified import is present in module.
+    :: Maybe Int    -- ^ Max columns.
+    -> Options      -- ^ Options.
+    -> Module       -- ^ Module.
+    -> ImportStats  -- ^ Module stats.
     -> NonEmpty (Located Import) -> Lines
-formatImports maxCols options m moduleLongestImport moduleAnyQual rawGroup =
+formatImports maxCols options m moduleStats rawGroup =
   runPrinter_ (PrinterConfig maxCols) [] m do
   let 
      
@@ -87,49 +83,48 @@ formatImports maxCols options m moduleLongestImport moduleAnyQual rawGroup =
 
     unLocatedGroup = fmap unLocated $ toList group
 
-    anyQual = any isQualified unLocatedGroup
-
     align' = importAlign options
     padModuleNames' = padModuleNames options
     padNames = align' /= None && padModuleNames'
-    padQual  = case align' of
-      Global -> True
-      File   -> moduleAnyQual
-      Group  -> anyQual
-      None   -> False
 
-    longest = case align' of
-        Global -> moduleLongestImport
-        File   -> moduleLongestImport
-        Group  -> longestImport unLocatedGroup
-        None   -> 0
+    stats = case align' of
+        Global -> moduleStats {isAnyQualified = True}
+        File   -> moduleStats
+        Group  -> foldMap importStats unLocatedGroup
+        None   -> mempty
 
-  forM_ group \imp -> printQualified options padQual padNames longest imp >> newline
+  forM_ group \imp -> printQualified options padNames stats imp >> newline
 
 --------------------------------------------------------------------------------
-printQualified :: Options -> Bool -> Bool -> Int -> Located Import -> P ()
-printQualified Options{..} padQual padNames longest (L _ decl) = do
+printQualified :: Options -> Bool -> ImportStats -> Located Import -> P ()
+printQualified Options{..} padNames stats (L _ decl) = do
   let
     decl'         = rawImport decl
     _listPadding' = listPaddingValue (6 + 1 + qualifiedLength) listPadding
 
   putText "import" >> space
 
-  when (isSource decl) (putText "{-# SOURCE #-}" >> space)
+  case (isSource decl, isAnySource stats) of
+    (True, _) -> putText "{-# SOURCE #-}" >> space
+    (_, True) -> putText "              " >> space
+    _         -> pure ()
 
   when (isSafe decl) (putText "safe" >> space)
 
-  when (isQualified decl) (putText "qualified" >> space)
-
-  padQualified decl padQual
+  case (isQualified decl, isAnyQualified stats) of
+    (True, _) -> putText "qualified" >> space
+    (_, True) -> putText "         " >> space
+    _         -> pure ()
 
   moduleNamePosition <- length <$> getCurrentLine
   putText (moduleName decl)
 
   -- Only print spaces if something follows.
-  when (isJust (ideclAs decl') || isHiding decl ||
-          not (null $ ideclHiding decl')) $
-      padImportsList decl padNames longest
+  when padNames $
+    when (isJust (ideclAs decl') || isHiding decl ||
+            not (null $ ideclHiding decl')) $
+      putText $
+        replicate (isLongestImport stats - importModuleNameLength decl) ' '
 
   beforeAliasPosition <- length <$> getCurrentLine
   forM_ (ideclAs decl') \(L _ name) ->
@@ -239,7 +234,7 @@ printQualified Options{..} padQual padNames longest (L _ decl) = do
         _                      -> id
 
     qualifiedDecl | isQualified decl = ["qualified"]
-                  | padQual          =
+                  | isAnyQualified stats =
                     if isSource decl
                     then []
                     else if isSafe decl
@@ -302,35 +297,34 @@ moduleName
 
 
 --------------------------------------------------------------------------------
-longestImport :: (Foldable f, Functor f) => f Import -> Int
-longestImport xs = if null xs then 0 else maximum $ fmap importLength xs
+data ImportStats = ImportStats
+    { isLongestImport :: !Int
+    , isAnySource     :: !Bool
+    , isAnyQualified  :: !Bool
+    , isAnySafe       :: !Bool
+    }
+
+instance Semigroup ImportStats where
+    l <> r = ImportStats
+        { isLongestImport = isLongestImport l `max` isLongestImport r
+        , isAnySource     = isAnySource     l ||    isAnySource     r
+        , isAnyQualified  = isAnyQualified  l ||    isAnyQualified  r
+        , isAnySafe       = isAnySafe       l ||    isAnySafe       r
+        }
+
+instance Monoid ImportStats where
+    mappend = (<>)
+    mempty  = ImportStats 0 False False False
+
+importStats :: Import -> ImportStats
+importStats i =
+    ImportStats (importModuleNameLength i) (isSource i) (isQualified i) (isSafe i)
 
 -- computes length till module name
-importLength :: Import -> Int
-importLength i =
-  let
-    srcLength  | isSource i = length "{# SOURCE #}"
-               | otherwise  = 0
-    qualLength = length "qualified"
-    nameLength = length $ moduleName i
-  in
-    srcLength + qualLength + nameLength
+importModuleNameLength :: Import -> Int
+importModuleNameLength = length . moduleName
 
 --------------------------------------------------------------------------------
-padQualified :: Import -> Bool -> P ()
-padQualified i padQual = do
-  let pads = length "qualified"
-  if padQual && not (isQualified i)
-  then (putText $ replicate pads ' ') >> space
-  else pure ()
-
-padImportsList :: Import -> Bool -> Int -> P ()
-padImportsList i padNames longest = do
-  let diff = longest - importLength i
-  if padNames
-  then putText $ replicate diff ' '
-  else pure ()
-                   
 isQualified :: Import -> Bool
 isQualified
   = (/=) NotQualified
