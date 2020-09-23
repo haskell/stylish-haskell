@@ -5,16 +5,14 @@ module Language.Haskell.Stylish.Step.Imports.Tests
 
 
 --------------------------------------------------------------------------------
-import           Test.Framework                 (Test, testGroup)
-import           Test.Framework.Providers.HUnit (testCase)
-import           Test.HUnit                     (Assertion, (@=?))
+import           Test.Framework                           (Test, testGroup)
+import           Test.Framework.Providers.HUnit           (testCase)
+import           Test.HUnit                               (Assertion, (@=?))
 
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Step.Imports
-import qualified Language.Haskell.Stylish.Step.ImportsGHC as GHC
+import           Language.Haskell.Stylish.Step.ImportsGHC
 import           Language.Haskell.Stylish.Tests.Util
-
 
 
 --------------------------------------------------------------------------------
@@ -64,13 +62,8 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
 
 
 --------------------------------------------------------------------------------
-inputSnippet :: Snippet
-inputSnippet = Snippet $ lines input
-
-
---------------------------------------------------------------------------------
-input :: String
-input = unlines
+input :: Snippet
+input = Snippet
     [ "module Herp where"
     , ""
     , "import qualified Data.Map  as M"
@@ -89,7 +82,7 @@ input = unlines
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testSnippet (GHC.step (Just 80) $ fromImportAlign Global) inputSnippet
+case01 = expected @=? testSnippet (step (Just 80) $ fromImportAlign Global) input
   where
     expected = Snippet
         [ "module Herp where"
@@ -111,7 +104,7 @@ case01 = expected @=? testSnippet (GHC.step (Just 80) $ fromImportAlign Global) 
 
 --------------------------------------------------------------------------------
 case02 :: Assertion
-case02 = expected @=? testSnippet (GHC.step (Just 80) $ fromImportAlign Group) inputSnippet
+case02 = expected @=? testSnippet (step (Just 80) $ fromImportAlign Group) input
   where
     expected = Snippet
         [ "module Herp where"
@@ -132,7 +125,7 @@ case02 = expected @=? testSnippet (GHC.step (Just 80) $ fromImportAlign Group) i
 
 --------------------------------------------------------------------------------
 case03 :: Assertion
-case03 = expected @=? testSnippet (GHC.step (Just 80) $ fromImportAlign None) inputSnippet
+case03 = expected @=? testSnippet (step (Just 80) $ fromImportAlign None) input
   where
     expected = Snippet
         [ "module Herp where"
@@ -153,7 +146,7 @@ case03 = expected @=? testSnippet (GHC.step (Just 80) $ fromImportAlign None) in
 
 --------------------------------------------------------------------------------
 case04 :: Assertion
-case04 = expected @=? testSnippet (GHC.step (Just 80) $ fromImportAlign Global) input'
+case04 = expected @=? testSnippet (step (Just 80) $ fromImportAlign Global) input'
   where
     input' = Snippet $ pure $
         "import Data.Aeson.Types (object, typeMismatch, FromJSON(..)," ++
@@ -168,7 +161,7 @@ case04 = expected @=? testSnippet (GHC.step (Just 80) $ fromImportAlign Global) 
 
 --------------------------------------------------------------------------------
 case05 :: Assertion
-case05 = input' @=? testSnippet (GHC.step (Just 80) $ fromImportAlign Group) input'
+case05 = input' @=? testSnippet (step (Just 80) $ fromImportAlign Group) input'
   where
     -- Putting this on a different line shouldn't really help.
     input' = Snippet ["import Distribution.PackageDescription.Configuration " ++
@@ -177,7 +170,7 @@ case05 = input' @=? testSnippet (GHC.step (Just 80) $ fromImportAlign Group) inp
 
 --------------------------------------------------------------------------------
 case06 :: Assertion
-case06 = input' @=? testStep' (GHC.step (Just 80) $ fromImportAlign File) input'
+case06 = input' @=? testStep' (step (Just 80) $ fromImportAlign File) input'
   where
     input' =
         [ "import Bar.Qux"
@@ -188,7 +181,7 @@ case06 = input' @=? testStep' (GHC.step (Just 80) $ fromImportAlign File) input'
 --------------------------------------------------------------------------------
 case07 :: Assertion
 case07 =
-    expected @=? testSnippet (GHC.step (Just 80) $ fromImportAlign File) input'
+    expected @=? testSnippet (step (Just 80) $ fromImportAlign File) input'
   where
     input' = Snippet
         [ "import Bar.Qux"
@@ -209,7 +202,7 @@ case08 =
   let
     options = Options Global WithAlias True Inline Inherit (LPConstant 4) True False False
   in
-    expected @=? testSnippet (GHC.step (Just 80) options) inputSnippet
+    expected @=? testSnippet (step (Just 80) options) input
   where
     expected = Snippet
         [ "module Herp where"
@@ -235,7 +228,7 @@ case08b =
   let
     options = Options Global WithModuleName True Inline Inherit (LPConstant 4) True False False
   in
-    expected @=? testSnippet (GHC.step (Just 80) options) inputSnippet
+    expected @=? testSnippet (step (Just 80) options) input
   where
     expected = Snippet
         ["module Herp where"
@@ -260,7 +253,7 @@ case09 =
   let
     options = Options Global WithAlias True Multiline Inherit (LPConstant 4) True False False
   in
-    expected @=? testSnippet (GHC.step (Just 80) options) inputSnippet
+    expected @=? testSnippet (step (Just 80) options) input
   where
     expected = Snippet
         [ "module Herp where"
@@ -297,7 +290,7 @@ case10 =
   let
     options = Options Group WithAlias True Multiline Inherit (LPConstant 4) True False False
   in
-    expected @=? testSnippet (GHC.step (Just 40) options) inputSnippet
+    expected @=? testSnippet (step (Just 40) options) input
   where
     expected = Snippet
         [ "module Herp where"
@@ -340,7 +333,7 @@ case11 =
   let
     options = Options Group NewLine True Inline Inherit (LPConstant 4) True False False
   in
-    expected @=? testSnippet (GHC.step (Just 80) options) inputSnippet
+    expected @=? testSnippet (step (Just 80) options) input
   where
     expected = Snippet
         [ "module Herp where"
@@ -370,7 +363,7 @@ case11b =
   let
     options = Options Group WithModuleName True Inline Inherit (LPConstant 4) True False False
   in
-    expected @=? testSnippet (GHC.step (Just 80) options) inputSnippet
+    expected @=? testSnippet (step (Just 80) options) input
   where
     expected = Snippet
         [ "module Herp where"
@@ -395,7 +388,7 @@ case12 =
   let
     options = Options Group NewLine True Inline Inherit (LPConstant 2) True False False
   in
-    expected @=? testSnippet (GHC.step (Just 80) options) input'
+    expected @=? testSnippet (step (Just 80) options) input'
   where
     input' = Snippet
         [ "import Data.List (map)"
@@ -413,7 +406,7 @@ case12b =
   let
     options = Options Group WithModuleName True Inline Inherit (LPConstant 2) True False False
   in
-    expected @=? testStep' (GHC.step (Just 80) options) input'
+    expected @=? testStep' (step (Just 80) options) input'
   where
     input' =  ["import Data.List (map)"]
 
@@ -426,7 +419,7 @@ case13 =
   let
     options = Options None WithAlias True InlineWithBreak Inherit (LPConstant 4) True False False
   in
-    expected @=? testSnippet (GHC.step (Just 80) options) input'
+    expected @=? testSnippet (step (Just 80) options) input'
   where
     input' = Snippet
         [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
@@ -446,7 +439,7 @@ case13b =
   let
     options = Options None WithModuleName True InlineWithBreak Inherit (LPConstant 4) True False False
   in
-    expected @=? testSnippet (GHC.step (Just 80) options) input'
+    expected @=? testSnippet (step (Just 80) options) input'
   where
     input' = Snippet
         [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
@@ -466,7 +459,7 @@ case14 =
   let
     options = Options None WithAlias True InlineWithBreak Inherit (LPConstant 10) True False False
   in
-    expected @=? testSnippet (GHC.step (Just 80) options) expected
+    expected @=? testSnippet (step (Just 80) options) expected
   where
     expected = Snippet
         [ "import qualified Data.List as List (concat, map, null, reverse, tail, (++))"
@@ -479,7 +472,7 @@ case15 =
   let
     options = Options None AfterAlias True Multiline Inherit (LPConstant 4) True False False
   in
-    expected @=? testSnippet (GHC.step (Just 80) options) input'
+    expected @=? testSnippet (step (Just 80) options) input'
   where
     expected = Snippet
         [ "import Data.Acid (AcidState)"
@@ -508,7 +501,7 @@ case16 =
   let
     options = Options None AfterAlias True Multiline Inherit (LPConstant 4) False False False
   in
-    expected @=? testSnippet (GHC.step (Just 80) options) input'
+    expected @=? testSnippet (step (Just 80) options) input'
   where
     expected = Snippet
         [ "import Data.Acid (AcidState)"
@@ -535,7 +528,7 @@ case17 =
   let
     options = Options None AfterAlias True Multiline Inherit (LPConstant 4) True False False
   in
-    expected @=? testSnippet (GHC.step (Just 80) options) input'
+    expected @=? testSnippet (step (Just 80) options) input'
   where
     expected = Snippet
         [ "import Control.Applicative (Applicative (pure, (<*>)))"
@@ -556,7 +549,7 @@ case18 =
   let
     options = Options None AfterAlias True InlineToMultiline Inherit (LPConstant 4) True False False
   in
-    expected @=? testSnippet (GHC.step (Just 40) options) input'
+    expected @=? testSnippet (step (Just 40) options) input'
   where
     expected = Snippet
            ----------------------------------------
@@ -587,7 +580,7 @@ case19 =
   let
     options = Options Global NewLine True InlineWithBreak RightAfter (LPConstant 17) True False False
   in
-    expected @=? testSnippet (GHC.step (Just 40) options) case19input
+    expected @=? testSnippet (step (Just 40) options) case19input
   where
     expected = Snippet
            ----------------------------------------
@@ -606,7 +599,7 @@ case19b =
   let
     options = Options File NewLine True InlineWithBreak RightAfter (LPConstant 17) True False False
   in
-    expected @=? testSnippet (GHC.step (Just 40) options) case19input
+    expected @=? testSnippet (step (Just 40) options) case19input
   where
     expected = Snippet
            ----------------------------------------
@@ -624,7 +617,7 @@ case19c =
   let
     options = Options File NewLine True InlineWithBreak RightAfter LPModuleName True False False
   in
-    expected @=? testSnippet (GHC.step (Just 40) options) case19input
+    expected @=? testSnippet (step (Just 40) options) case19input
   where
     expected = Snippet
            ----------------------------------------
@@ -642,7 +635,7 @@ case19d =
   let
     options = Options Global NewLine True InlineWithBreak RightAfter LPModuleName True False False
   in
-    expected @=? testSnippet (GHC.step (Just 40) options) case19input
+    expected @=? testSnippet (step (Just 40) options) case19input
   where
     expected = Snippet
            ----------------------------------------
@@ -668,7 +661,7 @@ case19input = Snippet
 --------------------------------------------------------------------------------
 case20 :: Assertion
 case20 = expected
-    @=? testSnippet (GHC.step (Just 80) defaultOptions) input'
+    @=? testSnippet (step (Just 80) defaultOptions) input'
   where
     expected = Snippet
         [ "import {-# SOURCE #-}           Data.ByteString as BS"
@@ -687,7 +680,7 @@ case20 = expected
 --------------------------------------------------------------------------------
 case21 :: Assertion
 case21 = expected
-    @=? testSnippet (GHC.step (Just 80) defaultOptions) input'
+    @=? testSnippet (step (Just 80) defaultOptions) input'
   where
     expected = Snippet
         [ "{-# LANGUAGE ExplicitNamespaces #-}"
@@ -718,7 +711,7 @@ case21 = expected
 --------------------------------------------------------------------------------
 case22 :: Assertion
 case22 = expected
-    @=? testSnippet (GHC.step (Just 80) defaultOptions) input'
+    @=? testSnippet (step (Just 80) defaultOptions) input'
   where
     expected = Snippet
         [ "{-# LANGUAGE PackageImports #-}"
@@ -748,7 +741,7 @@ case23 =
   let
     options = Options None AfterAlias False Inline Inherit (LPConstant 4) True True False
   in
-    expected @=? testSnippet (GHC.step (Just 40) options) input'
+    expected @=? testSnippet (step (Just 40) options) input'
   where
     expected = Snippet
            ----------------------------------------
@@ -777,7 +770,7 @@ case23b =
   let
     options = Options None WithModuleName False Inline Inherit (LPConstant 4) True True False
   in
-    expected @=? testSnippet (GHC.step (Just 40) options) input'
+    expected @=? testSnippet (step (Just 40) options) input'
   where
     expected = Snippet
            ----------------------------------------
@@ -807,7 +800,7 @@ case24 =
   let
     options = Options None AfterAlias False InlineWithBreak Inherit (LPConstant 4) True True False
   in
-    expected @=? testSnippet (GHC.step (Just 40) options) input'
+    expected @=? testSnippet (step (Just 40) options) input'
   where
     expected = Snippet
            ----------------------------------------
@@ -835,7 +828,7 @@ case25 =
   let
     options = Options Group AfterAlias False Multiline Inherit (LPConstant 4) False False False
   in
-    expected @=? testSnippet (GHC.step (Just 80) options) input'
+    expected @=? testSnippet (step (Just 80) options) input'
   where
     expected = Snippet
         [ "import Data.Acid (AcidState)"
@@ -860,7 +853,7 @@ case25 =
 --------------------------------------------------------------------------------
 case26 :: Assertion
 case26 = expected
-    @=? testSnippet (GHC.step (Just 80) options ) input'
+    @=? testSnippet (step (Just 80) options ) input'
   where
     options = defaultOptions { listAlign = NewLine, longListAlign = Multiline }
     input' = Snippet ["import Data.List"]
@@ -869,7 +862,7 @@ case26 = expected
 
 --------------------------------------------------------------------------------
 case27 :: Assertion
-case27 = expected @=? testSnippet (GHC.step Nothing $ fromImportAlign Global) inputSnippet
+case27 = expected @=? testSnippet (step Nothing $ fromImportAlign Global) input
   where
     expected = Snippet
         [ "module Herp where"

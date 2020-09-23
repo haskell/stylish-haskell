@@ -4,6 +4,12 @@
 {-# LANGUAGE RecordWildCards #-}
 module Language.Haskell.Stylish.Step.ImportsGHC
   ( Options (..)
+  , defaultOptions
+  , ImportAlign (..)
+  , ListAlign (..)
+  , LongListAlign (..)
+  , EmptyListAlign (..)
+  , ListPadding (..)
   , step
   ) where
 
