@@ -191,12 +191,18 @@ printQualified Options{..} padNames stats (L _ decl) = do
                 newline
                 void wprefix
                 case listAlign of
-                  Repeat         -> pure ()  -- '(' already included in repeat
+                  -- '(' already included in repeat
+                  Repeat         -> pure ()
+                  -- Print the much needed '('
                   _ | start      -> putText "(" >> doSpaceSurround
+                  -- Don't bother aligning if we're not in inline mode.
+                  _ | longListAlign /= Inline -> pure ()
+                  -- 'Inline + AfterAlias' is really where we want to be careful
+                  -- with spacing.
+                  AfterAlias -> space >> doSpaceSurround
                   WithModuleName -> pure ()
-                  WithAlias      -> pure ()
-                  AfterAlias     -> space >> doSpaceSurround
-                  NewLine        -> pure ()
+                  WithAlias -> pure ()
+                  NewLine -> pure ()
                 imp
                 if end then doSpaceSurround >> putText ")" else comma)
 

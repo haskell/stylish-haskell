@@ -807,9 +807,10 @@ case24 =
   let
     options = Options None AfterAlias False InlineWithBreak Inherit (LPConstant 4) True True False
   in
-    expected @=? testStep (step (Just 40) options) input'
+    expected @=? testSnippet (GHC.step (Just 40) options) input'
   where
-    expected = unlines
+    expected = Snippet
+           ----------------------------------------
         [ "import Data.Acid ( AcidState )"
         , "import Data.Default.Class"
         , "    ( Default (def) )"
@@ -819,7 +820,7 @@ case24 =
         , "    GooReallyLong )"
         ]
 
-    input' = unlines
+    input' = Snippet
         [ "import Data.Acid (AcidState)"
         , "import Data.Default.Class (Default(def))"
         , ""
