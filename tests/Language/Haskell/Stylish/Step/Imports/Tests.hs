@@ -835,9 +835,9 @@ case25 =
   let
     options = Options Group AfterAlias False Multiline Inherit (LPConstant 4) False False False
   in
-    expected @=? testStep (step (Just 80) options) input'
+    expected @=? testSnippet (GHC.step (Just 80) options) input'
   where
-    expected = unlines
+    expected = Snippet
         [ "import Data.Acid (AcidState)"
         , "import Data.Default.Class (Default(def))"
         , ""
@@ -846,7 +846,7 @@ case25 =
         , ""
         , "import Data.Foo (Foo(Bar, Foo), Goo(Goo))"
         ]
-    input' = unlines
+    input' = Snippet
         [ "import Data.Acid (AcidState)"
         , "import Data.Default.Class (Default(def))"
         , ""
@@ -860,22 +860,18 @@ case25 =
 --------------------------------------------------------------------------------
 case26 :: Assertion
 case26 = expected
-    @=? testStep (step (Just 80) options ) input'
+    @=? testSnippet (GHC.step (Just 80) options ) input'
   where
     options = defaultOptions { listAlign = NewLine, longListAlign = Multiline }
-    input' = unlines
-        [ "import Data.List"
-        ]
-    expected = unlines
-        [ "import           Data.List"
-        ]
+    input' = Snippet ["import Data.List"]
+    expected = Snippet ["import           Data.List"]
 
 
 --------------------------------------------------------------------------------
 case27 :: Assertion
-case27 = expected @=? testStep (step Nothing $ fromImportAlign Global) input
+case27 = expected @=? testSnippet (GHC.step Nothing $ fromImportAlign Global) inputSnippet
   where
-    expected = unlines
+    expected = Snippet
         [ "module Herp where"
         , ""
         , "import           Control.Monad"
