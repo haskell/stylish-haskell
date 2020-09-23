@@ -170,6 +170,7 @@ case04 = expected @=? testSnippet (GHC.step (Just 80) $ fromImportAlign Global) 
 case05 :: Assertion
 case05 = input' @=? testSnippet (GHC.step (Just 80) $ fromImportAlign Group) input'
   where
+    -- Putting this on a different line shouldn't really help.
     input' = Snippet ["import Distribution.PackageDescription.Configuration " ++
         "(finalizePackageDescription)"]
 
@@ -747,9 +748,10 @@ case23 =
   let
     options = Options None AfterAlias False Inline Inherit (LPConstant 4) True True False
   in
-    expected @=? testStep (step (Just 40) options) input'
+    expected @=? testSnippet (GHC.step (Just 40) options) input'
   where
-    expected = unlines
+    expected = Snippet
+           ----------------------------------------
         [ "import Data.Acid ( AcidState )"
         , "import Data.Default.Class ( Default (def) )"
         , ""
@@ -759,7 +761,7 @@ case23 =
         , "                            Goo )"
         ]
 
-    input' = unlines
+    input' = Snippet
         [ "import Data.Acid (AcidState)"
         , "import Data.Default.Class (Default(def))"
         , ""

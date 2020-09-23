@@ -158,26 +158,29 @@ printQualified Options{..} padNames stats (L _ decl) = do
       -- Since we might need to output the import module name several times, we
       -- need to save it to a variable:
       wrapPrefix <- case listAlign of
-        AfterAlias -> pure $ replicate (afterAliasPosition + 2) ' '
+        AfterAlias -> pure $ replicate (afterAliasPosition + 1) ' '
         WithAlias -> pure $ replicate (beforeAliasPosition + 1) ' '
         Repeat -> fmap (++ " (") getCurrentLine
         WithModuleName -> pure $ replicate (moduleNamePosition + offset) ' '
         NewLine -> pure $ replicate offset ' '
 
-      let -- Try to put everything on one line.
+      let -- Helper
+          doSpaceSurround = when spaceSurround space
+
+          -- Try to put everything on one line.
           printAsSingleLine = forM_ printedImports $ \(imp, start, end) -> do
-            when start $ putText "("
+            when start $ putText "(" >> doSpaceSurround
             imp
-            if end then putText ")" else comma >> space
+            if end then doSpaceSurround >> putText ")" else comma >> space
 
           -- Try to put everything one by one, wrapping if that fails.
           printAsInlineWrapping wprefix = forM_ printedImports $
             \(imp, start, end) ->
             patchForRepeatHiding $ wrapping
               (do
-                if start then putText "(" else space
+                if start then putText "(" >> doSpaceSurround else space
                 imp
-                if end then putText ")" else comma)
+                if end then doSpaceSurround >> putText ")" else comma)
               (do
                 case listAlign of
                     -- In 'Repeat' mode, end lines with ')' rather than ','.
@@ -186,9 +189,18 @@ printQualified Options{..} padNames stats (L _ decl) = do
                     _ -> pure ()
                 newline
                 void wprefix
+                case listAlign of
+                  Repeat         -> pure ()  -- '(' already included in repeat
+                  _ | start      -> putText "(" >> doSpaceSurround
+                  WithModuleName -> pure ()
+                  WithAlias      -> pure ()
+                  AfterAlias     -> space >> doSpaceSurround
+                  NewLine        -> pure ()
                 imp
-                if end then putText ")" else comma)
-          -- Put everything on a separate line.
+                if end then doSpaceSurround >> putText ")" else comma)
+
+          -- Put everything on a separate line.  'spaceSurround' can be
+          -- ignored.
           printAsMultiLine = forM_ printedImports $ \(imp, start, end) -> do
             when start $ modifyCurrentLine trimRight  -- We added some spaces.
             newline
@@ -197,7 +209,6 @@ printQualified Options{..} padNames stats (L _ decl) = do
             imp
             when end $ newline >> putOffset >> putText ")"
 
-      when spaceSurround space
       case longListAlign of
         Multiline -> wrapping
           (space >> printAsSingleLine)
