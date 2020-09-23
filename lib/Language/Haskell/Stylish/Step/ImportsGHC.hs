@@ -101,9 +101,7 @@ formatImports maxCols options m moduleStats rawGroup =
 --------------------------------------------------------------------------------
 printQualified :: Options -> Bool -> ImportStats -> Located Import -> P ()
 printQualified Options{..} padNames stats (L _ decl) = do
-  let
-    decl'         = rawImport decl
-    _listPadding' = listPaddingValue (6 + 1 + qualifiedLength) listPadding
+  let decl' = rawImport decl
 
   putText "import" >> space
 
@@ -186,6 +184,9 @@ printQualified Options{..} padNames stats (L _ decl) = do
                     -- In 'Repeat' mode, end lines with ')' rather than ','.
                     Repeat | not start -> modifyCurrentLine . withLast $
                         \c -> if c == ',' then ')' else c
+                    _ | start && spaceSurround ->
+                        -- Only necessary if spaceSurround is enabled.
+                        modifyCurrentLine trimRight
                     _ -> pure ()
                 newline
                 void wprefix
@@ -229,34 +230,12 @@ printQualified Options{..} padNames stats (L _ decl) = do
               modifyCurrentLine trimRight
               newline >> putOffset >> printAsSingleLine)
             printAsMultiLine)
-
-      -- when spaceSurround space
-      -- putText ")"
   where
-      {-
-    canSplit len = and
-      [ -- If the max cols have been surpassed, split:
-        maybe False (len >=) maxCols
-        -- Splitting a 'hiding' import changes the scope, don't split hiding:
-      , not (isHiding decl)
-      ]
-      -}
-
     -- We cannot wrap/repeat 'hiding' imports since then we would get multiple
     -- imports hiding different things.
     patchForRepeatHiding = case listAlign of
         Repeat | isHiding decl -> withColumns Nothing
         _                      -> id
-
-    qualifiedDecl | isQualified decl = ["qualified"]
-                  | isAnyQualified stats =
-                    if isSource decl
-                    then []
-                    else if isSafe decl
-                         then ["    "]
-                         else ["         "]
-                  | otherwise        = []
-    qualifiedLength = if null qualifiedDecl then 0 else 1 + sum (map length qualifiedDecl)
 
 
 --------------------------------------------------------------------------------
@@ -442,12 +421,6 @@ prepareImportList =
   unwrapName (IEName n)    = unLocated n
   unwrapName (IEPattern n) = unLocated n
   unwrapName (IEType n)    = unLocated n
-
-
---------------------------------------------------------------------------------
-listPaddingValue :: Int -> ListPadding -> Int
-listPaddingValue _ (LPConstant n) = n
-listPaddingValue n LPModuleName   = n
 
 
 --------------------------------------------------------------------------------
