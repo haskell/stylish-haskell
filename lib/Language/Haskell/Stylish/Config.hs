@@ -1,5 +1,6 @@
 --------------------------------------------------------------------------------
 {-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 module Language.Haskell.Stylish.Config
@@ -42,7 +43,6 @@ import           Language.Haskell.Stylish.Config.Internal
 import           Language.Haskell.Stylish.Step
 import qualified Language.Haskell.Stylish.Step.Data               as Data
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
-import qualified Language.Haskell.Stylish.Step.ImportsGHC         as ImportsGHC
 import qualified Language.Haskell.Stylish.Step.ModuleHeader       as ModuleHeader
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
 import qualified Language.Haskell.Stylish.Step.SimpleAlign        as SimpleAlign
@@ -247,26 +247,17 @@ parseSquash _ _ = return Squash.step
 
 --------------------------------------------------------------------------------
 parseImports :: Config -> A.Object -> A.Parser Step
-parseImports config o = do
-  cfg <-
-    Imports.Options
+parseImports config o = fmap (Imports.step columns) $ Imports.Options
       <$> (o A..:? "align" >>= parseEnum aligns (def Imports.importAlign))
       <*> (o A..:? "list_align" >>= parseEnum listAligns (def Imports.listAlign))
       <*> (o A..:? "pad_module_names" A..!= def Imports.padModuleNames)
       <*> (o A..:? "long_list_align" >>= parseEnum longListAligns (def Imports.longListAlign))
-      -- Note that padding has to be at least 1. Default is 4.
       <*> (o A..:? "empty_list_align" >>= parseEnum emptyListAligns (def Imports.emptyListAlign))
-      <*> o A..:? "list_padding" A..!= def Imports.listPadding
+      -- Note that padding has to be at least 1. Default is 4.
+      <*> (o A..:? "list_padding" >>= maybe (pure $ def Imports.listPadding) parseListPadding)
       <*> o A..:? "separate_lists" A..!= def Imports.separateLists
       <*> o A..:? "space_surround" A..!= def Imports.spaceSurround
       <*> o A..:? "ghc_lib_parser" A..!= True
-
-  pure
-    if Imports.useGhcLibParser cfg then
-      ImportsGHC.step columns cfg
-    else
-      Imports.step columns cfg
-
   where
     def f = f Imports.defaultOptions
 
@@ -298,6 +289,11 @@ parseImports config o = do
         [ ("inherit", Imports.Inherit)
         , ("right_after", Imports.RightAfter)
         ]
+
+    parseListPadding = \case
+        A.String "module_name" -> pure Imports.LPModuleName
+        A.Number n | n >= 1 -> pure $ Imports.LPConstant (truncate n)
+        v -> A.typeMismatch "'module_name' or >=1 number" v
 
 --------------------------------------------------------------------------------
 parseLanguagePragmas :: Config -> A.Object -> A.Parser Step

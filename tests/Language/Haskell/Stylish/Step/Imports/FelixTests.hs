@@ -1,19 +1,20 @@
-module Language.Haskell.Stylish.Step.ImportsGHC.Tests
+-- | Tests contributed by Felix Mulder as part of
+-- <https://github.com/jaspervdj/stylish-haskell/pull/293>.
+module Language.Haskell.Stylish.Step.Imports.FelixTests
   ( tests
   ) where
 
 --------------------------------------------------------------------------------
-import           Test.Framework                           (Test, testGroup)
-import           Test.Framework.Providers.HUnit           (testCase)
-import           Test.HUnit                               (Assertion)
-import           GHC.Stack                                (HasCallStack, withFrozenCallStack)
-import           Prelude                                  hiding (lines)
+import           Test.Framework                        (Test, testGroup)
+import           Test.Framework.Providers.HUnit        (testCase)
+import           Test.HUnit                            (Assertion)
+import           GHC.Stack                             (HasCallStack, withFrozenCallStack)
+import           Prelude                               hiding (lines)
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Module
-import           Language.Haskell.Stylish.Step.Imports    (Options (..), defaultOptions, ListAlign (..))
-import           Language.Haskell.Stylish.Step.ImportsGHC (step)
-import           Language.Haskell.Stylish.Tests.Util      (testStep', (@=??))
+import           Language.Haskell.Stylish.Step.Imports
+import           Language.Haskell.Stylish.Tests.Util   (testStep', (@=??))
 
 
 

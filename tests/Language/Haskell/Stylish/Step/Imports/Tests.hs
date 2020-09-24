@@ -5,13 +5,13 @@ module Language.Haskell.Stylish.Step.Imports.Tests
 
 
 --------------------------------------------------------------------------------
-import           Test.Framework                           (Test, testGroup)
-import           Test.Framework.Providers.HUnit           (testCase)
-import           Test.HUnit                               (Assertion, (@=?))
+import           Test.Framework                        (Test, testGroup)
+import           Test.Framework.Providers.HUnit        (testCase)
+import           Test.HUnit                            (Assertion, (@=?))
 
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Step.ImportsGHC
+import           Language.Haskell.Stylish.Step.Imports
 import           Language.Haskell.Stylish.Tests.Util
 
 
