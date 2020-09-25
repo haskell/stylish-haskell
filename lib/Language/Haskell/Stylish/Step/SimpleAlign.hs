@@ -26,6 +26,7 @@ import           Language.Haskell.Stylish.Module
 data Config = Config
     { cCases            :: !Bool
     , cTopLevelPatterns :: !Bool
+    -- TODO: Matches
     , cRecords          :: !Bool
     } deriving (Show)
 
@@ -52,18 +53,42 @@ _tlpats modu =
 
 --------------------------------------------------------------------------------
 records :: (S.Located (Hs.HsModule Hs.GhcPs)) -> [[S.Located (Hs.ConDeclField Hs.GhcPs)]]
-records modu = 
-  let
-    decls           = map S.unLoc (Hs.hsmodDecls (S.unLoc modu))
-    tyClDecls       = [ tyClDecl | Hs.TyClD _ tyClDecl <- decls ]
-    dataDecls       = [ d | d@(Hs.DataDecl _ _ _ _ _)  <- tyClDecls ]
-    dataDefns       = map Hs.tcdDataDefn dataDecls
-    conDecls        = concatMap getConDecls dataDefns
-    conDeclDetails  = map getConDeclDetails conDecls
-    llConDeclFields = getLocRecs conDeclDetails 
-    lConDeclFields  = concatMap S.unLoc llConDeclFields    
-  in 
+records modu = do
+  let decls           = map S.unLoc (Hs.hsmodDecls (S.unLoc modu))
+      tyClDecls       = [ tyClDecl | Hs.TyClD _ tyClDecl <- decls ]
+      dataDecls       = [ d | d@(Hs.DataDecl _ _ _ _ _)  <- tyClDecls ]
+      dataDefns       = map Hs.tcdDataDefn dataDecls
+  d@Hs.ConDeclH98 {} <- concatMap getConDecls dataDefns
+  pure $ do
+      Hs.RecCon rec <- [Hs.con_args d]
+      S.unLoc rec
+  {-
+      let conDeclDetails  = getConDeclDetails conDecl
+          llConDeclFields = getLocRecs conDeclDetails
+          lConDeclFields  = concatMap S.unLoc llConDeclFields
     [ lConDeclFields ]
+    -}
+
+ where
+  getConDecls :: Hs.HsDataDefn Hs.GhcPs -> [Hs.ConDecl Hs.GhcPs]
+  getConDecls d@Hs.HsDataDefn {} = map S.unLoc $ Hs.dd_cons d
+  getConDecls (Hs.XHsDataDefn x) = Hs.noExtCon x
+
+
+--------------------------------------------------------------------------------
+-- get Arguments from data Construction Declaration
+getConDeclDetails :: Hs.ConDecl Hs.GhcPs -> Hs.HsConDeclDetails Hs.GhcPs
+getConDeclDetails d@(Hs.ConDeclGADT _ _ _ _ _ _ _ _) = Hs.con_args d
+getConDeclDetails d@(Hs.ConDeclH98 _ _ _ _ _ _ _)    = Hs.con_args d
+getConDeclDetails (Hs.XConDecl x)                    = Hs.noExtCon x
+
+
+--------------------------------------------------------------------------------
+-- look for Record(s) in a list of Construction Declaration details
+getLocRecs :: [Hs.HsConDeclDetails Hs.GhcPs] -> [S.Located [Hs.LConDeclField Hs.GhcPs]]
+getLocRecs conDeclDetails =
+  [ rec | Hs.RecCon rec <- conDeclDetails ]
+
 
 
 _matchToAlignable :: S.Located (Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)) -> Maybe (Alignable S.RealSrcSpan)
@@ -132,6 +157,8 @@ caseToAlignable (S.L matchLoc (Hs.Match _ (Hs.FunRhs name _ _) pats@(_ : _) grhs
 caseToAlignable (S.L _ (Hs.XMatch x))       = Hs.noExtCon x
 caseToAlignable (S.L _ (Hs.Match _ _ _ _))  = Nothing
 
+recordToAlignable :: [S.Located (Hs.ConDeclField Hs.GhcPs)] -> [Alignable S.RealSrcSpan]
+recordToAlignable = fromMaybe [] . traverse fieldDeclToAlignable
 
 fieldDeclToAlignable :: S.Located (Hs.ConDeclField Hs.GhcPs) -> Maybe (Alignable S.RealSrcSpan)
 fieldDeclToAlignable (S.L _ (Hs.XConDeclField x)) = Hs.noExtCon x
@@ -162,7 +189,7 @@ step maxColumns config = makeStep "Cases" $ \ls module' ->
         configured :: [Change String]
         configured = concat $
           -- [changes tlpats matchToAlignable | cTopLevelPatterns config] ++
-          -- [changes records fieldDeclToAlignable | cRecords config] ++
+          [changes records recordToAlignable | cRecords config] ++
           [changes everything matchGroupToAlignable | cCases config]
           -- [changes everything caseToAlignable | cCases config]
 

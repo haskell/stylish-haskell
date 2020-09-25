@@ -8,7 +8,7 @@ module Language.Haskell.Stylish.Step.SimpleAlign.Tests
 --------------------------------------------------------------------------------
 import           Test.Framework                            (Test, testGroup)
 import           Test.Framework.Providers.HUnit            (testCase)
-import           Test.HUnit                                (Assertion, (@=?))
+import           Test.HUnit                                (Assertion)
 
 
 --------------------------------------------------------------------------------
@@ -34,76 +34,60 @@ tests = testGroup "Language.Haskell.Stylish.Step.SimpleAlign.Tests"
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testSnippet (step (Just 80) defaultConfig) input
-  where
-    input = Snippet
-        [ "eitherToMaybe e = case e of"
-        , "    Left _ -> Nothing"
-        , "    Right x -> Just x"
-        ]
-
-    expected = Snippet
-        [ "eitherToMaybe e = case e of"
-        , "    Left _  -> Nothing"
-        , "    Right x -> Just x"
-        ]
+case01 = assertSnippet (step (Just 80) defaultConfig)
+    [ "eitherToMaybe e = case e of"
+    , "    Left _ -> Nothing"
+    , "    Right x -> Just x"
+    ]
+    [ "eitherToMaybe e = case e of"
+    , "    Left _  -> Nothing"
+    , "    Right x -> Just x"
+    ]
 
 
 --------------------------------------------------------------------------------
 case02 :: Assertion
-case02 = expected @=? testSnippet (step (Just 80) defaultConfig) input
-  where
-    input = Snippet
-        [ "eitherToMaybe (Left _) = Nothing"
-        , "eitherToMaybe (Right x) = Just x"
-        ]
-
-    expected = Snippet
-        [ "eitherToMaybe (Left _)  = Nothing"
-        , "eitherToMaybe (Right x) = Just x"
-        ]
+case02 = assertSnippet (step (Just 80) defaultConfig)
+    [ "eitherToMaybe (Left _) = Nothing"
+    , "eitherToMaybe (Right x) = Just x"
+    ]
+    [ "eitherToMaybe (Left _)  = Nothing"
+    , "eitherToMaybe (Right x) = Just x"
+    ]
 
 
 --------------------------------------------------------------------------------
 case03 :: Assertion
-case03 = expected @=? testSnippet (step (Just 80) defaultConfig) input
-  where
-    input = Snippet
-        [ "heady def [] = def"
-        , "heady _ (x : _) = x"
-        ]
-
-    expected = Snippet
-        [ "heady def []    = def"
-        , "heady _ (x : _) = x"
-        ]
+case03 = assertSnippet (step (Just 80) defaultConfig)
+    [ "heady def [] = def"
+    , "heady _ (x : _) = x"
+    ]
+    [ "heady def []    = def"
+    , "heady _ (x : _) = x"
+    ]
 
 
 --------------------------------------------------------------------------------
 case04 :: Assertion
-case04 = expected @=? testSnippet (step (Just 80) defaultConfig) input
-  where
-    input = Snippet
-        [ "data Foo = Foo"
-        , "    { foo :: Int"
-        , "    , barqux :: String"
-        , "    } deriving (Show)"
-        ]
-
-    expected = Snippet
-        [ "data Foo = Foo"
-        , "    { foo    :: Int"
-        , "    , barqux :: String"
-        , "    } deriving (Show)"
-        ]
+case04 = assertSnippet (step (Just 80) defaultConfig)
+    [ "data Foo = Foo"
+    , "    { foo :: Int"
+    , "    , barqux :: String"
+    , "    } deriving (Show)"
+    ]
+    [ "data Foo = Foo"
+    , "    { foo    :: Int"
+    , "    , barqux :: String"
+    , "    } deriving (Show)"
+    ]
 
 
 --------------------------------------------------------------------------------
 case05 :: Assertion
-case05 = input @=? testSnippet (step (Just 80) defaultConfig) input
+case05 = assertSnippet (step (Just 80) defaultConfig) input input
   where
     -- Don't attempt to align this since a field spans multiple lines
-    input = Snippet
+    input =
         [ "data Foo = Foo"
         , "    { foo :: Int"
         , "    , barqux"
@@ -114,81 +98,64 @@ case05 = input @=? testSnippet (step (Just 80) defaultConfig) input
 
 --------------------------------------------------------------------------------
 case06 :: Assertion
-case06 =
+case06 = assertSnippet
     -- 22 max columns is /just/ enough to align this stuff.
-    expected @=? testSnippet (step (Just 22) defaultConfig) input
-  where
-    input = Snippet
-        [ "data Foo = Foo"
-        , "    { foo :: String"
-        , "    , barqux :: Int"
-        , "    }"
-        ]
-
-    expected = Snippet
-        [ "data Foo = Foo"
-        , "    { foo    :: String"
-        , "    , barqux :: Int"
-        , "    }"
-        ]
+    (step (Just 22) defaultConfig)
+    [ "data Foo = Foo"
+    , "    { foo :: String"
+    , "    , barqux :: Int"
+    , "    }"
+    ]
+    [ "data Foo = Foo"
+    , "    { foo    :: String"
+    , "    , barqux :: Int"
+    , "    }"
+    ]
 
 
 --------------------------------------------------------------------------------
 case07 :: Assertion
-case07 =
+case07 = assertSnippet
     -- 21 max columns is /just NOT/ enough to align this stuff.
-    expected @=? testSnippet (step (Just 21) defaultConfig) input
-  where
-    input = Snippet
-        [ "data Foo = Foo"
-        , "    { foo :: String"
-        , "    , barqux :: Int"
-        , "    }"
-        ]
-
-    expected = Snippet
-        [ "data Foo = Foo"
-        , "    { foo :: String"
-        , "    , barqux :: Int"
-        , "    }"
-        ]
+    (step (Just 21) defaultConfig)
+    [ "data Foo = Foo"
+    , "    { foo :: String"
+    , "    , barqux :: Int"
+    , "    }"
+    ]
+    [ "data Foo = Foo"
+    , "    { foo :: String"
+    , "    , barqux :: Int"
+    , "    }"
+    ]
 
 
 --------------------------------------------------------------------------------
 case08 :: Assertion
-case08 = expected @=? testSnippet (step (Just 80) defaultConfig) input
-  where
-    input = Snippet
-        [ "canDrink mbAge = case mbAge of"
-        , "    Just age | age > 18 -> True"
-        , "    _ -> False"
-        ]
-
-    expected = Snippet
-        [ "canDrink mbAge = case mbAge of"
-        , "    Just age | age > 18 -> True"
-        , "    _                   -> False"
-        ]
+case08 = assertSnippet (step (Just 80) defaultConfig)
+    [ "canDrink mbAge = case mbAge of"
+    , "    Just age | age > 18 -> True"
+    , "    _ -> False"
+    ]
+    [ "canDrink mbAge = case mbAge of"
+    , "    Just age | age > 18 -> True"
+    , "    _                   -> False"
+    ]
 
 
 --------------------------------------------------------------------------------
 case09 :: Assertion
-case09 =
-    expected @=? testSnippet (step Nothing defaultConfig) input
-  where
-    input = Snippet
-        [ "data Foo = Foo"
-        , "    { foo :: String"
-        , "    , barqux :: Int"
-        , "    }"
-        ]
-
-    expected = Snippet
-        [ "data Foo = Foo"
-        , "    { foo    :: String"
-        , "    , barqux :: Int"
-        , "    }"
-        ]
+case09 = assertSnippet (step Nothing defaultConfig)
+    [ "data Foo = Foo"
+    , "    { foo :: String"
+    , "    , barqux :: Int"
+    , "    }"
+    ]
+    [ "data Foo = Foo"
+    , "    { foo    :: String"
+    , "    , barqux :: Int"
+    , "    }"
+    ]
 
 
 --------------------------------------------------------------------------------

@@ -30,10 +30,6 @@ module Language.Haskell.Stylish.Util
     , unguardedRhsBody
     , rhsBody
 
-    , getConDecls
-    , getConDeclDetails
-    , getLocRecs
-
     , getGuards
     ) where
 
@@ -256,28 +252,6 @@ rhsBody :: Hs.GRHSs Hs.GhcPs a -> Maybe a
 rhsBody (Hs.GRHSs _ [grhs] _)
     | Hs.GRHS _ _ body <- S.unLoc grhs = Just body
 rhsBody _ = Nothing
-
---------------------------------------------------------------------------------
--- get a list of un-located constructors
-getConDecls :: Hs.HsDataDefn Hs.GhcPs -> [Hs.ConDecl Hs.GhcPs]
-getConDecls d@(Hs.HsDataDefn _ _ _ _ _ _cons _) = 
-  map S.unLoc $ Hs.dd_cons d
-getConDecls (Hs.XHsDataDefn x) = Hs.noExtCon x
-
-
---------------------------------------------------------------------------------
--- get Arguments from data Construction Declaration
-getConDeclDetails :: Hs.ConDecl Hs.GhcPs -> Hs.HsConDeclDetails Hs.GhcPs
-getConDeclDetails d@(Hs.ConDeclGADT _ _ _ _ _ _ _ _) = Hs.con_args d
-getConDeclDetails d@(Hs.ConDeclH98 _ _ _ _ _ _ _)    = Hs.con_args d
-getConDeclDetails (Hs.XConDecl x)                    = Hs.noExtCon x
-
-
---------------------------------------------------------------------------------
--- look for Record(s) in a list of Construction Declaration details
-getLocRecs :: [Hs.HsConDeclDetails Hs.GhcPs] -> [S.Located [Hs.LConDeclField Hs.GhcPs]]
-getLocRecs conDeclDetails =
-  [ rec | Hs.RecCon rec <- conDeclDetails ]
 
 
 --------------------------------------------------------------------------------
