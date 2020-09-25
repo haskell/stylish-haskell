@@ -1,9 +1,11 @@
 {-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE TypeFamilies   #-}
 module Language.Haskell.Stylish.Tests.Util
     ( testStep
     , testStep'
     , Snippet (..)
     , testSnippet
+    , assertSnippet
     , withTestDirTree
     , (@=??)
     ) where
@@ -18,10 +20,12 @@ import           System.Directory               (createDirectory,
                                                  getTemporaryDirectory,
                                                  removeDirectoryRecursive,
                                                  setCurrentDirectory)
+import           GHC.Exts                       (IsList (..))
 import           System.FilePath                ((</>))
 import           System.IO.Error                (isAlreadyExistsError)
 import           System.Random                  (randomIO)
-import           Test.HUnit                     (Assertion, assertFailure)
+import           Test.HUnit                     (Assertion, assertFailure,
+                                                 (@=?))
 
 
 --------------------------------------------------------------------------------
@@ -53,14 +57,22 @@ testStep' s ls = lines $ testStep s (unlines ls)
 -- | 'Lines' that show as a normal string.
 newtype Snippet = Snippet {unSnippet :: Lines} deriving (Eq)
 
-
---------------------------------------------------------------------------------
 instance Show Snippet where show = unlines . unSnippet
+
+instance IsList Snippet where
+    type Item Snippet = String
+    fromList = Snippet
+    toList   = unSnippet
 
 
 --------------------------------------------------------------------------------
 testSnippet :: Step -> Snippet -> Snippet
 testSnippet s = Snippet . lines . testStep s . unlines . unSnippet
+
+
+--------------------------------------------------------------------------------
+assertSnippet :: Step -> Snippet -> Snippet -> Assertion
+assertSnippet step input expected = expected @=? testSnippet step input
 
 
 --------------------------------------------------------------------------------

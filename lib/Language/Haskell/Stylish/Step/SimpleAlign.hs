@@ -8,7 +8,7 @@ module Language.Haskell.Stylish.Step.SimpleAlign
 
 
 --------------------------------------------------------------------------------
-import           Data.Maybe                      (maybeToList)
+import           Data.Maybe                      (fromMaybe, maybeToList)
 import           Data.List                       (foldl')
 import qualified GHC.Hs                          as Hs
 import qualified SrcLoc                          as S
@@ -40,8 +40,8 @@ defaultConfig = Config
 
 --------------------------------------------------------------------------------
 -- 
-tlpats :: (S.Located (Hs.HsModule Hs.GhcPs)) -> [[S.Located (Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs))]]
-tlpats modu =
+_tlpats :: (S.Located (Hs.HsModule Hs.GhcPs)) -> [[S.Located (Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs))]]
+_tlpats modu =
   let
     decls      = map S.unLoc (Hs.hsmodDecls (S.unLoc modu))
     binds      = [ bind | Hs.ValD _ bind <- decls ]
@@ -66,8 +66,8 @@ records modu =
     [ lConDeclFields ]
 
 
-matchToAlignable :: S.Located (Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)) -> Maybe (Alignable S.RealSrcSpan)
-matchToAlignable (S.L matchLoc (Hs.Match _ (Hs.FunRhs name _ _) pats grhss)) = do
+_matchToAlignable :: S.Located (Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)) -> Maybe (Alignable S.RealSrcSpan)
+_matchToAlignable (S.L matchLoc (Hs.Match _ (Hs.FunRhs name _ _) pats grhss)) = do
   body <- unguardedRhsBody grhss
   let patsLocs = map S.getLoc pats
       nameLoc  = S.getLoc name
@@ -82,11 +82,22 @@ matchToAlignable (S.L matchLoc (Hs.Match _ (Hs.FunRhs name _ _) pats grhss)) = d
     , aRight     = bodyPos
     , aRightLead = length "= "
     }
-matchToAlignable (S.L _ (Hs.Match _ _ [] _)) = Nothing
-matchToAlignable (S.L _ (Hs.Match _ _ _ _ )) = Nothing
-matchToAlignable (S.L _ (Hs.XMatch x))       = Hs.noExtCon x
+_matchToAlignable (S.L _ (Hs.Match _ _ [] _)) = Nothing
+_matchToAlignable (S.L _ (Hs.Match _ _ _ _ )) = Nothing
+_matchToAlignable (S.L _ (Hs.XMatch x))       = Hs.noExtCon x
 
-caseToAlignable :: S.Located (Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)) -> Maybe (Alignable S.RealSrcSpan)  
+{-
+rhsBodies :: Hs.GRHSs Hs.GhcPs a -> [a]
+rhsBodies (Hs.GRHSs _ grhss _) = [body | Hs.GRHS _ _ body <- map S.unLoc grhss]
+-}
+
+matchGroupToAlignable
+    :: Hs.MatchGroup Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> [Alignable S.RealSrcSpan]
+matchGroupToAlignable (Hs.XMatchGroup x) = Hs.noExtCon x
+matchGroupToAlignable (Hs.MG _ alts _) =
+    fromMaybe [] $ traverse caseToAlignable (S.unLoc alts)
+
+caseToAlignable :: S.Located (Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)) -> Maybe (Alignable S.RealSrcSpan)
 caseToAlignable (S.L matchLoc m@(Hs.Match _ Hs.CaseAlt pats@(_ : _) grhss)) = do
   let patsLocs   = map S.getLoc pats
       pat        = last patsLocs
@@ -102,6 +113,21 @@ caseToAlignable (S.L matchLoc m@(Hs.Match _ Hs.CaseAlt pats@(_ : _) grhss)) = do
     , aLeft      = leftPos
     , aRight     = rightPos
     , aRightLead = length "-> "
+    }
+caseToAlignable (S.L matchLoc (Hs.Match _ (Hs.FunRhs name _ _) pats@(_ : _) grhss)) = do
+  body <- unguardedRhsBody grhss
+  let patsLocs = map S.getLoc pats
+      nameLoc  = S.getLoc name
+      left     = last (nameLoc : patsLocs)
+      bodyLoc  = S.getLoc body
+  matchPos <- toRealSrcSpan matchLoc
+  leftPos  <- toRealSrcSpan left
+  bodyPos  <- toRealSrcSpan bodyLoc
+  Just $ Alignable
+    { aContainer = matchPos
+    , aLeft      = leftPos
+    , aRight     = bodyPos
+    , aRightLead = length "= "
     }
 caseToAlignable (S.L _ (Hs.XMatch x))       = Hs.noExtCon x
 caseToAlignable (S.L _ (Hs.Match _ _ _ _))  = Nothing
@@ -122,18 +148,29 @@ fieldDeclToAlignable (S.L matchLoc (Hs.ConDeclField _ names ty _)) = do
 
 step :: Maybe Int -> Config -> Step
 step maxColumns config = makeStep "Cases" $ \ls module' ->
-    let changes :: ((S.Located (Hs.HsModule Hs.GhcPs)) -> [[a]]) -> (a -> Maybe (Alignable S.RealSrcSpan)) -> [Change String]
-        changes search toAlign =
+    let changes :: ((S.Located (Hs.HsModule Hs.GhcPs)) -> [a]) -> (a -> [Alignable S.RealSrcSpan]) -> [Change String]
+        changes search toAlign = concat $
+            map (align maxColumns) . map toAlign $ search (parsedModule module')
+            {-
             [ change_
             | case_   <- search (parsedModule module')
             , aligns  <- maybeToList (mapM toAlign case_)
-            , change_ <- align maxColumns aligns
+            , change_ <- traceOutputtable "aligns" (length aligns) $
+                align maxColumns aligns
             ]
+            -}
         configured :: [Change String]
         configured = concat $
-          [changes tlpats matchToAlignable | cTopLevelPatterns config] ++
-          [changes records fieldDeclToAlignable | cRecords config] ++
-          [changes everything caseToAlignable | cCases config]
-    in applyChanges configured ls
+          -- [changes tlpats matchToAlignable | cTopLevelPatterns config] ++
+          -- [changes records fieldDeclToAlignable | cRecords config] ++
+          [changes everything matchGroupToAlignable | cCases config]
+          -- [changes everything caseToAlignable | cCases config]
 
-
+        cases = everything (parsedModule module') :: [S.Located (Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs))]
+        matchgroups = everything (parsedModule module') :: [Hs.MatchGroup Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)]
+    in 
+    -- traceOutputtable "tlpats" (tlpats $ parsedModule module') $
+    traceOutputtable "matchgroups" (length matchgroups) $
+    traceOutputtable "records" (records $ parsedModule module') $
+    traceOutputtable "cases" (cases) $
+    applyChanges configured ls
