@@ -29,6 +29,8 @@ tests = testGroup "Language.Haskell.Stylish.Step.SimpleAlign.Tests"
     , testCase "case 08" case08
     , testCase "case 09" case09
     , testCase "case 10" case10
+    , testCase "case 11" case11
+    , testCase "case 12" case12
     ]
 
 
@@ -171,3 +173,29 @@ case10 = assertSnippet (step Nothing defaultConfig)
     , "  File   -> fileAlign"
     , "  Group  -> anyQual"
     ]
+
+
+--------------------------------------------------------------------------------
+case11 :: Assertion
+case11 = assertSnippet (step Nothing defaultConfig)
+    [ "data Foo = Foo"
+    , "    { foo  :: String"
+    , "    , barqux  :: !Int"
+    , "    }"
+    ]
+    [ "data Foo = Foo"
+    , "    { foo    :: String"
+    , "    , barqux :: !Int"
+    , "    }"
+    ]
+
+
+--------------------------------------------------------------------------------
+case12 :: Assertion
+case12 = assertSnippet (step Nothing defaultConfig {cCases = False}) input input
+  where
+    input =
+        [ "case x of"
+        , "  Just y -> 1"
+        , "  Nothing -> 2"
+        ]
