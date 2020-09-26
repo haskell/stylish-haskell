@@ -257,7 +257,6 @@ parseImports config o = fmap (Imports.step columns) $ Imports.Options
       <*> (o A..:? "list_padding" >>= maybe (pure $ def Imports.listPadding) parseListPadding)
       <*> o A..:? "separate_lists" A..!= def Imports.separateLists
       <*> o A..:? "space_surround" A..!= def Imports.spaceSurround
-      <*> o A..:? "ghc_lib_parser" A..!= True
   where
     def f = f Imports.defaultOptions
 

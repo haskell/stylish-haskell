@@ -60,7 +60,6 @@ data Options = Options
     , listPadding     :: ListPadding
     , separateLists   :: Bool
     , spaceSurround   :: Bool
-    , useGhcLibParser :: Bool -- ^ if True, will use new printer
     } deriving (Eq, Show)
 
 defaultOptions :: Options
@@ -73,7 +72,6 @@ defaultOptions = Options
     , listPadding     = LPConstant 4
     , separateLists   = True
     , spaceSurround   = False
-    , useGhcLibParser = False
     }
 
 data ListPadding
