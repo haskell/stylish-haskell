@@ -10,16 +10,16 @@ import           Data.List                                     (isPrefixOf,
 import           Data.Map                                      (Map)
 import qualified Data.Map                                      as M
 import           Data.Maybe                                    (maybeToList)
-import qualified Language.Haskell.Exts                         as H
-
-
+import           GHC.Hs.Binds
+import           GHC.Hs.Extension                              (GhcPs)
+import           GHC.Hs.Types
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Block
 import           Language.Haskell.Stylish.Editor
+import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Step.LanguagePragmas (addLanguagePragma)
 import           Language.Haskell.Stylish.Util
-
 
 --------------------------------------------------------------------------------
 unicodeReplacements :: Map String String
@@ -39,7 +39,7 @@ replaceAll :: [(Int, [(Int, String)])] -> [Change String]
 replaceAll = map changeLine'
   where
     changeLine' (r, ns) = changeLine r $ \str -> return $
-        applyChanges 
+        applyChanges
             [ change (Block c ec) (const repl)
             | (c, needle) <- sort ns
             , let ec = c + length needle - 1
@@ -54,33 +54,32 @@ groupPerLine = M.toList . M.fromListWith (++) .
 
 
 --------------------------------------------------------------------------------
-typeSigs :: H.Module H.SrcSpanInfo -> Lines -> [((Int, Int), String)]
+typeSigs :: Module -> Lines -> [((Int, Int), String)]
 typeSigs module' ls =
     [ (pos, "::")
-    | H.TypeSig loc _ _  <- everything module' :: [H.Decl H.SrcSpanInfo]
-    , (start, end)       <- infoPoints loc
-    , pos                <- maybeToList $ between start end "::" ls
+    | TypeSig _ funLoc typeLoc <- everything (rawModuleDecls $ moduleDecls module') :: [Sig GhcPs]
+    , (_, funEnd)              <- infoPoints funLoc
+    , (typeStart, _)           <- infoPoints [hsSigWcType typeLoc]
+    , pos                      <- maybeToList $ between funEnd typeStart "::" ls
     ]
 
-
 --------------------------------------------------------------------------------
-contexts :: H.Module H.SrcSpanInfo -> Lines -> [((Int, Int), String)]
+contexts :: Module -> Lines -> [((Int, Int), String)]
 contexts module' ls =
     [ (pos, "=>")
-    | context      <- everything module' :: [H.Context H.SrcSpanInfo]
-    , (start, end) <- infoPoints $ H.ann context
-    , pos          <- maybeToList $ between start end "=>" ls
+    | TypeSig _ _ typeLoc <- everything (rawModuleDecls $ moduleDecls module') :: [Sig GhcPs]
+    , (start, end)        <- infoPoints [hsSigWcType typeLoc]
+    , pos                 <- maybeToList $ between start end "=>" ls
     ]
 
 
 --------------------------------------------------------------------------------
-typeFuns :: H.Module H.SrcSpanInfo -> Lines -> [((Int, Int), String)]
+typeFuns :: Module -> Lines -> [((Int, Int), String)]
 typeFuns module' ls =
     [ (pos, "->")
-    | H.TyFun _ t1 t2 <- everything module'
-    , let start = H.srcSpanEnd $ H.srcInfoSpan $ H.ann t1
-    , let end   = H.srcSpanStart $ H.srcInfoSpan $ H.ann t2
-    , pos <- maybeToList $ between start end "->" ls
+    | TypeSig _ _ typeLoc <- everything (rawModuleDecls $ moduleDecls module') :: [Sig GhcPs]
+    , (start, end)        <- infoPoints [hsSigWcType typeLoc]
+    , pos                 <- maybeToList $ between start end "->" ls
     ]
 
 
@@ -105,12 +104,12 @@ between (startRow, startCol) (endRow, endCol) needle =
 
 --------------------------------------------------------------------------------
 step :: Bool -> String -> Step
-step = (oldMakeStep "UnicodeSyntax" .) . step'
+step = (makeStep "UnicodeSyntax" .) . step'
 
 
 --------------------------------------------------------------------------------
-step' :: Bool -> String -> Lines -> OldModule -> Lines
-step' alp lg ls (module', _) = applyChanges changes ls
+step' :: Bool -> String -> Lines -> Module -> Lines
+step' alp lg ls module' = applyChanges changes ls
   where
     changes = (if alp then addLanguagePragma lg "UnicodeSyntax" module' else []) ++
         replaceAll perLine

@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
-{-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE LambdaCase    #-}
+{-# LANGUAGE PatternGuards #-}
 module Language.Haskell.Stylish.Util
     ( nameToString
     , isOperator
@@ -35,7 +35,6 @@ module Language.Haskell.Stylish.Util
 
 
 --------------------------------------------------------------------------------
-import           Control.Arrow                 ((&&&), (>>>))
 import           Data.Char                     (isAlpha, isSpace)
 import           Data.Data                     (Data)
 import qualified Data.Generics                 as G
@@ -43,9 +42,9 @@ import           Data.Maybe                    (fromMaybe, listToMaybe,
                                                 maybeToList)
 import           Data.Typeable                 (cast)
 import           Debug.Trace                   (trace)
+import qualified GHC.Hs                        as Hs
 import qualified Language.Haskell.Exts         as H
 import qualified Outputable
-import qualified GHC.Hs                        as Hs
 import qualified SrcLoc                        as S
 
 
@@ -86,8 +85,16 @@ everything = G.everything (++) (maybeToList . cast)
 
 
 --------------------------------------------------------------------------------
-infoPoints :: H.SrcSpanInfo -> [((Int, Int), (Int, Int))]
-infoPoints = H.srcInfoPoints >>> map (H.srcSpanStart &&& H.srcSpanEnd)
+infoPoints :: [S.Located pass] -> [((Int, Int), (Int, Int))]
+infoPoints = fmap (helper . S.getLoc)
+  where
+    helper :: S.SrcSpan -> ((Int, Int), (Int, Int))
+    helper (S.RealSrcSpan s) = do
+               let
+                start = S.realSrcSpanStart s
+                end = S.realSrcSpanEnd s
+               ((S.srcLocLine start, S.srcLocCol start), (S.srcLocLine end, S.srcLocCol end))
+    helper _                   = ((-1,-1), (-1,-1))
 
 
 --------------------------------------------------------------------------------
@@ -135,7 +142,7 @@ noWrap :: String    -- ^ Leading string
        -> Lines     -- ^ Resulting lines
 noWrap leading _ind = noWrap' leading
   where
-    noWrap' ss [] = [ss]
+    noWrap' ss []         = [ss]
     noWrap' ss (str:strs) = noWrap' (ss ++ " " ++ str) strs
 
 
@@ -257,7 +264,7 @@ rhsBody _ = Nothing
 --------------------------------------------------------------------------------
 -- get guards in a guarded rhs of a Match
 getGuards :: Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> [Hs.GuardLStmt Hs.GhcPs]
-getGuards (Hs.Match _ _ _ grhss) = 
+getGuards (Hs.Match _ _ _ grhss) =
   let
     lgrhs = getLocGRHS grhss -- []
     grhs  = map S.unLoc lgrhs
