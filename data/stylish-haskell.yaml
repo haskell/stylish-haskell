@@ -20,7 +20,9 @@ steps:
   # Currently, this option is not configurable and will format all exports and
   # module declarations to minimize diffs
   #
-  # - module_header: {}
+  # - module_header:
+  #     # How many spaces use for indentation in the module header.
+  #     indent: 4
 
   # Format record definitions. This is disabled by default.
   #

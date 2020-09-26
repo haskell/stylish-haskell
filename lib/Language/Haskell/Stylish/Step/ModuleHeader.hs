@@ -2,6 +2,7 @@
 {-# LANGUAGE LambdaCase #-}
 module Language.Haskell.Stylish.Step.ModuleHeader
   ( Config (..)
+  , defaultConfig
   , step
   ) where
 
@@ -34,12 +35,21 @@ import           Language.Haskell.Stylish.GHC
 
 
 data Config = Config
+    -- TODO(jaspervdj): Use the same sorting as in `Imports`?
+    -- TODO: make sorting optional?
+    { indent :: Int
+    }
+
+defaultConfig :: Config
+defaultConfig = Config
+    { indent = 4
+    }
 
 step :: Config -> Step
 step = makeStep "Module header" . printModuleHeader
 
 printModuleHeader :: Config -> Lines -> Module -> Lines
-printModuleHeader _ ls m =
+printModuleHeader conf ls m =
   let
     header = moduleHeader m
     name = rawModuleName header
@@ -56,7 +66,7 @@ printModuleHeader _ ls m =
 
     -- TODO: pass max columns?
     printedModuleHeader = runPrinter_ (PrinterConfig Nothing) relevantComments
-        m (printHeader name exports haddocks)
+        m (printHeader conf name exports haddocks)
 
     getBlock loc =
       Block <$> fmap getStartLineUnsafe loc <*> fmap getEndLineUnsafe loc
@@ -110,12 +120,13 @@ printModuleHeader _ ls m =
   in
     applyChanges changes ls
 
-printHeader ::
-     Maybe (Located GHC.ModuleName)
+printHeader
+  :: Config
+  -> Maybe (Located GHC.ModuleName)
   -> Maybe (Located [GHC.LIE GhcPs])
   -> Maybe GHC.LHsDocString
   -> P ()
-printHeader mname mexps _ = do
+printHeader conf mname mexps _ = do
   forM_ mname \(L loc name) -> do
     putText "module"
     space
@@ -123,8 +134,8 @@ printHeader mname mexps _ = do
     attachEolComment loc
 
   maybe
-    (when (isJust mname) do newline >> space >> space >> putText "where")
-    printExportList
+    (when (isJust mname) do newline >> spaces (indent conf) >> putText "where")
+    (printExportList conf)
     mexps
 
 attachEolComment :: SrcSpan -> P ()
@@ -139,10 +150,10 @@ attachEolCommentEnd = \case
   RealSrcSpan rspan ->
     removeLineComment (srcSpanEndLine rspan) >>= mapM_ \c -> space >> putComment c
 
-printExportList :: Located [GHC.LIE GhcPs] -> P ()
-printExportList (L srcLoc exports) = do
+printExportList :: Config -> Located [GHC.LIE GhcPs] -> P ()
+printExportList conf (L srcLoc exports) = do
   newline
-  spaces 2 >> putText "(" >> when (notNull exports) space
+  doIndent >> putText "(" >> when (notNull exports) space
 
   exportsWithComments <- sortedAttachedComments exports
 
@@ -150,31 +161,49 @@ printExportList (L srcLoc exports) = do
 
   putText ")" >> space >> putText "where" >> attachEolCommentEnd srcLoc
   where
+    -- 'doIndent' is @x@:
+    --
+    -- > module Foo
+    -- > xxxx( foo
+    -- > xxxx, bar
+    -- > xxxx) where
+    --
+    -- 'doHang' is @y@:
+    --
+    -- > module Foo
+    -- > xxxx( -- Some comment
+    -- > xxxxyyfoo
+    -- > xxxx) where
+    doIndent = spaces (indent conf)
+    doHang = do
+        len <- length <$> getCurrentLine
+        spaces $ indent conf + 2 - len
+
     printExports :: [([AnnotationComment], NonEmpty (GHC.LIE GhcPs))] -> P ()
     printExports (([], firstInGroup :| groupRest) : rest) = do
       printExport firstInGroup
       newline
-      spaces 2
+      doIndent
       printExportsGroupTail groupRest
       printExportsTail rest
     printExports ((firstComment : comments, firstExport :| groupRest) : rest) = do
-      putComment firstComment >> newline >> spaces 2
-      forM_ comments \c -> spaces 2 >> putComment c >> newline >> spaces 2
-      spaces 2
+      putComment firstComment >> newline >> doIndent
+      forM_ comments \c -> doHang >> putComment c >> newline >> doIndent
+      doHang
       printExport firstExport
       newline
-      spaces 2
+      doIndent
       printExportsGroupTail groupRest
       printExportsTail rest
     printExports [] =
-      newline >> spaces 2
+      newline >> doIndent
 
     printExportsTail :: [([AnnotationComment], NonEmpty (GHC.LIE GhcPs))] -> P ()
     printExportsTail = mapM_ \(comments, exported) -> do
-      forM_ comments \c -> spaces 2 >> putComment c >> newline >> spaces 2
+      forM_ comments \c -> doHang >> putComment c >> newline >> doIndent
       forM_ exported \export -> do
         comma >> space >> printExport export
-        newline >> spaces 2
+        newline >> doIndent
 
     printExportsGroupTail :: [GHC.LIE GhcPs] -> P ()
     printExportsGroupTail (x : xs) = printExportsTail [([], x :| xs)]
