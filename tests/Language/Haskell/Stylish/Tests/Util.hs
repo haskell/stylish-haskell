@@ -57,7 +57,9 @@ testStep' s ls = lines $ testStep s (unlines ls)
 -- | 'Lines' that show as a normal string.
 newtype Snippet = Snippet {unSnippet :: Lines} deriving (Eq)
 
-instance Show Snippet where show = unlines . unSnippet
+-- Prefix with one newline since so HUnit will use a newline after `got: ` or
+-- `expected: `.
+instance Show Snippet where show = unlines . ("" :) . unSnippet
 
 instance IsList Snippet where
     type Item Snippet = String
