@@ -1,6 +1,6 @@
-{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE BlockArguments    #-}
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE LambdaCase #-}
 --------------------------------------------------------------------------------
 module Language.Haskell.Stylish.Step.LanguagePragmas
     ( Style (..)
@@ -19,9 +19,10 @@ import qualified Language.Haskell.Exts           as H
 
 --------------------------------------------------------------------------------
 import           GHC.Hs.Extension                (GhcPs)
-import           GHC.Hs.Pat                      (Pat(BangPat, ViewPat))
+import           GHC.Hs.Pat                      (Pat (BangPat, ViewPat))
 import           SrcLoc                          (RealSrcSpan)
-import           SrcLoc                          (srcSpanStartLine, srcSpanEndLine)
+import           SrcLoc                          (srcSpanEndLine,
+                                                  srcSpanStartLine)
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Block
@@ -32,24 +33,10 @@ import           Language.Haskell.Stylish.Util
 
 
 --------------------------------------------------------------------------------
-data Style
-    = Vertical
+data Style = Vertical
     | Compact
     | CompactLine
     deriving (Eq, Show)
-
-
---------------------------------------------------------------------------------
-pragmas :: H.Module l -> [(l, [String])]
-pragmas (H.Module _ _ ps _ _) =
-    [(l, map nameToString names) | H.LanguagePragma l names <- ps]
-pragmas _                     = []
-
-
---------------------------------------------------------------------------------
--- | The start of the first block
-firstLocation :: [(Block a, [String])] -> Int
-firstLocation = minimum . map (blockStart . fst)
 
 
 --------------------------------------------------------------------------------
@@ -155,14 +142,14 @@ step' columns style align removeRedundant lngPrefix ls m
 
 --------------------------------------------------------------------------------
 -- | Add a LANGUAGE pragma to a module if it is not present already.
-addLanguagePragma :: String -> String -> H.Module H.SrcSpanInfo -> [Change String]
+addLanguagePragma :: String -> String -> Module -> [Change String]
 addLanguagePragma lg prag modu
     | prag `elem` present = []
     | otherwise           = [insert line ["{-# " ++ lg ++ " " ++ prag ++ " #-}"]]
   where
-    pragmas' = pragmas (fmap linesFromSrcSpan modu)
-    present  = concatMap snd pragmas'
-    line     = if null pragmas' then 1 else firstLocation pragmas'
+    pragmas' = moduleLanguagePragmas modu
+    present  = concatMap ((fmap T.unpack) . toList . snd) pragmas'
+    line     = if null pragmas' then 1 else 0 --TODO: fixme firstLocation pragmas'
 
 
 --------------------------------------------------------------------------------
