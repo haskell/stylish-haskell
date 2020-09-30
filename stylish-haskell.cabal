@@ -50,6 +50,7 @@ Library
     Language.Haskell.Stylish.Config.Cabal
     Language.Haskell.Stylish.Config.Internal
     Language.Haskell.Stylish.Editor
+    Language.Haskell.Stylish.Ordering
     Language.Haskell.Stylish.Parse
     Language.Haskell.Stylish.Step
     Language.Haskell.Stylish.Util
@@ -120,6 +121,7 @@ Test-suite stylish-haskell-tests
     Language.Haskell.Stylish.Config.Tests
     Language.Haskell.Stylish.Editor
     Language.Haskell.Stylish.GHC
+    Language.Haskell.Stylish.Ordering
     Language.Haskell.Stylish.Module
     Language.Haskell.Stylish.Parse
     Language.Haskell.Stylish.Parse.Tests

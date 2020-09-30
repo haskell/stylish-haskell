@@ -15,13 +15,11 @@ module Language.Haskell.Stylish.Step.Imports
 
 --------------------------------------------------------------------------------
 import           Control.Monad                   (forM_, when, void)
-import           Data.Char                       (isUpper)
-import           Data.Function                   ((&))
+import           Data.Function                   ((&), on)
 import           Data.Functor                    (($>))
 import           Data.Foldable                   (toList)
-import           Data.Ord                        (comparing)
 import           Data.Maybe                      (isJust)
-import           Data.List                       (sortBy, sortOn)
+import           Data.List                       (sortBy)
 import           Data.List.NonEmpty              (NonEmpty(..))
 import qualified Data.List.NonEmpty              as NonEmpty
 import qualified Data.Map                        as Map
@@ -43,6 +41,7 @@ import           SrcLoc                          (Located, GenLocated(..), unLoc
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Block
 import           Language.Haskell.Stylish.Module
+import           Language.Haskell.Stylish.Ordering
 import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Editor
@@ -432,7 +431,7 @@ isSafe
 -- * Removes duplicates from import lists.
 prepareImportList :: [LIE GhcPs] -> [LIE GhcPs]
 prepareImportList =
-  sortBy compareImportLIE . map (fmap prepareInner) .
+  sortBy compareLIE . map (fmap prepareInner) .
   concatMap (toList . snd) . Map.toAscList . mergeByName
  where
   mergeByName :: [LIE GhcPs] -> Map.Map RdrName (NonEmpty (LIE GhcPs))
@@ -445,32 +444,13 @@ prepareImportList =
       Nothing -> x :| (xs ++ y : ys))
     [(ieName $ unLocated imp, imp :| []) | imp <- imports0]
 
-  -- | TODO: get rid off this by adding a properly sorting newtype around
-  -- 'RdrName'.
-  compareImportLIE :: LIE GhcPs -> LIE GhcPs -> Ordering
-  compareImportLIE = comparing $ ieKey . unLoc
-
   prepareInner :: IE GhcPs -> IE GhcPs
   prepareInner = \case
     -- Simplify `A ()` to `A`.
     IEThingWith x n NoIEWildcard [] [] -> IEThingAbs x n
-    IEThingWith x n w ns fs -> IEThingWith x n w (sortOn nameKey ns) fs
+    IEThingWith x n w ns fs ->
+      IEThingWith x n w (sortBy (compareWrappedName `on` unLoc) ns) fs
     ie -> ie
-
-  -- | The implementation is a bit hacky to get proper sorting for input specs:
-  -- constructors first, followed by functions, and then operators.
-  ieKey :: IE GhcPs -> (Int, String)
-  ieKey = \case
-    IEVar _ n             -> nameKey n
-    IEThingAbs _ n        -> nameKey n
-    IEThingAll _ n        -> nameKey n
-    IEThingWith _ n _ _ _ -> nameKey n
-    _                     -> (2, "")
-
-  nameKey n = case showOutputable n of
-    o@('(' : _)             -> (2 :: Int, o)
-    o@(o0 : _) | isUpper o0 -> (0, o)
-    o                       -> (1, o)
 
   -- Merge two import items, assuming they have the same name.
   ieMerge :: IE GhcPs -> IE GhcPs -> Maybe (IE GhcPs)
@@ -484,13 +464,8 @@ prepareImportList =
     | w0 /= w1  = Nothing
     | otherwise = Just $
         -- TODO: sort the `ns0 ++ ns1`?
-        IEThingWith x0 n0 w0 (nubOn (unwrapName . unLocated) $ ns0 ++ ns1) []
+        IEThingWith x0 n0 w0 (nubOn (unwrapName . unLoc) $ ns0 ++ ns1) []
   ieMerge _ _ = Nothing
-
-  unwrapName :: IEWrappedName n -> n
-  unwrapName (IEName n)    = unLocated n
-  unwrapName (IEPattern n) = unLocated n
-  unwrapName (IEType n)    = unLocated n
 
 
 --------------------------------------------------------------------------------

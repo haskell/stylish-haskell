@@ -12,7 +12,7 @@ import           ApiAnnotation                    (AnnKeywordId (..),
 import           Control.Monad                    (forM_, join, when)
 import           Data.Bifunctor                   (second)
 import           Data.Foldable                    (find, toList)
-import           Data.Function                    ((&))
+import           Data.Function                    (on, (&))
 import qualified Data.List                        as L
 import           Data.List.NonEmpty               (NonEmpty (..))
 import qualified Data.List.NonEmpty               as NonEmpty
@@ -26,7 +26,7 @@ import qualified Module                           as GHC
 import           SrcLoc                           (GenLocated (..), Located,
                                                    RealLocated, SrcSpan (..),
                                                    srcSpanEndLine,
-                                                   srcSpanStartLine)
+                                                   srcSpanStartLine, unLoc)
 import           Util                             (notNull)
 
 --------------------------------------------------------------------------------
@@ -34,6 +34,7 @@ import           Language.Haskell.Stylish.Block
 import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.GHC
 import           Language.Haskell.Stylish.Module
+import           Language.Haskell.Stylish.Ordering
 import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
 
@@ -185,7 +186,7 @@ printExportList conf (L srcLoc exports) = do
         len <- length <$> getCurrentLine
         spaces $ indent conf + 2 - len
 
-    doSort = if sort conf then NonEmpty.sortBy compareOutputable else id
+    doSort = if sort conf then NonEmpty.sortBy compareLIE else id
 
     printExports :: [([AnnotationComment], NonEmpty (GHC.LIE GhcPs))] -> P ()
     printExports (([], firstInGroup :| groupRest) : rest) = do
@@ -233,7 +234,8 @@ printExportList conf (L srcLoc exports) = do
         putOutputable name
         space
         putText "("
-        sep (comma >> space) (fmap putOutputable (L.sortBy compareOutputable imps))
+        sep (comma >> space) $
+          fmap putOutputable $ L.sortBy (compareWrappedName `on` unLoc) imps
         putText ")"
       IEGroup _ _ _ ->
         error $
