@@ -5,13 +5,6 @@
 
 packages:
 - completed:
-    hackage: haskell-src-exts-1.23.0@sha256:1bb9f7e97d569e56973133cb075fdcc1bfd11f90d94b035b5cf44814bb39a73d,4541
-    pantry-tree:
-      size: 97804
-      sha256: 8e5bc885533431db9bf75e9609f6b80b56ab0c289a903d701f8628e78322afd0
-  original:
-    hackage: haskell-src-exts-1.23.0
-- completed:
     hackage: ghc-lib-parser-8.10.1.20200324@sha256:6a0b014e97f627dd9ca177f26f184e2f2ff713ec1271045334ccb56ac7bfdff3,9116
     pantry-tree:
       size: 19497

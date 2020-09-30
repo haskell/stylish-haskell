@@ -1,7 +1,6 @@
 resolver: lts-16.9
 
 extra-deps:
-- 'haskell-src-exts-1.23.0'
 - 'ghc-lib-parser-8.10.1.20200324'
 - 'aeson-1.5.2.0'
 - 'Cabal-3.2.0.0'
