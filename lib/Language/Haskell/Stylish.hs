@@ -94,8 +94,6 @@ runStep :: Extensions -> Maybe FilePath -> Lines -> Step -> Either String Lines
 runStep exts mfp ls = \case
   Step _name step ->
     step ls <$> parseModule exts mfp (unlines ls)
-  OldStep _name step ->
-    step ls <$> parseModuleHSE exts mfp (unlines ls)
 
 --------------------------------------------------------------------------------
 runSteps ::
