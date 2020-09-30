@@ -66,14 +66,13 @@ Library
     directory        >= 1.2.3  && < 1.4,
     filepath         >= 1.1    && < 1.5,
     file-embed       >= 0.0.10 && < 0.1,
-    haskell-src-exts >= 1.18   && < 1.24,
     ghc-lib-parser   >= 8.10   && < 8.12,
     mtl              >= 2.0    && < 2.3,
     syb              >= 0.3    && < 0.8,
     text             >= 1.2    && < 1.3,
     HsYAML-aeson     >=0.2.0   && < 0.3,
     HsYAML           >=0.2.0   && < 0.3
-  
+
   if impl(ghc < 8.0)
     Build-depends:
       semigroups     >= 0.18   && < 0.20
@@ -97,7 +96,6 @@ Executable stylish-haskell
     directory        >= 1.2.3  && < 1.4,
     filepath         >= 1.1    && < 1.5,
     file-embed       >= 0.0.10 && < 0.1,
-    haskell-src-exts >= 1.18   && < 1.24,
     ghc-lib-parser   >= 8.10   && < 8.12,
     mtl              >= 2.0    && < 2.3,
     syb              >= 0.3    && < 0.8,
@@ -166,7 +164,6 @@ Test-suite stylish-haskell-tests
     directory        >= 1.2.3  && < 1.4,
     filepath         >= 1.1    && < 1.5,
     file-embed       >= 0.0.10 && < 0.1,
-    haskell-src-exts >= 1.18   && < 1.24,
     ghc-lib-parser   >= 8.10   && < 8.12,
     mtl              >= 2.0    && < 2.3,
     syb              >= 0.3    && < 0.8,
