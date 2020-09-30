@@ -2,9 +2,7 @@
 {-# LANGUAGE LambdaCase    #-}
 {-# LANGUAGE PatternGuards #-}
 module Language.Haskell.Stylish.Util
-    ( nameToString
-    , isOperator
-    , indent
+    ( indent
     , padRight
     , everything
     , infoPoints
@@ -35,15 +33,13 @@ module Language.Haskell.Stylish.Util
 
 
 --------------------------------------------------------------------------------
-import           Data.Char                     (isAlpha, isSpace)
+import           Data.Char                     (isSpace)
 import           Data.Data                     (Data)
 import qualified Data.Generics                 as G
-import           Data.Maybe                    (fromMaybe, listToMaybe,
-                                                maybeToList)
+import           Data.Maybe                    (maybeToList)
 import           Data.Typeable                 (cast)
 import           Debug.Trace                   (trace)
 import qualified GHC.Hs                        as Hs
-import qualified Language.Haskell.Exts         as H
 import qualified Outputable
 import qualified SrcLoc                        as S
 
@@ -51,18 +47,6 @@ import qualified SrcLoc                        as S
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Step
 
-
---------------------------------------------------------------------------------
-nameToString :: H.Name l -> String
-nameToString (H.Ident _ str)  = str
-nameToString (H.Symbol _ str) = str
-
-
---------------------------------------------------------------------------------
-isOperator :: H.Name l -> Bool
-isOperator = fromMaybe False
-    . (fmap (not . isAlpha) . listToMaybe)
-    . nameToString
 
 --------------------------------------------------------------------------------
 indent :: Int -> String -> String
