@@ -20,7 +20,8 @@ import qualified Data.Text                       as T
 import           GHC.Hs.Extension                (GhcPs)
 import           GHC.Hs.Pat                      (Pat (BangPat, ViewPat))
 import           SrcLoc                          (RealSrcSpan)
-import           SrcLoc                          (srcSpanEndLine,
+import           SrcLoc                          (realSrcSpanStart, srcLocLine,
+                                                  srcSpanEndLine,
                                                   srcSpanStartLine)
 
 --------------------------------------------------------------------------------
@@ -146,9 +147,11 @@ addLanguagePragma lg prag modu
     | prag `elem` present = []
     | otherwise           = [insert line ["{-# " ++ lg ++ " " ++ prag ++ " #-}"]]
   where
-    pragmas' = moduleLanguagePragmas modu
-    present  = concatMap ((fmap T.unpack) . toList . snd) pragmas'
-    line     = if null pragmas' then 1 else 0 --TODO: fixme firstLocation pragmas'
+    pragmas'      = moduleLanguagePragmas modu
+    present       = concatMap ((fmap T.unpack) . toList . snd) pragmas'
+    line          = if null pragmas' then 1 else firstLocation pragmas'
+    firstLocation :: [(RealSrcSpan, NonEmpty Text)] -> Int
+    firstLocation = minimum . fmap (srcLocLine . realSrcSpanStart . fst)
 
 
 --------------------------------------------------------------------------------
