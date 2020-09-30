@@ -1,5 +1,5 @@
 {-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase     #-}
 module Language.Haskell.Stylish.Step.ModuleHeader
   ( Config (..)
   , defaultConfig
@@ -7,42 +7,48 @@ module Language.Haskell.Stylish.Step.ModuleHeader
   ) where
 
 --------------------------------------------------------------------------------
-import           ApiAnnotation                   (AnnotationComment(..), AnnKeywordId(..))
-import           Control.Monad                   (forM_, join, when)
-import           Data.Foldable                   (find, toList)
-import           Data.Function                   ((&))
-import           Data.List                       (sort, sortBy)
-import           Data.List.NonEmpty              (NonEmpty(..))
-import           Data.Maybe                      (listToMaybe, isJust)
-import qualified GHC.Hs.Doc                      as GHC
-import           GHC.Hs.Extension                (GhcPs)
-import qualified GHC.Hs.Extension                as GHC
-import           GHC.Hs.ImpExp                   (IE(..))
-import qualified GHC.Hs.ImpExp                   as GHC
-import qualified Module                          as GHC
-import           SrcLoc                          (Located, GenLocated(..), SrcSpan(..))
-import           SrcLoc                          (RealLocated)
-import           SrcLoc                          (srcSpanStartLine, srcSpanEndLine)
-import           Util                            (notNull)
+import           ApiAnnotation                    (AnnKeywordId (..),
+                                                   AnnotationComment (..))
+import           Control.Monad                    (forM_, join, when)
+import           Data.Bifunctor                   (second)
+import           Data.Foldable                    (find, toList)
+import           Data.Function                    ((&))
+import qualified Data.List                        as L
+import           Data.List.NonEmpty               (NonEmpty (..))
+import qualified Data.List.NonEmpty               as NonEmpty
+import           Data.Maybe                       (isJust, listToMaybe)
+import qualified GHC.Hs.Doc                       as GHC
+import           GHC.Hs.Extension                 (GhcPs)
+import qualified GHC.Hs.Extension                 as GHC
+import           GHC.Hs.ImpExp                    (IE (..))
+import qualified GHC.Hs.ImpExp                    as GHC
+import qualified Module                           as GHC
+import           SrcLoc                           (GenLocated (..), Located,
+                                                   RealLocated, SrcSpan (..),
+                                                   srcSpanEndLine,
+                                                   srcSpanStartLine)
+import           Util                             (notNull)
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Block
 import           Language.Haskell.Stylish.Editor
+import           Language.Haskell.Stylish.GHC
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
-import           Language.Haskell.Stylish.GHC
 
 
 data Config = Config
     -- TODO(jaspervdj): Use the same sorting as in `Imports`?
     -- TODO: make sorting optional?
     { indent :: Int
+    , sort   :: Bool
     }
 
 defaultConfig :: Config
 defaultConfig = Config
     { indent = 4
+    , sort   = True
     }
 
 step :: Config -> Step
@@ -88,7 +94,7 @@ printModuleHeader conf ls m =
       = annotations
       & filter (\(((_, w), _)) -> w == AnnWhere)
       & fmap (head . snd) -- get position of annot
-      & sort
+      & L.sort
       & listToMaybe
 
     isModuleHeaderWhere :: Block a -> Bool
@@ -155,7 +161,7 @@ printExportList conf (L srcLoc exports) = do
   newline
   doIndent >> putText "(" >> when (notNull exports) space
 
-  exportsWithComments <- sortedAttachedComments exports
+  exportsWithComments <- fmap (second doSort) <$> groupAttachedComments exports
 
   printExports exportsWithComments
 
@@ -178,6 +184,8 @@ printExportList conf (L srcLoc exports) = do
     doHang = do
         len <- length <$> getCurrentLine
         spaces $ indent conf + 2 - len
+
+    doSort = if sort conf then NonEmpty.sortBy compareOutputable else id
 
     printExports :: [([AnnotationComment], NonEmpty (GHC.LIE GhcPs))] -> P ()
     printExports (([], firstInGroup :| groupRest) : rest) = do
@@ -207,7 +215,7 @@ printExportList conf (L srcLoc exports) = do
 
     printExportsGroupTail :: [GHC.LIE GhcPs] -> P ()
     printExportsGroupTail (x : xs) = printExportsTail [([], x :| xs)]
-    printExportsGroupTail [] = pure ()
+    printExportsGroupTail []       = pure ()
 
     printExport :: GHC.LIE GhcPs -> P ()
     printExport (L _ export) = case export of
@@ -225,7 +233,7 @@ printExportList conf (L srcLoc exports) = do
         putOutputable name
         space
         putText "("
-        sep (comma >> space) (fmap putOutputable (sortBy compareOutputable imps))
+        sep (comma >> space) (fmap putOutputable (L.sortBy compareOutputable imps))
         putText ")"
       IEGroup _ _ _ ->
         error $

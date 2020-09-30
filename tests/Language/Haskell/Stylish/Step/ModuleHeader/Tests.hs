@@ -33,6 +33,7 @@ tests = testGroup "Language.Haskell.Stylish.Printer.ModuleHeader"
     , testCase "Indents absent export list with 2 spaces" ex13
     , testCase "Indents with 2 spaces" ex14
     , testCase "Group doc with 2 spaces" ex15
+    , testCase "Does not sort" ex16
     ]
 
 --------------------------------------------------------------------------------
@@ -288,3 +289,13 @@ ex15 = assertSnippet (step defaultConfig {indent = 2})
     , "  , t2"
     , "  ) where"
     ]
+
+ex16 :: Assertion
+ex16 = assertSnippet (step defaultConfig {sort = False}) input input
+  where
+    input =
+      [ "module Foo"
+      , "    ( yes"
+      , "    , no"
+      , "    ) where"
+      ]

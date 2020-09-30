@@ -40,7 +40,7 @@ module Language.Haskell.Stylish.Printer
   , removeCommentToEnd
   , removeLineComment
   , sep
-  , sortedAttachedComments
+  , groupAttachedComments
   , space
   , spaces
   , suffix
@@ -75,11 +75,10 @@ import           Data.Foldable                   (find)
 import           Data.Functor                    ((<&>))
 import           Data.List                       (delete, isPrefixOf)
 import           Data.List.NonEmpty              (NonEmpty(..))
-import qualified Data.List.NonEmpty              as NonEmpty
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Module (Module, Lines, lookupAnnotation)
-import           Language.Haskell.Stylish.GHC    (compareOutputable, showOutputable, unLocated)
+import           Language.Haskell.Stylish.GHC    (showOutputable, unLocated)
 
 -- | Shorthand for 'Printer' monad
 type P = Printer
@@ -395,12 +394,10 @@ peekNextCommentPos = do
     (L next _ : _) -> Just (RealSrcSpan next)
     [] -> Nothing
 
--- | Get sorted attached comments belonging to '[Located a]' given
-sortedAttachedComments :: Outputable a => [Located a] -> P [([AnnotationComment], NonEmpty (Located a))]
-sortedAttachedComments origs = go origs <&> fmap sortGroup
+-- | Get attached comments belonging to '[Located a]' given
+groupAttachedComments :: [Located a] -> P [([AnnotationComment], NonEmpty (Located a))]
+groupAttachedComments = go
   where
-    sortGroup = fmap (NonEmpty.sortBy compareOutputable)
-
     go :: [Located a] -> P [([AnnotationComment], NonEmpty (Located a))]
     go (L rspan x : xs) = do
       comments <- removeCommentTo rspan

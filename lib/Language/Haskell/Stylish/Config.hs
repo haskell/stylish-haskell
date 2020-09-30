@@ -194,8 +194,9 @@ parseEnum strs _   (Just k) = case lookup k strs of
 
 --------------------------------------------------------------------------------
 parseModuleHeader :: Config -> A.Object -> A.Parser Step
-parseModuleHeader _ o = (ModuleHeader.step . ModuleHeader.Config) <$>
-    o A..:? "indent" A..!= 4
+parseModuleHeader _ o = fmap ModuleHeader.step $ ModuleHeader.Config
+    <$> o A..:? "indent" A..!= (ModuleHeader.indent ModuleHeader.defaultConfig)
+    <*> o A..:? "sort"   A..!= (ModuleHeader.sort ModuleHeader.defaultConfig)
 
 --------------------------------------------------------------------------------
 parseSimpleAlign :: Config -> A.Object -> A.Parser Step
