@@ -7,7 +7,6 @@ module Language.Haskell.Stylish.Parse
 
 --------------------------------------------------------------------------------
 import           Data.Function                   ((&))
-import           Data.List                       (isPrefixOf, nub)
 import           Data.Maybe                      (fromMaybe, listToMaybe)
 import           System.IO.Unsafe                (unsafePerformIO)
 

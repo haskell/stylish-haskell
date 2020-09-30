@@ -4,8 +4,6 @@ module Language.Haskell.Stylish.Block
     , LineBlock
     , SpanBlock
     , blockLength
-    , linesFromSrcSpan
-    , spanFromSrcSpan
     , moveBlock
     , adjacent
     , merge
@@ -16,9 +14,7 @@ module Language.Haskell.Stylish.Block
 
 
 --------------------------------------------------------------------------------
-import           Control.Arrow         (arr, (&&&), (>>>))
-import qualified Data.IntSet           as IS
-import qualified Language.Haskell.Exts as H
+import qualified Data.IntSet as IS
 
 
 --------------------------------------------------------------------------------
@@ -26,7 +22,8 @@ import qualified Language.Haskell.Exts as H
 data Block a = Block
     { blockStart :: Int
     , blockEnd   :: Int
-    } deriving (Eq, Ord, Show)
+    }
+    deriving (Eq, Ord, Show)
 
 
 --------------------------------------------------------------------------------
@@ -40,21 +37,6 @@ type SpanBlock = Block Char
 --------------------------------------------------------------------------------
 blockLength :: Block a -> Int
 blockLength (Block start end) = end - start + 1
-
-
---------------------------------------------------------------------------------
-linesFromSrcSpan :: H.SrcSpanInfo -> LineBlock
-linesFromSrcSpan = H.srcInfoSpan >>>
-    H.srcSpanStartLine &&& H.srcSpanEndLine >>>
-    arr (uncurry Block)
-
-
---------------------------------------------------------------------------------
-spanFromSrcSpan :: H.SrcSpanInfo -> SpanBlock
-spanFromSrcSpan = H.srcInfoSpan >>>
-    H.srcSpanStartColumn &&& H.srcSpanEndColumn >>>
-    arr (uncurry Block)
-
 
 --------------------------------------------------------------------------------
 moveBlock :: Int -> Block a -> Block a
@@ -98,6 +80,5 @@ groupAdjacent = foldr go []
 
 mergeAdjacent :: [Block a] -> [Block a]
 mergeAdjacent (a : b : rest) | a `adjacent` b = merge a b : mergeAdjacent rest
-mergeAdjacent (a : rest) = a : mergeAdjacent rest
-mergeAdjacent [] = []
-
+mergeAdjacent (a : rest)     = a : mergeAdjacent rest
+mergeAdjacent []             = []
