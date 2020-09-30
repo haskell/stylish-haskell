@@ -15,7 +15,6 @@ import           Data.List.NonEmpty              (NonEmpty, fromList, toList)
 import qualified Data.Set                        as S
 import           Data.Text                       (Text)
 import qualified Data.Text                       as T
-import qualified Language.Haskell.Exts           as H
 
 --------------------------------------------------------------------------------
 import           GHC.Hs.Extension                (GhcPs)
