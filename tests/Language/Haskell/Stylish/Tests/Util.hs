@@ -15,12 +15,12 @@ module Language.Haskell.Stylish.Tests.Util
 import           Control.Exception              (bracket, try)
 import           Control.Monad.Writer           (execWriter, tell)
 import           Data.List                      (intercalate)
+import           GHC.Exts                       (IsList (..))
 import           System.Directory               (createDirectory,
                                                  getCurrentDirectory,
                                                  getTemporaryDirectory,
                                                  removeDirectoryRecursive,
                                                  setCurrentDirectory)
-import           GHC.Exts                       (IsList (..))
 import           System.FilePath                ((</>))
 import           System.IO.Error                (isAlreadyExistsError)
 import           System.Random                  (randomIO)
@@ -38,10 +38,6 @@ testStep :: Step -> String -> String
 testStep s str = case s of
   Step _ step ->
     case parseModule [] Nothing str of
-      Left err      -> error err
-      Right module' -> unlines $ step ls module'
-  OldStep _ step ->
-    case parseModuleHSE [] Nothing str of
       Left err      -> error err
       Right module' -> unlines $ step ls module'
   where
