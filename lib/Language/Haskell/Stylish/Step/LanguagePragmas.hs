@@ -1,7 +1,7 @@
+--------------------------------------------------------------------------------
 {-# LANGUAGE BlockArguments    #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
---------------------------------------------------------------------------------
 module Language.Haskell.Stylish.Step.LanguagePragmas
     ( Style (..)
     , step
@@ -16,13 +16,13 @@ import qualified Data.Set                        as S
 import           Data.Text                       (Text)
 import qualified Data.Text                       as T
 
+
 --------------------------------------------------------------------------------
-import           GHC.Hs.Extension                (GhcPs)
-import           GHC.Hs.Pat                      (Pat (BangPat, ViewPat))
-import           SrcLoc                          (RealSrcSpan)
-import           SrcLoc                          (realSrcSpanStart, srcLocLine,
-                                                  srcSpanEndLine,
+import qualified GHC.Hs                          as Hs
+import           SrcLoc                          (RealSrcSpan, realSrcSpanStart,
+                                                  srcLocLine, srcSpanEndLine,
                                                   srcSpanStartLine)
+
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Block
@@ -33,7 +33,8 @@ import           Language.Haskell.Stylish.Util
 
 
 --------------------------------------------------------------------------------
-data Style = Vertical
+data Style
+    = Vertical
     | Compact
     | CompactLine
     deriving (Eq, Show)
@@ -168,18 +169,26 @@ isRedundant _ _              = False
 isRedundantViewPatterns :: Module -> Bool
 isRedundantViewPatterns = null . queryModule getViewPat
   where
-    getViewPat :: Pat GhcPs -> [()]
+    getViewPat :: Hs.Pat Hs.GhcPs -> [()]
     getViewPat = \case
-      ViewPat{} -> [()]
-      _ -> []
+      Hs.ViewPat{} -> [()]
+      _            -> []
 
 
 --------------------------------------------------------------------------------
 -- | Check if the BangPatterns language pragma is redundant.
 isRedundantBangPatterns :: Module -> Bool
-isRedundantBangPatterns = null . queryModule getBangPat
+isRedundantBangPatterns modul =
+    (null $ queryModule getBangPat modul) &&
+    (null $ queryModule getMatchStrict modul)
   where
-    getBangPat :: Pat GhcPs -> [()]
+    getBangPat :: Hs.Pat Hs.GhcPs -> [()]
     getBangPat = \case
-      BangPat{} -> [()]
-      _ -> []
+      Hs.BangPat{} -> [()]
+      _            -> []
+
+    getMatchStrict :: Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> [()]
+    getMatchStrict (Hs.XMatch m) = Hs.noExtCon m
+    getMatchStrict (Hs.Match _ ctx _ _) = case ctx of
+      Hs.FunRhs _ _ Hs.SrcStrict -> [()]
+      _                          -> []
