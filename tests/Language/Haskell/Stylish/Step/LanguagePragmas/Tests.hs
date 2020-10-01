@@ -31,6 +31,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.LanguagePragmas.Tests"
     , testCase "case 10" case10
     , testCase "case 11" case11
     , testCase "case 12" case12
+    , testCase "case 13" case13
     ]
 
 lANG :: String
@@ -200,6 +201,7 @@ case11 = assertSnippet
     , "module Main where"
     ]
 
+
 --------------------------------------------------------------------------------
 case12 :: Assertion
 case12 = assertSnippet
@@ -213,3 +215,15 @@ case12 = assertSnippet
     [ "{-# language NoImplicitPrelude, OverloadedStrings, ScopedTypeVariables, TemplateHaskell, ViewPatterns #-}"
     , "module Main where"
     ]
+
+
+--------------------------------------------------------------------------------
+case13 :: Assertion
+case13 = assertSnippet
+    (step Nothing Vertical True True lANG) input input
+  where
+    input =
+        [ "{-# LANGUAGE BangPatterns  #-}"
+        , "{-# LANGUAGE DeriveFunctor #-}"
+        , "main = let !x = 1 + 1 in print x"
+        ]
