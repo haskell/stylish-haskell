@@ -2,7 +2,7 @@
 
 <img src="./assets/Logo/SVG/RoundedLogo.svg" width="100px">
 
-[![Build Status](https://img.shields.io/circleci/project/github/jaspervdj/stylish-haskell.svg)](https://circleci.com/gh/jaspervdj/stylish-haskell)
+![Build Status](https://github.com/jaspervdj/patat/workflows/CI/badge.svg)
 
 ## Introduction
 
@@ -235,3 +235,7 @@ Contributors:
 - Leonid Onokhov
 - Michael Snoyman
 - Mikhail Glushenkov
+- Beatrice Vergani
+- Paweł Szulc
+- Łukasz Gołębiewski
+- Felix Mulder
