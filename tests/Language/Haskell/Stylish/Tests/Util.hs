@@ -1,11 +1,21 @@
+{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE TypeFamilies   #-}
 module Language.Haskell.Stylish.Tests.Util
     ( testStep
+    , testStep'
+    , Snippet (..)
+    , testSnippet
+    , assertSnippet
     , withTestDirTree
+    , (@=??)
     ) where
 
 
 --------------------------------------------------------------------------------
 import           Control.Exception              (bracket, try)
+import           Control.Monad.Writer           (execWriter, tell)
+import           Data.List                      (intercalate)
+import           GHC.Exts                       (IsList (..))
 import           System.Directory               (createDirectory,
                                                  getCurrentDirectory,
                                                  getTemporaryDirectory,
@@ -14,6 +24,8 @@ import           System.Directory               (createDirectory,
 import           System.FilePath                ((</>))
 import           System.IO.Error                (isAlreadyExistsError)
 import           System.Random                  (randomIO)
+import           Test.HUnit                     (Assertion, assertFailure,
+                                                 (@=?))
 
 
 --------------------------------------------------------------------------------
@@ -23,11 +35,42 @@ import           Language.Haskell.Stylish.Step
 
 --------------------------------------------------------------------------------
 testStep :: Step -> String -> String
-testStep step str = case parseModule [] Nothing str of
-    Left err      -> error err
-    Right module' -> unlines $ stepFilter step ls module'
+testStep s str = case s of
+  Step _ step ->
+    case parseModule [] Nothing str of
+      Left err      -> error err
+      Right module' -> unlines $ step ls module'
   where
     ls = lines str
+
+
+--------------------------------------------------------------------------------
+testStep' :: Step -> Lines -> Lines
+testStep' s ls = lines $ testStep s (unlines ls)
+
+
+--------------------------------------------------------------------------------
+-- | 'Lines' that show as a normal string.
+newtype Snippet = Snippet {unSnippet :: Lines} deriving (Eq)
+
+-- Prefix with one newline since so HUnit will use a newline after `got: ` or
+-- `expected: `.
+instance Show Snippet where show = unlines . ("" :) . unSnippet
+
+instance IsList Snippet where
+    type Item Snippet = String
+    fromList = Snippet
+    toList   = unSnippet
+
+
+--------------------------------------------------------------------------------
+testSnippet :: Step -> Snippet -> Snippet
+testSnippet s = Snippet . lines . testStep s . unlines . unSnippet
+
+
+--------------------------------------------------------------------------------
+assertSnippet :: Step -> Snippet -> Snippet -> Assertion
+assertSnippet step input expected = expected @=? testSnippet step input
 
 
 --------------------------------------------------------------------------------
@@ -59,3 +102,15 @@ withTestDirTree action = bracket
         setCurrentDirectory current *>
         removeDirectoryRecursive temp)
     (\(_, temp) -> setCurrentDirectory temp *> action)
+
+(@=??) :: Lines -> Lines -> Assertion
+expected @=?? actual =
+  if expected == actual then pure ()
+  else assertFailure $ intercalate "\n" $ execWriter do
+    tell ["Expected:"]
+    printLines expected
+    tell ["Got:"]
+    printLines actual
+  where
+    printLines =
+      mapM_ \line -> tell ["  " <> line]

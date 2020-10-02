@@ -1,8 +1,8 @@
 --------------------------------------------------------------------------------
+{-# LANGUAGE LambdaCase    #-}
+{-# LANGUAGE PatternGuards #-}
 module Language.Haskell.Stylish.Util
-    ( nameToString
-    , isOperator
-    , indent
+    ( indent
     , padRight
     , everything
     , infoPoints
@@ -13,39 +13,40 @@ module Language.Haskell.Stylish.Util
     , wrapMaybe
     , wrapRestMaybe
 
+    -- * Extra list functions
     , withHead
     , withInit
     , withTail
     , withLast
+    , flagEnds
+
+    , toRealSrcSpan
+
+    , traceOutputtable
+    , traceOutputtableM
+
+    , unguardedRhsBody
+    , rhsBody
+
+    , getGuards
     ) where
 
 
 --------------------------------------------------------------------------------
-import           Control.Arrow                 ((&&&), (>>>))
-import           Data.Char                     (isAlpha, isSpace)
+import           Data.Char                     (isSpace)
 import           Data.Data                     (Data)
 import qualified Data.Generics                 as G
-import           Data.Maybe                    (fromMaybe, listToMaybe,
-                                                maybeToList)
+import           Data.Maybe                    (maybeToList)
 import           Data.Typeable                 (cast)
-import qualified Language.Haskell.Exts         as H
+import           Debug.Trace                   (trace)
+import qualified GHC.Hs                        as Hs
+import qualified Outputable
+import qualified SrcLoc                        as S
 
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Step
 
-
---------------------------------------------------------------------------------
-nameToString :: H.Name l -> String
-nameToString (H.Ident _ str)  = str
-nameToString (H.Symbol _ str) = str
-
-
---------------------------------------------------------------------------------
-isOperator :: H.Name l -> Bool
-isOperator = fromMaybe False
-    . (fmap (not . isAlpha) . listToMaybe)
-    . nameToString
 
 --------------------------------------------------------------------------------
 indent :: Int -> String -> String
@@ -68,8 +69,16 @@ everything = G.everything (++) (maybeToList . cast)
 
 
 --------------------------------------------------------------------------------
-infoPoints :: H.SrcSpanInfo -> [((Int, Int), (Int, Int))]
-infoPoints = H.srcInfoPoints >>> map (H.srcSpanStart &&& H.srcSpanEnd)
+infoPoints :: [S.Located pass] -> [((Int, Int), (Int, Int))]
+infoPoints = fmap (helper . S.getLoc)
+  where
+    helper :: S.SrcSpan -> ((Int, Int), (Int, Int))
+    helper (S.RealSrcSpan s) = do
+               let
+                start = S.realSrcSpanStart s
+                end = S.realSrcSpanEnd s
+               ((S.srcLocLine start, S.srcLocCol start), (S.srcLocLine end, S.srcLocCol end))
+    helper _                   = ((-1,-1), (-1,-1))
 
 
 --------------------------------------------------------------------------------
@@ -117,7 +126,7 @@ noWrap :: String    -- ^ Leading string
        -> Lines     -- ^ Resulting lines
 noWrap leading _ind = noWrap' leading
   where
-    noWrap' ss [] = [ss]
+    noWrap' ss []         = [ss]
     noWrap' ss (str:strs) = noWrap' (ss ++ " " ++ str) strs
 
 
@@ -181,7 +190,78 @@ withInit _ []       = []
 withInit _ [x]      = [x]
 withInit f (x : xs) = f x : withInit f xs
 
+
 --------------------------------------------------------------------------------
 withTail :: (a -> a) -> [a] -> [a]
 withTail _ []       = []
 withTail f (x : xs) = x : map f xs
+
+
+
+--------------------------------------------------------------------------------
+-- | Utility for traversing through a list and knowing when you're at the
+-- first and last element.
+flagEnds :: [a] -> [(a, Bool, Bool)]
+flagEnds = \case
+    [] -> []
+    [x] -> [(x, True, True)]
+    x : y : zs -> (x, True, False) : go (y : zs)
+  where
+    go (x : y : zs) = (x, False, False) : go (y : zs)
+    go [x]          = [(x, False, True)]
+    go []           = []
+
+
+--------------------------------------------------------------------------------
+traceOutputtable :: Outputable.Outputable a => String -> a -> b -> b
+traceOutputtable title x =
+    trace (title ++ ": " ++ (Outputable.showSDocUnsafe $ Outputable.ppr x))
+
+
+--------------------------------------------------------------------------------
+traceOutputtableM :: (Outputable.Outputable a, Monad m) => String -> a -> m ()
+traceOutputtableM title x = traceOutputtable title x $ pure ()
+
+
+--------------------------------------------------------------------------------
+-- take the (Maybe) RealSrcSpan out of the SrcSpan
+toRealSrcSpan :: S.SrcSpan -> Maybe S.RealSrcSpan
+toRealSrcSpan (S.RealSrcSpan s) = Just s
+toRealSrcSpan _                 = Nothing
+
+
+--------------------------------------------------------------------------------
+-- Utility: grab the body out of guarded RHSs if it's a single unguarded one.
+unguardedRhsBody :: Hs.GRHSs Hs.GhcPs a -> Maybe a
+unguardedRhsBody (Hs.GRHSs _ [grhs] _)
+    | Hs.GRHS _ [] body <- S.unLoc grhs = Just body
+unguardedRhsBody _ = Nothing
+
+
+-- Utility: grab the body out of guarded RHSs
+rhsBody :: Hs.GRHSs Hs.GhcPs a -> Maybe a
+rhsBody (Hs.GRHSs _ [grhs] _)
+    | Hs.GRHS _ _ body <- S.unLoc grhs = Just body
+rhsBody _ = Nothing
+
+
+--------------------------------------------------------------------------------
+-- get guards in a guarded rhs of a Match
+getGuards :: Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> [Hs.GuardLStmt Hs.GhcPs]
+getGuards (Hs.Match _ _ _ grhss) =
+  let
+    lgrhs = getLocGRHS grhss -- []
+    grhs  = map S.unLoc lgrhs
+  in
+    concatMap getGuardLStmts grhs
+getGuards (Hs.XMatch x) = Hs.noExtCon x
+
+
+getLocGRHS :: Hs.GRHSs Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> [Hs.LGRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)]
+getLocGRHS (Hs.GRHSs _ guardeds _) = guardeds
+getLocGRHS (Hs.XGRHSs x)           = Hs.noExtCon x
+
+
+getGuardLStmts :: Hs.GRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> [Hs.GuardLStmt Hs.GhcPs]
+getGuardLStmts (Hs.GRHS _ guards _) = guards
+getGuardLStmts (Hs.XGRHS x)         = Hs.noExtCon x

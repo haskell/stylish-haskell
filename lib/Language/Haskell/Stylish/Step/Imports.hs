@@ -1,61 +1,76 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
---------------------------------------------------------------------------------
+{-# LANGUAGE BlockArguments  #-}
+{-# LANGUAGE DoAndIfThenElse #-}
+{-# LANGUAGE LambdaCase      #-}
+{-# LANGUAGE RecordWildCards #-}
 module Language.Haskell.Stylish.Step.Imports
-    ( Options (..)
-    , defaultOptions
-    , ImportAlign (..)
-    , ListAlign (..)
-    , LongListAlign (..)
-    , EmptyListAlign (..)
-    , ListPadding (..)
-    , step
-    ) where
+  ( Options (..)
+  , defaultOptions
+  , ImportAlign (..)
+  , ListAlign (..)
+  , LongListAlign (..)
+  , EmptyListAlign (..)
+  , ListPadding (..)
+  , step
+  ) where
+
+--------------------------------------------------------------------------------
+import           Control.Monad                   (forM_, when, void)
+import           Data.Function                   ((&), on)
+import           Data.Functor                    (($>))
+import           Data.Foldable                   (toList)
+import           Data.Maybe                      (isJust)
+import           Data.List                       (sortBy)
+import           Data.List.NonEmpty              (NonEmpty(..))
+import qualified Data.List.NonEmpty              as NonEmpty
+import qualified Data.Map                        as Map
+import qualified Data.Set                        as Set
 
 
 --------------------------------------------------------------------------------
-import           Control.Arrow                   ((&&&))
-import           Control.Monad                   (void)
-import qualified Data.Aeson                      as A
-import qualified Data.Aeson.Types                as A
-import           Data.Char                       (toLower)
-import           Data.List                       (intercalate, sortBy)
-import qualified Data.Map                        as M
-import           Data.Maybe                      (isJust, maybeToList)
-import           Data.Ord                        (comparing)
-import qualified Data.Set                        as S
-import           Data.Semigroup                  (Semigroup ((<>)))
-import qualified Language.Haskell.Exts           as H
+import           BasicTypes                      (StringLiteral (..),
+                                                  SourceText (..))
+import qualified FastString                      as FS
+import           GHC.Hs.Extension                (GhcPs)
+import qualified GHC.Hs.Extension                as GHC
+import           GHC.Hs.ImpExp
+import           Module                          (moduleNameString)
+import           RdrName                         (RdrName)
+import           SrcLoc                          (Located, GenLocated(..), unLoc)
 
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Block
-import           Language.Haskell.Stylish.Editor
+import           Language.Haskell.Stylish.Module
+import           Language.Haskell.Stylish.Ordering
+import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
+import           Language.Haskell.Stylish.Editor
+import           Language.Haskell.Stylish.GHC
 import           Language.Haskell.Stylish.Util
+
 
 --------------------------------------------------------------------------------
 data Options = Options
-    { importAlign    :: ImportAlign
-    , listAlign      :: ListAlign
-    , padModuleNames :: Bool
-    , longListAlign  :: LongListAlign
-    , emptyListAlign :: EmptyListAlign
-    , listPadding    :: ListPadding
-    , separateLists  :: Bool
-    , spaceSurround  :: Bool
+    { importAlign     :: ImportAlign
+    , listAlign       :: ListAlign
+    , padModuleNames  :: Bool
+    , longListAlign   :: LongListAlign
+    , emptyListAlign  :: EmptyListAlign
+    , listPadding     :: ListPadding
+    , separateLists   :: Bool
+    , spaceSurround   :: Bool
     } deriving (Eq, Show)
 
 defaultOptions :: Options
 defaultOptions = Options
-    { importAlign    = Global
-    , listAlign      = AfterAlias
-    , padModuleNames = True
-    , longListAlign  = Inline
-    , emptyListAlign = Inherit
-    , listPadding    = LPConstant 4
-    , separateLists  = True
-    , spaceSurround  = False
+    { importAlign     = Global
+    , listAlign       = AfterAlias
+    , padModuleNames  = True
+    , longListAlign   = Inline
+    , emptyListAlign  = Inherit
+    , listPadding     = LPConstant 4
+    , separateLists   = True
+    , spaceSurround   = False
     }
 
 data ListPadding
@@ -75,6 +90,7 @@ data ListAlign
     | WithModuleName
     | WithAlias
     | AfterAlias
+    | Repeat
     deriving (Eq, Show)
 
 data EmptyListAlign
@@ -83,375 +99,382 @@ data EmptyListAlign
     deriving (Eq, Show)
 
 data LongListAlign
-    = Inline
-    | InlineWithBreak
-    | InlineToMultiline
-    | Multiline
+    = Inline -- inline
+    | InlineWithBreak -- new_line
+    | InlineToMultiline -- new_line_multiline
+    | Multiline -- multiline
     deriving (Eq, Show)
 
 
 --------------------------------------------------------------------------------
-
-modifyImportSpecs :: ([H.ImportSpec l] -> [H.ImportSpec l])
-                  -> H.ImportDecl l -> H.ImportDecl l
-modifyImportSpecs f imp = imp {H.importSpecs = f' <$> H.importSpecs imp}
-  where
-    f' (H.ImportSpecList l h specs) = H.ImportSpecList l h (f specs)
-
-
---------------------------------------------------------------------------------
-imports :: H.Module l -> [H.ImportDecl l]
-imports (H.Module _ _ _ is _) = is
-imports _                     = []
-
-
---------------------------------------------------------------------------------
-importName :: H.ImportDecl l -> String
-importName i = let (H.ModuleName _ n) = H.importModule i in n
-
-importPackage :: H.ImportDecl l -> Maybe String
-importPackage i = H.importPkg i
-
-
---------------------------------------------------------------------------------
--- | A "compound import name" is import's name and package (if present). For
--- instance, if you have an import @Foo.Bar@ from package @foobar@, the full
--- name will be @"foobar" Foo.Bar@.
-compoundImportName :: H.ImportDecl l -> String
-compoundImportName i =
-  case importPackage i of
-    Nothing  -> importName i
-    Just pkg -> show pkg ++ " " ++ importName i
-
-
---------------------------------------------------------------------------------
-longestImport :: [H.ImportDecl l] -> Int
-longestImport = maximum . map (length . compoundImportName)
-
-
---------------------------------------------------------------------------------
--- | Compare imports for ordering
-compareImports :: H.ImportDecl l -> H.ImportDecl l -> Ordering
-compareImports =
-  comparing (map toLower . importName &&&
-             fmap (map toLower) . importPackage &&&
-             H.importQualified)
-
-
---------------------------------------------------------------------------------
--- | Remove (or merge) duplicated import specs.
---
--- * When something is mentioned twice, it's removed: @A, A@ -> A
--- * More general forms take priority: @A, A(..)@ -> @A(..)@
--- * Sometimes we have to combine imports: @A(x), A(y)@ -> @A(x, y)@
---
--- Import specs are always sorted by subsequent steps so we don't have to care
--- about preserving order.
-deduplicateImportSpecs :: Ord l => H.ImportDecl l -> H.ImportDecl l
-deduplicateImportSpecs =
-  modifyImportSpecs $
-    map recomposeImportSpec .
-    M.toList . M.fromListWith (<>) .
-    map decomposeImportSpec
-
--- | What we are importing (variable, class, etc)
-data ImportEntity l
-  -- | A variable
-  = ImportVar l (H.Name l)
-  -- | Something that can be imported partially
-  | ImportClassOrData l (H.Name l)
-  -- | Something else ('H.IAbs')
-  | ImportOther l (H.Namespace l) (H.Name l)
-  deriving (Eq, Ord)
-
--- | What we are importing from an 'ImportClassOrData'
-data ImportPortion l
-  = ImportSome [H.CName l]  -- ^ @A(x, y, z)@
-  | ImportAll               -- ^ @A(..)@
-
-instance Ord l => Semigroup (ImportPortion l) where
-  ImportSome a <> ImportSome b = ImportSome (setUnion a b)
-  _ <> _                       = ImportAll
-
-instance Ord l => Monoid (ImportPortion l) where
-  mempty = ImportSome []
-  mappend = (<>)
-
--- | O(n log n) union.
-setUnion :: Ord a => [a] -> [a] -> [a]
-setUnion a b = S.toList (S.fromList a `S.union` S.fromList b)
-
-decomposeImportSpec :: H.ImportSpec l -> (ImportEntity l, ImportPortion l)
-decomposeImportSpec x = case x of
-  -- I checked and it looks like namespace's 'l' is always equal to x's 'l'
-  H.IAbs l space n -> case space of
-    H.NoNamespace      _ -> (ImportClassOrData l n, ImportSome [])
-    H.TypeNamespace    _ -> (ImportOther l space n, ImportSome [])
-    H.PatternNamespace _ -> (ImportOther l space n, ImportSome [])
-  H.IVar l n             -> (ImportVar l n, ImportSome [])
-  H.IThingAll l n        -> (ImportClassOrData l n, ImportAll)
-  H.IThingWith l n names -> (ImportClassOrData l n, ImportSome names)
-
-recomposeImportSpec :: (ImportEntity l, ImportPortion l) -> H.ImportSpec l
-recomposeImportSpec (e, p) = case e of
-  ImportClassOrData l n -> case p of
-    ImportSome []    -> H.IAbs l (H.NoNamespace l) n
-    ImportSome names -> H.IThingWith l n names
-    ImportAll        -> H.IThingAll l n
-  ImportVar l n         -> H.IVar l n
-  ImportOther l space n -> H.IAbs l space n
-
-
---------------------------------------------------------------------------------
--- | The implementation is a bit hacky to get proper sorting for input specs:
--- constructors first, followed by functions, and then operators.
-compareImportSpecs :: H.ImportSpec l -> H.ImportSpec l -> Ordering
-compareImportSpecs = comparing key
-  where
-    key :: H.ImportSpec l -> (Int, Bool, String)
-    key (H.IVar _ x)         = (1, isOperator x, nameToString x)
-    key (H.IAbs _ _ x)       = (0, False, nameToString x)
-    key (H.IThingAll _ x)    = (0, False, nameToString x)
-    key (H.IThingWith _ x _) = (0, False, nameToString x)
-
-
---------------------------------------------------------------------------------
--- | Sort the input spec list inside an 'H.ImportDecl'
-sortImportSpecs :: H.ImportDecl l -> H.ImportDecl l
-sortImportSpecs = modifyImportSpecs (sortBy compareImportSpecs)
-
-
---------------------------------------------------------------------------------
--- | Order of imports in sublist is:
--- Constructors, accessors/methods, operators.
-compareImportSubSpecs :: H.CName l -> H.CName l -> Ordering
-compareImportSubSpecs = comparing key
-  where
-    key :: H.CName l -> (Int, Bool, String)
-    key (H.ConName _ x) = (0, False,        nameToString x)
-    key (H.VarName _ x) = (1, isOperator x, nameToString x)
-
-
---------------------------------------------------------------------------------
--- | By default, haskell-src-exts pretty-prints
---
--- > import Foo (Bar(..))
---
--- but we want
---
--- > import Foo (Bar (..))
---
--- instead.
-prettyImportSpec :: (Ord l) => Bool -> H.ImportSpec l -> String
-prettyImportSpec separate = prettyImportSpec'
-  where
-    prettyImportSpec' (H.IThingAll  _ n)     = H.prettyPrint n ++ sep "(..)"
-    prettyImportSpec' (H.IThingWith _ n cns) = H.prettyPrint n
-        ++ sep "("
-        ++ intercalate ", "
-          (map H.prettyPrint $ sortBy compareImportSubSpecs cns)
-        ++ ")"
-    prettyImportSpec' x                      = H.prettyPrint x
-
-    sep = if separate then (' ' :) else id
-
-
---------------------------------------------------------------------------------
-prettyImport :: (Ord l, Show l) =>
-    Maybe Int -> Options -> Bool -> Bool -> Int -> H.ImportDecl l -> [String]
-prettyImport columns Options{..} padQualified padName longest imp
-    | (void `fmap` H.importSpecs imp) == emptyImportSpec = emptyWrap
-    | otherwise = case longListAlign of
-        Inline            -> inlineWrap
-        InlineWithBreak   -> longListWrapper inlineWrap inlineWithBreakWrap
-        InlineToMultiline -> longListWrapper inlineWrap inlineToMultilineWrap
-        Multiline         -> longListWrapper inlineWrap multilineWrap
-  where
-    emptyImportSpec = Just (H.ImportSpecList () False [])
-    -- "import" + space + qualifiedLength has space in it.
-    listPadding' = listPaddingValue (6 + 1 + qualifiedLength) listPadding
-      where
-        qualifiedLength =
-            if null qualified then 0 else 1 + sum (map length qualified)
-
-    longListWrapper shortWrap longWrap
-        | listAlign == NewLine
-        || length shortWrap > 1
-        || exceedsColumns (length (head shortWrap))
-            = longWrap
-        | otherwise = shortWrap
-
-    emptyWrap = case emptyListAlign of
-        Inherit    -> inlineWrap
-        RightAfter -> [paddedNoSpecBase ++ " ()"]
-
-    inlineWrap = inlineWrapper
-        $ mapSpecs
-        $ withInit (++ ",")
-        . withHead (("(" ++ maybeSpace) ++)
-        . withLast (++ (maybeSpace ++ ")"))
-
-    inlineWrapper = case listAlign of
-        NewLine        -> (paddedNoSpecBase :) . wrapRestMaybe columns listPadding'
-        WithModuleName -> wrapMaybe columns paddedBase (withModuleNameBaseLength + 4)
-        WithAlias      -> wrapMaybe columns paddedBase (inlineBaseLength + 1)
-        -- Add 1 extra space to ensure same padding as in original code.
-        AfterAlias     -> withTail ((' ' : maybeSpace) ++)
-            . wrapMaybe columns paddedBase (afterAliasBaseLength + 1)
-
-    inlineWithBreakWrap = paddedNoSpecBase : wrapRestMaybe columns listPadding'
-        ( mapSpecs
-        $ withInit (++ ",")
-        . withHead (("(" ++ maybeSpace) ++)
-        . withLast (++ (maybeSpace ++ ")")))
-
-    inlineToMultilineWrap
-        | length inlineWithBreakWrap > 2
-        || any (exceedsColumns . length) (tail inlineWithBreakWrap)
-            = multilineWrap
-        | otherwise = inlineWithBreakWrap
-
-    -- 'wrapRest 0' ensures that every item of spec list is on new line.
-    multilineWrap = paddedNoSpecBase : wrapRest 0 listPadding'
-        ( mapSpecs
-          ( withHead ("( " ++)
-          . withTail (", " ++))
-        ++ closer)
-      where
-        closer = if null importSpecs
-            then []
-            else [")"]
-
-    paddedBase = base $ padImport $ compoundImportName imp
-
-    paddedNoSpecBase = base $ padImportNoSpec $ compoundImportName imp
-
-    padImport = if hasExtras && padName
-        then padRight longest
-        else id
-
-    padImportNoSpec = if (isJust (H.importAs imp) || hasHiding) && padName
-        then padRight longest
-        else id
-
-    base' baseName importAs hasHiding' = unwords $ concat $
-        [ ["import"]
-        , source
-        , safe
-        , qualified
-        , [baseName]
-        , importAs
-        , hasHiding'
-        ]
-
-    base baseName = base' baseName
-        ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp]
-        ["hiding" | hasHiding]
-
-    inlineBaseLength = length $
-                       base' (padImport $ compoundImportName imp) [] []
-
-    withModuleNameBaseLength = length $ base' "" [] []
-
-    afterAliasBaseLength = length $ base' (padImport $ compoundImportName imp)
-        ["as " ++ as | H.ModuleName _ as <- maybeToList $ H.importAs imp] []
-
-    (hasHiding, importSpecs) = case H.importSpecs imp of
-        Just (H.ImportSpecList _ h l) -> (h, Just l)
-        _                             -> (False, Nothing)
-
-    hasExtras = isJust (H.importAs imp) || isJust (H.importSpecs imp)
-
-    qualified
-        | H.importQualified imp = ["qualified"]
-        | padQualified          =
-              if H.importSrc imp
-                  then []
-                  else if H.importSafe imp
-                           then ["    "]
-                           else ["         "]
-        | otherwise             = []
-
-    safe
-        | H.importSafe imp = ["safe"]
-        | otherwise        = []
-
-    source
-        | H.importSrc imp = ["{-# SOURCE #-}"]
-        | otherwise       = []
-
-    mapSpecs f = case importSpecs of
-        Nothing -> []     -- Import everything
-        Just [] -> ["()"] -- Instance only imports
-        Just is -> f $ map (prettyImportSpec separateLists) is
-
-    maybeSpace = case spaceSurround of
-        True  -> " "
-        False -> ""
-
-    exceedsColumns i = case columns of
-        Nothing -> False  -- No number exceeds a maximum column count of
-                          -- Nothing, because there is no limit to exceed.
-        Just c -> i > c
-
-
---------------------------------------------------------------------------------
-prettyImportGroup :: Maybe Int -> Options -> Bool -> Int
-                  -> [H.ImportDecl LineBlock]
-                  -> Lines
-prettyImportGroup columns align fileAlign longest imps =
-    concatMap (prettyImport columns align padQual padName longest') $
-    sortBy compareImports imps
-  where
-    align' = importAlign align
-    padModuleNames' = padModuleNames align
-
-    longest' = case align' of
-        Group -> longestImport imps
-        _     -> longest
-
-    padName = align' /= None && padModuleNames'
-
-    padQual = case align' of
-        Global -> True
-        File   -> fileAlign
-        Group  -> any H.importQualified imps
-        None   -> False
-
-
---------------------------------------------------------------------------------
 step :: Maybe Int -> Options -> Step
-step columns = makeStep "Imports" . step' columns
+step columns = makeStep "Imports (ghc-lib-parser)" . printImports columns
 
 
 --------------------------------------------------------------------------------
-step' :: Maybe Int -> Options -> Lines -> Module -> Lines
-step' columns align ls (module', _) = applyChanges
-    [ change block $ const $
-        prettyImportGroup columns align fileAlign longest importGroup
-    | (block, importGroup) <- groups
-    ]
-    ls
+printImports :: Maybe Int -> Options -> Lines -> Module -> Lines
+printImports maxCols align ls m = applyChanges changes ls
   where
-    imps    = map (sortImportSpecs . deduplicateImportSpecs) $
-              imports $ fmap linesFromSrcSpan module'
-    longest = longestImport imps
-    groups  = groupAdjacent [(H.ann i, i) | i <- imps]
+    groups = moduleImportGroups m
+    moduleStats = foldMap importStats . fmap unLoc $ concatMap toList groups
+    changes = do
+        group <- groups
+        pure $ formatGroup maxCols align m moduleStats group
 
-    fileAlign = case importAlign align of
-        File -> any H.importQualified imps
-        _    -> False
+formatGroup
+    :: Maybe Int -> Options -> Module -> ImportStats
+    -> NonEmpty (Located Import) -> Change String
+formatGroup maxCols options m moduleStats imports =
+    let newLines = formatImports maxCols options m moduleStats imports in
+    change (importBlock imports) (const newLines)
+
+importBlock :: NonEmpty (Located a) -> Block String
+importBlock group = Block
+    (getStartLineUnsafe $ NonEmpty.head group)
+    (getEndLineUnsafe   $ NonEmpty.last group)
+
+formatImports
+    :: Maybe Int    -- ^ Max columns.
+    -> Options      -- ^ Options.
+    -> Module       -- ^ Module.
+    -> ImportStats  -- ^ Module stats.
+    -> NonEmpty (Located Import) -> Lines
+formatImports maxCols options m moduleStats rawGroup =
+  runPrinter_ (PrinterConfig maxCols) [] m do
+  let 
+     
+    group
+      = NonEmpty.sortWith unLocated rawGroup
+      & mergeImports
+
+    unLocatedGroup = fmap unLocated $ toList group
+
+    align' = importAlign options
+    padModuleNames' = padModuleNames options
+    padNames = align' /= None && padModuleNames'
+
+    stats = case align' of
+        Global -> moduleStats {isAnyQualified = True}
+        File   -> moduleStats
+        Group  -> foldMap importStats unLocatedGroup
+        None   -> mempty
+
+  forM_ group \imp -> printQualified options padNames stats imp >> newline
 
 --------------------------------------------------------------------------------
-listPaddingValue :: Int -> ListPadding -> Int
-listPaddingValue _ (LPConstant n) = n
-listPaddingValue n LPModuleName   = n
+printQualified :: Options -> Bool -> ImportStats -> Located Import -> P ()
+printQualified Options{..} padNames stats (L _ decl) = do
+  let decl' = rawImport decl
+
+  putText "import" >> space
+
+  case (isSource decl, isAnySource stats) of
+    (True, _) -> putText "{-# SOURCE #-}" >> space
+    (_, True) -> putText "              " >> space
+    _         -> pure ()
+
+  when (isSafe decl) (putText "safe" >> space)
+
+  case (isQualified decl, isAnyQualified stats) of
+    (True, _) -> putText "qualified" >> space
+    (_, True) -> putText "         " >> space
+    _         -> pure ()
+
+  moduleNamePosition <- length <$> getCurrentLine
+  forM_ (ideclPkgQual decl') $ \pkg -> putText (stringLiteral pkg) >> space
+  putText (moduleName decl)
+
+  -- Only print spaces if something follows.
+  when padNames $
+    when (isJust (ideclAs decl') || isHiding decl ||
+            not (null $ ideclHiding decl')) $
+      putText $
+        replicate (isLongestImport stats - importModuleNameLength decl) ' '
+
+  beforeAliasPosition <- length <$> getCurrentLine
+  forM_ (ideclAs decl') \(L _ name) ->
+    space >> putText "as" >> space >> putText (moduleNameString name)
+  afterAliasPosition <- length <$> getCurrentLine
+
+  when (isHiding decl) (space >> putText "hiding")
+
+  let putOffset = putText $ replicate offset ' '
+      offset = case listPadding of
+        LPConstant n -> n
+        LPModuleName -> moduleNamePosition
+
+  case snd <$> ideclHiding decl' of
+    Nothing            -> pure ()
+    Just (L _ [])      -> case emptyListAlign of
+      RightAfter -> modifyCurrentLine trimRight >> space >> putText "()"
+      Inherit -> case listAlign of
+        NewLine ->
+          modifyCurrentLine trimRight >> newline >> putOffset >> putText "()"
+        _ -> space >> putText "()"
+    Just (L _ imports) -> do
+      let printedImports = flagEnds $ -- [P ()]
+            fmap ((printImport Options{..}) . unLocated)
+            (prepareImportList imports)
+
+      -- Since we might need to output the import module name several times, we
+      -- need to save it to a variable:
+      wrapPrefix <- case listAlign of
+        AfterAlias -> pure $ replicate (afterAliasPosition + 1) ' '
+        WithAlias -> pure $ replicate (beforeAliasPosition + 1) ' '
+        Repeat -> fmap (++ " (") getCurrentLine
+        WithModuleName -> pure $ replicate (moduleNamePosition + offset) ' '
+        NewLine -> pure $ replicate offset ' '
+
+      let -- Helper
+          doSpaceSurround = when spaceSurround space
+
+          -- Try to put everything on one line.
+          printAsSingleLine = forM_ printedImports $ \(imp, start, end) -> do
+            when start $ putText "(" >> doSpaceSurround
+            imp
+            if end then doSpaceSurround >> putText ")" else comma >> space
+
+          -- Try to put everything one by one, wrapping if that fails.
+          printAsInlineWrapping wprefix = forM_ printedImports $
+            \(imp, start, end) ->
+            patchForRepeatHiding $ wrapping
+              (do
+                if start then putText "(" >> doSpaceSurround else space
+                imp
+                if end then doSpaceSurround >> putText ")" else comma)
+              (do
+                case listAlign of
+                    -- In 'Repeat' mode, end lines with ')' rather than ','.
+                    Repeat | not start -> modifyCurrentLine . withLast $
+                        \c -> if c == ',' then ')' else c
+                    _ | start && spaceSurround ->
+                        -- Only necessary if spaceSurround is enabled.
+                        modifyCurrentLine trimRight
+                    _ -> pure ()
+                newline
+                void wprefix
+                case listAlign of
+                  -- '(' already included in repeat
+                  Repeat         -> pure ()
+                  -- Print the much needed '('
+                  _ | start      -> putText "(" >> doSpaceSurround
+                  -- Don't bother aligning if we're not in inline mode.
+                  _ | longListAlign /= Inline -> pure ()
+                  -- 'Inline + AfterAlias' is really where we want to be careful
+                  -- with spacing.
+                  AfterAlias -> space >> doSpaceSurround
+                  WithModuleName -> pure ()
+                  WithAlias -> pure ()
+                  NewLine -> pure ()
+                imp
+                if end then doSpaceSurround >> putText ")" else comma)
+
+          -- Put everything on a separate line.  'spaceSurround' can be
+          -- ignored.
+          printAsMultiLine = forM_ printedImports $ \(imp, start, end) -> do
+            when start $ modifyCurrentLine trimRight  -- We added some spaces.
+            newline
+            putOffset
+            if start then putText "( " else putText ", "
+            imp
+            when end $ newline >> putOffset >> putText ")"
+
+      case longListAlign of
+        Multiline -> wrapping
+          (space >> printAsSingleLine)
+          printAsMultiLine
+        Inline | NewLine <- listAlign -> do
+          modifyCurrentLine trimRight
+          newline >> putOffset >> printAsInlineWrapping (putText wrapPrefix)
+        Inline -> space >> printAsInlineWrapping (putText wrapPrefix)
+        InlineWithBreak -> wrapping
+          (space >> printAsSingleLine)
+          (do
+            modifyCurrentLine trimRight
+            newline >> putOffset >> printAsInlineWrapping putOffset)
+        InlineToMultiline -> wrapping
+          (space >> printAsSingleLine)
+          (wrapping
+            (do
+              modifyCurrentLine trimRight
+              newline >> putOffset >> printAsSingleLine)
+            printAsMultiLine)
+  where
+    -- We cannot wrap/repeat 'hiding' imports since then we would get multiple
+    -- imports hiding different things.
+    patchForRepeatHiding = case listAlign of
+        Repeat | isHiding decl -> withColumns Nothing
+        _                      -> id
+
 
 --------------------------------------------------------------------------------
+printImport :: Options -> IE GhcPs -> P ()
+printImport Options{..} (IEVar _ name) = do
+    printIeWrappedName name
+printImport _ (IEThingAbs _ name) = do
+    printIeWrappedName name
+printImport _ (IEThingAll _ name) = do
+    printIeWrappedName name
+    space
+    putText "(..)"
+printImport _ (IEModuleContents _ (L _ m)) = do
+    putText (moduleNameString m)
+printImport Options{..} (IEThingWith _ name _wildcard imps _) = do
+    printIeWrappedName name
+    when separateLists space
+    parenthesize $
+      sep (comma >> space) (printIeWrappedName <$> imps)
+printImport _ (IEGroup _ _ _ ) =
+    error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEGroup'"
+printImport _ (IEDoc _ _) =
+    error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEDoc'"
+printImport _ (IEDocNamed _ _) =
+    error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEDocNamed'"
+printImport _ (XIE ext) =
+    GHC.noExtCon ext
 
-instance A.FromJSON ListPadding where
-    parseJSON (A.String "module_name") = return LPModuleName
-    parseJSON (A.Number n) | n' >= 1   = return $ LPConstant n'
-      where
-        n' = truncate n
-    parseJSON v                        = A.typeMismatch "'module_name' or >=1 number" v
+--------------------------------------------------------------------------------
+printIeWrappedName :: LIEWrappedName RdrName -> P ()
+printIeWrappedName lie = unLocated lie & \case
+  IEName n -> putRdrName n
+  IEPattern n -> putText "pattern" >> space >> putRdrName n
+  IEType n -> putText "type" >> space >> putRdrName n
+
+mergeImports :: NonEmpty (Located Import) -> NonEmpty (Located Import)
+mergeImports (x :| []) = x :| []
+mergeImports (h :| (t : ts))
+  | canMergeImport (unLocated h) (unLocated t) = mergeImports (mergeModuleImport h t :| ts)
+  | otherwise = h :| mergeImportsTail (t : ts)
+  where
+    mergeImportsTail (x : y : ys)
+      | canMergeImport (unLocated x) (unLocated y) = mergeImportsTail ((mergeModuleImport x y) : ys)
+      | otherwise = x : mergeImportsTail (y : ys)
+    mergeImportsTail xs = xs
+
+moduleName :: Import -> String
+moduleName
+  = moduleNameString
+  . unLocated
+  . ideclName
+  . rawImport
+
+
+--------------------------------------------------------------------------------
+data ImportStats = ImportStats
+    { isLongestImport :: !Int
+    , isAnySource     :: !Bool
+    , isAnyQualified  :: !Bool
+    , isAnySafe       :: !Bool
+    }
+
+instance Semigroup ImportStats where
+    l <> r = ImportStats
+        { isLongestImport = isLongestImport l `max` isLongestImport r
+        , isAnySource     = isAnySource     l ||    isAnySource     r
+        , isAnyQualified  = isAnyQualified  l ||    isAnyQualified  r
+        , isAnySafe       = isAnySafe       l ||    isAnySafe       r
+        }
+
+instance Monoid ImportStats where
+    mappend = (<>)
+    mempty  = ImportStats 0 False False False
+
+importStats :: Import -> ImportStats
+importStats i =
+    ImportStats (importModuleNameLength i) (isSource i) (isQualified i) (isSafe i)
+
+-- Computes length till module name, includes package name.
+-- TODO: this should reuse code with the printer
+importModuleNameLength :: Import -> Int
+importModuleNameLength imp =
+    (case ideclPkgQual (rawImport imp) of
+        Nothing -> 0
+        Just sl -> 1 + length (stringLiteral sl)) +
+    (length $ moduleName imp)
+
+
+--------------------------------------------------------------------------------
+stringLiteral :: StringLiteral -> String
+stringLiteral sl = case sl_st sl of
+    NoSourceText -> FS.unpackFS $ sl_fs sl
+    SourceText s -> s
+
+
+--------------------------------------------------------------------------------
+isQualified :: Import -> Bool
+isQualified
+  = (/=) NotQualified
+  . ideclQualified
+  . rawImport
+
+isHiding :: Import -> Bool
+isHiding
+  = maybe False fst
+  . ideclHiding
+  . rawImport
+
+isSource :: Import -> Bool
+isSource
+  = ideclSource
+  . rawImport
+
+isSafe :: Import -> Bool
+isSafe
+  = ideclSafe
+  . rawImport
+
+--------------------------------------------------------------------------------
+-- | Cleans up an import item list.
+--
+-- * Sorts import items.
+-- * Sort inner import lists, e.g. `import Control.Monad (Monad (return, join))`
+-- * Removes duplicates from import lists.
+prepareImportList :: [LIE GhcPs] -> [LIE GhcPs]
+prepareImportList =
+  sortBy compareLIE . map (fmap prepareInner) .
+  concatMap (toList . snd) . Map.toAscList . mergeByName
+ where
+  mergeByName :: [LIE GhcPs] -> Map.Map RdrName (NonEmpty (LIE GhcPs))
+  mergeByName imports0 = Map.fromListWith
+    -- Note that ideally every NonEmpty will just have a single entry and we
+    -- will be able to merge everything into that entry.  Exotic imports can
+    -- mess this up, though.  So they end up in the tail of the list.
+    (\(x :| xs) (y :| ys) -> case ieMerge (unLocated x) (unLocated y) of
+      Just z -> (x $> z) :| (xs ++ ys)  -- Keep source from `x`
+      Nothing -> x :| (xs ++ y : ys))
+    [(ieName $ unLocated imp, imp :| []) | imp <- imports0]
+
+  prepareInner :: IE GhcPs -> IE GhcPs
+  prepareInner = \case
+    -- Simplify `A ()` to `A`.
+    IEThingWith x n NoIEWildcard [] [] -> IEThingAbs x n
+    IEThingWith x n w ns fs ->
+      IEThingWith x n w (sortBy (compareWrappedName `on` unLoc) ns) fs
+    ie -> ie
+
+  -- Merge two import items, assuming they have the same name.
+  ieMerge :: IE GhcPs -> IE GhcPs -> Maybe (IE GhcPs)
+  ieMerge l@(IEVar _ _)      _                  = Just l
+  ieMerge _                  r@(IEVar _ _)      = Just r
+  ieMerge (IEThingAbs _ _)   r                  = Just r
+  ieMerge l                  (IEThingAbs _ _)   = Just l
+  ieMerge l@(IEThingAll _ _) _                  = Just l
+  ieMerge _                  r@(IEThingAll _ _) = Just r
+  ieMerge (IEThingWith x0 n0 w0 ns0 []) (IEThingWith _ _ w1 ns1 [])
+    | w0 /= w1  = Nothing
+    | otherwise = Just $
+        -- TODO: sort the `ns0 ++ ns1`?
+        IEThingWith x0 n0 w0 (nubOn (unwrapName . unLoc) $ ns0 ++ ns1) []
+  ieMerge _ _ = Nothing
+
+
+--------------------------------------------------------------------------------
+nubOn :: Ord k => (a -> k) -> [a] -> [a]
+nubOn f = go Set.empty
+ where
+  go _   []              = []
+  go acc (x : xs)
+    | y `Set.member` acc = go acc xs
+    | otherwise          = x : go (Set.insert y acc) xs
+   where
+    y = f x

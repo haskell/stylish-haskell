@@ -1,9 +1,12 @@
 --------------------------------------------------------------------------------
+{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 module Language.Haskell.Stylish.Config
     ( Extensions
     , Config (..)
+    , ExitCodeBehavior (..)
     , defaultConfigBytes
     , configFilePath
     , loadConfig
@@ -40,6 +43,7 @@ import           Language.Haskell.Stylish.Config.Internal
 import           Language.Haskell.Stylish.Step
 import qualified Language.Haskell.Stylish.Step.Data               as Data
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
+import qualified Language.Haskell.Stylish.Step.ModuleHeader       as ModuleHeader
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
 import qualified Language.Haskell.Stylish.Step.SimpleAlign        as SimpleAlign
 import qualified Language.Haskell.Stylish.Step.Squash             as Squash
@@ -60,8 +64,18 @@ data Config = Config
     , configLanguageExtensions :: [String]
     , configNewline            :: IO.Newline
     , configCabal              :: Bool
+    , configExitCode           :: ExitCodeBehavior
     }
 
+--------------------------------------------------------------------------------
+data ExitCodeBehavior
+  = NormalExitBehavior
+  | ErrorOnFormatExitBehavior
+  deriving (Eq)
+
+instance Show ExitCodeBehavior where
+  show NormalExitBehavior = "normal"
+  show ErrorOnFormatExitBehavior = "error_on_format"
 
 --------------------------------------------------------------------------------
 instance FromJSON Config where
@@ -126,6 +140,7 @@ parseConfig (A.Object o) = do
         <*> (o A..:? "language_extensions" A..!= [])
         <*> (o A..:? "newline"             >>= parseEnum newlines IO.nativeNewline)
         <*> (o A..:? "cabal"               A..!= True)
+        <*> (o A..:? "exit_code"           >>= parseEnum exitCodes NormalExitBehavior)
 
     -- Then fill in the steps based on the partial config we already have
     stepValues <- o A..: "steps" :: A.Parser [A.Value]
@@ -137,6 +152,10 @@ parseConfig (A.Object o) = do
         , ("lf",     IO.LF)
         , ("crlf",   IO.CRLF)
         ]
+    exitCodes =
+        [ ("normal", NormalExitBehavior)
+        , ("error_on_format", ErrorOnFormatExitBehavior)
+        ]
 parseConfig _            = mzero
 
 
@@ -144,6 +163,7 @@ parseConfig _            = mzero
 catalog :: Map String (Config -> A.Object -> A.Parser Step)
 catalog = M.fromList
     [ ("imports",             parseImports)
+    , ("module_header",       parseModuleHeader)
     , ("records",             parseRecords)
     , ("language_pragmas",    parseLanguagePragmas)
     , ("simple_align",        parseSimpleAlign)
@@ -172,6 +192,11 @@ parseEnum strs _   (Just k) = case lookup k strs of
     Nothing -> fail $ "Unknown option: " ++ k ++ ", should be one of: " ++
         intercalate ", " (map fst strs)
 
+--------------------------------------------------------------------------------
+parseModuleHeader :: Config -> A.Object -> A.Parser Step
+parseModuleHeader _ o = fmap ModuleHeader.step $ ModuleHeader.Config
+    <$> o A..:? "indent" A..!= (ModuleHeader.indent ModuleHeader.defaultConfig)
+    <*> o A..:? "sort"   A..!= (ModuleHeader.sort ModuleHeader.defaultConfig)
 
 --------------------------------------------------------------------------------
 parseSimpleAlign :: Config -> A.Object -> A.Parser Step
@@ -186,13 +211,20 @@ parseSimpleAlign c o = SimpleAlign.step
 
 --------------------------------------------------------------------------------
 parseRecords :: Config -> A.Object -> A.Parser Step
-parseRecords _ o = Data.step
+parseRecords c o = Data.step
     <$> (Data.Config
         <$> (o A..: "equals" >>= parseIndent)
         <*> (o A..: "first_field" >>= parseIndent)
         <*> (o A..: "field_comment")
-        <*> (o A..: "deriving"))
-
+        <*> (o A..: "deriving")
+        <*> (o A..:? "break_enums" A..!= False)
+        <*> (o A..:? "break_single_constructors" A..!= True)
+        <*> (o A..: "via" >>= parseIndent)
+        <*> (o A..:? "curried_context" A..!= False)
+        <*> pure configMaxColumns)
+  where
+    configMaxColumns =
+      maybe Data.NoMaxColumns Data.MaxColumns (configColumns c)
 
 parseIndent :: A.Value -> A.Parser Data.Indent
 parseIndent = A.withText "Indent" $ \t ->
@@ -214,22 +246,20 @@ parseSquash _ _ = return Squash.step
 
 --------------------------------------------------------------------------------
 parseImports :: Config -> A.Object -> A.Parser Step
-parseImports config o = Imports.step
-    <$> pure (configColumns config)
-    <*> (Imports.Options
-        <$> (o A..:? "align" >>= parseEnum aligns (def Imports.importAlign))
-        <*> (o A..:? "list_align" >>= parseEnum listAligns (def Imports.listAlign))
-        <*> (o A..:? "pad_module_names" A..!= def Imports.padModuleNames)
-        <*> (o A..:? "long_list_align"
-            >>= parseEnum longListAligns (def Imports.longListAlign))
-        -- Note that padding has to be at least 1. Default is 4.
-        <*> (o A..:? "empty_list_align"
-            >>= parseEnum emptyListAligns (def Imports.emptyListAlign))
-        <*> o A..:? "list_padding" A..!= def Imports.listPadding
-        <*> o A..:? "separate_lists" A..!= def Imports.separateLists
-        <*> o A..:? "space_surround" A..!= def Imports.spaceSurround)
+parseImports config o = fmap (Imports.step columns) $ Imports.Options
+      <$> (o A..:? "align" >>= parseEnum aligns (def Imports.importAlign))
+      <*> (o A..:? "list_align" >>= parseEnum listAligns (def Imports.listAlign))
+      <*> (o A..:? "pad_module_names" A..!= def Imports.padModuleNames)
+      <*> (o A..:? "long_list_align" >>= parseEnum longListAligns (def Imports.longListAlign))
+      <*> (o A..:? "empty_list_align" >>= parseEnum emptyListAligns (def Imports.emptyListAlign))
+      -- Note that padding has to be at least 1. Default is 4.
+      <*> (o A..:? "list_padding" >>= maybe (pure $ def Imports.listPadding) parseListPadding)
+      <*> o A..:? "separate_lists" A..!= def Imports.separateLists
+      <*> o A..:? "space_surround" A..!= def Imports.spaceSurround
   where
     def f = f Imports.defaultOptions
+
+    columns = configColumns config
 
     aligns =
         [ ("global", Imports.Global)
@@ -243,6 +273,7 @@ parseImports config o = Imports.step
         , ("with_module_name",  Imports.WithModuleName)
         , ("with_alias",        Imports.WithAlias)
         , ("after_alias",       Imports.AfterAlias)
+        , ("repeat",            Imports.Repeat)
         ]
 
     longListAligns =
@@ -256,6 +287,11 @@ parseImports config o = Imports.step
         [ ("inherit", Imports.Inherit)
         , ("right_after", Imports.RightAfter)
         ]
+
+    parseListPadding = \case
+        A.String "module_name" -> pure Imports.LPModuleName
+        A.Number n | n >= 1 -> pure $ Imports.LPConstant (truncate n)
+        v -> A.typeMismatch "'module_name' or >=1 number" v
 
 --------------------------------------------------------------------------------
 parseLanguagePragmas :: Config -> A.Object -> A.Parser Step

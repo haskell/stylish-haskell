@@ -5,6 +5,13 @@
 
 packages:
 - completed:
+    hackage: ghc-lib-parser-8.10.1.20200324@sha256:6a0b014e97f627dd9ca177f26f184e2f2ff713ec1271045334ccb56ac7bfdff3,9116
+    pantry-tree:
+      size: 19497
+      sha256: ba6d7c3a2c3517b1a1f25daa04446209137a38e39b35367ffb13bbb2a0a7be4e
+  original:
+    hackage: ghc-lib-parser-8.10.1.20200324
+- completed:
     hackage: aeson-1.5.2.0@sha256:d00c7aa51969b2849550e4dee14c9ce188504d55ed8d7f734ce9f6976db452f6,6786
     pantry-tree:
       size: 39758

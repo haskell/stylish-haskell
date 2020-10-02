@@ -8,7 +8,7 @@ module Language.Haskell.Stylish.Align
 
 --------------------------------------------------------------------------------
 import           Data.List                       (nub)
-import qualified Language.Haskell.Exts           as H
+import qualified SrcLoc                          as S
 
 
 --------------------------------------------------------------------------------
@@ -51,49 +51,48 @@ data Alignable a = Alignable
     , aRightLead :: !Int
     } deriving (Show)
 
-
 --------------------------------------------------------------------------------
 -- | Create changes that perform the alignment.
+
 align
-    :: Maybe Int              -- ^ Max columns
-    -> [Alignable H.SrcSpan]  -- ^ Alignables
-    -> [Change String]        -- ^ Changes performing the alignment.
+  :: Maybe Int                    -- ^ Max columns
+  -> [Alignable S.RealSrcSpan]    -- ^ Alignables
+  -> [Change String]              -- ^ Changes performing the alignment
 align _ [] = []
 align maxColumns alignment
-    -- Do not make any change if we would go past the maximum number of columns.
-    | exceedsColumns (longestLeft + longestRight) = []
-    | not (fixable alignment)                     = []
-    | otherwise                                   = map align' alignment
+  -- Do not make an changes if we would go past the maximum number of columns
+  | exceedsColumns (longestLeft + longestRight)  = []
+  | not (fixable alignment)                      = []
+  | otherwise                                    = map align' alignment
   where
     exceedsColumns i = case maxColumns of
-        Nothing -> False  -- No number exceeds a maximum column count of
-                          -- Nothing, because there is no limit to exceed.
-        Just c -> i > c
+      Nothing -> False
+      Just c  -> i > c
 
-    -- The longest thing in the left column.
-    longestLeft = maximum $ map (H.srcSpanEndColumn . aLeft) alignment
+    -- The longest thing in the left column
+    longestLeft = maximum $ map (S.srcSpanEndCol . aLeft) alignment
 
-    -- The longest thing in the right column.
+    -- The longest thing in the right column
     longestRight = maximum
-        [ H.srcSpanEndColumn (aRight a) - H.srcSpanStartColumn (aRight a)
-            + aRightLead a
-        | a <- alignment
-        ]
+      [ S.srcSpanEndCol (aRight a) - S.srcSpanStartCol (aRight a)
+          + aRightLead a
+      | a <- alignment
+      ]
 
-    align' a = changeLine (H.srcSpanStartLine $ aContainer a) $ \str ->
-        let column      = H.srcSpanEndColumn $ aLeft a
-            (pre, post) = splitAt column str
-        in [padRight longestLeft (trimRight pre) ++ trimLeft post]
-
+    align' a = changeLine (S.srcSpanStartLine $ aContainer a) $ \str ->
+      let column = S.srcSpanEndCol $ aLeft a
+          (pre, post) = splitAt column str
+      in [padRight longestLeft (trimRight pre) ++ trimLeft post] 
 
 --------------------------------------------------------------------------------
 -- | Checks that all the alignables appear on a single line, and that they do
 -- not overlap.
-fixable :: [Alignable H.SrcSpan] -> Bool
+
+fixable :: [Alignable S.RealSrcSpan] -> Bool
 fixable []     = False
 fixable [_]    = False
 fixable fields = all singleLine containers && nonOverlapping containers
   where
     containers        = map aContainer fields
-    singleLine s      = H.srcSpanStartLine s == H.srcSpanEndLine s
-    nonOverlapping ss = length ss == length (nub $ map H.srcSpanStartLine ss)
+    singleLine s      = S.srcSpanStartLine s == S.srcSpanEndLine s
+    nonOverlapping ss = length ss == length (nub $ map S.srcSpanStartLine ss)

@@ -1,6 +1,7 @@
 resolver: lts-16.9
 
 extra-deps:
+- 'ghc-lib-parser-8.10.1.20200324'
 - 'aeson-1.5.2.0'
 - 'Cabal-3.2.0.0'
 - 'HsYAML-aeson-0.2.0.0@rev:2'

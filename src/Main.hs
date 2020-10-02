@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 --------------------------------------------------------------------------------
 module Main
     ( main
@@ -5,15 +6,18 @@ module Main
 
 
 --------------------------------------------------------------------------------
-import           Control.Monad            (forM_, unless)
+import           Control.Monad            (forM_, unless, when)
 import qualified Data.ByteString.Char8    as BC8
-import           Data.Monoid              ((<>))
 import           Data.Version             (showVersion)
 import qualified Options.Applicative      as OA
 import           System.Exit              (exitFailure)
 import qualified System.IO                as IO
 import qualified System.IO.Strict         as IO.Strict
 
+--------------------------------------------------------------------------------
+#if __GLASGOW_HASKELL__ < 808
+import           Data.Monoid              ((<>))
+#endif
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish
@@ -112,7 +116,10 @@ stylishHaskell sa = do
             forM_ steps $ \s -> verbose' $ "Enabled " ++ stepName s ++ " step"
             verbose' $ "Extra language extensions: " ++
                 show (configLanguageExtensions conf)
-            mapM_ (file sa conf) $ files' filesR
+            res <- foldMap (file sa conf) (files' filesR)
+
+            verbose' $ "Exit code behavior: " ++ show (configExitCode conf)
+            when (configExitCode conf == ErrorOnFormatExitBehavior && res == DidFormat) exitFailure
   where
     verbose' = makeVerbose (saVerbose sa)
     files' x = case (saRecursive sa, null x) of
@@ -120,16 +127,33 @@ stylishHaskell sa = do
       (_,True)    -> [Nothing]  -- Involving IO.stdin.
       (_,False)   -> map Just x -- Process available files.
 
+data FormattingResult
+  = DidFormat
+  | NoChange
+  deriving (Eq)
+
+instance Semigroup FormattingResult where
+  _ <> DidFormat = DidFormat
+  DidFormat <> _ = DidFormat
+  _ <> _ = NoChange
+
+instance Monoid FormattingResult where
+  mempty = NoChange
 
 --------------------------------------------------------------------------------
 -- | Processes a single file, or stdin if no filepath is given
-file :: StylishArgs -> Config -> Maybe FilePath -> IO ()
+file :: StylishArgs -> Config -> Maybe FilePath -> IO FormattingResult
 file sa conf mfp = do
     contents <- maybe getContents readUTF8File mfp
-    let result = runSteps (configLanguageExtensions conf)
-            mfp (configSteps conf) $ lines contents
+    let
+      inputLines =
+        lines contents
+      result =
+        runSteps (configLanguageExtensions conf) mfp (configSteps conf) inputLines
     case result of
-        Right ok  -> write contents $ unlines ok
+        Right ok  -> do
+            write contents (unlines ok)
+            pure $ if ok /= inputLines then DidFormat else NoChange
         Left  err -> do
             IO.hPutStrLn IO.stderr err
             exitFailure

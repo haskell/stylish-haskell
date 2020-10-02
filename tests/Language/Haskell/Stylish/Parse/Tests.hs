@@ -6,7 +6,8 @@ module Language.Haskell.Stylish.Parse.Tests
 --------------------------------------------------------------------------------
 import           Test.Framework                 (Test, testGroup)
 import           Test.Framework.Providers.HUnit (testCase)
-import           Test.HUnit                     (Assertion, assert)
+import           Test.HUnit                     (Assertion, assertFailure)
+import           GHC.Stack                      (HasCallStack, withFrozenCallStack)
 
 
 --------------------------------------------------------------------------------
@@ -33,18 +34,18 @@ tests = testGroup "Language.Haskell.Stylish.Parse"
 
 --------------------------------------------------------------------------------
 testShebangExt :: Assertion
-testShebangExt = assert $ isRight $ parseModule [] Nothing input
-                         where
-                           input = unlines
-                               [ "#!env runghc"
-                               , "{-# LANGUAGE CPP #-}"
-                               , "#define foo bar \\"
-                               , "             qux"
-                               ]
+testShebangExt = returnsRight $ parseModule [] Nothing input
+  where
+    input = unlines
+      [ "#!env runghc"
+      , "{-# LANGUAGE CPP #-}"
+      , "#define foo bar \\"
+      , "             qux"
+      ]
 
 --------------------------------------------------------------------------------
 testBom :: Assertion
-testBom = assert $ isRight $ parseModule [] Nothing input
+testBom = returnsRight $ parseModule [] Nothing input
   where
     input = unlines
         [ '\xfeff' : "foo :: Int"
@@ -54,13 +55,13 @@ testBom = assert $ isRight $ parseModule [] Nothing input
 
 --------------------------------------------------------------------------------
 testExtraExtensions :: Assertion
-testExtraExtensions = assert $ isRight $
+testExtraExtensions = returnsRight $
     parseModule ["TemplateHaskell"] Nothing "$(foo)"
 
 
 --------------------------------------------------------------------------------
 testMultilineCpp :: Assertion
-testMultilineCpp = assert $ isRight $ parseModule [] Nothing $ unlines
+testMultilineCpp = returnsRight $ parseModule [] Nothing $ unlines
     [ "{-# LANGUAGE CPP #-}"
     , "#define foo bar \\"
     , "             qux"
@@ -69,7 +70,7 @@ testMultilineCpp = assert $ isRight $ parseModule [] Nothing $ unlines
 
 --------------------------------------------------------------------------------
 testHaskell2010 :: Assertion
-testHaskell2010 = assert $ isRight $ parseModule [] Nothing $ unlines
+testHaskell2010 = returnsRight $ parseModule [] Nothing $ unlines
     [ "{-# LANGUAGE Haskell2010 #-}"
     , "module X where"
     , "foo x | Just y <- x = y"
@@ -78,7 +79,7 @@ testHaskell2010 = assert $ isRight $ parseModule [] Nothing $ unlines
 
 --------------------------------------------------------------------------------
 testShebang :: Assertion
-testShebang = assert $ isRight $ parseModule [] Nothing $ unlines
+testShebang = returnsRight $ parseModule [] Nothing $ unlines
     [ "#!runhaskell"
     , "module Main where"
     , "main = return ()"
@@ -87,7 +88,7 @@ testShebang = assert $ isRight $ parseModule [] Nothing $ unlines
 --------------------------------------------------------------------------------
 
 testShebangDouble :: Assertion
-testShebangDouble = assert $ isRight $ parseModule [] Nothing $ unlines
+testShebangDouble = returnsRight $ parseModule [] Nothing $ unlines
     [ "#!nix-shell"
     , "#!nix-shell -i runhaskell -p haskellPackages.ghc"
     , "module Main where"
@@ -100,7 +101,7 @@ testShebangDouble = assert $ isRight $ parseModule [] Nothing $ unlines
 -- enabled for parsing, even when the pragma is absent.
 
 testGADTs :: Assertion
-testGADTs = assert $ isRight $ parseModule [] Nothing $ unlines
+testGADTs = returnsRight $ parseModule [] Nothing $ unlines
   [ "module Main where"
   , "data SafeList a b where"
   , "  Nil :: SafeList a Empty"
@@ -108,36 +109,35 @@ testGADTs = assert $ isRight $ parseModule [] Nothing $ unlines
   ]
 
 testKindSignatures :: Assertion
-testKindSignatures = assert $ isRight $ parseModule [] Nothing $ unlines
+testKindSignatures = returnsRight $ parseModule [] Nothing $ unlines
   [ "module Main where"
   , "data D :: * -> * -> * where"
   , "  D :: a -> b -> D a b"
   ]
 
 testStandaloneDeriving :: Assertion
-testStandaloneDeriving = assert $ isRight $ parseModule [] Nothing $ unlines
+testStandaloneDeriving = returnsRight $ parseModule [] Nothing $ unlines
   [ "module Main where"
   , "deriving instance Show MyType"
   ]
 
 testUnicodeSyntax :: Assertion
-testUnicodeSyntax = assert $ isRight $ parseModule [] Nothing $ unlines
+testUnicodeSyntax = returnsRight $ parseModule [] Nothing $ unlines
   [ "module Main where"
   , "monadic ∷ (Monad m) ⇒ m a → m a"
   , "monadic = id"
   ]
 
 testXmlSyntaxRegression :: Assertion
-testXmlSyntaxRegression = assert $ isRight $ parseModule [] Nothing $ unlines
+testXmlSyntaxRegression = returnsRight $ parseModule [] Nothing $ unlines
   [ "smaller a b = a <b"
   ]
 
 testMagicHashRegression :: Assertion
-testMagicHashRegression = assert $ isRight $ parseModule [] Nothing $ unlines
+testMagicHashRegression = returnsRight $ parseModule [] Nothing $ unlines
   [ "xs = \"foo\"#|1#|'a'#|bar#|Nil"
   ]
 
 --------------------------------------------------------------------------------
-isRight :: Either a b -> Bool
-isRight (Right _) = True
-isRight _         = False
+returnsRight :: HasCallStack => Show a => Either a b -> Assertion
+returnsRight action = withFrozenCallStack $ either (assertFailure . show) mempty action
