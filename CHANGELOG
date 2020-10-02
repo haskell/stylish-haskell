@@ -1,5 +1,38 @@
 # CHANGELOG
 
+- 0.12.0.0 (2020-10-02)
+     *  Use ghc-lib-parser rather than haskell-src-exts
+
+        This patch swaps out the parsing library from `haskell-src-exts` to
+        `ghc-lib-parser`, which gives us better compatibility with GHC.
+
+        Because almost every module heavily used the Haskell AST provided by
+        `haskell-src-exts`, this was a huge effort and it would not have been
+        possible without Felix Mulder doing an initial port, GSoC student
+        Beatrice Vergani porting several other steps, and Łukasz Gołębiewski and
+        Paweł Szulc who helped me finish up things in the home stretch.
+
+        I've generally tried to keep styling 100% compatible with what was there
+        before, but some issues may have unintentionally slipped in so please
+        report those.
+
+        This introduces one new import styling contributed by Felix: when
+        wrapping import lists over multiple lines, you can repeat the module
+        name, e.g.:
+
+            import Control.Monad.Except as X (ExceptT (..), MonadError (..))
+            import Control.Monad.Except as X (runExceptT, withExceptT)
+
+        This is activated by using `import_align: repeat`.
+
+        Secondly, a new Step was added, `module_header`, which formats the
+        export list of a module, including the trailing `where` clause.  Details
+        for this new step can be found in the `data/stylish-haskell.yaml`.
+
+     *   Remove `semigroup` dependency for GHC >= 8.0
+     *   Bump `strict` upper bound to 0.4
+     *   Bump `Cabal` upper bound to 3.3 for test suite
+
 - 0.11.0.3 (2020-08-02)
     * Set default-language to Haskell2010
 
