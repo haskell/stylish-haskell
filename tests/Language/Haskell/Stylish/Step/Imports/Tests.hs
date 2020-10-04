@@ -58,6 +58,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 25" case25
     , testCase "case 26 (issue 185)" case26
     , testCase "case 27" case27
+    , testCase "case 28" case28
     ]
 
 
@@ -877,4 +878,36 @@ case27 = expected @=? testSnippet (step Nothing $ fromImportAlign Global) input
         , "import           Herp.Derp.Internals hiding (foo)"
         , ""
         , "herp = putStrLn \"import Hello world\""
+        ]
+
+
+--------------------------------------------------------------------------------
+case28 :: Assertion
+case28 = expected @=? testSnippet (step (Just 80) $ fromImportAlign Global) input'
+  where
+    expected = Snippet
+        [ "import           Control.Monad"
+        ,  "import qualified Data.Aeson         as JSON"
+        , "import           Data.Default.Class (Default (def))"
+        , ""
+        , "import           Data.Maybe         (Maybe (Just, Nothing))"
+        , "import qualified Data.Maybe.Extra   (Maybe (Just, Nothing))"
+        , ""
+        , "import           Data.Foo           (Foo (Bar, Foo), Goo (Goo))"
+        , "import           Data.Set           (empty, intersect, nub)"
+        ]
+    input' = Snippet
+        [ "import Data.Default.Class (Default(def))"
+        , "import qualified Data.Aeson as JSON"
+        , "import qualified Data.Aeson as JSON"
+        , "import Control.Monad"
+        , "import Control.Monad"
+        , ""
+        , "import Data.Maybe (Maybe   (Just, Nothing))"
+        , "import qualified Data.Maybe.Extra (Maybe(Just, Nothing))"
+        , ""
+        , "import Data.Foo (Foo (Foo,Bar), Goo(Goo))"
+        , "import Data.Foo (Foo (Foo,Bar))"
+        , "import Data.Set (empty, intersect)"
+        , "import Data.Set (empty, nub)"
         ]
