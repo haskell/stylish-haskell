@@ -177,9 +177,14 @@ formatDataDecl cfg@Config{..} m ldecl@(L declPos decl) =
             newline
             spaces cDerivingIndent
 
-        sep (newline >> spaces cDerivingIndent) $ defn & dd_derivs & \(L pos ds) -> ds <&> \d -> do
-          putAllSpanComments (newline >> spaces cDerivingIndent) pos
-          putDeriving cfg d
+        if True
+        then
+          sep (newline >> spaces cDerivingIndent) $ defn & dd_derivs & \(L pos ds) -> ds <&> \d -> do
+              putAllSpanComments (newline >> spaces cDerivingIndent) pos
+              putDeriving cfg d
+        else
+          undefined
+          --putDeriving cfg d
 
     consIndent eqIndent = newline >> case (cEquals, cFirstField) of
       (SameLine, SameLine) -> spaces (eqIndent - 2)
@@ -518,3 +523,6 @@ singleConstructor = (== 1) . length . dd_cons . dataDefn
 
 hasDeriving :: DataDecl -> Bool
 hasDeriving = not . null . unLocated . dd_derivs . dataDefn
+
+hasOneDeriving :: DataDecl -> Bool
+hasOneDeriving = (== 1) . length . unLocated . dd_derivs . dataDefn
