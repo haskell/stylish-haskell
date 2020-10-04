@@ -201,10 +201,13 @@ moduleImportGroups = go [] Nothing . moduleImports
         -> [NonEmpty (Located Import)]
     go acc _        []                   = ne acc
     go acc mbCurrentLine (imp : impRest) =
-        let l2 = getStartLineUnsafe imp in
+        let
+          lStart = getStartLineUnsafe imp
+          lEnd = getEndLineUnsafe imp in
         case mbCurrentLine of
-            Just l1 | l1 + 1 < l2 -> ne acc ++ go [imp] (Just l2) impRest
-            _                     -> go (acc ++ [imp]) (Just l2) impRest
+            Just lPrevEnd | lPrevEnd + 1 < lStart
+              -> ne acc ++ go [imp] (Just lEnd) impRest
+            _ -> go (acc ++ [imp]) (Just lEnd) impRest
 
     ne []       = []
     ne (x : xs) = [x :| xs]
