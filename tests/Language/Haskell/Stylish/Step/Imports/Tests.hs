@@ -58,6 +58,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 25" case25
     , testCase "case 26 (issue 185)" case26
     , testCase "case 27" case27
+    , testCase "case 28" case28
     ]
 
 
@@ -877,4 +878,25 @@ case27 = expected @=? testSnippet (step Nothing $ fromImportAlign Global) input
         , "import           Herp.Derp.Internals hiding (foo)"
         , ""
         , "herp = putStrLn \"import Hello world\""
+        ]
+
+--------------------------------------------------------------------------------
+case28 :: Assertion
+case28 = expected @=? testSnippet (step Nothing $ fromImportAlign Group) input'
+  where
+    -- Check that "Group" mode recognizes groups with multi-line imports
+    input' = Snippet
+        [ "import Foo (foo)"
+        , "import BarBar ( bar"
+        , "              , kek)"
+        , "import Abcd ()"
+        , ""
+        , "import A (A)"
+        ]
+    expected = Snippet
+        [ "import Abcd   ()"
+        , "import BarBar (bar, kek)"
+        , "import Foo    (foo)"
+        , ""
+        , "import A (A)"
         ]
