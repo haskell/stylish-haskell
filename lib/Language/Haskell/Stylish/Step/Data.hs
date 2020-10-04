@@ -61,8 +61,10 @@ data Config = Config
       -- ^ Indent between data constructor and @{@ line (measured from column with data constructor name)
     , cFieldComment            :: !Int
       -- ^ Indent between column with @{@ and start of field line comment (this line has @cFieldComment = 2@)
-    , cDeriving                :: !Int
+    , cDerivingIndent          :: !Int
       -- ^ Indent before @deriving@ lines (measured from column 0)
+    , cDerivingSameLine        :: !Bool
+      -- ^ Should the @deriving@ clause be kept on the same line as the closing curly brace
     , cBreakEnums              :: !Bool
       -- ^ Break enums by newlines and follow the above rules
     , cBreakSingleConstructors :: !Bool
@@ -171,12 +173,12 @@ formatDataDecl cfg@Config{..} m ldecl@(L declPos decl) =
             space
           else do
             removeCommentTo (defn & dd_derivs & \(L pos _) -> pos) >>=
-              mapM_ \c -> newline >> spaces cDeriving >> putComment c
+              mapM_ \c -> newline >> spaces cDerivingIndent >> putComment c
             newline
-            spaces cDeriving
+            spaces cDerivingIndent
 
-        sep (newline >> spaces cDeriving) $ defn & dd_derivs & \(L pos ds) -> ds <&> \d -> do
-          putAllSpanComments (newline >> spaces cDeriving) pos
+        sep (newline >> spaces cDerivingIndent) $ defn & dd_derivs & \(L pos ds) -> ds <&> \d -> do
+          putAllSpanComments (newline >> spaces cDerivingIndent) pos
           putDeriving cfg d
 
     consIndent eqIndent = newline >> case (cEquals, cFirstField) of
@@ -211,7 +213,7 @@ putDeriving Config{..} (L pos clause) = do
     L _ (ViaStrategy tp) -> do
       case cVia of
         SameLine -> space
-        Indent x -> newline >> spaces (x + cDeriving)
+        Indent x -> newline >> spaces (x + cDerivingIndent)
 
       putText "via"
       space
@@ -258,7 +260,7 @@ putDeriving Config{..} (L pos clause) = do
       putText ")"
 
     indentation =
-      cDeriving + case cFirstField of
+      cDerivingIndent + case cFirstField of
         Indent x -> x
         SameLine -> 0
 
