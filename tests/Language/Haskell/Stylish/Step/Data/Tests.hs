@@ -1208,9 +1208,7 @@ case55 = expected @=? testStep (step sameSameNoSortStyle) input
        [ "data Foo = Foo deriving (Z, Y, X, Bar, Abcd)"
        ]
 
-    expected = unlines
-       [ "data Foo = Foo deriving (Z, Y, X, Bar, Abcd)"
-       ]
+    expected = input
 
 sameSameStyle :: Config
 sameSameStyle = Config SameLine SameLine 2 2 False True SameLine False True NoMaxColumns
