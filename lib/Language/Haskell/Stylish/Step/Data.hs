@@ -74,6 +74,8 @@ data Config = Config
       -- ^ Indentation between @via@ clause and start of deriving column start
     , cCurriedContext          :: !Bool
       -- ^ If true, use curried context. E.g: @allValues :: Enum a => Bounded a => Proxy a -> [a]@
+    , cSortDeriving            :: !Bool
+      -- ^ If true, will sort type classes in a @deriving@ list.
     , cMaxColumns              :: !MaxColumns
     } deriving (Show)
 
@@ -299,7 +301,7 @@ putDeriving Config{..} (L pos clause) = do
       = clause
       & deriv_clause_tys
       & unLocated
-      & sortBy compareOutputable
+      & (if cSortDeriving then sortBy compareOutputable else id)
       & fmap hsib_body
 
     headTy =
