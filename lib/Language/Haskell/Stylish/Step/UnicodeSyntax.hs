@@ -92,8 +92,5 @@ step' alp lg ls module' = applyChanges changes ls
   where
     changes = (if alp then addLanguagePragma lg "UnicodeSyntax" module' else []) ++
         replaceAll perLine
-    perLine = sort $ groupPerLine $
-        findSymbol' "::" ++
-        findSymbol' "=>" ++
-        findSymbol' "->"
-    findSymbol' = findSymbol module' ls
+    toReplace = [ "::", "=>", "->" ]
+    perLine = sort $ groupPerLine $ concatMap (findSymbol module' ls) toReplace
