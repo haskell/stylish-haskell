@@ -22,8 +22,8 @@ module Language.Haskell.Stylish.Util
 
     , toRealSrcSpan
 
-    , traceOutputtable
-    , traceOutputtableM
+    , traceOutputable
+    , traceOutputableM
 
     , unguardedRhsBody
     , rhsBody
@@ -213,14 +213,14 @@ flagEnds = \case
 
 
 --------------------------------------------------------------------------------
-traceOutputtable :: Outputable.Outputable a => String -> a -> b -> b
-traceOutputtable title x =
+traceOutputable :: Outputable.Outputable a => String -> a -> b -> b
+traceOutputable title x =
     trace (title ++ ": " ++ (Outputable.showSDocUnsafe $ Outputable.ppr x))
 
 
 --------------------------------------------------------------------------------
-traceOutputtableM :: (Outputable.Outputable a, Monad m) => String -> a -> m ()
-traceOutputtableM title x = traceOutputtable title x $ pure ()
+traceOutputableM :: (Outputable.Outputable a, Monad m) => String -> a -> m ()
+traceOutputableM title x = traceOutputable title x $ pure ()
 
 
 --------------------------------------------------------------------------------
