@@ -1,5 +1,9 @@
 # CHANGELOG
 
+- 0.12.1.0 (2020-10-05)
+     *  Bump Cabal-version to 2.4 (by Łukasz Gołębiewski)
+     *  Fix "group" import sort with multi-line imports (by Maxim Koltsov)
+
 - 0.12.0.0 (2020-10-02)
      *  Use ghc-lib-parser rather than haskell-src-exts
 
