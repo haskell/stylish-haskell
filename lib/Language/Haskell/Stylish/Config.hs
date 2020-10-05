@@ -221,6 +221,7 @@ parseRecords c o = Data.step
         <*> (o A..:? "break_single_constructors" A..!= True)
         <*> (o A..: "via" >>= parseIndent)
         <*> (o A..:? "curried_context" A..!= False)
+        <*> (o A..:? "sort_deriving" A..!= True)
         <*> pure configMaxColumns)
   where
     configMaxColumns =

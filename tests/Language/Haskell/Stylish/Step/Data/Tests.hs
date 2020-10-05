@@ -65,6 +65,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 52" case52
     , testCase "case 53" case53
     , testCase "case 54" case54
+    , testCase "case 55" case55
     ]
 
 case00 :: Assertion
@@ -1200,17 +1201,31 @@ case54 = expected @=? testStep (step indentIndentStyle { cMaxColumns = MaxColumn
       , "  deriving newtype (Applicative, Functor, Monad)"
       ]
 
+case55 :: Assertion
+case55 = expected @=? testStep (step sameSameNoSortStyle) input
+  where
+    input = unlines
+       [ "data Foo = Foo deriving (Z, Y, X, Bar, Abcd)"
+       ]
+
+    expected = unlines
+       [ "data Foo = Foo deriving (Z, Y, X, Bar, Abcd)"
+       ]
+
 sameSameStyle :: Config
-sameSameStyle = Config SameLine SameLine 2 2 False True SameLine False NoMaxColumns
+sameSameStyle = Config SameLine SameLine 2 2 False True SameLine False True NoMaxColumns
 
 sameIndentStyle :: Config
-sameIndentStyle = Config SameLine (Indent 2) 2 2 False True SameLine False NoMaxColumns
+sameIndentStyle = Config SameLine (Indent 2) 2 2 False True SameLine False True NoMaxColumns
 
 indentSameStyle :: Config
-indentSameStyle = Config (Indent 2) SameLine 2 2 False True SameLine False NoMaxColumns
+indentSameStyle = Config (Indent 2) SameLine 2 2 False True SameLine False True NoMaxColumns
 
 indentIndentStyle :: Config
-indentIndentStyle = Config (Indent 2) (Indent 2) 2 2 False True SameLine False NoMaxColumns
+indentIndentStyle = Config (Indent 2) (Indent 2) 2 2 False True SameLine False True NoMaxColumns
 
 indentIndentStyle4 :: Config
-indentIndentStyle4 = Config (Indent 4) (Indent 4) 4 4 False True SameLine False NoMaxColumns
+indentIndentStyle4 = Config (Indent 4) (Indent 4) 4 4 False True SameLine False True NoMaxColumns
+
+sameSameNoSortStyle :: Config
+sameSameNoSortStyle = Config SameLine SameLine 2 2 False True SameLine False False NoMaxColumns
