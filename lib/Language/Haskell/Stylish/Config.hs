@@ -24,12 +24,14 @@ import           Data.List                                        (intercalate,
 import           Data.Map                                         (Map)
 import qualified Data.Map                                         as M
 import           Data.Maybe                                       (fromMaybe)
+import qualified Data.Text                                        as T
 import           Data.YAML                                        (prettyPosWithSource)
 import           Data.YAML.Aeson                                  (decode1Strict)
 import           System.Directory
 import           System.FilePath                                  ((</>))
 import qualified System.IO                                        as IO (Newline (..),
                                                                          nativeNewline)
+import           Text.Read                                        (readMaybe)
 
 
 --------------------------------------------------------------------------------
@@ -54,7 +56,6 @@ type Extensions = [String]
 --------------------------------------------------------------------------------
 data Config = Config
     { configSteps              :: [Step]
-    , configIndent             :: Int
     , configColumns            :: Maybe Int
     , configLanguageExtensions :: [String]
     , configNewline            :: IO.Newline
@@ -121,7 +122,6 @@ parseConfig (A.Object o) = do
     -- First load the config without the actual steps
     config <- Config
         <$> pure []
-        <*> (o A..:? "indent"              A..!= 4)
         <*> (o A..:! "columns"             A..!= Just 80)
         <*> (o A..:? "language_extensions" A..!= [])
         <*> (o A..:? "newline"             >>= parseEnum newlines IO.nativeNewline)
@@ -186,8 +186,25 @@ parseSimpleAlign c o = SimpleAlign.step
 
 --------------------------------------------------------------------------------
 parseRecords :: Config -> A.Object -> A.Parser Step
-parseRecords c _ = Data.step
-    <$> pure (configIndent c)
+parseRecords _ o = Data.step
+    <$> (Data.Config
+        <$> (o A..: "equals" >>= parseIndent)
+        <*> (o A..: "first_field" >>= parseIndent)
+        <*> (o A..: "field_comment")
+        <*> (o A..: "deriving"))
+
+
+parseIndent :: A.Value -> A.Parser Data.Indent
+parseIndent = A.withText "Indent" $ \t ->
+  if t == "same_line"
+     then return Data.SameLine
+     else
+         if "indent " `T.isPrefixOf` t
+             then
+                 case readMaybe (T.unpack $ T.drop 7 t) of
+                     Just n -> return $ Data.Indent n
+                     Nothing -> fail $ "Indent: not a number" <> T.unpack (T.drop 7 t)
+             else fail $ "can't parse indent setting: " <> T.unpack t
 
 
 --------------------------------------------------------------------------------

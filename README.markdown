@@ -33,6 +33,7 @@ You can also install it using your package manager:
 - Replaces tabs by four spaces (turned off by default)
 - Replaces some ASCII sequences by their Unicode equivalents (turned off by
   default)
+- Format data constructors and fields in records.
 
 Feature requests are welcome! Use the [issue tracker] for that.
 
@@ -101,6 +102,61 @@ following order:
 Use `stylish-haskell --defaults > .stylish-haskell.yaml` to dump a
 well-documented default configuration to a file, this way you can get started
 quickly.
+
+## Record formatting
+
+Basically, stylish-haskell supports 4 different styles of records, controlled by `records`
+in the config file.
+
+Here's an example of all four styles:
+
+```haskell
+-- equals: "indent 2", "first_field": "indent 2"
+data Foo a
+  = Foo
+      { a :: Int
+      , a2 :: String
+        -- ^ some haddock
+      }
+  | Bar
+      { b :: a
+      }
+  deriving (Eq, Show)
+  deriving (ToJSON) via Bar Foo
+
+-- equals: "same_line", "first_field": "indent 2"
+data Foo a = Foo
+               { a :: Int
+               , a2 :: String
+                 -- ^ some haddock
+               }
+           | Bar
+               { b :: a
+               }
+  deriving (Eq, Show)
+  deriving (ToJSON) via Bar Foo
+
+-- equals: "same_line", "first_field": "same_line"
+data Foo a = Foo { a :: Int
+                 , a2 :: String
+                   -- ^ some haddock
+                 }
+           | Bar { b :: a
+                 }
+  deriving (Eq, Show)
+  deriving (ToJSON) via Bar Foo
+
+-- equals: "indent 2", first_field: "same_line"
+data Foo a
+  = Foo { a :: Int
+        , a2 :: String
+          -- ^ some haddock
+        }
+  | Bar { b :: a
+        }
+  deriving (Eq, Show)
+  deriving (ToJSON) via Bar Foo
+```
 
 ## VIM integration
 

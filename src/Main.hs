@@ -21,13 +21,14 @@ import           Language.Haskell.Stylish
 
 --------------------------------------------------------------------------------
 data StylishArgs = StylishArgs
-    { saVersion  :: Bool
-    , saConfig   :: Maybe FilePath
-    , saVerbose  :: Bool
-    , saDefaults :: Bool
-    , saInPlace  :: Bool
-    , saNoUtf8   :: Bool
-    , saFiles    :: [FilePath]
+    { saVersion   :: Bool
+    , saConfig    :: Maybe FilePath
+    , saRecursive :: Bool
+    , saVerbose   :: Bool
+    , saDefaults  :: Bool
+    , saInPlace   :: Bool
+    , saNoUtf8    :: Bool
+    , saFiles     :: [FilePath]
     } deriving (Show)
 
 
@@ -43,6 +44,11 @@ parseStylishArgs = StylishArgs
             OA.help    "Configuration file"  <>
             OA.long    "config"              <>
             OA.short   'c'                   <>
+            OA.hidden)
+    <*> OA.switch (
+            OA.help    "Recursive file search" <>
+            OA.long    "recursive"             <>
+            OA.short   'r'                     <>
             OA.hidden)
     <*> OA.switch (
             OA.help  "Run in verbose mode" <>
@@ -99,14 +105,20 @@ stylishHaskell sa = do
 
         else do
             conf <- loadConfig verbose' (saConfig sa)
+            filesR <- case (saRecursive sa) of
+              True -> findHaskellFiles (saVerbose sa) (saFiles sa)
+              _    -> return $ saFiles sa
             let steps = configSteps conf
             forM_ steps $ \s -> verbose' $ "Enabled " ++ stepName s ++ " step"
             verbose' $ "Extra language extensions: " ++
                 show (configLanguageExtensions conf)
-            mapM_ (file sa conf) files'
+            mapM_ (file sa conf) $ files' filesR
   where
     verbose' = makeVerbose (saVerbose sa)
-    files'   = if null (saFiles sa) then [Nothing] else map Just (saFiles sa)
+    files' x = case (saRecursive sa, null x) of
+      (True,True) -> []         -- No file to format and recursive enabled.
+      (_,True)    -> [Nothing]  -- Involving IO.stdin.
+      (_,False)   -> map Just x -- Process available files.
 
 
 --------------------------------------------------------------------------------

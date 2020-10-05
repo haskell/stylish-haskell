@@ -1,9 +1,9 @@
-resolver: lts-14.20
-packages:
-- '.'
+resolver: lts-16.9
 
 extra-deps:
-- 'Cabal-3.0.0.0'
-- 'haskell-src-exts-1.23.0'
-- 'HsYAML-0.2.1.0'
-- 'HsYAML-aeson-0.2.0.0'
+- 'aeson-1.5.2.0'
+- 'Cabal-3.2.0.0'
+- 'HsYAML-aeson-0.2.0.0@rev:2'
+- 'HsYAML-0.2.1.0@rev:1'
+
+save-hackage-creds: false
