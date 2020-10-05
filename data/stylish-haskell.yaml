@@ -58,9 +58,12 @@ steps:
   #
   #     # How many spaces to insert before "via" clause counted from indentation of deriving clause
   #     # Possible values:
-  #     # - "same_line" -- "{" and first field goes on the same line as the data constructor.
-  #     # - "indent N" -- insert a new line and N spaces from the beginning of the data constructor
+  #     # - "same_line" -- "via" part goes on the same line as "deriving" keyword.
+  #     # - "indent N" -- insert a new line and N spaces from the beginning of "deriving" keyword.
   #     via: "indent 2"
+  #
+  #     # Sort typeclass names in the "deriving" list alphabetically.
+  #     sort_deriving: true
   #
   #     # Wheter or not to break enums onto several lines
   #     #
