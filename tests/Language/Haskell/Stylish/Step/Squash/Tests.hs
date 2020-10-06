@@ -1,13 +1,14 @@
 --------------------------------------------------------------------------------
+{-# LANGUAGE OverloadedLists #-}
 module Language.Haskell.Stylish.Step.Squash.Tests
     ( tests
     ) where
 
 
 --------------------------------------------------------------------------------
-import           Test.Framework                            (Test, testGroup)
-import           Test.Framework.Providers.HUnit            (testCase)
-import           Test.HUnit                                (Assertion, (@=?))
+import           Test.Framework                       (Test, testGroup)
+import           Test.Framework.Providers.HUnit       (testCase)
+import           Test.HUnit                           (Assertion)
 
 
 --------------------------------------------------------------------------------
@@ -28,94 +29,74 @@ tests = testGroup "Language.Haskell.Stylish.Step.SimpleSquash.Tests"
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testStep step input
-  where
-    input = unlines
-        [ "data Foo = Foo"
-        , "    { foo    :: Int"
-        , "    , barqux :: String"
-        , "    } deriving (Show)"
-        ]
-
-    expected = unlines
-        [ "data Foo = Foo"
-        , "    { foo :: Int"
-        , "    , barqux :: String"
-        , "    } deriving (Show)"
-        ]
+case01 = assertSnippet step
+    [ "data Foo = Foo"
+    , "    { foo    :: Int"
+    , "    , barqux :: String"
+    , "    } deriving (Show)"
+    ]
+    [ "data Foo = Foo"
+    , "    { foo :: Int"
+    , "    , barqux :: String"
+    , "    } deriving (Show)"
+    ]
 
 
 --------------------------------------------------------------------------------
 case02 :: Assertion
-case02 = expected @=? testStep step input
-  where
-    input = unlines
-        [ "data Foo = Foo"
-        , "    { fooqux"
-        , "    , bar    :: String"
-        , "    } deriving (Show)"
-        ]
-
-    expected = unlines
-        [ "data Foo = Foo"
-        , "    { fooqux"
-        , "    , bar :: String"
-        , "    } deriving (Show)"
-        ]
+case02 = assertSnippet step
+    [ "data Foo = Foo"
+    , "    { fooqux"
+    , "    , bar    :: String"
+    , "    } deriving (Show)"
+    ]
+    [ "data Foo = Foo"
+    , "    { fooqux"
+    , "    , bar :: String"
+    , "    } deriving (Show)"
+    ]
 
 
 --------------------------------------------------------------------------------
 case03 :: Assertion
-case03 = expected @=? testStep step input
-  where
-    input = unlines
-        [ "maybe y0 f mx ="
-        , "    case mx of"
-        , "        Nothing -> y0"
-        , "        Just x  -> f x"
-        ]
-
-    expected = unlines
-        [ "maybe y0 f mx ="
-        , "    case mx of"
-        , "        Nothing -> y0"
-        , "        Just x -> f x"
-        ]
+case03 = assertSnippet step
+    [ "maybe y0 f mx ="
+    , "    case mx of"
+    , "        Nothing -> y0"
+    , "        Just x  -> f x"
+    ]
+    [ "maybe y0 f mx ="
+    , "    case mx of"
+    , "        Nothing -> y0"
+    , "        Just x -> f x"
+    ]
 
 
 --------------------------------------------------------------------------------
 case04 :: Assertion
-case04 = expected @=? testStep step input
-  where
-    input = unlines
-        [ "maybe y0 f mx ="
-        , "    case mx of"
-        , "        Nothing ->"
-        , "            y0"
-        , "        Just x  ->"
-        , "            f x"
-        ]
-
-    expected = unlines
-        [ "maybe y0 f mx ="
-        , "    case mx of"
-        , "        Nothing ->"
-        , "            y0"
-        , "        Just x ->"
-        , "            f x"
-        ]
+case04 = assertSnippet step
+    [ "maybe y0 f mx ="
+    , "    case mx of"
+    , "        Nothing ->"
+    , "            y0"
+    , "        Just x  ->"
+    , "            f x"
+    ]
+    [ "maybe y0 f mx ="
+    , "    case mx of"
+    , "        Nothing ->"
+    , "            y0"
+    , "        Just x ->"
+    , "            f x"
+    ]
 
 
 --------------------------------------------------------------------------------
 case05 :: Assertion
-case05 = expected @=? testStep step input
-  where
-    input = unlines
-        [ "maybe y0 _ Nothing  = y"
-        , "maybe _  f (Just x) = f x"
-        ]
-
-    expected = unlines
-        [ "maybe y0 _ Nothing = y"
-        , "maybe _  f (Just x) = f x"
-        ]
+case05 = assertSnippet step
+    [ "maybe y0 _ Nothing  = y"
+    , "maybe _  f (Just x) = f x"
+    ]
+    [ "maybe y0 _ Nothing = y"
+    , "maybe _  f (Just x) = f x"
+    ]
