@@ -17,8 +17,9 @@ import           Prelude                          hiding (init)
 import           Control.Monad                    (forM_, unless, when)
 import           Data.Function                    ((&))
 import           Data.Functor                     ((<&>))
-import           Data.List                        (sortBy)
+import           Data.List                        (intersperse, sortBy)
 import           Data.Maybe                       (listToMaybe)
+import Data.Foldable (for_)
 
 --------------------------------------------------------------------------------
 import           ApiAnnotation                    (AnnotationComment)
@@ -33,7 +34,7 @@ import           GHC.Hs.Types                     (HsType(..), ForallVisFlag(..)
 import           GHC.Hs.Types                     (LHsQTyVars(..), HsTyVarBndr(..))
 import           GHC.Hs.Types                     (HsConDetails(..), HsImplicitBndrs(..))
 import           RdrName                          (RdrName)
-import           SrcLoc                           (Located, RealLocated)
+import           SrcLoc                           (Located, RealLocated, unLoc)
 import           SrcLoc                           (GenLocated(..))
 
 --------------------------------------------------------------------------------
@@ -174,17 +175,42 @@ formatDataDecl cfg@Config{..} m ldecl@(L declPos decl) =
           else do
             removeCommentTo (defn & dd_derivs & \(L pos _) -> pos) >>=
               mapM_ \c -> newline >> spaces cDerivingIndent >> putComment c
-            newline
-            spaces cDerivingIndent
 
+        -- TODO:
+        -- 1. newline / spaces / putAllSpanComments / putDeriving should
+        --    have names?
+        -- 2. `[L pos deriv] | cDerivingSameLine ... && null (getSpanComments pos) ? -> do` clause
+        --    does this work if there are comments?
+        case unLoc (dd_derivs defn) of
+            [] -> pure ()
+            [L pos deriv] -> do
+                newline >> spaces cDerivingIndent
+                putAllSpanComments (newline >> spaces cDerivingIndent) pos
+                putDeriving cfg (L pos deriv)
+            derivs -> sequence_ $
+                (newline >> spaces cDerivingIndent) :
+                intersperse
+                (newline >> spaces cDerivingIndent)
+                [ do
+                    putAllSpanComments (newline >> spaces cDerivingIndent) pos
+                    putDeriving cfg (L pos deriv)
+                | L pos deriv <- derivs
+                ]
+
+        {-
         if True
-        then
+        then do
+          for_ (unLoc $ dd_derivs defn) $ \(L pos d) -> do
+              putAllSpanComments (newline >> spaces cDerivingIndent) pos
+              putDeriving cfg (L pos d)
+
           sep (newline >> spaces cDerivingIndent) $ defn & dd_derivs & \(L pos ds) -> ds <&> \d -> do
               putAllSpanComments (newline >> spaces cDerivingIndent) pos
               putDeriving cfg d
         else
           undefined
           --putDeriving cfg d
+        -}
 
     consIndent eqIndent = newline >> case (cEquals, cFirstField) of
       (SameLine, SameLine) -> spaces (eqIndent - 2)
