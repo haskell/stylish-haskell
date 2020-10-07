@@ -52,36 +52,16 @@ groupPerLine :: [((Int, Int), a)] -> [(Int, [(Int, a)])]
 groupPerLine = M.toList . M.fromListWith (++) .
     map (\((r, c), x) -> (r, [(c, x)]))
 
-
---------------------------------------------------------------------------------
-typeSigs :: Module -> Lines -> [((Int, Int), String)]
-typeSigs module' ls =
-    [ (pos, "::")
+-- | Find symbol positions in the module.  Currently only searches in type
+-- signatures.
+findSymbol :: Module -> Lines -> String -> [((Int, Int), String)]
+findSymbol module' ls sym =
+    [ (pos, sym)
     | TypeSig _ funLoc typeLoc <- everything (rawModuleDecls $ moduleDecls module') :: [Sig GhcPs]
-    , (_, funEnd)              <- infoPoints funLoc
-    , (typeStart, _)           <- infoPoints [hsSigWcType typeLoc]
-    , pos                      <- maybeToList $ between funEnd typeStart "::" ls
+    , (funStart, _)            <- infoPoints funLoc
+    , (_, typeEnd)             <- infoPoints [hsSigWcType typeLoc]
+    , pos                      <- maybeToList $ between funStart typeEnd sym ls
     ]
-
---------------------------------------------------------------------------------
-contexts :: Module -> Lines -> [((Int, Int), String)]
-contexts module' ls =
-    [ (pos, "=>")
-    | TypeSig _ _ typeLoc <- everything (rawModuleDecls $ moduleDecls module') :: [Sig GhcPs]
-    , (start, end)        <- infoPoints [hsSigWcType typeLoc]
-    , pos                 <- maybeToList $ between start end "=>" ls
-    ]
-
-
---------------------------------------------------------------------------------
-typeFuns :: Module -> Lines -> [((Int, Int), String)]
-typeFuns module' ls =
-    [ (pos, "->")
-    | TypeSig _ _ typeLoc <- everything (rawModuleDecls $ moduleDecls module') :: [Sig GhcPs]
-    , (start, end)        <- infoPoints [hsSigWcType typeLoc]
-    , pos                 <- maybeToList $ between start end "->" ls
-    ]
-
 
 --------------------------------------------------------------------------------
 -- | Search for a needle in a haystack of lines. Only part the inside (startRow,
@@ -113,7 +93,5 @@ step' alp lg ls module' = applyChanges changes ls
   where
     changes = (if alp then addLanguagePragma lg "UnicodeSyntax" module' else []) ++
         replaceAll perLine
-    perLine = sort $ groupPerLine $
-        typeSigs module' ls ++
-        contexts module' ls ++
-        typeFuns module' ls
+    toReplace = [ "::", "=>", "->" ]
+    perLine = sort $ groupPerLine $ concatMap (findSymbol module' ls) toReplace
