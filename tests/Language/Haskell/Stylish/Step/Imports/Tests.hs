@@ -61,6 +61,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 27" case27
     , testCase "case 28" case28
     , testCase "case 29" case29
+    , testCase "case 30" case30
     ]
 
 
@@ -834,3 +835,10 @@ case29 = assertSnippet (step Nothing $ fromImportAlign Group)
     , ""
     , "import A (A)"
     ]
+
+
+--------------------------------------------------------------------------------
+case30 :: Assertion
+case30 = assertSnippet (step Nothing defaultOptions {separateLists = False})
+    ["import           Data.Monoid (Monoid (..))"]
+    ["import           Data.Monoid (Monoid(..))"]

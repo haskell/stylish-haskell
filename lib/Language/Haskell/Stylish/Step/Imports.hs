@@ -309,13 +309,13 @@ printQualified Options{..} padNames stats (L _ decl) = do
 
 --------------------------------------------------------------------------------
 printImport :: Options -> IE GhcPs -> P ()
-printImport Options{..} (IEVar _ name) = do
+printImport _ (IEVar _ name) = do
     printIeWrappedName name
 printImport _ (IEThingAbs _ name) = do
     printIeWrappedName name
-printImport _ (IEThingAll _ name) = do
+printImport Options{..} (IEThingAll _ name) = do
     printIeWrappedName name
-    space
+    when separateLists space
     putText "(..)"
 printImport _ (IEModuleContents _ (L _ m)) = do
     putText (moduleNameString m)
