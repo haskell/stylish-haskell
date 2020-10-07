@@ -40,16 +40,16 @@ import           Language.Haskell.Stylish.Step
 
 
 data Config = Config
-    -- TODO(jaspervdj): Use the same sorting as in `Imports`?
-    -- TODO: make sorting optional?
-    { indent :: Int
-    , sort   :: Bool
+    { indent        :: Int
+    , sort          :: Bool
+    , separateLists :: Bool
     }
 
 defaultConfig :: Config
 defaultConfig = Config
-    { indent = 4
-    , sort   = True
+    { indent        = 4
+    , sort          = True
+    , separateLists = True
     }
 
 step :: Config -> Step
@@ -218,13 +218,15 @@ printExportList conf (L srcLoc exports) = do
     printExportsGroupTail (x : xs) = printExportsTail [([], x :| xs)]
     printExportsGroupTail []       = pure ()
 
+    -- NOTE(jaspervdj): This code is almost the same as the import printing
+    -- in 'Imports' and should be merged.
     printExport :: GHC.LIE GhcPs -> P ()
     printExport (L _ export) = case export of
       IEVar _ name -> putOutputable name
       IEThingAbs _ name -> putOutputable name
       IEThingAll _ name -> do
         putOutputable name
-        space
+        when (separateLists conf) space
         putText "(..)"
       IEModuleContents _ (L _ m) -> do
         putText "module"
@@ -232,7 +234,7 @@ printExportList conf (L srcLoc exports) = do
         putText (showOutputable m)
       IEThingWith _ name _wildcard imps _ -> do
         putOutputable name
-        space
+        when (separateLists conf) space
         putText "("
         sep (comma >> space) $
           fmap putOutputable $ L.sortBy (compareWrappedName `on` unLoc) imps
