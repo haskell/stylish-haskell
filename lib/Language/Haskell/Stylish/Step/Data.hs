@@ -1,10 +1,12 @@
-{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE BlockArguments  #-}
 {-# LANGUAGE DoAndIfThenElse #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE LambdaCase      #-}
+{-# LANGUAGE NamedFieldPuns  #-}
 {-# LANGUAGE RecordWildCards #-}
 module Language.Haskell.Stylish.Step.Data
   ( Config(..)
+  , defaultConfig
+
   , Indent(..)
   , MaxColumns(..)
   , step
@@ -23,19 +25,23 @@ import Data.Foldable (for_)
 
 --------------------------------------------------------------------------------
 import           ApiAnnotation                    (AnnotationComment)
-import           BasicTypes                       (LexicalFixity(..))
-import           GHC.Hs.Decls                     (HsDecl(..), HsDataDefn(..))
-import           GHC.Hs.Decls                     (TyClDecl(..), NewOrData(..))
-import           GHC.Hs.Decls                     (HsDerivingClause(..), DerivStrategy(..))
-import           GHC.Hs.Decls                     (ConDecl(..))
-import           GHC.Hs.Extension                 (GhcPs, NoExtField(..), noExtCon)
-import           GHC.Hs.Types                     (ConDeclField(..), HsContext)
-import           GHC.Hs.Types                     (HsType(..), ForallVisFlag(..))
-import           GHC.Hs.Types                     (LHsQTyVars(..), HsTyVarBndr(..))
-import           GHC.Hs.Types                     (HsConDetails(..), HsImplicitBndrs(..))
+import           BasicTypes                       (LexicalFixity (..))
+import           GHC.Hs.Decls                     (ConDecl (..),
+                                                   DerivStrategy (..),
+                                                   HsDataDefn (..), HsDecl (..),
+                                                   HsDerivingClause (..),
+                                                   NewOrData (..),
+                                                   TyClDecl (..))
+import           GHC.Hs.Extension                 (GhcPs, NoExtField (..),
+                                                   noExtCon)
+import           GHC.Hs.Types                     (ConDeclField (..),
+                                                   ForallVisFlag (..),
+                                                   HsConDetails (..), HsContext,
+                                                   HsImplicitBndrs (..),
+                                                   HsTyVarBndr (..),
+                                                   HsType (..), LHsQTyVars (..))
 import           RdrName                          (RdrName)
-import           SrcLoc                           (Located, RealLocated, unLoc)
-import           SrcLoc                           (GenLocated(..))
+import           SrcLoc                           (GenLocated (..), Located, RealLocated, unLoc)
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Block
@@ -78,6 +84,21 @@ data Config = Config
       -- ^ If true, will sort type classes in a @deriving@ list.
     , cMaxColumns              :: !MaxColumns
     } deriving (Show)
+
+-- | TODO: pass in MaxColumns?
+defaultConfig :: Config
+defaultConfig = Config
+    { cEquals          = Indent 4
+    , cFirstField      = Indent 4
+    , cFieldComment    = 2
+    , cDeriving        = 4
+    , cBreakEnums      = True
+    , cBreakSingleConstructors = False
+    , cVia             = Indent 4
+    , cSortDeriving    = True
+    , cMaxColumns      = NoMaxColumns
+    , cCurriedContext    = False
+    }
 
 step :: Config -> Step
 step cfg = makeStep "Data" \ls m -> applyChanges (changes m) ls
@@ -223,8 +244,8 @@ formatDataDecl cfg@Config{..} m ldecl@(L declPos decl) =
 data DataDecl = MkDataDecl
   { dataDeclName :: Located RdrName
   , dataTypeVars :: LHsQTyVars GhcPs
-  , dataDefn :: HsDataDefn GhcPs
-  , dataFixity :: LexicalFixity
+  , dataDefn     :: HsDataDefn GhcPs
+  , dataFixity   :: LexicalFixity
   }
 
 putDeriving :: Config -> Located (HsDerivingClause GhcPs) -> P ()
@@ -232,10 +253,10 @@ putDeriving Config{..} (L pos clause) = do
   putText "deriving"
 
   forM_ (deriv_clause_strategy clause) \case
-    L _ StockStrategy -> space >> putText "stock"
+    L _ StockStrategy    -> space >> putText "stock"
     L _ AnyclassStrategy -> space >> putText "anyclass"
-    L _ NewtypeStrategy -> space >> putText "newtype"
-    L _ (ViaStrategy _) -> pure ()
+    L _ NewtypeStrategy  -> space >> putText "newtype"
+    L _ (ViaStrategy _)  -> pure ()
 
   putCond
     withinColumns
@@ -257,13 +278,13 @@ putDeriving Config{..} (L pos clause) = do
 
   where
     getType = \case
-      HsIB _ tp -> tp
+      HsIB _ tp          -> tp
       XHsImplicitBndrs x -> noExtCon x
 
     withinColumns PrinterState{currentLine} =
       case cMaxColumns of
         MaxColumns maxCols -> length currentLine <= maxCols
-        NoMaxColumns -> True
+        NoMaxColumns       -> True
 
     oneLinePrint = do
       space
@@ -394,8 +415,10 @@ putConstructor cfg consIndent (L _ cons) = case cons of
         sep space (fmap putOutputable xs)
       RecCon (L recPos (L posFirst firstArg : args)) -> do
         putRdrName con_name
-        skipToBrace >> putText "{"
+        skipToBrace
         bracePos <- getCurrentLineLength
+        putText "{"
+        let fieldPos = bracePos + 2
         space
 
         -- Unless everything's configured to be on the same line, put pending
@@ -404,7 +427,7 @@ putConstructor cfg consIndent (L _ cons) = case cons of
           removeCommentTo posFirst >>= mapM_ \c -> putComment c >> sepDecl bracePos
 
         -- Put first decl field
-        putConDeclField cfg firstArg
+        pad fieldPos >> putConDeclField cfg firstArg
         unless (cFirstField cfg == SameLine) (putEolComment posFirst)
 
         -- Put tail decl fields
@@ -428,6 +451,7 @@ putConstructor cfg consIndent (L _ cons) = case cons of
         skipToBrace >> putText "}"
 
     where
+      -- Jump to the first brace of the first record of the first constructor.
       skipToBrace = case (cEquals cfg, cFirstField cfg) of
         (_, Indent y) | not (cBreakSingleConstructors cfg) -> newline >> spaces y
         (SameLine, SameLine) -> space
@@ -435,12 +459,13 @@ putConstructor cfg consIndent (L _ cons) = case cons of
         (SameLine, Indent y) -> newline >> spaces (consIndent + y)
         (Indent _, SameLine) -> space
 
+      -- Jump to the next declaration.
       sepDecl bracePos = newline >> spaces case (cEquals cfg, cFirstField cfg) of
         (_, Indent y) | not (cBreakSingleConstructors cfg) -> y
-        (SameLine, SameLine) -> bracePos - 1 -- back one from brace pos to place comma
+        (SameLine, SameLine) -> bracePos
         (Indent x, Indent y) -> x + y + 2
-        (SameLine, Indent y) -> bracePos - 1 + y - 2
-        (Indent x, SameLine) -> bracePos - 1 + x - 2
+        (SameLine, Indent y) -> bracePos + y - 2
+        (Indent x, SameLine) -> bracePos + x - 2
 
 putNewtypeConstructor :: Config -> Located (ConDecl GhcPs) -> P ()
 putNewtypeConstructor cfg (L _ cons) = case cons of
@@ -526,7 +551,7 @@ isGADT = any isGADTCons . dd_cons . dataDefn
   where
     isGADTCons = \case
       L _ (ConDeclGADT {}) -> True
-      _ -> False
+      _                    -> False
 
 isNewtype :: DataDecl -> Bool
 isNewtype = (== NewType) . dd_ND . dataDefn
@@ -540,7 +565,7 @@ isEnum = all isUnary . dd_cons . dataDefn
     isUnary = \case
       L _ (ConDeclH98 {..}) -> case con_args of
         PrefixCon [] -> True
-        _ -> False
+        _            -> False
       _ -> False
 
 hasConstructors :: DataDecl -> Bool

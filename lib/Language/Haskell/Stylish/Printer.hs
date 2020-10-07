@@ -44,6 +44,7 @@ module Language.Haskell.Stylish.Printer
   , space
   , spaces
   , suffix
+  , pad
 
     -- ** Advanced combinators
   , withColumns
@@ -327,6 +328,13 @@ prefix pa pb = pa >> pb
 -- | Suffix a printer with another one
 suffix :: P a -> P b -> P a
 suffix pa pb = pb >> pa
+
+-- | Indent to a given number of spaces.  If the current line already exceeds
+-- that number in length, nothing happens.
+pad :: Int -> P ()
+pad n = do
+    len <- length <$> getCurrentLine
+    spaces $ n - len
 
 -- | Gets comment on supplied 'line' and removes it from the state
 removeLineComment :: Int -> P (Maybe AnnotationComment)
