@@ -1,9 +1,11 @@
+{-# LANGUAGE OverloadedLists   #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Language.Haskell.Stylish.Step.Data.Tests
     ( tests
     ) where
 
 import           Language.Haskell.Stylish.Step.Data
-import           Language.Haskell.Stylish.Tests.Util (testStep)
+import           Language.Haskell.Stylish.Tests.Util (assertSnippet, testStep)
 import           Test.Framework                      (Test, testGroup)
 import           Test.Framework.Providers.HUnit      (testCase)
 import           Test.HUnit                          (Assertion, (@=?))
@@ -66,6 +68,8 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 53" case53
     , testCase "case 54" case54
     , testCase "case 55" case55
+    , testCase "case 56" case56
+    , testCase "case 57" case57
     ]
 
 case00 :: Assertion
@@ -456,79 +460,67 @@ case20 = input @=? testStep (step indentIndentStyle) input
        ]
 
 case21 :: Assertion
-case21 = expected @=? testStep (step sameSameStyle) input
-  where
-    input = unlines
-       [ "data Foo a"
-       , "  = Foo { a :: Int,"
-       , "          a2 :: String"
-       , "          -- ^ some haddock"
-       , "        }"
-       , "  | Bar { b :: a }  deriving (Eq, Show)"
-       , "  deriving (ToJSON)"
-       ]
-
-    expected = unlines
-       [ "data Foo a = Foo { a :: Int"
-       , "                 , a2 :: String"
-       , "                   -- ^ some haddock"
-       , "                 }"
-       , "           | Bar { b :: a"
-       , "                 }"
-       , "  deriving (Eq, Show)"
-       , "  deriving (ToJSON)"
-       ]
+case21 = assertSnippet (step sameSameStyle)
+   [ "data Foo a"
+   , "  = Foo { a :: Int,"
+   , "          a2 :: String"
+   , "          -- ^ some haddock"
+   , "        }"
+   , "  | Bar { b :: a }  deriving (Eq, Show)"
+   , "  deriving (ToJSON)"
+   ]
+   [ "data Foo a = Foo { a :: Int"
+   , "                 , a2 :: String"
+   , "                   -- ^ some haddock"
+   , "                 }"
+   , "           | Bar { b :: a"
+   , "                 }"
+   , "  deriving (Eq, Show)"
+   , "  deriving (ToJSON)"
+   ]
 
 case22 :: Assertion
-case22 = expected @=? testStep (step sameIndentStyle) input
-  where
-    input = unlines
-       [ "data Foo a"
-       , "  = Foo { a :: Int,"
-       , "          a2 :: String"
-       , "          -- ^ some haddock"
-       , "        }"
-       , "  | Bar { b :: a }  deriving (Eq, Show)"
-       , "  deriving (ToJSON)"
-       ]
-
-    expected = unlines
-       [ "data Foo a = Foo"
-       , "               { a :: Int"
-       , "               , a2 :: String"
-       , "                 -- ^ some haddock"
-       , "               }"
-       , "           | Bar"
-       , "               { b :: a"
-       , "               }"
-       , "  deriving (Eq, Show)"
-       , "  deriving (ToJSON)"
-       ]
+case22 = assertSnippet (step sameIndentStyle)
+   [ "data Foo a"
+   , "  = Foo { a :: Int,"
+   , "          a2 :: String"
+   , "          -- ^ some haddock"
+   , "        }"
+   , "  | Bar { b :: a }  deriving (Eq, Show)"
+   , "  deriving (ToJSON)"
+   ]
+   [ "data Foo a = Foo"
+   , "               { a :: Int"
+   , "               , a2 :: String"
+   , "                 -- ^ some haddock"
+   , "               }"
+   , "           | Bar"
+   , "               { b :: a"
+   , "               }"
+   , "  deriving (Eq, Show)"
+   , "  deriving (ToJSON)"
+   ]
 
 case23 :: Assertion
-case23 = expected @=? testStep (step indentSameStyle) input
-  where
-    input = unlines
-       [ "data Foo a"
-       , "  = Foo { a :: Int,"
-       , "          a2 :: String"
-       , "          -- ^ some haddock"
-       , "        }"
-       , "  | Bar { b :: a }  deriving (Eq, Show)"
-       , "  deriving (ToJSON)"
-       ]
-
-    expected = unlines
-       [ "data Foo a"
-       , "  = Foo { a :: Int"
-       , "        , a2 :: String"
-       , "          -- ^ some haddock"
-       , "        }"
-       , "  | Bar { b :: a"
-       , "        }"
-       , "  deriving (Eq, Show)"
-       , "  deriving (ToJSON)"
-       ]
+case23 = assertSnippet (step indentSameStyle)
+   [ "data Foo a"
+   , "  = Foo { a :: Int,"
+   , "          a2 :: String"
+   , "          -- ^ some haddock"
+   , "        }"
+   , "  | Bar { b :: a }  deriving (Eq, Show)"
+   , "  deriving (ToJSON)"
+   ]
+   [ "data Foo a"
+   , "  = Foo { a :: Int"
+   , "        , a2 :: String"
+   , "          -- ^ some haddock"
+   , "        }"
+   , "  | Bar { b :: a"
+   , "        }"
+   , "  deriving (Eq, Show)"
+   , "  deriving (ToJSON)"
+   ]
 
 case24 :: Assertion
 case24 = expected @=? testStep (step indentIndentStyle) input
@@ -1209,6 +1201,78 @@ case55 = expected @=? testStep (step sameSameNoSortStyle) input
        ]
 
     expected = input
+
+case56 :: Assertion
+case56 = assertSnippet (step defaultConfig)
+    [ "data Foo = Foo"
+    , "  { -- | Comment"
+    , "    bar :: Int"
+    , "  , baz :: Int"
+    , "  }"
+    ]
+    [ "data Foo = Foo"
+    , "    { -- | Comment"
+    , "      bar :: Int"
+    , "    , baz :: Int"
+    , "    }"
+    ]
+
+case57 :: Assertion
+case57 = assertSnippet (step defaultConfig)
+    [ "data Foo = Foo"
+    , "    { {- | A"
+    , "      -}"
+    , "      fooA :: Int"
+    , ""
+    , "      {- | B"
+    , "      -}"
+    , "    , fooB :: Int"
+    , ""
+    , "      {- | C"
+    , "      -}"
+    , "    , fooC :: Int"
+    , ""
+    , "      {- | D"
+    , "      -}"
+    , "    , fooD :: Int"
+    , ""
+    , "      {- | E"
+    , "      -}"
+    , "    , fooE :: Int"
+    , ""
+    , "      {- | F"
+    , "      -}"
+    , "    , fooFooFoo :: Int"
+    , ""
+    , "      {- | G"
+    , "      -}"
+    , "    , fooBarBar :: Int"
+    , "    }"
+    ]
+    [ "data Foo = Foo"
+    , "    { {- | A"
+    , "      -}"
+    , "      fooA :: Int"
+    , "      {- | B"
+    , "      -}"
+    , "    , fooB :: Int"
+    , "      {- | C"
+    , "      -}"
+    , "    , fooC :: Int"
+    , "      {- | D"
+    , "      -}"
+    , "    , fooD :: Int"
+    , "      {- | E"
+    , "      -}"
+    , "    , fooE :: Int"
+    , "      {- | F"
+    , "      -}"
+    , "    , fooFooFoo :: Int"
+    , "      {- | G"
+    , "      -}"
+    , "    , fooBarBar :: Int"
+    , "    }"
+    ]
 
 sameSameStyle :: Config
 sameSameStyle = Config SameLine SameLine 2 2 False True SameLine False True NoMaxColumns
