@@ -34,6 +34,7 @@ tests = testGroup "Language.Haskell.Stylish.Printer.ModuleHeader"
     , testCase "Indents with 2 spaces" ex14
     , testCase "Group doc with 2 spaces" ex15
     , testCase "Does not sort" ex16
+    , testCase "Repects separate_lists" ex17
     ]
 
 --------------------------------------------------------------------------------
@@ -299,3 +300,14 @@ ex16 = assertSnippet (step defaultConfig {sort = False}) input input
       , "    , no"
       , "    ) where"
       ]
+
+ex17 :: Assertion
+ex17 = assertSnippet (step defaultConfig {separateLists = False})
+    [ "module Foo"
+    , "    ( Bar (..)"
+    , "    ) where"
+    ]
+    [ "module Foo"
+    , "    ( Bar(..)"
+    , "    ) where"
+    ]

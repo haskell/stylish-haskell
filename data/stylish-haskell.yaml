@@ -27,6 +27,9 @@ steps:
   #     # Should export lists be sorted?  Sorting is only performed within the
   #     # export section, as delineated by Haddock comments.
   #     sort: true
+  #
+  #     # See `separate_lists` for the `imports` step.
+  #     separate_lists: true
 
   # Format record definitions. This is disabled by default.
   #
