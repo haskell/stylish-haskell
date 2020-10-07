@@ -182,9 +182,7 @@ printExportList conf (L srcLoc exports) = do
     -- > xxxxyyfoo
     -- > xxxx) where
     doIndent = spaces (indent conf)
-    doHang = do
-        len <- length <$> getCurrentLine
-        spaces $ indent conf + 2 - len
+    doHang = pad (indent conf + 2)
 
     doSort = if sort conf then NonEmpty.sortBy compareLIE else id
 
