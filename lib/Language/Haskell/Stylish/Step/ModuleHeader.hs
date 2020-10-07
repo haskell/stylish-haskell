@@ -7,27 +7,26 @@ module Language.Haskell.Stylish.Step.ModuleHeader
   ) where
 
 --------------------------------------------------------------------------------
-import           ApiAnnotation                    (AnnKeywordId (..),
-                                                   AnnotationComment (..))
-import           Control.Monad                    (forM_, join, when)
-import           Data.Bifunctor                   (second)
-import           Data.Foldable                    (find, toList)
-import           Data.Function                    (on, (&))
-import qualified Data.List                        as L
-import           Data.List.NonEmpty               (NonEmpty (..))
-import qualified Data.List.NonEmpty               as NonEmpty
-import           Data.Maybe                       (isJust, listToMaybe)
-import qualified GHC.Hs.Doc                       as GHC
-import           GHC.Hs.Extension                 (GhcPs)
-import qualified GHC.Hs.Extension                 as GHC
-import           GHC.Hs.ImpExp                    (IE (..))
-import qualified GHC.Hs.ImpExp                    as GHC
-import qualified Module                           as GHC
-import           SrcLoc                           (GenLocated (..), Located,
-                                                   RealLocated, SrcSpan (..),
-                                                   srcSpanEndLine,
-                                                   srcSpanStartLine, unLoc)
-import           Util                             (notNull)
+import           ApiAnnotation                         (AnnKeywordId (..),
+                                                        AnnotationComment (..))
+import           Control.Monad                         (forM_, join, when)
+import           Data.Bifunctor                        (second)
+import           Data.Foldable                         (find, toList)
+import           Data.Function                         ((&))
+import qualified Data.List                             as L
+import           Data.List.NonEmpty                    (NonEmpty (..))
+import qualified Data.List.NonEmpty                    as NonEmpty
+import           Data.Maybe                            (isJust, listToMaybe)
+import qualified GHC.Hs.Doc                            as GHC
+import           GHC.Hs.Extension                      (GhcPs)
+import qualified GHC.Hs.ImpExp                         as GHC
+import qualified Module                                as GHC
+import           SrcLoc                                (GenLocated (..),
+                                                        Located, RealLocated,
+                                                        SrcSpan (..),
+                                                        srcSpanEndLine,
+                                                        srcSpanStartLine, unLoc)
+import           Util                                  (notNull)
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Block
@@ -37,6 +36,7 @@ import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Ordering
 import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
+import qualified Language.Haskell.Stylish.Step.Imports as Imports
 
 
 data Config = Config
@@ -221,32 +221,4 @@ printExportList conf (L srcLoc exports) = do
     -- NOTE(jaspervdj): This code is almost the same as the import printing
     -- in 'Imports' and should be merged.
     printExport :: GHC.LIE GhcPs -> P ()
-    printExport (L _ export) = case export of
-      IEVar _ name -> putOutputable name
-      IEThingAbs _ name -> putOutputable name
-      IEThingAll _ name -> do
-        putOutputable name
-        when (separateLists conf) space
-        putText "(..)"
-      IEModuleContents _ (L _ m) -> do
-        putText "module"
-        space
-        putText (showOutputable m)
-      IEThingWith _ name _wildcard imps _ -> do
-        putOutputable name
-        when (separateLists conf) space
-        putText "("
-        sep (comma >> space) $
-          fmap putOutputable $ L.sortBy (compareWrappedName `on` unLoc) imps
-        putText ")"
-      IEGroup _ _ _ ->
-        error $
-          "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEGroup'" <> showOutputable export
-      IEDoc _ _ ->
-        error $
-          "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEDoc'" <> showOutputable export
-      IEDocNamed _ _ ->
-        error $
-          "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEDocNamed'" <> showOutputable export
-      XIE ext ->
-        GHC.noExtCon ext
+    printExport = Imports.printImport (separateLists conf) . unLoc
