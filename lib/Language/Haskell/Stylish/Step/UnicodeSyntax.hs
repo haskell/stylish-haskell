@@ -52,7 +52,8 @@ groupPerLine :: [((Int, Int), a)] -> [(Int, [(Int, a)])]
 groupPerLine = M.toList . M.fromListWith (++) .
     map (\((r, c), x) -> (r, [(c, x)]))
 
-
+-- | Find symbol positions in the module.  Currently only searches in type
+-- signatures.
 findSymbol :: Module -> Lines -> String -> [((Int, Int), String)]
 findSymbol module' ls sym =
     [ (pos, sym)
