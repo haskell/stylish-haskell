@@ -11,6 +11,8 @@ module Language.Haskell.Stylish.Step.Imports
   , EmptyListAlign (..)
   , ListPadding (..)
   , step
+
+  , printImport
   ) where
 
 --------------------------------------------------------------------------------
@@ -213,7 +215,7 @@ printQualified Options{..} padNames stats (L _ decl) = do
         _ -> space >> putText "()"
     Just (L _ imports) -> do
       let printedImports = flagEnds $ -- [P ()]
-            fmap ((printImport Options{..}) . unLocated)
+            fmap ((printImport separateLists) . unLocated)
             (prepareImportList imports)
 
       -- Since we might need to output the import module name several times, we
@@ -308,18 +310,20 @@ printQualified Options{..} padNames stats (L _ decl) = do
 
 
 --------------------------------------------------------------------------------
-printImport :: Options -> IE GhcPs -> P ()
+printImport :: Bool -> IE GhcPs -> P ()
 printImport _ (IEVar _ name) = do
     printIeWrappedName name
 printImport _ (IEThingAbs _ name) = do
     printIeWrappedName name
-printImport Options{..} (IEThingAll _ name) = do
+printImport separateLists (IEThingAll _ name) = do
     printIeWrappedName name
     when separateLists space
     putText "(..)"
 printImport _ (IEModuleContents _ (L _ m)) = do
+    putText "module"
+    space
     putText (moduleNameString m)
-printImport Options{..} (IEThingWith _ name _wildcard imps _) = do
+printImport separateLists (IEThingWith _ name _wildcard imps _) = do
     printIeWrappedName name
     when separateLists space
     parenthesize $
@@ -332,6 +336,7 @@ printImport _ (IEDocNamed _ _) =
     error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEDocNamed'"
 printImport _ (XIE ext) =
     GHC.noExtCon ext
+
 
 --------------------------------------------------------------------------------
 printIeWrappedName :: LIEWrappedName RdrName -> P ()
