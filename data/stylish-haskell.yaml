@@ -92,7 +92,7 @@ steps:
   # line.
   # Possible values:
   # - always - Always align statements.
-  # - adjacent - Only align statements that are on adjacent lines in groups. Comments and blank lines.
+  # - adjacent - Align statements that are on adjacent lines in groups.
   # - never - Never align statements.
   # All default to always.
   - simple_align:
