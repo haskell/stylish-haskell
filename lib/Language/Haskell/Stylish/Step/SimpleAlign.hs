@@ -3,14 +3,16 @@
 {-# LANGUAGE TypeFamilies    #-}
 module Language.Haskell.Stylish.Step.SimpleAlign
     ( Config (..)
+    , Align (..)
     , defaultConfig
     , step
     ) where
 
 
 --------------------------------------------------------------------------------
-import           Control.Monad                   (guard)
-import           Data.List                       (foldl', foldl1')
+import           Data.Either                     (partitionEithers)
+import           Data.Foldable                   (toList)
+import           Data.List                       (foldl', foldl1', sortOn)
 import           Data.Maybe                      (fromMaybe)
 import qualified GHC.Hs                          as Hs
 import qualified SrcLoc                          as S
@@ -26,21 +28,33 @@ import           Language.Haskell.Stylish.Util
 
 --------------------------------------------------------------------------------
 data Config = Config
-    { cCases            :: !Bool
-    , cTopLevelPatterns :: !Bool
-    , cRecords          :: !Bool
-    , cMultiWayIf       :: !Bool
+    { cCases            :: Align
+    , cTopLevelPatterns :: Align
+    , cRecords          :: Align
+    , cMultiWayIf       :: Align
     } deriving (Show)
 
+data Align
+    = Always
+    | Adjacent
+    | Never
+    deriving (Eq, Show)
 
---------------------------------------------------------------------------------
 defaultConfig :: Config
 defaultConfig = Config
-    { cCases            = True
-    , cTopLevelPatterns = True
-    , cRecords          = True
-    , cMultiWayIf       = True
+    { cCases            = Always
+    , cTopLevelPatterns = Always
+    , cRecords          = Always
+    , cMultiWayIf       = Always
     }
+
+groupAlign :: Align -> [Alignable S.RealSrcSpan] -> [[Alignable S.RealSrcSpan]]
+groupAlign a xs = case a of
+    Never    -> []
+    Adjacent -> byLine . sortOn (S.srcSpanStartLine . aLeft) $ xs
+    Always   -> [xs]
+  where
+    byLine = map toList . groupByLine aLeft
 
 
 --------------------------------------------------------------------------------
@@ -65,8 +79,8 @@ records modu = do
 
 
 --------------------------------------------------------------------------------
-recordToAlignable :: Record -> [Alignable S.RealSrcSpan]
-recordToAlignable = fromMaybe [] . traverse fieldDeclToAlignable
+recordToAlignable :: Config -> Record -> [[Alignable S.RealSrcSpan]]
+recordToAlignable conf = groupAlign (cRecords conf) . fromMaybe [] . traverse fieldDeclToAlignable
 
 
 --------------------------------------------------------------------------------
@@ -89,36 +103,36 @@ fieldDeclToAlignable (S.L matchLoc (Hs.ConDeclField _ names ty _)) = do
 matchGroupToAlignable
     :: Config
     -> Hs.MatchGroup Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)
-    -> [Alignable S.RealSrcSpan]
+    -> [[Alignable S.RealSrcSpan]]
 matchGroupToAlignable _conf (Hs.XMatchGroup x) = Hs.noExtCon x
-matchGroupToAlignable conf (Hs.MG _ alts _) =
-  fromMaybe [] $ traverse (matchToAlignable conf) (S.unLoc alts)
+matchGroupToAlignable conf (Hs.MG _ alts _) = cases' ++ patterns'
+  where
+    (cases, patterns) = partitionEithers . fromMaybe [] $ traverse matchToAlignable (S.unLoc alts)
+    cases' = groupAlign (cCases conf) cases
+    patterns' = groupAlign (cTopLevelPatterns conf) patterns
 
 
 --------------------------------------------------------------------------------
 matchToAlignable
-    :: Config
-    -> S.Located (Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs))
-    -> Maybe (Alignable S.RealSrcSpan)
-matchToAlignable conf (S.L matchLoc m@(Hs.Match _ Hs.CaseAlt pats@(_ : _) grhss)) = do
+    :: S.Located (Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs))
+    -> Maybe (Either (Alignable S.RealSrcSpan) (Alignable S.RealSrcSpan))
+matchToAlignable (S.L matchLoc m@(Hs.Match _ Hs.CaseAlt pats@(_ : _) grhss)) = do
   let patsLocs   = map S.getLoc pats
       pat        = last patsLocs
       guards     = getGuards m
       guardsLocs = map S.getLoc guards
       left       = foldl' S.combineSrcSpans pat guardsLocs
-  guard $ cCases conf
   body     <- rhsBody grhss
   matchPos <- toRealSrcSpan matchLoc
   leftPos  <- toRealSrcSpan left
   rightPos <- toRealSrcSpan $ S.getLoc body
-  Just $ Alignable
+  Just . Left $ Alignable
     { aContainer = matchPos
     , aLeft      = leftPos
     , aRight     = rightPos
     , aRightLead = length "-> "
     }
-matchToAlignable conf (S.L matchLoc (Hs.Match _ (Hs.FunRhs name _ _) pats@(_ : _) grhss)) = do
-  guard $ cTopLevelPatterns conf
+matchToAlignable (S.L matchLoc (Hs.Match _ (Hs.FunRhs name _ _) pats@(_ : _) grhss)) = do
   body <- unguardedRhsBody grhss
   let patsLocs = map S.getLoc pats
       nameLoc  = S.getLoc name
@@ -127,23 +141,26 @@ matchToAlignable conf (S.L matchLoc (Hs.Match _ (Hs.FunRhs name _ _) pats@(_ : _
   matchPos <- toRealSrcSpan matchLoc
   leftPos  <- toRealSrcSpan left
   bodyPos  <- toRealSrcSpan bodyLoc
-  Just $ Alignable
+  Just . Right $ Alignable
     { aContainer = matchPos
     , aLeft      = leftPos
     , aRight     = bodyPos
     , aRightLead = length "= "
     }
-matchToAlignable _conf (S.L _ (Hs.XMatch x))       = Hs.noExtCon x
-matchToAlignable _conf (S.L _ (Hs.Match _ _ _ _))  = Nothing
+matchToAlignable (S.L _ (Hs.XMatch x))      = Hs.noExtCon x
+matchToAlignable (S.L _ (Hs.Match _ _ _ _)) = Nothing
 
 
 --------------------------------------------------------------------------------
 multiWayIfToAlignable
-    :: Hs.LHsExpr Hs.GhcPs
-    -> [Alignable S.RealSrcSpan]
-multiWayIfToAlignable  (S.L _ (Hs.HsMultiIf _ grhss)) =
-  fromMaybe [] $ traverse grhsToAlignable grhss
-multiWayIfToAlignable _ = []
+    :: Config
+    -> Hs.LHsExpr Hs.GhcPs
+    -> [[Alignable S.RealSrcSpan]]
+multiWayIfToAlignable conf (S.L _ (Hs.HsMultiIf _ grhss)) =
+    groupAlign (cMultiWayIf conf) as
+  where
+    as = fromMaybe [] $ traverse grhsToAlignable grhss
+multiWayIfToAlignable _conf _ = []
 
 
 --------------------------------------------------------------------------------
@@ -163,8 +180,8 @@ grhsToAlignable (S.L grhsloc (Hs.GRHS _ guards@(_ : _) body)) = do
         , aRight     = bodyPos
         , aRightLead = length "-> "
         }
-grhsToAlignable (S.L _ (Hs.XGRHS x))  = Hs.noExtCon x
-grhsToAlignable (S.L _ _)             = Nothing
+grhsToAlignable (S.L _ (Hs.XGRHS x)) = Hs.noExtCon x
+grhsToAlignable (S.L _ _)            = Nothing
 
 
 --------------------------------------------------------------------------------
@@ -172,14 +189,14 @@ step :: Maybe Int -> Config -> Step
 step maxColumns config@(Config {..}) = makeStep "Cases" $ \ls module' ->
     let changes
             :: (S.Located (Hs.HsModule Hs.GhcPs) -> [a])
-            -> (a -> [Alignable S.RealSrcSpan])
+            -> (a -> [[Alignable S.RealSrcSpan]])
             -> [Change String]
-        changes search toAlign = concat $
-            map (align maxColumns) . map toAlign $ search (parsedModule module')
+        changes search toAlign =
+            (concatMap . concatMap) (align maxColumns) . map toAlign $ search (parsedModule module')
 
         configured :: [Change String]
         configured = concat $
-            [changes records recordToAlignable | cRecords ] ++
+            [changes records (recordToAlignable config)] ++
             [changes everything (matchGroupToAlignable config)] ++
-            [changes everything multiWayIfToAlignable | cMultiWayIf] in
+            [changes everything (multiWayIfToAlignable config)] in
     applyChanges configured ls

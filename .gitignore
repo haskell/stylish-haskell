@@ -17,5 +17,6 @@ cabal-dev
 cabal.config
 cabal.sandbox.config
 cabal.sandbox.config
+cabal.project.local
 dist
 /dist-newstyle/
