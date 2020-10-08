@@ -9,7 +9,7 @@ module Language.Haskell.Stylish.Step.SimpleAlign
 
 --------------------------------------------------------------------------------
 import           Control.Monad                   (guard)
-import           Data.List                       (foldl')
+import           Data.List                       (foldl', foldl1')
 import           Data.Maybe                      (fromMaybe)
 import qualified GHC.Hs                          as Hs
 import qualified SrcLoc                          as S
@@ -135,6 +135,39 @@ matchToAlignable _conf (S.L _ (Hs.Match _ _ _ _))  = Nothing
 
 
 --------------------------------------------------------------------------------
+multiWayIfToAlignable
+    :: Config
+    -> Hs.LHsExpr Hs.GhcPs
+    -> [Alignable S.RealSrcSpan]
+multiWayIfToAlignable conf (S.L _ (Hs.HsMultiIf _ grhss)) =
+  fromMaybe [] $ traverse (grhsToAlignable conf) grhss
+multiWayIfToAlignable _conf _ = []
+
+
+--------------------------------------------------------------------------------
+grhsToAlignable
+    :: Config
+    -> S.Located (Hs.GRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs))
+    -> Maybe (Alignable S.RealSrcSpan)
+grhsToAlignable conf (S.L grhsloc (Hs.GRHS _ guards@(_ : _) body)) = do
+    guard $ cCases conf
+    let guardsLocs = map S.getLoc guards
+        bodyLoc    = S.getLoc body
+        left       = foldl1' S.combineSrcSpans guardsLocs
+    matchPos <- toRealSrcSpan grhsloc
+    leftPos  <- toRealSrcSpan left
+    bodyPos  <- toRealSrcSpan bodyLoc
+    Just $ Alignable
+        { aContainer = matchPos
+        , aLeft      = leftPos
+        , aRight     = bodyPos
+        , aRightLead = length "-> "
+        }
+grhsToAlignable _conf (S.L _ (Hs.XGRHS x))  = Hs.noExtCon x
+grhsToAlignable _conf (S.L _ _)             = Nothing
+
+
+--------------------------------------------------------------------------------
 step :: Maybe Int -> Config -> Step
 step maxColumns config = makeStep "Cases" $ \ls module' ->
     let changes
@@ -147,5 +180,6 @@ step maxColumns config = makeStep "Cases" $ \ls module' ->
         configured :: [Change String]
         configured = concat $
             [changes records recordToAlignable | cRecords config] ++
-            [changes everything (matchGroupToAlignable config)] in
+            [changes everything (matchGroupToAlignable config)] ++
+            [changes everything (multiWayIfToAlignable config)] in
     applyChanges configured ls
