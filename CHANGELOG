@@ -1,5 +1,13 @@
 # CHANGELOG
 
+- 0.12.2.0 (2020-10-08)
+     *  align: Add a new option for aligning only adjacent items (by 1Computer1)
+     *  align: Add support for aligning MultiWayIf syntax (by 1Computer1)
+     *  data: Fix some issues with record field padding
+     *  module_header: Add separate_lists option
+     *  imports: Respect separate_lists for (..) imports
+     *  data: Make sorting deriving list optional (by Maxim Koltsov)
+
 - 0.12.1.0 (2020-10-05)
      *  Bump Cabal-version to 2.4 (by Łukasz Gołębiewski)
      *  Fix "group" import sort with multi-line imports (by Maxim Koltsov)
