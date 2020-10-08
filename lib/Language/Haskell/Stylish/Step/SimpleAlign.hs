@@ -1,5 +1,6 @@
 --------------------------------------------------------------------------------
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeFamilies    #-}
 module Language.Haskell.Stylish.Step.SimpleAlign
     ( Config (..)
     , defaultConfig
@@ -28,6 +29,7 @@ data Config = Config
     { cCases            :: !Bool
     , cTopLevelPatterns :: !Bool
     , cRecords          :: !Bool
+    , cMultiWayIf       :: !Bool
     } deriving (Show)
 
 
@@ -37,6 +39,7 @@ defaultConfig = Config
     { cCases            = True
     , cTopLevelPatterns = True
     , cRecords          = True
+    , cMultiWayIf       = True
     }
 
 
@@ -136,21 +139,18 @@ matchToAlignable _conf (S.L _ (Hs.Match _ _ _ _))  = Nothing
 
 --------------------------------------------------------------------------------
 multiWayIfToAlignable
-    :: Config
-    -> Hs.LHsExpr Hs.GhcPs
+    :: Hs.LHsExpr Hs.GhcPs
     -> [Alignable S.RealSrcSpan]
-multiWayIfToAlignable conf (S.L _ (Hs.HsMultiIf _ grhss)) =
-  fromMaybe [] $ traverse (grhsToAlignable conf) grhss
-multiWayIfToAlignable _conf _ = []
+multiWayIfToAlignable  (S.L _ (Hs.HsMultiIf _ grhss)) =
+  fromMaybe [] $ traverse grhsToAlignable grhss
+multiWayIfToAlignable _ = []
 
 
 --------------------------------------------------------------------------------
 grhsToAlignable
-    :: Config
-    -> S.Located (Hs.GRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs))
+    :: S.Located (Hs.GRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs))
     -> Maybe (Alignable S.RealSrcSpan)
-grhsToAlignable conf (S.L grhsloc (Hs.GRHS _ guards@(_ : _) body)) = do
-    guard $ cCases conf
+grhsToAlignable (S.L grhsloc (Hs.GRHS _ guards@(_ : _) body)) = do
     let guardsLocs = map S.getLoc guards
         bodyLoc    = S.getLoc body
         left       = foldl1' S.combineSrcSpans guardsLocs
@@ -163,13 +163,13 @@ grhsToAlignable conf (S.L grhsloc (Hs.GRHS _ guards@(_ : _) body)) = do
         , aRight     = bodyPos
         , aRightLead = length "-> "
         }
-grhsToAlignable _conf (S.L _ (Hs.XGRHS x))  = Hs.noExtCon x
-grhsToAlignable _conf (S.L _ _)             = Nothing
+grhsToAlignable (S.L _ (Hs.XGRHS x))  = Hs.noExtCon x
+grhsToAlignable (S.L _ _)             = Nothing
 
 
 --------------------------------------------------------------------------------
 step :: Maybe Int -> Config -> Step
-step maxColumns config = makeStep "Cases" $ \ls module' ->
+step maxColumns config@(Config {..}) = makeStep "Cases" $ \ls module' ->
     let changes
             :: (S.Located (Hs.HsModule Hs.GhcPs) -> [a])
             -> (a -> [Alignable S.RealSrcSpan])
@@ -179,7 +179,7 @@ step maxColumns config = makeStep "Cases" $ \ls module' ->
 
         configured :: [Change String]
         configured = concat $
-            [changes records recordToAlignable | cRecords config] ++
+            [changes records recordToAlignable | cRecords ] ++
             [changes everything (matchGroupToAlignable config)] ++
-            [changes everything (multiWayIfToAlignable config)] in
+            [changes everything multiWayIfToAlignable | cMultiWayIf] in
     applyChanges configured ls

@@ -94,6 +94,7 @@ steps:
       cases: true
       top_level_patterns: true
       records: true
+      multi_way_if: true
 
   # Import cleanup
   - imports:

@@ -208,7 +208,8 @@ parseSimpleAlign c o = SimpleAlign.step
     <*> (SimpleAlign.Config
         <$> withDef SimpleAlign.cCases            "cases"
         <*> withDef SimpleAlign.cTopLevelPatterns "top_level_patterns"
-        <*> withDef SimpleAlign.cRecords          "records")
+        <*> withDef SimpleAlign.cRecords          "records"
+        <*> withDef SimpleAlign.cMultiWayIf       "multi_way_if")
   where
     withDef f k = fromMaybe (f SimpleAlign.defaultConfig) <$> (o A..:? k)
 
