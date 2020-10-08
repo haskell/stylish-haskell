@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
-{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE BlockArguments    #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
@@ -10,10 +10,12 @@ module Language.Haskell.Stylish.Config
     , defaultConfigBytes
     , configFilePath
     , loadConfig
+    , parseConfig
     ) where
 
 
 --------------------------------------------------------------------------------
+import           Control.Applicative                              ((<|>))
 import           Control.Monad                                    (forM, mzero)
 import           Data.Aeson                                       (FromJSON (..))
 import qualified Data.Aeson                                       as A
@@ -43,8 +45,8 @@ import           Language.Haskell.Stylish.Config.Internal
 import           Language.Haskell.Stylish.Step
 import qualified Language.Haskell.Stylish.Step.Data               as Data
 import qualified Language.Haskell.Stylish.Step.Imports            as Imports
-import qualified Language.Haskell.Stylish.Step.ModuleHeader       as ModuleHeader
 import qualified Language.Haskell.Stylish.Step.LanguagePragmas    as LanguagePragmas
+import qualified Language.Haskell.Stylish.Step.ModuleHeader       as ModuleHeader
 import qualified Language.Haskell.Stylish.Step.SimpleAlign        as SimpleAlign
 import qualified Language.Haskell.Stylish.Step.Squash             as Squash
 import qualified Language.Haskell.Stylish.Step.Tabs               as Tabs
@@ -74,7 +76,7 @@ data ExitCodeBehavior
   deriving (Eq)
 
 instance Show ExitCodeBehavior where
-  show NormalExitBehavior = "normal"
+  show NormalExitBehavior        = "normal"
   show ErrorOnFormatExitBehavior = "error_on_format"
 
 --------------------------------------------------------------------------------
@@ -206,17 +208,22 @@ parseSimpleAlign :: Config -> A.Object -> A.Parser Step
 parseSimpleAlign c o = SimpleAlign.step
     <$> pure (configColumns c)
     <*> (SimpleAlign.Config
-        <$> (o A..:? "cases" >>= parseEnum aligns (def SimpleAlign.cCases))
-        <*> (o A..:? "top_level_patterns" >>= parseEnum aligns (def SimpleAlign.cTopLevelPatterns))
-        <*> (o A..:? "records" >>= parseEnum aligns (def SimpleAlign.cRecords))
-        <*> (o A..:? "multi_way_if" >>= parseEnum aligns (def SimpleAlign.cMultiWayIf)))
+        <$> parseAlign "cases"              SimpleAlign.cCases
+        <*> parseAlign "top_level_patterns" SimpleAlign.cTopLevelPatterns
+        <*> parseAlign "records"            SimpleAlign.cRecords
+        <*> parseAlign "multi_way_if"       SimpleAlign.cMultiWayIf)
   where
-    def f = f SimpleAlign.defaultConfig
+    parseAlign key f =
+        (o A..:? key >>= parseEnum aligns (f SimpleAlign.defaultConfig)) <|>
+        (boolToAlign <$> o A..: key)
     aligns =
         [ ("always",   SimpleAlign.Always)
         , ("adjacent", SimpleAlign.Adjacent)
         , ("never",    SimpleAlign.Never)
         ]
+    boolToAlign True  = SimpleAlign.Always
+    boolToAlign False = SimpleAlign.Never
+
 
 --------------------------------------------------------------------------------
 parseRecords :: Config -> A.Object -> A.Parser Step
@@ -300,8 +307,8 @@ parseImports config o = fmap (Imports.step columns) $ Imports.Options
 
     parseListPadding = \case
         A.String "module_name" -> pure Imports.LPModuleName
-        A.Number n | n >= 1 -> pure $ Imports.LPConstant (truncate n)
-        v -> A.typeMismatch "'module_name' or >=1 number" v
+        A.Number n | n >= 1    -> pure $ Imports.LPConstant (truncate n)
+        v                      -> A.typeMismatch "'module_name' or >=1 number" v
 
 --------------------------------------------------------------------------------
 parseLanguagePragmas :: Config -> A.Object -> A.Parser Step

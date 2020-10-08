@@ -4,11 +4,14 @@ module Language.Haskell.Stylish.Config.Tests
 
 
 --------------------------------------------------------------------------------
-import qualified Data.Set                        as Set
+import qualified Data.Aeson.Types                    as Aeson
+import qualified Data.ByteString.Lazy.Char8          as BL8
+import qualified Data.Set                            as Set
+import qualified Data.YAML.Aeson                     as Yaml
 import           System.Directory
-import           Test.Framework                  (Test, testGroup)
-import           Test.Framework.Providers.HUnit  (testCase)
-import           Test.HUnit                      (Assertion, assert)
+import           Test.Framework                      (Test, testGroup)
+import           Test.Framework.Providers.HUnit      (testCase)
+import           Test.HUnit                          (Assertion, assert, (@?=))
 
 
 --------------------------------------------------------------------------------
@@ -31,6 +34,8 @@ tests = testGroup "Language.Haskell.Stylish.Config"
                testSpecifiedColumns
     , testCase "Correctly read .stylish-haskell.yaml file with no max column number"
                testNoColumns
+    , testCase "Backwards-compatible align options"
+               testBoolSimpleAlign
     ]
 
 
@@ -103,6 +108,22 @@ testNoColumns =
     createFilesAndGetConfig [(".stylish-haskell.yaml", dotStylish3)]
     where
       expected = Nothing
+
+
+--------------------------------------------------------------------------------
+testBoolSimpleAlign :: Assertion
+testBoolSimpleAlign = do
+    Right val <- pure $ Yaml.decode1 $ BL8.pack config
+    Aeson.Success conf <- pure $ Aeson.parse parseConfig val
+    length (configSteps conf) @?= 1
+  where
+    config = unlines
+      [ "steps:"
+      , "  - simple_align:"
+      , "      cases: true"
+      , "      top_level_patterns: always"
+      , "      records: false"
+      ]
 
 
 -- | Example cabal file borrowed from
