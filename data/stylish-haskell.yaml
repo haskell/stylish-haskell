@@ -92,12 +92,17 @@ steps:
 
   # Align the right hand side of some elements.  This is quite conservative
   # and only applies to statements where each element occupies a single
-  # line. All default to true.
+  # line.
+  # Possible values:
+  # - always - Always align statements.
+  # - adjacent - Align statements that are on adjacent lines in groups.
+  # - never - Never align statements.
+  # All default to always.
   - simple_align:
-      cases: true
-      top_level_patterns: true
-      records: true
-      multi_way_if: true
+      cases: always
+      top_level_patterns: always
+      records: always
+      multi_way_if: always
 
   # Import cleanup
   - imports:

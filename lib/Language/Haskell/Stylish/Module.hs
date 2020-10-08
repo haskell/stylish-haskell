@@ -24,6 +24,7 @@ module Language.Haskell.Stylish.Module
   , moduleComments
   , moduleLanguagePragmas
   , queryModule
+  , groupByLine
 
     -- * Imports
   , canMergeImport
@@ -192,22 +193,21 @@ moduleImports m
 
 -- | Get groups of imports from module
 moduleImportGroups :: Module -> [NonEmpty (Located Import)]
-moduleImportGroups = go [] Nothing . moduleImports
+moduleImportGroups = groupByLine unsafeGetRealSrcSpan . moduleImports
+
+-- The same logic as 'Language.Haskell.Stylish.Module.moduleImportGroups'.
+groupByLine :: (a -> RealSrcSpan) -> [a] -> [NonEmpty a]
+groupByLine f = go [] Nothing
   where
-    -- Run through all imports (assume they are sorted already in order of
-    -- appearance in the file) and group the ones that are on consecutive
-    -- lines.
-    go  :: [Located Import] -> Maybe Int -> [Located Import]
-        -> [NonEmpty (Located Import)]
-    go acc _        []                   = ne acc
-    go acc mbCurrentLine (imp : impRest) =
-        let
-          lStart = getStartLineUnsafe imp
-          lEnd = getEndLineUnsafe imp in
-        case mbCurrentLine of
-            Just lPrevEnd | lPrevEnd + 1 < lStart
-              -> ne acc ++ go [imp] (Just lEnd) impRest
-            _ -> go (acc ++ [imp]) (Just lEnd) impRest
+    go acc _ [] = ne acc
+    go acc mbCurrentLine (x:xs) =
+      let
+        lStart = GHC.srcSpanStartLine (f x)
+        lEnd = GHC.srcSpanEndLine (f x) in
+      case mbCurrentLine of
+        Just lPrevEnd | lPrevEnd + 1 < lStart
+          -> ne acc ++ go [x] (Just lEnd) xs
+        _ -> go (acc ++ [x]) (Just lEnd) xs
 
     ne []       = []
     ne (x : xs) = [x :| xs]
