@@ -145,7 +145,10 @@ multiWayIfToAlignable _conf _ = []
 
 
 --------------------------------------------------------------------------------
-grhsToAlignable :: Config -> S.Located (Hs.GRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)) -> Maybe (Alignable S.RealSrcSpan)
+grhsToAlignable
+    :: Config
+    -> S.Located (Hs.GRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs))
+    -> Maybe (Alignable S.RealSrcSpan)
 grhsToAlignable conf (S.L grhsloc (Hs.GRHS _ guards@(_ : _) body)) = do
     guard $ cCases conf
     let guardsLocs = map S.getLoc guards
