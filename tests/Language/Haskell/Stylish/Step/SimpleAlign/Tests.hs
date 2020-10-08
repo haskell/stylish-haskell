@@ -34,6 +34,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.SimpleAlign.Tests"
     , testCase "case 13" case13
     , testCase "case 14" case14
     , testCase "case 15" case15
+    , testCase "case 16" case16
     ]
 
 
@@ -206,7 +207,20 @@ case12 = assertSnippet (step Nothing defaultConfig { cCases = Never }) input inp
 
 --------------------------------------------------------------------------------
 case13 :: Assertion
-case13 = assertSnippet (step (Just 80) defaultConfig { cCases = Adjacent })
+case13 = assertSnippet (step Nothing defaultConfig)
+    [ "cond n = if"
+    , "    | n < 10, x <- 1 -> x"
+    , "    | otherwise -> 2"
+    ]
+    [ "cond n = if"
+    , "    | n < 10, x <- 1 -> x"
+    , "    | otherwise      -> 2"
+    ]
+
+
+--------------------------------------------------------------------------------
+case14 :: Assertion
+case14 = assertSnippet (step (Just 80) defaultConfig { cCases = Adjacent })
     [ "catch e = case e of"
     , "    Left GoodError -> 1"
     , "    Left BadError -> 2"
@@ -224,8 +238,8 @@ case13 = assertSnippet (step (Just 80) defaultConfig { cCases = Adjacent })
 
 
 --------------------------------------------------------------------------------
-case14 :: Assertion
-case14 = assertSnippet (step (Just 80) defaultConfig { cTopLevelPatterns = Adjacent })
+case15 :: Assertion
+case15 = assertSnippet (step (Just 80) defaultConfig { cTopLevelPatterns = Adjacent })
     [ "catch (Left GoodError) = 1"
     , "catch (Left BadError) = 2"
     , "-- otherwise"
@@ -241,8 +255,8 @@ case14 = assertSnippet (step (Just 80) defaultConfig { cTopLevelPatterns = Adjac
 
 
 --------------------------------------------------------------------------------
-case15 :: Assertion
-case15 = assertSnippet (step (Just 80) defaultConfig { cRecords = Adjacent })
+case16 :: Assertion
+case16 = assertSnippet (step (Just 80) defaultConfig { cRecords = Adjacent })
     [ "data Foo = Foo"
     , "    { foo :: Int"
     , "    , foo2 :: String"
