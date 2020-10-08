@@ -32,6 +32,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.SimpleAlign.Tests"
     , testCase "case 11" case11
     , testCase "case 12" case12
     , testCase "case 13" case13
+    , testCase "case 13b" case13b
     ]
 
 
@@ -212,4 +213,15 @@ case13 = assertSnippet (step Nothing defaultConfig)
     [ "cond n = if"
     , "    | n < 10, x <- 1 -> x"
     , "    | otherwise      -> 2"
+    ]
+
+case13b :: Assertion
+case13b = assertSnippet (step Nothing defaultConfig {cMultiWayIf = False})
+    [ "cond n = if"
+    , "    | n < 10, x <- 1 -> x"
+    , "    | otherwise -> 2"
+    ]
+    [ "cond n = if"
+    , "    | n < 10, x <- 1 -> x"
+    , "    | otherwise -> 2"
     ]
