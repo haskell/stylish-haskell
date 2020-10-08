@@ -35,6 +35,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.SimpleAlign.Tests"
     , testCase "case 14" case14
     , testCase "case 15" case15
     , testCase "case 16" case16
+    , testCase "case 17" case17
     ]
 
 
@@ -274,4 +275,19 @@ case16 = assertSnippet (step (Just 80) defaultConfig { cRecords = Adjacent })
     , "    , baz    :: String"
     , "    , baz2   :: Bool"
     , "    } deriving (Show)"
+    ]
+
+
+--------------------------------------------------------------------------------
+case17 :: Assertion
+case17 = assertSnippet (step Nothing defaultConfig { cCases = Adjacent })
+    [ "cond n = if"
+    , "    | n < 10, x <- 1 -> x"
+    , "    -- comment"
+    , "    | otherwise -> 2"
+    ]
+    [ "cond n = if"
+    , "    | n < 10, x <- 1 -> x"
+    , "    -- comment"
+    , "    | otherwise -> 2"
     ]
