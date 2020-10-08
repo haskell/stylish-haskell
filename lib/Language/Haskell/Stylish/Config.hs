@@ -206,11 +206,16 @@ parseSimpleAlign :: Config -> A.Object -> A.Parser Step
 parseSimpleAlign c o = SimpleAlign.step
     <$> pure (configColumns c)
     <*> (SimpleAlign.Config
-        <$> withDef SimpleAlign.cCases            "cases"
-        <*> withDef SimpleAlign.cTopLevelPatterns "top_level_patterns"
-        <*> withDef SimpleAlign.cRecords          "records")
+        <$> (o A..:? "cases" >>= parseEnum aligns (def SimpleAlign.cCases))
+        <*> (o A..:? "top_level_patterns" >>= parseEnum aligns (def SimpleAlign.cTopLevelPatterns))
+        <*> (o A..:? "records" >>= parseEnum aligns (def SimpleAlign.cRecords)))
   where
-    withDef f k = fromMaybe (f SimpleAlign.defaultConfig) <$> (o A..:? k)
+    def f = f SimpleAlign.defaultConfig
+    aligns =
+        [ ("always",   SimpleAlign.Always)
+        , ("adjacent", SimpleAlign.Adjacent)
+        , ("never",    SimpleAlign.Never)
+        ]
 
 --------------------------------------------------------------------------------
 parseRecords :: Config -> A.Object -> A.Parser Step

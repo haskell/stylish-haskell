@@ -31,6 +31,9 @@ tests = testGroup "Language.Haskell.Stylish.Step.SimpleAlign.Tests"
     , testCase "case 10" case10
     , testCase "case 11" case11
     , testCase "case 12" case12
+    , testCase "case 13" case13
+    , testCase "case 14" case14
+    , testCase "case 15" case15
     ]
 
 
@@ -192,10 +195,69 @@ case11 = assertSnippet (step Nothing defaultConfig)
 
 --------------------------------------------------------------------------------
 case12 :: Assertion
-case12 = assertSnippet (step Nothing defaultConfig {cCases = False}) input input
+case12 = assertSnippet (step Nothing defaultConfig { cCases = Never }) input input
   where
     input =
         [ "case x of"
         , "  Just y -> 1"
         , "  Nothing -> 2"
         ]
+
+
+--------------------------------------------------------------------------------
+case13 :: Assertion
+case13 = assertSnippet (step (Just 80) defaultConfig { cCases = Adjacent })
+    [ "catch e = case e of"
+    , "    Left GoodError -> 1"
+    , "    Left BadError -> 2"
+    , "    -- otherwise"
+    , "    Right [] -> 0"
+    , "    Right (x:_) -> x"
+    ]
+    [ "catch e = case e of"
+    , "    Left GoodError -> 1"
+    , "    Left BadError  -> 2"
+    , "    -- otherwise"
+    , "    Right []    -> 0"
+    , "    Right (x:_) -> x"
+    ]
+
+
+--------------------------------------------------------------------------------
+case14 :: Assertion
+case14 = assertSnippet (step (Just 80) defaultConfig { cTopLevelPatterns = Adjacent })
+    [ "catch (Left GoodError) = 1"
+    , "catch (Left BadError) = 2"
+    , "-- otherwise"
+    , "catch (Right []) = 0"
+    , "catch (Right (x:_)) = x"
+    ]
+    [ "catch (Left GoodError) = 1"
+    , "catch (Left BadError)  = 2"
+    , "-- otherwise"
+    , "catch (Right [])    = 0"
+    , "catch (Right (x:_)) = x"
+    ]
+
+
+--------------------------------------------------------------------------------
+case15 :: Assertion
+case15 = assertSnippet (step (Just 80) defaultConfig { cRecords = Adjacent })
+    [ "data Foo = Foo"
+    , "    { foo :: Int"
+    , "    , foo2 :: String"
+    , "      -- a comment"
+    , "    , barqux :: String"
+    , "    , baz :: String"
+    , "    , baz2 :: Bool"
+    , "    } deriving (Show)"
+    ]
+    [ "data Foo = Foo"
+    , "    { foo  :: Int"
+    , "    , foo2 :: String"
+    , "      -- a comment"
+    , "    , barqux :: String"
+    , "    , baz    :: String"
+    , "    , baz2   :: Bool"
+    , "    } deriving (Show)"
+    ]
