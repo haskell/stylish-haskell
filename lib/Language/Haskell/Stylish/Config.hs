@@ -208,7 +208,8 @@ parseSimpleAlign c o = SimpleAlign.step
     <*> (SimpleAlign.Config
         <$> (o A..:? "cases" >>= parseEnum aligns (def SimpleAlign.cCases))
         <*> (o A..:? "top_level_patterns" >>= parseEnum aligns (def SimpleAlign.cTopLevelPatterns))
-        <*> (o A..:? "records" >>= parseEnum aligns (def SimpleAlign.cRecords)))
+        <*> (o A..:? "records" >>= parseEnum aligns (def SimpleAlign.cRecords))
+        <*> (o A..:? "multi_way_if" >>= parseEnum aligns (def SimpleAlign.cMultiWayIf)))
   where
     def f = f SimpleAlign.defaultConfig
     aligns =

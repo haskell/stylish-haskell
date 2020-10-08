@@ -99,6 +99,7 @@ steps:
       cases: always
       top_level_patterns: always
       records: always
+      multi_way_if: always
 
   # Import cleanup
   - imports:

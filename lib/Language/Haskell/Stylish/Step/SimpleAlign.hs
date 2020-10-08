@@ -1,5 +1,6 @@
 --------------------------------------------------------------------------------
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeFamilies    #-}
 module Language.Haskell.Stylish.Step.SimpleAlign
     ( Config (..)
     , Align (..)
@@ -11,6 +12,7 @@ module Language.Haskell.Stylish.Step.SimpleAlign
 --------------------------------------------------------------------------------
 import           Data.Either                     (partitionEithers)
 import           Data.List                       (foldl', foldl1', sortOn)
+import           Control.Monad                   (guard)
 import           Data.Maybe                      (fromMaybe)
 import qualified GHC.Hs                          as Hs
 import qualified SrcLoc                          as S
@@ -29,18 +31,21 @@ data Config = Config
     { cCases            :: Align
     , cTopLevelPatterns :: Align
     , cRecords          :: Align
-    }
+    , cMultiWayIf       :: Align
+    } deriving (Show)
 
 data Align
     = Always
     | Adjacent
     | Never
+    deriving (Eq, Show)
 
 defaultConfig :: Config
 defaultConfig = Config
     { cCases            = Always
     , cTopLevelPatterns = Always
     , cRecords          = Always
+    , cMultiWayIf       = Always
     }
 
 -- The same logic as 'Language.Haskell.Stylish.Module.moduleImportGroups'.
@@ -163,9 +168,10 @@ multiWayIfToAlignable
     :: Config
     -> Hs.LHsExpr Hs.GhcPs
     -> [[Alignable S.RealSrcSpan]]
-multiWayIfToAlignable conf (S.L _ (Hs.HsMultiIf _ grhss)) = groupAlign (cCases conf) as
+multiWayIfToAlignable conf (S.L _ (Hs.HsMultiIf _ grhss)) =
+    groupAlign (cMultiWayIf conf) as
   where
-      as = fromMaybe [] $ traverse grhsToAlignable grhss
+    as = fromMaybe [] $ traverse grhsToAlignable grhss
 multiWayIfToAlignable _conf _ = []
 
 
@@ -192,7 +198,7 @@ grhsToAlignable (S.L _ _)            = Nothing
 
 --------------------------------------------------------------------------------
 step :: Maybe Int -> Config -> Step
-step maxColumns config = makeStep "Cases" $ \ls module' ->
+step maxColumns config@(Config {..}) = makeStep "Cases" $ \ls module' ->
     let changes
             :: (S.Located (Hs.HsModule Hs.GhcPs) -> [a])
             -> (a -> [[Alignable S.RealSrcSpan]])
