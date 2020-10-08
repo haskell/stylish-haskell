@@ -6,6 +6,7 @@ module Language.Haskell.Stylish.GHC
   , dropBeforeLocated
   , dropBeforeAndAfter
     -- * Unsafe getters
+  , unsafeGetRealSrcSpan
   , getEndLineUnsafe
   , getStartLineUnsafe
     -- * Standard settings
@@ -18,32 +19,33 @@ module Language.Haskell.Stylish.GHC
   ) where
 
 --------------------------------------------------------------------------------
-import           Data.Function (on)
+import           Data.Function     (on)
 
 --------------------------------------------------------------------------------
-import           DynFlags                        (Settings(..), defaultDynFlags)
-import qualified DynFlags                        as GHC
-import           FileSettings                    (FileSettings(..))
-import           GHC.Fingerprint                 (fingerprint0)
+import           DynFlags          (Settings (..), defaultDynFlags)
+import qualified DynFlags          as GHC
+import           FileSettings      (FileSettings (..))
+import           GHC.Fingerprint   (fingerprint0)
 import           GHC.Platform
-import           GHC.Version                     (cProjectVersion)
-import           GhcNameVersion                  (GhcNameVersion(..))
-import           PlatformConstants               (PlatformConstants(..))
-import           SrcLoc                          (GenLocated(..), SrcSpan(..))
-import           SrcLoc                          (Located, RealLocated)
-import           SrcLoc                          (srcSpanStartLine, srcSpanEndLine)
-import           ToolSettings                    (ToolSettings(..))
-import qualified Outputable                      as GHC
+import           GHC.Version       (cProjectVersion)
+import           GhcNameVersion    (GhcNameVersion (..))
+import qualified Outputable        as GHC
+import           PlatformConstants (PlatformConstants (..))
+import           SrcLoc            (GenLocated (..), Located, RealLocated,
+                                    RealSrcSpan, SrcSpan (..), srcSpanEndLine,
+                                    srcSpanStartLine)
+import           ToolSettings      (ToolSettings (..))
+
+unsafeGetRealSrcSpan :: Located a -> RealSrcSpan
+unsafeGetRealSrcSpan = \case
+  (L (RealSrcSpan s) _) -> s
+  _                     -> error "could not get source code location"
 
 getStartLineUnsafe :: Located a -> Int
-getStartLineUnsafe = \case
-  (L (RealSrcSpan s) _) -> srcSpanStartLine s
-  _ -> error "could not get start line of block"
+getStartLineUnsafe = srcSpanStartLine . unsafeGetRealSrcSpan
 
 getEndLineUnsafe :: Located a -> Int
-getEndLineUnsafe = \case
-  (L (RealSrcSpan s) _) -> srcSpanEndLine s
-  _ -> error "could not get end line of block"
+getEndLineUnsafe = srcSpanEndLine . unsafeGetRealSrcSpan
 
 dropAfterLocated :: Maybe (Located a) -> [RealLocated b] -> [RealLocated b]
 dropAfterLocated loc xs = case loc of

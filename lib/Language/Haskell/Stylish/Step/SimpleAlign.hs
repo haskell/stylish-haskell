@@ -11,8 +11,8 @@ module Language.Haskell.Stylish.Step.SimpleAlign
 
 --------------------------------------------------------------------------------
 import           Data.Either                     (partitionEithers)
+import           Data.Foldable                   (toList)
 import           Data.List                       (foldl', foldl1', sortOn)
-import           Control.Monad                   (guard)
 import           Data.Maybe                      (fromMaybe)
 import qualified GHC.Hs                          as Hs
 import qualified SrcLoc                          as S
@@ -48,25 +48,13 @@ defaultConfig = Config
     , cMultiWayIf       = Always
     }
 
--- The same logic as 'Language.Haskell.Stylish.Module.moduleImportGroups'.
-groupByLine :: [Alignable S.RealSrcSpan] -> [[Alignable S.RealSrcSpan]]
-groupByLine = go [] Nothing
-  where
-    go acc _ [] = [acc]
-    go acc mbCurrentLine (x:xs) =
-      let
-        lStart = S.srcSpanStartLine (aLeft x)
-        lEnd = S.srcSpanEndLine (aRight x) in
-      case mbCurrentLine of
-        Just lPrevEnd | lPrevEnd + 1 < lStart
-          -> [acc] ++ go [x] (Just lEnd) xs
-        _ -> go (acc ++ [x]) (Just lEnd) xs
-
 groupAlign :: Align -> [Alignable S.RealSrcSpan] -> [[Alignable S.RealSrcSpan]]
 groupAlign a xs = case a of
-  Never -> []
-  Adjacent -> groupByLine . sortOn (S.srcSpanStartLine . aLeft) $ xs
-  Always -> [xs]
+    Never    -> []
+    Adjacent -> byLine . sortOn (S.srcSpanStartLine . aLeft) $ xs
+    Always   -> [xs]
+  where
+    byLine = map toList . groupByLine aLeft
 
 
 --------------------------------------------------------------------------------
