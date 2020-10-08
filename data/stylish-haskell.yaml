@@ -30,6 +30,9 @@ steps:
   #
   #     # See `separate_lists` for the `imports` step.
   #     separate_lists: true
+  #
+  #     # Whether to break the "where" if there are no exports.
+  #     break_only_where: true
 
   # Format record definitions. This is disabled by default.
   #

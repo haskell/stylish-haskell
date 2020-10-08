@@ -40,16 +40,18 @@ import qualified Language.Haskell.Stylish.Step.Imports as Imports
 
 
 data Config = Config
-    { indent        :: Int
-    , sort          :: Bool
-    , separateLists :: Bool
+    { indent         :: Int
+    , sort           :: Bool
+    , separateLists  :: Bool
+    , breakOnlyWhere :: Bool
     }
 
 defaultConfig :: Config
 defaultConfig = Config
-    { indent        = 4
-    , sort          = True
-    , separateLists = True
+    { indent         = 4
+    , sort           = True
+    , separateLists  = True
+    , breakOnlyWhere = True
     }
 
 step :: Config -> Step
@@ -140,10 +142,15 @@ printHeader conf mname mexps _ = do
     putText (showOutputable name)
     attachEolComment loc
 
-  maybe
-    (when (isJust mname) do newline >> spaces (indent conf) >> putText "where")
-    (printExportList conf)
-    mexps
+  case mexps of
+    Nothing -> when (isJust mname) do
+      if breakOnlyWhere conf
+        then do
+          newline
+          spaces (indent conf)
+        else space
+      putText "where"
+    Just exps -> printExportList conf exps
 
 attachEolComment :: SrcSpan -> P ()
 attachEolComment = \case

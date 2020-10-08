@@ -35,6 +35,8 @@ tests = testGroup "Language.Haskell.Stylish.Printer.ModuleHeader"
     , testCase "Group doc with 2 spaces" ex15
     , testCase "Does not sort" ex16
     , testCase "Repects separate_lists" ex17
+    , testCase "Does not break 'where' with no exports" ex18
+    , testCase "Does break 'where' with exports" ex19
     ]
 
 --------------------------------------------------------------------------------
@@ -309,5 +311,21 @@ ex17 = assertSnippet (step defaultConfig {separateLists = False})
     ]
     [ "module Foo"
     , "    ( Bar(..)"
+    , "    ) where"
+    ]
+
+ex18 :: Assertion
+ex18 = assertSnippet (step defaultConfig {breakOnlyWhere = False}) input input
+  where
+    input =
+      [ "module Foo where"
+      ]
+
+ex19 :: Assertion
+ex19 = assertSnippet (step defaultConfig {breakOnlyWhere = False})
+    [ "module Foo (x) where"
+    ]
+    [ "module Foo"
+    , "    ( x"
     , "    ) where"
     ]
