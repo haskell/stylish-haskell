@@ -51,7 +51,7 @@ defaultConfig = Config
     { indent         = 4
     , sort           = True
     , separateLists  = True
-    , breakOnlyWhere = True
+    , breakOnlyWhere = False
     }
 
 step :: Config -> Step

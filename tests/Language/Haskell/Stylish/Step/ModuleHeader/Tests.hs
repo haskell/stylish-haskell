@@ -17,7 +17,7 @@ import           Language.Haskell.Stylish.Tests.Util
 --------------------------------------------------------------------------------
 tests :: Test
 tests = testGroup "Language.Haskell.Stylish.Printer.ModuleHeader"
-    [ testCase "Hello world" ex0
+    [ testCase "Does not indent absent export list" ex0
     , testCase "Empty exports list" ex1
     , testCase "Single exported variable" ex2
     , testCase "Multiple exported variables" ex3
@@ -29,24 +29,22 @@ tests = testGroup "Language.Haskell.Stylish.Printer.ModuleHeader"
     , testCase "Exports module" ex9
     , testCase "Exports symbol" ex10
     , testCase "Respects groups" ex11
-    , testCase "'where' not repeated in case it isn't part of exports" ex12
-    , testCase "Indents absent export list with 2 spaces" ex13
+    , testCase "'where' not repeated when not part of exports with break_only_where" ex12
+    , testCase "Indents absent export list with 2 spaces with break_only_where" ex13
     , testCase "Indents with 2 spaces" ex14
     , testCase "Group doc with 2 spaces" ex15
     , testCase "Does not sort" ex16
     , testCase "Repects separate_lists" ex17
-    , testCase "Does not break 'where' with no exports" ex18
-    , testCase "Does break 'where' with exports" ex19
+    , testCase "Indents absent export list with break_only_where" ex18
     ]
 
 --------------------------------------------------------------------------------
 ex0 :: Assertion
-ex0 = assertSnippet (step defaultConfig)
-    [ "module Foo where"
-    ]
-    [ "module Foo"
-    , "    where"
-    ]
+ex0 = assertSnippet (step defaultConfig) input input
+  where
+    input =
+      [ "module Foo where"
+      ]
 
 ex1 :: Assertion
 ex1 = assertSnippet (step defaultConfig)
@@ -242,7 +240,7 @@ ex11 = assertSnippet (step defaultConfig)
     ]
 
 ex12 :: Assertion
-ex12 = assertSnippet (step defaultConfig)
+ex12 = assertSnippet (step defaultConfig {breakOnlyWhere = True})
     [ "module Foo"
     , "  where"
     , "-- hmm"
@@ -253,7 +251,7 @@ ex12 = assertSnippet (step defaultConfig)
     ]
 
 ex13 :: Assertion
-ex13 = assertSnippet (step defaultConfig {indent = 2})
+ex13 = assertSnippet (step defaultConfig {breakOnlyWhere = True, indent = 2})
     [ "module Foo where"
     ]
     [ "module Foo"
@@ -315,17 +313,9 @@ ex17 = assertSnippet (step defaultConfig {separateLists = False})
     ]
 
 ex18 :: Assertion
-ex18 = assertSnippet (step defaultConfig {breakOnlyWhere = False}) input input
-  where
-    input =
-      [ "module Foo where"
-      ]
-
-ex19 :: Assertion
-ex19 = assertSnippet (step defaultConfig {breakOnlyWhere = False})
-    [ "module Foo (x) where"
+ex18 = assertSnippet (step defaultConfig {breakOnlyWhere = True})
+    [ "module Foo where"
     ]
     [ "module Foo"
-    , "    ( x"
-    , "    ) where"
+    , "    where"
     ]

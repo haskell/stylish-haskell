@@ -32,7 +32,7 @@ steps:
   #     separate_lists: true
   #
   #     # Whether to break the "where" if there are no exports.
-  #     break_only_where: true
+  #     break_only_where: false
 
   # Format record definitions. This is disabled by default.
   #
