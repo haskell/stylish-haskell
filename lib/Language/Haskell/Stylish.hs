@@ -12,6 +12,8 @@ module Language.Haskell.Stylish
     , unicodeSyntax
       -- ** Helpers
     , findHaskellFiles
+    , considerFiles
+    , considerFile
     , stepName
       -- * Config
     , module Language.Haskell.Stylish.Config
@@ -45,6 +47,7 @@ import qualified Language.Haskell.Stylish.Step.TrailingWhitespace as TrailingWhi
 import qualified Language.Haskell.Stylish.Step.UnicodeSyntax      as UnicodeSyntax
 import           Language.Haskell.Stylish.Verbose
 import           Paths_stylish_haskell                            (version)
+import Data.Maybe (maybeToList, mapMaybe)
 
 
 --------------------------------------------------------------------------------
@@ -118,19 +121,18 @@ format maybeConfigPath maybeFilePath contents = do
 
 --------------------------------------------------------------------------------
 -- | Searches Haskell source files in any given folder recursively.
-findHaskellFiles :: Bool -> [FilePath] -> IO [FilePath]
+findHaskellFiles :: Bool -> [FilePath] -> IO [(FilePath, [String])]
 findHaskellFiles v fs = mapM (findFilesR v) fs >>= return . concat
 
 
 --------------------------------------------------------------------------------
-findFilesR :: Bool -> FilePath -> IO [FilePath]
+findFilesR :: Bool -> FilePath -> IO [(FilePath, [String])]
 findFilesR _ []   = return []
 findFilesR v path = do
   doesFileExist path >>= \case
-    True -> return [path]
+    True -> return . maybeToList $ considerFile path
     _    -> doesDirectoryExist path >>= \case
-      True  -> findFilesRecursive path >>=
-        return . filter (\x -> takeExtension x == ".hs")
+      True  -> mapMaybe considerFile <$> findFilesRecursive path
       False -> do
         makeVerbose v ("Input folder does not exists: " <> path)
         findFilesR v []
@@ -148,3 +150,13 @@ findFilesR v path = do
                    True  -> go dir
                    False -> return [dir])
       return $ concat ps
+
+considerFiles :: [FilePath] -> [(FilePath, [String])]
+considerFiles = mapMaybe considerFile
+
+considerFile :: FilePath -> Maybe (FilePath, [String])
+considerFile x =
+  case takeExtension x of
+    ".hs"  -> Just (x, [])
+    ".hsc" -> Just (x, ["CPP"])
+    _      -> Nothing
