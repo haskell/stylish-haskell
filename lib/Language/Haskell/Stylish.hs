@@ -29,6 +29,8 @@ module Language.Haskell.Stylish
 
 --------------------------------------------------------------------------------
 import           Control.Monad                                    (foldM)
+import           Data.Maybe                                       (maybeToList,
+                                                                   mapMaybe)
 import           System.Directory                                 (doesDirectoryExist,
                                                                    doesFileExist,
                                                                    listDirectory)
@@ -47,7 +49,6 @@ import qualified Language.Haskell.Stylish.Step.TrailingWhitespace as TrailingWhi
 import qualified Language.Haskell.Stylish.Step.UnicodeSyntax      as UnicodeSyntax
 import           Language.Haskell.Stylish.Verbose
 import           Paths_stylish_haskell                            (version)
-import Data.Maybe (maybeToList, mapMaybe)
 
 
 --------------------------------------------------------------------------------
@@ -121,6 +122,7 @@ format maybeConfigPath maybeFilePath contents = do
 
 --------------------------------------------------------------------------------
 -- | Searches Haskell source files in any given folder recursively.
+-- Includes any extra extensions to add on top of the config.
 findHaskellFiles :: Bool -> [FilePath] -> IO [(FilePath, [String])]
 findHaskellFiles v fs = mapM (findFilesR v) fs >>= return . concat
 
@@ -151,6 +153,8 @@ findFilesR v path = do
                    False -> return [dir])
       return $ concat ps
 
+-- | Filter out files that can be formatted and also any extra extensions they may use.
+-- Currently supported: .hs .hsc
 considerFiles :: [FilePath] -> [(FilePath, [String])]
 considerFiles = mapMaybe considerFile
 
