@@ -70,6 +70,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 55" case55
     , testCase "case 56" case56
     , testCase "case 57" case57
+    , testCase "case 58" case58
     ]
 
 case00 :: Assertion
@@ -1273,6 +1274,22 @@ case57 = assertSnippet (step defaultConfig)
     , "    , fooBarBar :: Int"
     , "    }"
     ]
+
+-- | Should not break DataKinds in records
+--
+-- See https://github.com/jaspervdj/stylish-haskell/issues/330
+case58 :: Assertion
+case58 = expected @=? testStep (step sameIndentStyle) input
+  where
+    input = unlines
+      [ "module Herp where"
+      , ""
+      , "data Foo a = Foo"
+      , "               { foo :: Foo 'True"
+      , "               }"
+      ]
+
+    expected = input
 
 sameSameStyle :: Config
 sameSameStyle = Config SameLine SameLine 2 2 False True SameLine False True NoMaxColumns
