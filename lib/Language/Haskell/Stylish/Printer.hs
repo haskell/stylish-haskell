@@ -57,6 +57,7 @@ import           Prelude                         hiding (lines)
 
 --------------------------------------------------------------------------------
 import           ApiAnnotation                   (AnnKeywordId(..), AnnotationComment(..))
+import           BasicTypes                      (PromotionFlag(..))
 import           GHC.Hs.Extension                (GhcPs, NoExtField(..))
 import           GHC.Hs.Types                    (HsType(..))
 import           Module                          (ModuleName, moduleNameString)
@@ -229,7 +230,10 @@ putType ltp = case unLocated ltp of
     putRdrName op
     space
     putType rhs
-  HsTyVar NoExtField _ rdrName ->
+  HsTyVar NoExtField flag rdrName -> do
+    case flag of
+      IsPromoted  -> putText "'"
+      NotPromoted -> pure ()
     putRdrName rdrName
   HsTyLit _ tp ->
     putOutputable tp
