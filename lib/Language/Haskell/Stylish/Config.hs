@@ -197,9 +197,10 @@ parseEnum strs _   (Just k) = case lookup k strs of
 --------------------------------------------------------------------------------
 parseModuleHeader :: Config -> A.Object -> A.Parser Step
 parseModuleHeader _ o = fmap ModuleHeader.step $ ModuleHeader.Config
-    <$> o A..:? "indent"         A..!= ModuleHeader.indent        def
-    <*> o A..:? "sort"           A..!= ModuleHeader.sort          def
-    <*> o A..:? "separate_lists" A..!= ModuleHeader.separateLists def
+    <$> o A..:? "indent"           A..!= ModuleHeader.indent         def
+    <*> o A..:? "sort"             A..!= ModuleHeader.sort           def
+    <*> o A..:? "separate_lists"   A..!= ModuleHeader.separateLists  def
+    <*> o A..:? "break_only_where" A..!= ModuleHeader.breakOnlyWhere def
   where
     def = ModuleHeader.defaultConfig
 
