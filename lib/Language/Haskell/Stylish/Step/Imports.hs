@@ -323,11 +323,14 @@ printImport _ (IEModuleContents _ (L _ m)) = do
     putText "module"
     space
     putText (moduleNameString m)
-printImport separateLists (IEThingWith _ name _wildcard imps _) = do
+printImport separateLists (IEThingWith _ name wildcard imps _) = do
     printIeWrappedName name
     when separateLists space
+    let ellipsis = case wildcard of
+          IEWildcard _position -> [putText ".."]
+          NoIEWildcard         -> []
     parenthesize $
-      sep (comma >> space) (printIeWrappedName <$> imps)
+      sep (comma >> space) (ellipsis <> fmap printIeWrappedName imps)
 printImport _ (IEGroup _ _ _ ) =
     error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEGroup'"
 printImport _ (IEDoc _ _) =
