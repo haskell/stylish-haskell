@@ -274,6 +274,7 @@ parseImports config o = fmap (Imports.step columns) $ Imports.Options
       <*> (o A..:? "list_padding" >>= maybe (pure $ def Imports.listPadding) parseListPadding)
       <*> o A..:? "separate_lists" A..!= def Imports.separateLists
       <*> o A..:? "space_surround" A..!= def Imports.spaceSurround
+      <*> o A..:? "post_qualify" A..!= def Imports.postQualified
   where
     def f = f Imports.defaultOptions
 
