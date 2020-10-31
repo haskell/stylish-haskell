@@ -36,6 +36,7 @@ tests = testGroup "Language.Haskell.Stylish.Printer.ModuleHeader"
     , testCase "Does not sort" ex16
     , testCase "Repects separate_lists" ex17
     , testCase "Indents absent export list with break_only_where" ex18
+    , testCase "Respects bundled patterns" ex19
     ]
 
 --------------------------------------------------------------------------------
@@ -318,4 +319,15 @@ ex18 = assertSnippet (step defaultConfig {breakOnlyWhere = True})
     ]
     [ "module Foo"
     , "    where"
+    ]
+
+ex19 :: Assertion
+ex19 = assertSnippet (step defaultConfig)
+    [ "{-# LANGUAGE PatternSynonyms #-}"
+    , "module Foo (Bar (.., Baz)) where"
+    ]
+    [ "{-# LANGUAGE PatternSynonyms #-}"
+    , "module Foo"
+    , "    ( Bar (.., Baz)"
+    , "    ) where"
     ]
