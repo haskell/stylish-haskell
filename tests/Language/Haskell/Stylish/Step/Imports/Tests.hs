@@ -65,6 +65,10 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 31" case31
     , testCase "case 32" case32
     , testCase "case 33" case33
+    , testCase "case 34" case34
+    , testCase "case 35" case35
+    , testCase "case 36" case36
+    , testCase "case 37" case37
     ]
 
 
@@ -884,4 +888,38 @@ case33 = assertSnippet (step Nothing defaultOptions {postQualified = True})
     , ""
     , "import Data.Foo           (Foo (Bar, Foo), Goo (Goo))"
     , "import Data.Set           (empty, intersect, nub)"
+    ]
+
+--------------------------------------------------------------------------------
+case34 :: Assertion
+case34 = assertSnippet (step Nothing defaultOptions {postQualified = True})
+    [ "import qualified Data.Aeson as JSON (Value)"
+    ]
+    [ "import Data.Aeson qualified as JSON (Value)"
+    ]
+
+--------------------------------------------------------------------------------
+case35 :: Assertion
+case35 = assertSnippet (step Nothing defaultOptions {postQualified = True})
+    [ "import Data.Aeson qualified as JSON (Value)"
+    ]
+    [ "import Data.Aeson qualified as JSON (Value)"
+    ]
+
+--------------------------------------------------------------------------------
+case36 :: Assertion
+case36 = assertSnippet (step Nothing defaultOptions {postQualified = True})
+    [ "import qualified Data.Aeson as JSON (Value)"
+    , "import qualified Data.Aeson as JSON (encode, decode)"
+    ]
+    [ "import Data.Aeson qualified as JSON (Value, decode, encode)"
+    ]
+
+--------------------------------------------------------------------------------
+case37 :: Assertion
+case37 = assertSnippet (step Nothing defaultOptions {postQualified = True})
+    [ "import Data.Aeson qualified as JSON (Value)"
+    , "import Data.Aeson qualified as JSON (encode, decode)"
+    ]
+    [ "import Data.Aeson qualified as JSON (Value, decode, encode)"
     ]
