@@ -179,28 +179,31 @@ printQualified Options{..} padNames stats (L _ decl) = do
 
   when (isSafe decl) (putText "safe" >> space)
 
-  case (postQualified, isQualified decl, isAnyQualified stats) of
-    (False, True, _) -> putText "qualified" >> space
-    (False, _, True) -> putText "         " >> space
-    _                -> pure ()
+  let
+    module_ = do
+      moduleNamePosition <- length <$> getCurrentLine
+      forM_ (ideclPkgQual decl') $ \pkg -> putText (stringLiteral pkg) >> space
+      putText (moduleName decl)
+      -- Only print spaces if something follows.
+      when padNames $
+        when (isJust (ideclAs decl') || isHiding decl ||
+                not (null $ ideclHiding decl')) $
+          putText $
+            replicate (isLongestImport stats - importModuleNameLength decl) ' '
+      pure moduleNamePosition
 
-  moduleNamePosition <- length <$> getCurrentLine
-  forM_ (ideclPkgQual decl') $ \pkg -> putText (stringLiteral pkg) >> space
-  putText (moduleName decl)
-
-  -- Only print spaces if something follows.
-  when padNames $
-    when (isJust (ideclAs decl') || isHiding decl ||
-            not (null $ ideclHiding decl')) $
-      putText $
-        replicate (isLongestImport stats - importModuleNameLength decl) ' '
+  moduleNamePosition <-
+    case (postQualified, isQualified decl, isAnyQualified stats) of
+      (False, True , _   ) -> putText "qualified" *> space *> module_
+      (False, _    , True) -> putText "         " *> space *> module_
+      (True , True , _   ) -> module_ <* space <* putText "qualified"
+      _                    -> module_
 
   beforeAliasPosition <- length <$> getCurrentLine
-  if not postQualified then
-    forM_ (ideclAs decl') \(L _ name) ->
-      space >> putText "as" >> space >> putText (moduleNameString name)
-  else
-    pure ()
+
+  forM_ (ideclAs decl') \(L _ name) -> do
+    space >> putText "as" >> space >> putText (moduleNameString name)
+
   afterAliasPosition <- length <$> getCurrentLine
 
   when (isHiding decl) (space >> putText "hiding")
@@ -306,13 +309,6 @@ printQualified Options{..} padNames stats (L _ decl) = do
               modifyCurrentLine trimRight
               newline >> putOffset >> printAsSingleLine)
             printAsMultiLine)
-  if postQualified && isQualified decl
-  then do
-    space
-    putText "qualified"
-    forM_ (ideclAs decl') \(L _ name) ->
-      space >> putText "as" >> space >> putText (moduleNameString name)
-  else pure ()
   where
     -- We cannot wrap/repeat 'hiding' imports since then we would get multiple
     -- imports hiding different things.
