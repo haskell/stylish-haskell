@@ -884,7 +884,7 @@ case33 = assertSnippet (step Nothing defaultOptions {postQualified = True})
     , "import Data.Default.Class (Default (def))"
     , ""
     , "import Data.Maybe         (Maybe (Just, Nothing))"
-    , "import Data.Maybe.Extra   (Maybe (Just, Nothing)) qualified"
+    , "import Data.Maybe.Extra   qualified (Maybe (Just, Nothing))"
     , ""
     , "import Data.Foo           (Foo (Bar, Foo), Goo (Goo))"
     , "import Data.Set           (empty, intersect, nub)"
