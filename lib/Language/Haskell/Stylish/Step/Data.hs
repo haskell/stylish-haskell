@@ -357,19 +357,15 @@ putConstructor cfg consIndent (L _ cons) = case cons of
     putText "::"
     space
 
-    when (unLocated con_forall) do
-      putText "forall"
-      space
-      sep space (fmap putOutputable $ hsq_explicit con_qvars)
-      dot
-      space
-
+    putForAll con_forall $ hsq_explicit con_qvars
     forM_ con_mb_cxt (putContext cfg . unLocated)
     putType con_res_ty
 
   XConDecl x ->
     noExtCon x
-  ConDeclH98{..} ->
+  ConDeclH98{..} -> do
+    putForAll con_forall con_ex_tvs
+    forM_ con_mb_cxt (putContext cfg . unLocated)
     case con_args of
       InfixCon arg1 arg2 -> do
         putType arg1
@@ -466,6 +462,15 @@ putNewtypeConstructor cfg (L _ cons) = case cons of
       [ "Language.Haskell.Stylish.Step.Data.putNewtypeConstructor: "
       , "GADT encountered in newtype"
       ]
+
+putForAll :: Located Bool -> [Located (HsTyVarBndr GhcPs)] -> P ()
+putForAll forall ex_tvs =
+  when (unLocated forall) do
+    putText "forall"
+    space
+    sep space (fmap putOutputable ex_tvs)
+    dot
+    space
 
 putContext :: Config -> HsContext GhcPs -> P ()
 putContext Config{..} = suffix (space >> putText "=>" >> space) . \case

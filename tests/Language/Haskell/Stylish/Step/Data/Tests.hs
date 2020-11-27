@@ -71,6 +71,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 56" case56
     , testCase "case 57" case57
     , testCase "case 58" case58
+    , testCase "case 59" case59
     ]
 
 case00 :: Assertion
@@ -1290,6 +1291,14 @@ case58 = expected @=? testStep (step sameIndentStyle) input
       ]
 
     expected = input
+
+-- | Don't remove existential quantification
+--
+-- See https://github.com/jaspervdj/stylish-haskell/issues/339
+case59 :: Assertion
+case59 = assertSnippet (step defaultConfig)
+    [ "data Foo = forall (a :: *) . Bar a" ]
+    [ "data Foo = forall (a :: *). Bar a" ]
 
 sameSameStyle :: Config
 sameSameStyle = Config SameLine SameLine 2 2 False True SameLine False True NoMaxColumns
