@@ -158,7 +158,21 @@ data Foo a
   deriving (ToJSON) via Bar Foo
 ```
 
-## VIM integration
+## Editor integration
+
+### Haskell Language Server
+[Haskell Language Server(HLS)][HLS] includes a [plugin][HLS stylish-haskell Plugin]
+for stylish-haskell. By changing the formatting provider option
+(`haskell.formattingProvider`) to `stylish-haskell` as described in
+[HLS options][HLS option], any editors that support [Language Server Protocol][LSP]
+can use stylish-haskell for formatting.
+
+[HLS]: https://github.com/haskell/haskell-language-server
+[HLS option]: https://github.com/haskell/haskell-language-server#language-specific-server-options
+[HLS stylish-haskell Plugin]: https://github.com/haskell/haskell-language-server/blob/master/plugins/default/src/Ide/Plugin/StylishHaskell.hs
+[LSP]: https://microsoft.github.io/language-server-protocol/
+
+### VIM integration
 
 Since it works as a filter it is pretty easy to integrate this with VIM.
 
@@ -192,7 +206,7 @@ Haskell file:
 [vim-stylish-haskell]: https://github.com/nbouscal/vim-stylish-haskell
 [vim-stylishask]: https://github.com/alx741/vim-stylishask
 
-## Emacs integration
+### Emacs integration
 
 [haskell-mode] for Emacs supports `stylish-haskell`. For configuration,
 see [the “Using external formatters” section][haskell-mode/format] of the
@@ -201,7 +215,7 @@ haskell-mode manual.
 [haskell-mode]: https://github.com/haskell/haskell-mode
 [haskell-mode/format]: http://haskell.github.io/haskell-mode/manual/latest/Autoformating.html
 
-## Atom integration
+### Atom integration
 
 [ide-haskell] for Atom supports `stylish-haskell`.
 
@@ -210,7 +224,7 @@ haskell-mode manual.
 [ide-haskell]: https://atom.io/packages/ide-haskell
 [atom-beautify]: Https://atom.io/packages/atom-beautify
 
-## Visual Studio Code integration
+### Visual Studio Code integration
 
 [stylish-haskell-vscode] for VSCode supports `stylish-haskell`.
 
