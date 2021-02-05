@@ -21,8 +21,8 @@ tests = testGroup "Language.Haskell.Stylish.Step.Signature.Tests"
     ]
 
 config :: Int -> Config
-config maxColumnLength = Config
-  { maxColumnLength = maxColumnLength
+config cMaxColumns = Config
+  { cMaxColumns = cMaxColumns
   }
 
 case00 :: Assertion
