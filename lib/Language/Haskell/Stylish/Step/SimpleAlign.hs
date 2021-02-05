@@ -186,7 +186,7 @@ grhsToAlignable (S.L _ _)            = Nothing
 
 --------------------------------------------------------------------------------
 step :: Maybe Int -> Config -> Step
-step maxColumns config@(Config {..}) = makeStep "Cases" $ \ls module' ->
+step maxColumns config = makeStep "Cases" $ \ls module' ->
     let changes
             :: (S.Located (Hs.HsModule Hs.GhcPs) -> [a])
             -> (a -> [[Alignable S.RealSrcSpan]])
