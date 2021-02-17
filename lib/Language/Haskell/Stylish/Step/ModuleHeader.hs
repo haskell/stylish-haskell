@@ -2,6 +2,7 @@
 {-# LANGUAGE LambdaCase     #-}
 module Language.Haskell.Stylish.Step.ModuleHeader
   ( Config (..)
+  , BreakWhere (..)
   , defaultConfig
   , step
   ) where
@@ -40,25 +41,31 @@ import qualified Language.Haskell.Stylish.Step.Imports as Imports
 
 
 data Config = Config
-    { indent         :: Int
-    , sort           :: Bool
-    , separateLists  :: Bool
-    , breakOnlyWhere :: Bool
+    { indent        :: Int
+    , sort          :: Bool
+    , separateLists :: Bool
+    , breakWhere    :: BreakWhere
     }
+
+data BreakWhere
+    = Exports
+    | Single
+    | Inline
+    | Always
 
 defaultConfig :: Config
 defaultConfig = Config
-    { indent         = 4
-    , sort           = True
-    , separateLists  = True
-    , breakOnlyWhere = False
+    { indent        = 4
+    , sort          = True
+    , separateLists = True
+    , breakWhere    = Exports
     }
 
-step :: Config -> Step
-step = makeStep "Module header" . printModuleHeader
+step :: Maybe Int -> Config -> Step
+step maxCols = makeStep "Module header" . printModuleHeader maxCols
 
-printModuleHeader :: Config -> Lines -> Module -> Lines
-printModuleHeader conf ls m =
+printModuleHeader :: Maybe Int -> Config -> Lines -> Module -> Lines
+printModuleHeader maxCols conf ls m =
   let
     header = moduleHeader m
     name = rawModuleName header
@@ -73,8 +80,7 @@ printModuleHeader conf ls m =
       & dropAfterLocated exports
       & dropBeforeLocated name
 
-    -- TODO: pass max columns?
-    printedModuleHeader = runPrinter_ (PrinterConfig Nothing) relevantComments
+    printedModuleHeader = runPrinter_ (PrinterConfig maxCols) relevantComments
         m (printHeader conf name exports haddocks)
 
     getBlock loc =
@@ -144,13 +150,27 @@ printHeader conf mname mexps _ = do
 
   case mexps of
     Nothing -> when (isJust mname) do
-      if breakOnlyWhere conf
-        then do
+      case breakWhere conf of
+        Always -> do
           newline
           spaces (indent conf)
-        else space
+        _      -> space
       putText "where"
-    Just exps -> printExportList conf exps
+    Just (L loc exps) -> do
+      exportsWithComments <- fmap (second doSort) <$> groupAttachedComments exps
+      case breakWhere conf of
+        Single
+          | Just exportsWithoutComments <- groupWithoutComments exportsWithComments
+          , length exportsWithoutComments <= 1
+          -> printSingleLineExportList conf (L loc exportsWithoutComments)
+        Inline
+          | Just exportsWithoutComments <- groupWithoutComments exportsWithComments
+          -> wrapping
+               (printSingleLineExportList conf (L loc exportsWithoutComments))
+               (printMultiLineExportList conf (L loc exportsWithComments))
+        _ -> printMultiLineExportList conf (L loc exportsWithComments)
+  where
+    doSort = if sort conf then NonEmpty.sortBy compareLIE else id
 
 attachEolComment :: SrcSpan -> P ()
 attachEolComment = \case
@@ -164,12 +184,25 @@ attachEolCommentEnd = \case
   RealSrcSpan rspan ->
     removeLineComment (srcSpanEndLine rspan) >>= mapM_ \c -> space >> putComment c
 
-printExportList :: Config -> Located [GHC.LIE GhcPs] -> P ()
-printExportList conf (L srcLoc exports) = do
-  newline
-  doIndent >> putText "(" >> when (notNull exports) space
+printSingleLineExportList :: Config -> Located [GHC.LIE GhcPs] -> P ()
+printSingleLineExportList conf (L srcLoc exports) = do
+  space >> putText "("
+  printInlineExports exports
+  putText ")" >> space >> putText "where" >> attachEolCommentEnd srcLoc
+  where
+    printInlineExports :: [GHC.LIE GhcPs] -> P ()
+    printInlineExports = \case
+      []     -> pure ()
+      [e]    -> printExport conf e
+      (e:es) -> printExport conf e >> comma >> space >> printInlineExports es
 
-  exportsWithComments <- fmap (second doSort) <$> groupAttachedComments exports
+printMultiLineExportList
+     :: Config
+     -> Located [([AnnotationComment], NonEmpty (GHC.LIE GhcPs))]
+     -> P ()
+printMultiLineExportList conf (L srcLoc exportsWithComments) = do
+  newline
+  doIndent >> putText "(" >> when (notNull exportsWithComments) space
 
   printExports exportsWithComments
 
@@ -191,11 +224,9 @@ printExportList conf (L srcLoc exports) = do
     doIndent = spaces (indent conf)
     doHang = pad (indent conf + 2)
 
-    doSort = if sort conf then NonEmpty.sortBy compareLIE else id
-
     printExports :: [([AnnotationComment], NonEmpty (GHC.LIE GhcPs))] -> P ()
     printExports (([], firstInGroup :| groupRest) : rest) = do
-      printExport firstInGroup
+      printExport conf firstInGroup
       newline
       doIndent
       printExportsGroupTail groupRest
@@ -204,7 +235,7 @@ printExportList conf (L srcLoc exports) = do
       putComment firstComment >> newline >> doIndent
       forM_ comments \c -> doHang >> putComment c >> newline >> doIndent
       doHang
-      printExport firstExport
+      printExport conf firstExport
       newline
       doIndent
       printExportsGroupTail groupRest
@@ -216,14 +247,14 @@ printExportList conf (L srcLoc exports) = do
     printExportsTail = mapM_ \(comments, exported) -> do
       forM_ comments \c -> doHang >> putComment c >> newline >> doIndent
       forM_ exported \export -> do
-        comma >> space >> printExport export
+        comma >> space >> printExport conf export
         newline >> doIndent
 
     printExportsGroupTail :: [GHC.LIE GhcPs] -> P ()
     printExportsGroupTail (x : xs) = printExportsTail [([], x :| xs)]
     printExportsGroupTail []       = pure ()
 
-    -- NOTE(jaspervdj): This code is almost the same as the import printing
-    -- in 'Imports' and should be merged.
-    printExport :: GHC.LIE GhcPs -> P ()
-    printExport = Imports.printImport (separateLists conf) . unLoc
+-- NOTE(jaspervdj): This code is almost the same as the import printing in
+-- 'Imports' and should be merged.
+printExport :: Config -> GHC.LIE GhcPs -> P ()
+printExport conf = Imports.printImport (separateLists conf) . unLoc

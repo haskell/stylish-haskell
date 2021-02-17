@@ -31,8 +31,15 @@ steps:
   #     # See `separate_lists` for the `imports` step.
   #     separate_lists: true
   #
-  #     # Whether to break the "where" if there are no exports.
-  #     break_only_where: false
+  #     # When to break the "where".
+  #     # Possible values:
+  #     # - exports: only break when there is an explicit export list.
+  #     # - single: only break when the export list counts more than one export.
+  #     # - inline: only break when the export list is too long. This is
+  #     #   determined by the `columns` setting. Not applicable when the export
+  #     #   list contains comments as newlines will be required.
+  #     # - always: always break before the "where".
+  #     break_where: exports
 
   # Format record definitions. This is disabled by default.
   #
