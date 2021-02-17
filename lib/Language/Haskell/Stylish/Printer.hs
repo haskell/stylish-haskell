@@ -41,6 +41,7 @@ module Language.Haskell.Stylish.Printer
   , removeLineComment
   , sep
   , groupAttachedComments
+  , groupWithoutComments
   , space
   , spaces
   , suffix
@@ -73,7 +74,7 @@ import           Control.Monad.Reader            (MonadReader, ReaderT(..), asks
 import           Control.Monad.State             (MonadState, State)
 import           Control.Monad.State             (runState)
 import           Control.Monad.State             (get, gets, modify, put)
-import           Data.Foldable                   (find)
+import           Data.Foldable                   (find, toList)
 import           Data.Functor                    ((<&>))
 import           Data.List                       (delete, isPrefixOf)
 import           Data.List.NonEmpty              (NonEmpty(..))
@@ -431,6 +432,17 @@ groupAttachedComments = go
       pure $ (comments, L rspan x :| sameGroupOf nextGroupStartM) : restGroups
 
     go _ = pure []
+
+-- | A view on 'groupAttachedComments': return 'Just' when there is just a
+--   one big group without any comments.
+groupWithoutComments
+    :: [([AnnotationComment], NonEmpty (Located a))]
+    -> Maybe [Located a]
+groupWithoutComments grouped
+    | all (null . fst) grouped
+    = Just $ concatMap (toList . snd) grouped
+    | otherwise
+    = Nothing
 
 modifyCurrentLine :: (String -> String) -> P ()
 modifyCurrentLine f = do
