@@ -59,25 +59,26 @@ data SignatureDecl = MkSignatureDecl
   }
 
 formatSignatureDecl :: Config -> Module -> Located SignatureDecl -> ChangeLine
-formatSignatureDecl Config{..} m ldecl@(L _declPos decl) = do
+formatSignatureDecl cfg@Config{..} m ldecl = do
   let block = originalDeclBlock
       declLength = getEndColumnUnsafe ldecl
   if fits declLength cMaxColumns then
     noop block
   else
-    change block (const printDecl)
+    change block (const (printDecl cfg m ldecl))
 
   where
     originalDeclBlock =
       Block (getStartLineUnsafe ldecl) (getEndLineUnsafe ldecl)
 
+printDecl :: Config -> Module -> Located SignatureDecl -> Lines
+printDecl Config{..} m ldecl@(L _declPos decl) = runPrinter_ printerConfig [] m do
+  (putRdrName $ sigName decl) >> space >> putText "::" >> newline
+  spaces 5 >> (putRdrName $ head $ sigParameters decl) >> newline
+  traverse (\para -> spaces 2 >> putText "->" >> space >> (putRdrName para) >> newline) (tail $ sigParameters decl)
+  where
     printerConfig = PrinterConfig
       { columns = case cMaxColumns of
           NoMaxColumns -> Nothing
           MaxColumns n -> Just n
       }
-
-    printDecl = runPrinter_ printerConfig [] m do
-      (putRdrName $ sigName decl) >> space >> putText "::" >> newline
-      spaces 5 >> (putRdrName $ head $ sigParameters decl) >> newline
-      traverse (\para -> spaces 2 >> putText "->" >> space >> (putRdrName para) >> newline) (tail $ sigParameters decl)
