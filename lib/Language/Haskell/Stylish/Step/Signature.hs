@@ -59,29 +59,29 @@ data SignatureDecl = MkSignatureDecl
   }
 
 formatSignatureDecl :: Config -> Module -> Located SignatureDecl -> ChangeLine
-formatSignatureDecl cfg@Config{..} m ldecl
+formatSignatureDecl cfg@Config{..} m ldecl@(L _ decl)
   | fits declLength cMaxColumns = noop block
-  | otherwise = change block (const (printDecl cfg m ldecl))
+  | otherwise = change block (const (printDecl cfg m decl))
 
   where
     block = Block (getStartLineUnsafe ldecl) (getEndLineUnsafe ldecl)
     declLength = getEndColumnUnsafe ldecl
 
-printDecl :: Config -> Module -> Located SignatureDecl -> Lines
-printDecl Config{..} m (L _declPos decl) = runPrinter_ printerConfig [] m do
+printDecl :: Config -> Module -> SignatureDecl -> Lines
+printDecl Config{..} m MkSignatureDecl{..} = runPrinter_ printerConfig [] m do
   printFirstLine
   printSecondLine
   printRemainingLines
   where
 
     printFirstLine =
-      (putRdrName $ sigName decl) >> space >> putText "::" >> newline
+      putRdrName sigName >> space >> putText "::" >> newline
 
     printSecondLine =
-      spaces 5 >> (putRdrName $ head $ sigParameters decl) >> newline
+      spaces 5 >> (putRdrName $ head sigParameters) >> newline
 
     printRemainingLines =
-      traverse (\para -> spaces 2 >> putText "->" >> space >> (putRdrName para) >> newline) (tail $ sigParameters decl)
+      traverse (\para -> spaces 2 >> putText "->" >> space >> (putRdrName para) >> newline) (tail $ sigParameters)
 
     printerConfig = PrinterConfig
       { columns = case cMaxColumns of
