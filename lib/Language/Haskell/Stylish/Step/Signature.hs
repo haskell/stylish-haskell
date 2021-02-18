@@ -72,11 +72,21 @@ formatSignatureDecl cfg@Config{..} m ldecl = do
       Block (getStartLineUnsafe ldecl) (getEndLineUnsafe ldecl)
 
 printDecl :: Config -> Module -> Located SignatureDecl -> Lines
-printDecl Config{..} m ldecl@(L _declPos decl) = runPrinter_ printerConfig [] m do
-  (putRdrName $ sigName decl) >> space >> putText "::" >> newline
-  spaces 5 >> (putRdrName $ head $ sigParameters decl) >> newline
-  traverse (\para -> spaces 2 >> putText "->" >> space >> (putRdrName para) >> newline) (tail $ sigParameters decl)
+printDecl Config{..} m (L _declPos decl) = runPrinter_ printerConfig [] m do
+  printFirstLine
+  printSecondLine
+  printRemainingLines
   where
+
+    printFirstLine =
+      (putRdrName $ sigName decl) >> space >> putText "::" >> newline
+
+    printSecondLine =
+      spaces 5 >> (putRdrName $ head $ sigParameters decl) >> newline
+
+    printRemainingLines =
+      traverse (\para -> spaces 2 >> putText "->" >> space >> (putRdrName para) >> newline) (tail $ sigParameters decl)
+
     printerConfig = PrinterConfig
       { columns = case cMaxColumns of
           NoMaxColumns -> Nothing
