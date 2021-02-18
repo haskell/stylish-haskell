@@ -81,7 +81,10 @@ printDecl Config{..} m MkSignatureDecl{..} = runPrinter_ printerConfig [] m do
       spaces 5 >> (putRdrName $ head sigParameters) >> newline
 
     printRemainingLines =
-      traverse (\para -> spaces 2 >> putText "->" >> space >> (putRdrName para) >> newline) (tail $ sigParameters)
+      traverse printRemainingLine (tail sigParameters)
+
+    printRemainingLine parameter =
+      spaces 2 >> putText "->" >> space >> (putRdrName parameter) >> newline
 
     printerConfig = PrinterConfig
       { columns = case cMaxColumns of
