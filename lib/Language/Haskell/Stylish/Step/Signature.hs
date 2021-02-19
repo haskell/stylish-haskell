@@ -45,7 +45,9 @@ changes cfg m = fmap (formatSignatureDecl cfg m) (topLevelFunctionSignatures m)
 topLevelFunctionSignatures :: Module -> [Located SignatureDecl]
 topLevelFunctionSignatures = queryModule @(Located (HsDecl GhcPs)) \case
   L pos (SigD _ (TypeSig _ [name] (HsWC _ (HsIB _ (L _ funTy@(HsFunTy _ _ _ )))))) ->
-    [L pos $ MkSignatureDecl name (listParameters funTy)]
+    [L pos $ MkSignatureDecl name (listParameters funTy) []]
+  L pos (SigD _ (TypeSig _ [name] (HsWC _ (HsIB _ (L _ (HsQualTy _ (L _ contexts) (L _ funTy))))))) ->
+    [L pos $ MkSignatureDecl name (listParameters funTy) (contexts >>= listContexts)]
   _ -> []
 
 listParameters :: HsType GhcPs -> [Located RdrName]
@@ -53,9 +55,15 @@ listParameters (HsFunTy _ (L _ arg2) (L _ arg3)) = listParameters arg2 <> listPa
 listParameters (HsTyVar _ _promotionFlag name) = [name]
 listParameters _ = []
 
+listContexts :: Located (HsType GhcPs) -> [Located RdrName]
+listContexts (L _ (HsTyVar _ _ name)) = [name]
+listContexts (L _ (HsAppTy _ arg1 arg2)) = listContexts arg1 <> listContexts arg2
+listContexts _ = []
+
 data SignatureDecl = MkSignatureDecl
   { sigName :: Located RdrName
   , sigParameters :: [Located RdrName]
+  , sigConstraints :: [Located RdrName]
   }
 
 formatSignatureDecl :: Config -> Module -> Located SignatureDecl -> ChangeLine
@@ -74,20 +82,54 @@ printDecl Config{..} m MkSignatureDecl{..} = runPrinter_ printerConfig [] m do
   printRemainingLines
   where
 
+    ----------------------------------------------------------------------------------------
+
     printFirstLine =
       putRdrName sigName >> space >> putText "::" >> newline
 
+    ----------------------------------------------------------------------------------------
+
     printSecondLine =
-      spaces 5 >> (putRdrName $ head sigParameters) >> newline
+      if hasConstraints then printConstraints
+      else printFirstParameter
+
+    printConstraints =
+        spaces 5 >> putText "("
+        >> (traverse (\ctr -> printConstraint ctr >> putText ", ") (init groupConstraints))
+        >> (printConstraint $ last groupConstraints)
+        >> putText ")" >> newline
+
+    groupConstraints = zip (dropEvery sigConstraints 2) (dropEvery (tail sigConstraints) 2)
+
+    printConstraint (tc, tp) = putRdrName tc >> space >> putRdrName tp
+
+    printFirstParameter =
+        spaces 5 >> (putRdrName $ head sigParameters) >> newline
+
+    ----------------------------------------------------------------------------------------
 
     printRemainingLines =
-      traverse printRemainingLine (tail sigParameters)
+      if hasConstraints then
+        printRemainingLine "=>" (head sigParameters)
+        >> traverse (printRemainingLine "->") (tail sigParameters)
+      else
+        traverse (printRemainingLine "->") (tail sigParameters)
 
-    printRemainingLine parameter =
-      spaces 2 >> putText "->" >> space >> (putRdrName parameter) >> newline
+    printRemainingLine prefix parameter =
+      spaces 2 >> putText prefix >> space >> (putRdrName parameter) >> newline
+
+    ----------------------------------------------------------------------------------------
 
     printerConfig = PrinterConfig
       { columns = case cMaxColumns of
           NoMaxColumns -> Nothing
           MaxColumns n -> Just n
       }
+
+    hasConstraints = not $ null sigConstraints
+
+-- 99 problems :)
+dropEvery :: [a] -> Int -> [a]
+dropEvery xs n
+  | length xs < n = xs
+  | otherwise     = take (n-1) xs ++ dropEvery (drop n xs) n

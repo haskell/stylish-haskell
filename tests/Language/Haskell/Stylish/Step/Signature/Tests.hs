@@ -14,7 +14,7 @@ tests :: Test
 tests = testGroup "Language.Haskell.Stylish.Step.Signature.Tests"
     [ testCase "do not wrap signature if it fits max column length" case00
     , testCase "wrap signature if it does not fit max column length" case01
-    -- , testCase "how it behaves when there is a list of constraints" case02
+    , testCase "how it behaves when there is a list of constraints" case02
     -- , testCase "how it behaves when there is a explicit forall" case03
     -- , testCase "how it behaves when there is a explicit forall" case04
     -- , testCase "how it behaves when there is a large function in the argument" case05
