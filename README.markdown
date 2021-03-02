@@ -2,7 +2,7 @@
 
 <img src="./assets/Logo/SVG/RoundedLogo.svg" width="100px">
 
-![Build Status](https://github.com/jaspervdj/patat/workflows/CI/badge.svg)
+![Build Status](https://github.com/jaspervdj/stylish-haskell/workflows/CI/badge.svg)
 
 ## Introduction
 
