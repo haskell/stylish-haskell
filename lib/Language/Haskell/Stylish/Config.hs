@@ -201,6 +201,7 @@ parseModuleHeader config o = fmap (ModuleHeader.step columns) $ ModuleHeader.Con
     <*> (o A..:? "sort"           A..!= ModuleHeader.sort          def)
     <*> (o A..:? "separate_lists" A..!= ModuleHeader.separateLists def)
     <*> (o A..:? "break_where"      >>= parseEnum breakWhere (ModuleHeader.breakWhere def))
+    <*> (o A..:? "open_bracket"     >>= parseEnum openBracket (ModuleHeader.openBracket def))
   where
     def = ModuleHeader.defaultConfig
 
@@ -211,6 +212,11 @@ parseModuleHeader config o = fmap (ModuleHeader.step columns) $ ModuleHeader.Con
         , ("single",  ModuleHeader.Single)
         , ("inline",  ModuleHeader.Inline)
         , ("always",  ModuleHeader.Always)
+        ]
+
+    openBracket =
+        [ ("same_line", ModuleHeader.SameLine)
+        , ("next_line", ModuleHeader.NextLine)
         ]
 
 --------------------------------------------------------------------------------

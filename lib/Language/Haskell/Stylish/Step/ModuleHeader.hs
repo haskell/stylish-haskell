@@ -3,6 +3,7 @@
 module Language.Haskell.Stylish.Step.ModuleHeader
   ( Config (..)
   , BreakWhere (..)
+  , OpenBracket (..)
   , defaultConfig
   , step
   ) where
@@ -45,13 +46,20 @@ data Config = Config
     , sort          :: Bool
     , separateLists :: Bool
     , breakWhere    :: BreakWhere
+    , openBracket   :: OpenBracket
     }
+
+data OpenBracket
+    = SameLine
+    | NextLine
+    deriving (Eq, Show)
 
 data BreakWhere
     = Exports
     | Single
     | Inline
     | Always
+    deriving (Eq, Show)
 
 defaultConfig :: Config
 defaultConfig = Config
@@ -59,6 +67,7 @@ defaultConfig = Config
     , sort          = True
     , separateLists = True
     , breakWhere    = Exports
+    , openBracket   = NextLine
     }
 
 step :: Maybe Int -> Config -> Step
@@ -142,14 +151,14 @@ printHeader
   -> Maybe GHC.LHsDocString
   -> P ()
 printHeader conf mname mexps _ = do
-  forM_ mname \(L loc name) -> do
+  forM_ mname \(L _ name) -> do
     putText "module"
     space
     putText (showOutputable name)
-    attachEolComment loc
 
   case mexps of
     Nothing -> when (isJust mname) do
+      forM_ mname \(L nloc _) -> attachEolComment nloc
       case breakWhere conf of
         Always -> do
           newline
@@ -157,20 +166,48 @@ printHeader conf mname mexps _ = do
         _      -> space
       putText "where"
     Just (L loc exps) -> do
+      moduleComment <- getModuleComment
       exportsWithComments <- fmap (second doSort) <$> groupAttachedComments exps
       case breakWhere conf of
         Single
           | Just exportsWithoutComments <- groupWithoutComments exportsWithComments
           , length exportsWithoutComments <= 1
-          -> printSingleLineExportList conf (L loc exportsWithoutComments)
+          -> do
+              attachModuleComment moduleComment
+              printSingleLineExportList conf (L loc exportsWithoutComments)
         Inline
           | Just exportsWithoutComments <- groupWithoutComments exportsWithComments
-          -> wrapping
-               (printSingleLineExportList conf (L loc exportsWithoutComments))
-               (printMultiLineExportList conf (L loc exportsWithComments))
-        _ -> printMultiLineExportList conf (L loc exportsWithComments)
+          -> do
+              wrapping
+               (   attachModuleComment moduleComment
+                >> printSingleLineExportList conf (L loc exportsWithoutComments))
+               (   attachOpenBracket
+                >> attachModuleComment moduleComment
+                >> printMultiLineExportList conf (L loc exportsWithComments))
+        _ -> do
+          attachOpenBracket
+          attachModuleComment moduleComment
+          printMultiLineExportList conf (L loc exportsWithComments)
   where
+
+    getModuleComment = do
+       maybemaybeComment <- traverse (\(L nloc _) -> removeModuleComment nloc) mname
+       pure $ join maybemaybeComment
+
+    attachModuleComment moduleComment =
+      mapM_ (\c -> space >> putComment c) moduleComment
+
     doSort = if sort conf then NonEmpty.sortBy compareLIE else id
+
+    attachOpenBracket
+      | openBracket conf == SameLine = putText " ("
+      | otherwise                    = pure ()
+
+removeModuleComment :: SrcSpan -> P (Maybe AnnotationComment)
+removeModuleComment = \case
+  UnhelpfulSpan _ -> pure Nothing
+  RealSrcSpan rspan ->
+    removeLineComment (srcSpanStartLine rspan)
 
 attachEolComment :: SrcSpan -> P ()
 attachEolComment = \case
@@ -202,8 +239,7 @@ printMultiLineExportList
      -> P ()
 printMultiLineExportList conf (L srcLoc exportsWithComments) = do
   newline
-  doIndent >> putText "(" >> when (notNull exportsWithComments) space
-
+  doIndent >> putText firstChar >> when (notNull exportsWithComments) space
   printExports exportsWithComments
 
   putText ")" >> space >> putText "where" >> attachEolCommentEnd srcLoc
@@ -221,6 +257,11 @@ printMultiLineExportList conf (L srcLoc exportsWithComments) = do
     -- > xxxx( -- Some comment
     -- > xxxxyyfoo
     -- > xxxx) where
+
+    firstChar =
+      if openBracket conf == SameLine then " "
+      else "("
+
     doIndent = spaces (indent conf)
     doHang = pad (indent conf + 2)
 

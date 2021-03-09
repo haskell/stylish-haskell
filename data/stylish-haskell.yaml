@@ -40,6 +40,13 @@ steps:
   #     #   list contains comments as newlines will be required.
   #     # - always: always break before the "where".
   #     break_where: exports
+  #
+  #     # Where to put open bracket
+  #     # Possible values:
+  #     # - same_line: put open bracket on the same line as the module name, before the
+  #     #              the comment of the module
+  #     # - next_line: put open bracket on the next line, after module comment
+  #     open_bracket: next_line
 
   # Format record definitions. This is disabled by default.
   #
