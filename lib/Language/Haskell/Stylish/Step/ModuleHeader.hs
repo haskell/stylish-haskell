@@ -259,8 +259,9 @@ printMultiLineExportList conf (L srcLoc exportsWithComments) = do
     -- > xxxx) where
 
     firstChar =
-      if openBracket conf == SameLine then " "
-      else "("
+      case openBracket conf of
+        SameLine -> " "
+        NextLine -> "("
 
     doIndent = spaces (indent conf)
     doHang = pad (indent conf + 2)
