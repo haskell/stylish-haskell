@@ -44,7 +44,7 @@ steps:
   #     # Where to put open bracket
   #     # Possible values:
   #     # - same_line: put open bracket on the same line as the module name, before the
-  #     #              the comment of the module
+  #     #              comment of the module
   #     # - next_line: put open bracket on the next line, after module comment
   #     open_bracket: next_line
 
