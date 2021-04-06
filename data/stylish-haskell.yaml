@@ -212,9 +212,7 @@ steps:
       # - compact: A more compact style.
       #
       # - compact_line: Similar to compact, but wrap each line with
-      #   `{-# LANGUAGE #-}'.
-      #
-      # - vertical_compact: Similar to vertical, but use only one language pragma.
+      #   `{-#LANGUAGE #-}'.
       #
       # Default: vertical.
       style: vertical

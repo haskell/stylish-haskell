@@ -24,7 +24,6 @@ data Style
     = Vertical
     | Compact
     | CompactLine
-    | VerticalCompact
     deriving (Eq, Show)
 
 
@@ -75,16 +74,6 @@ compactLinePragmas lg columns align pragmas' = map (wrapLanguage . pad) prags
 
 
 --------------------------------------------------------------------------------
-verticalCompactPragmas :: String -> [String] -> Lines
-verticalCompactPragmas lg pragmas' =
-  [ "{-# " <> lg
-  , "    " <> head pragmas'
-  ]
-  <> [ "  , "  <> pragma | pragma <- tail pragmas']
-  <> [ "  #-}"]
-
-
---------------------------------------------------------------------------------
 truncateComma :: String -> String
 truncateComma ""     = ""
 truncateComma xs
@@ -94,10 +83,9 @@ truncateComma xs
 
 --------------------------------------------------------------------------------
 prettyPragmas :: String -> Maybe Int -> Int -> Bool -> Style -> [String] -> Lines
-prettyPragmas lp _    longest align Vertical        = verticalPragmas lp longest align
-prettyPragmas lp cols _       _     Compact         = compactPragmas lp cols
-prettyPragmas lp cols _       align CompactLine     = compactLinePragmas lp cols align
-prettyPragmas lp _    _       _     VerticalCompact = verticalCompactPragmas lp
+prettyPragmas lp _    longest align Vertical    = verticalPragmas lp longest align
+prettyPragmas lp cols _       _     Compact     = compactPragmas lp cols
+prettyPragmas lp cols _       align CompactLine = compactLinePragmas lp cols align
 
 
 --------------------------------------------------------------------------------

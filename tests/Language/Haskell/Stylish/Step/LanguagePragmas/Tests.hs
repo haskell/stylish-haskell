@@ -30,7 +30,6 @@ tests = testGroup "Language.Haskell.Stylish.Step.LanguagePragmas.Tests"
     , testCase "case 10" case10
     , testCase "case 11" case11
     , testCase "case 12" case12
-    , testCase "case 13" case13
     ]
 
 lANG :: String
@@ -235,27 +234,5 @@ case12 = expected @=? testStep (step Nothing Compact False False "language") inp
 
     expected = unlines
         [ "{-# language NoImplicitPrelude, OverloadedStrings, ScopedTypeVariables, TemplateHaskell, ViewPatterns #-}"
-        , "module Main where"
-        ]
-
---------------------------------------------------------------------------------
-case13 :: Assertion
-case13 = expected @=? testStep (step Nothing VerticalCompact False False "language") input
-  where
-    input = unlines
-        [ "{-# LANGUAGE ViewPatterns, OverloadedStrings #-}"
-        , "{-# LANGUAGE TemplateHaskell, ViewPatterns #-}"
-        , "{-# LANGUAGE ScopedTypeVariables, NoImplicitPrelude #-}"
-        , "module Main where"
-        ]
-
-    expected = unlines
-        [ "{-# language"
-        , "    NoImplicitPrelude"
-        , "  , OverloadedStrings"
-        , "  , ScopedTypeVariables"
-        , "  , TemplateHaskell"
-        , "  , ViewPatterns"
-        , "  #-}"
         , "module Main where"
         ]
