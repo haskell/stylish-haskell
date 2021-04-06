@@ -20,8 +20,10 @@ hsPkgs.shellFor {
   # See overlays/tools.nix for more details
 
   # Some you may need to get some other way.
-  buildInputs = with pkgs.haskellPackages;
-    [ ghcid ];
+  buildInputs = [
+    pkgs.ghcid
+    pkgs.nixpkgs-fmt
+  ];
 
   # Prevents cabal from choosing alternate plans, so that
   # *all* dependencies are provided by Nix.
