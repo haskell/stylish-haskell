@@ -227,3 +227,25 @@ case13 = assertSnippet
         , "{-# LANGUAGE DeriveFunctor #-}"
         , "main = let !x = 1 + 1 in print x"
         ]
+
+--------------------------------------------------------------------------------
+case13 :: Assertion
+case13 = expected @=? testStep (step Nothing VerticalCompact False False "language") input
+  where
+    input = unlines
+        [ "{-# LANGUAGE ViewPatterns, OverloadedStrings #-}"
+        , "{-# LANGUAGE TemplateHaskell, ViewPatterns #-}"
+        , "{-# LANGUAGE ScopedTypeVariables, NoImplicitPrelude #-}"
+        , "module Main where"
+        ]
+
+    expected = unlines
+        [ "{-# language"
+        , "    NoImplicitPrelude"
+        , "  , OverloadedStrings"
+        , "  , ScopedTypeVariables"
+        , "  , TemplateHaskell"
+        , "  , ViewPatterns"
+        , "  #-}"
+        , "module Main where"
+        ]
