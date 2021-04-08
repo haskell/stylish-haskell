@@ -39,6 +39,12 @@ import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Module (Module)
 
 --------------------------------------------------------------------------------
+-- | Takes a Haskell source as an argument and parse it into a Module.
+-- Extract function selects element from that Module record and returns
+-- its String representation.
+--
+-- This function should be used when trying to understand how particular
+-- Haskell code will be represented by ghc-parser's AST
 dumpAst :: Data a => (Module -> a) -> String -> String
 dumpAst extract str =
   let Right(theModule) = parseModule [] Nothing str
