@@ -16,6 +16,7 @@ hsPkgs.shellFor {
   tools = {
     cabal = "3.2.0.0";
     hlint = "2.2.11";
+    stylish-haskell = "0.12.2.0";
   };
   # See overlays/tools.nix for more details
 
