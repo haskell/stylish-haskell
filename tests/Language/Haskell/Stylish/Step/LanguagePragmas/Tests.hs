@@ -8,7 +8,7 @@ module Language.Haskell.Stylish.Step.LanguagePragmas.Tests
 --------------------------------------------------------------------------------
 import Test.Framework                 (Test, testGroup)
 import Test.Framework.Providers.HUnit (testCase)
-import Test.HUnit                     (Assertion)
+import Test.HUnit                     (Assertion, (@=?))
 
 
 --------------------------------------------------------------------------------
@@ -32,6 +32,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.LanguagePragmas.Tests"
     , testCase "case 11" case11
     , testCase "case 12" case12
     , testCase "case 13" case13
+    , testCase "case 14" case14
     ]
 
 lANG :: String
@@ -229,8 +230,8 @@ case13 = assertSnippet
         ]
 
 --------------------------------------------------------------------------------
-case13 :: Assertion
-case13 = expected @=? testStep (step Nothing VerticalCompact False False "language") input
+case14 :: Assertion
+case14 = expected @=? testStep (step Nothing VerticalCompact False False "language") input
   where
     input = unlines
         [ "{-# LANGUAGE ViewPatterns, OverloadedStrings #-}"
