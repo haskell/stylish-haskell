@@ -1,7 +1,9 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE TypeFamilies   #-}
 module Language.Haskell.Stylish.Tests.Util
-    ( testStep
+    ( dumpAst
+    , dumpModule
+    , testStep
     , testStep'
     , Snippet (..)
     , testSnippet
@@ -16,6 +18,8 @@ import           Control.Exception              (bracket, try)
 import           Control.Monad.Writer           (execWriter, tell)
 import           Data.List                      (intercalate)
 import           GHC.Exts                       (IsList (..))
+import           GHC.Hs.Dump                    (showAstData, BlankSrcSpan(..))
+import           Language.Haskell.Stylish.GHC   (baseDynFlags)
 import           System.Directory               (createDirectory,
                                                  getCurrentDirectory,
                                                  getTemporaryDirectory,
@@ -26,12 +30,30 @@ import           System.IO.Error                (isAlreadyExistsError)
 import           System.Random                  (randomIO)
 import           Test.HUnit                     (Assertion, assertFailure,
                                                  (@=?))
-
+import           Outputable                     (showSDoc)
+import           Data.Data                      (Data(..))
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Parse
 import           Language.Haskell.Stylish.Step
+import           Language.Haskell.Stylish.Module (Module)
 
+--------------------------------------------------------------------------------
+-- | Takes a Haskell source as an argument and parse it into a Module.
+-- Extract function selects element from that Module record and returns
+-- its String representation.
+--
+-- This function should be used when trying to understand how particular
+-- Haskell code will be represented by ghc-parser's AST
+dumpAst :: Data a => (Module -> a) -> String -> String
+dumpAst extract str =
+  let Right(theModule) = parseModule [] Nothing str
+      ast              = extract theModule
+      sdoc             = showAstData BlankSrcSpan ast
+  in  showSDoc baseDynFlags sdoc
+
+dumpModule :: String -> String
+dumpModule = dumpAst id
 
 --------------------------------------------------------------------------------
 testStep :: Step -> String -> String
