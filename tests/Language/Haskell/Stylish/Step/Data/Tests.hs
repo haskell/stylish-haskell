@@ -450,7 +450,7 @@ case19 = expected @=? testStep (step indentIndentStyle) input
 
 -- | Should not break Enums (data without records) formatting
 --
--- See https://github.com/jaspervdj/stylish-haskell/issues/262
+-- See https://github.com/haskell/stylish-haskell/issues/262
 case20 :: Assertion
 case20 = input @=? testStep (step indentIndentStyle) input
   where
@@ -1277,7 +1277,7 @@ case57 = assertSnippet (step defaultConfig)
 
 -- | Should not break DataKinds in records
 --
--- See https://github.com/jaspervdj/stylish-haskell/issues/330
+-- See https://github.com/haskell/stylish-haskell/issues/330
 case58 :: Assertion
 case58 = expected @=? testStep (step sameIndentStyle) input
   where

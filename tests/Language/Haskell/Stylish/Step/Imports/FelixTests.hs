@@ -1,15 +1,16 @@
 -- | Tests contributed by Felix Mulder as part of
--- <https://github.com/jaspervdj/stylish-haskell/pull/293>.
+-- <https://github.com/haskell/stylish-haskell/pull/293>.
 module Language.Haskell.Stylish.Step.Imports.FelixTests
   ( tests
   ) where
 
 --------------------------------------------------------------------------------
+import           GHC.Stack                             (HasCallStack,
+                                                        withFrozenCallStack)
+import           Prelude                               hiding (lines)
 import           Test.Framework                        (Test, testGroup)
 import           Test.Framework.Providers.HUnit        (testCase)
 import           Test.HUnit                            (Assertion)
-import           GHC.Stack                             (HasCallStack, withFrozenCallStack)
-import           Prelude                               hiding (lines)
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Module
