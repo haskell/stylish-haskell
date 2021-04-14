@@ -2,7 +2,7 @@ Cabal-version: 2.4
 Name:          stylish-haskell
 Version:       0.12.2.0
 Synopsis:      Haskell code prettifier
-Homepage:      https://github.com/jaspervdj/stylish-haskell
+Homepage:      https://github.com/haskell/stylish-haskell
 License:       BSD-3-Clause
 License-file:  LICENSE
 Author:        Jasper Van der Jeugt <m@jaspervdj.be>
@@ -16,7 +16,7 @@ Description:
 
     .
 
-    <https://github.com/jaspervdj/stylish-haskell/blob/master/README.markdown>
+    <https://github.com/haskell/stylish-haskell/blob/master/README.markdown>
 
 Extra-source-files:
   CHANGELOG,
@@ -179,4 +179,4 @@ Test-suite stylish-haskell-tests
 
 Source-repository head
   Type:     git
-  Location: https://github.com/jaspervdj/stylish-haskell
+  Location: https://github.com/haskell/stylish-haskell

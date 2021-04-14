@@ -29,7 +29,7 @@ jobs:
       name: Cache ~/.stack
       with:
         path: ~/.stack
-        key: ${{ runner.os }}-${{ matrix.ghc }}-v6
+        key: ${{ runner.os }}-${{ matrix.ghc }}-v7
 
     - name: Add ~/.local/bin to PATH
       run: echo "$HOME/.local/bin" >> $GITHUB_PATH
