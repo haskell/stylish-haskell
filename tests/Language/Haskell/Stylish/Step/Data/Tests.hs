@@ -1295,7 +1295,7 @@ case58 = expected @=? testStep (step sameIndentStyle) input
 
 -- | Don't remove existential quantification
 --
--- See https://github.com/jaspervdj/stylish-haskell/issues/339
+-- See https://github.com/haskell/stylish-haskell/issues/339
 case59 :: Assertion
 case59 = assertSnippet (step defaultConfig)
     [ "data Foo = forall (a :: *) . Bar a" ]
@@ -1303,7 +1303,7 @@ case59 = assertSnippet (step defaultConfig)
 
 -- | Don't remove existential quantification
 --
--- See https://github.com/jaspervdj/stylish-haskell/issues/339
+-- See https://github.com/haskell/stylish-haskell/issues/339
 case60 :: Assertion
 case60 = assertSnippet (step defaultConfig)
     [ "data Foo = forall a . Bar a" ]
