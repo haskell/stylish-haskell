@@ -147,6 +147,7 @@ Test-suite stylish-haskell-tests
     Language.Haskell.Stylish.Step.TrailingWhitespace.Tests
     Language.Haskell.Stylish.Step.UnicodeSyntax
     Language.Haskell.Stylish.Step.UnicodeSyntax.Tests
+    Language.Haskell.Stylish.Regressions
     Language.Haskell.Stylish.Tests
     Language.Haskell.Stylish.Tests.Util
     Language.Haskell.Stylish.Util

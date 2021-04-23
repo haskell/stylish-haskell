@@ -22,6 +22,7 @@ import qualified Language.Haskell.Stylish.Step.Tabs.Tests
 import qualified Language.Haskell.Stylish.Step.TrailingWhitespace.Tests
 import qualified Language.Haskell.Stylish.Step.UnicodeSyntax.Tests
 import qualified Language.Haskell.Stylish.Tests
+import qualified Language.Haskell.Stylish.Regressions
 
 
 --------------------------------------------------------------------------------
@@ -40,4 +41,5 @@ main = defaultMain
     , Language.Haskell.Stylish.Step.TrailingWhitespace.Tests.tests
     , Language.Haskell.Stylish.Step.UnicodeSyntax.Tests.tests
     , Language.Haskell.Stylish.Tests.tests
+    , Language.Haskell.Stylish.Regressions.tests
     ]
