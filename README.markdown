@@ -37,7 +37,7 @@ You can also install it using your package manager:
 
 Feature requests are welcome! Use the [issue tracker] for that.
 
-[issue tracker]: https://github.com/jaspervdj/stylish-haskell/issues
+[issue tracker]: https://github.com/haskell/stylish-haskell/issues
 
 ## Example
 
@@ -234,7 +234,7 @@ haskell-mode manual.
 
 You can quickly grab the latest binary and run `stylish-haskell` like so:
 
-    curl -sL https://raw.github.com/jaspervdj/stylish-haskell/master/scripts/latest.sh | sh -s .
+    curl -sL https://raw.github.com/haskell/stylish-haskell/master/scripts/latest.sh | sh -s .
 
 Where the `.` can be replaced with the arguments you pass to `stylish-haskell`.
 
