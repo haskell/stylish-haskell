@@ -73,6 +73,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 58" case58
     , testCase "case 59" case59
     , testCase "case 60" case60
+    , testCase "case 61 (issue 282)" case61
     ]
 
 case00 :: Assertion
@@ -1308,6 +1309,40 @@ case60 :: Assertion
 case60 = assertSnippet (step defaultConfig)
     [ "data Foo = forall a . Bar a" ]
     [ "data Foo = forall a. Bar a" ]
+
+-- | Formatting duplicates haddock comments #282
+--
+-- Regression test for https://github.com/haskell/stylish-haskell/issues/282
+case61 :: Assertion
+case61 = expected @=? testStep (step sameIndentStyle) input
+  where
+    input = unlines
+      [ "module Herp where"
+      , ""
+      , "data Game = Game { _board    :: Board -- ^ Board state"
+      , "                , _time     :: Int   -- ^ Time elapsed"
+      , "                , _paused   :: Bool  -- ^ Playing vs. paused"
+      , "                , _speed    :: Float -- ^ Speed in [0..1]"
+      , "                , _interval :: TVar Int -- ^ Interval kept in TVar"
+      , "                }"
+      ]
+
+    expected = unlines
+      [ "module Herp where"
+      , ""
+      , "data Game = Game"
+      , "              { _board :: Board"
+      , "                -- ^ Board state"
+      , "              , _time :: Int"
+      , "                -- ^ Time elapsed"
+      , "              , _paused :: Bool"
+      , "                -- ^ Playing vs. paused"
+      , "              , _speed :: Float"
+      , "                -- ^ Speed in [0..1]"
+      , "              , _interval :: TVar Int"
+      , "                -- ^ Interval kept in TVar"
+      , "              }"
+      ]
 
 sameSameStyle :: Config
 sameSameStyle = Config SameLine SameLine 2 2 False True SameLine False True NoMaxColumns
