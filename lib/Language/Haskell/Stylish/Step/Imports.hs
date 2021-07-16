@@ -61,6 +61,7 @@ data Options = Options
     , listPadding     :: ListPadding
     , separateLists   :: Bool
     , spaceSurround   :: Bool
+    , postQualified   :: Bool
     } deriving (Eq, Show)
 
 defaultOptions :: Options
@@ -73,6 +74,7 @@ defaultOptions = Options
     , listPadding     = LPConstant 4
     , separateLists   = True
     , spaceSurround   = False
+    , postQualified   = False
     }
 
 data ListPadding
@@ -143,8 +145,8 @@ formatImports
     -> NonEmpty (Located Import) -> Lines
 formatImports maxCols options m moduleStats rawGroup =
   runPrinter_ (PrinterConfig maxCols) [] m do
-  let 
-     
+  let
+
     group
       = NonEmpty.sortWith unLocated rawGroup
       & mergeImports
@@ -177,25 +179,31 @@ printQualified Options{..} padNames stats (L _ decl) = do
 
   when (isSafe decl) (putText "safe" >> space)
 
-  case (isQualified decl, isAnyQualified stats) of
-    (True, _) -> putText "qualified" >> space
-    (_, True) -> putText "         " >> space
-    _         -> pure ()
+  let
+    module_ = do
+      moduleNamePosition <- length <$> getCurrentLine
+      forM_ (ideclPkgQual decl') $ \pkg -> putText (stringLiteral pkg) >> space
+      putText (moduleName decl)
+      -- Only print spaces if something follows.
+      when padNames $
+        when (isJust (ideclAs decl') || isHiding decl ||
+                not (null $ ideclHiding decl')) $
+          putText $
+            replicate (isLongestImport stats - importModuleNameLength decl) ' '
+      pure moduleNamePosition
 
-  moduleNamePosition <- length <$> getCurrentLine
-  forM_ (ideclPkgQual decl') $ \pkg -> putText (stringLiteral pkg) >> space
-  putText (moduleName decl)
-
-  -- Only print spaces if something follows.
-  when padNames $
-    when (isJust (ideclAs decl') || isHiding decl ||
-            not (null $ ideclHiding decl')) $
-      putText $
-        replicate (isLongestImport stats - importModuleNameLength decl) ' '
+  moduleNamePosition <-
+    case (postQualified, isQualified decl, isAnyQualified stats) of
+      (False, True , _   ) -> putText "qualified" *> space *> module_
+      (False, _    , True) -> putText "         " *> space *> module_
+      (True , True , _   ) -> module_ <* space <* putText "qualified"
+      _                    -> module_
 
   beforeAliasPosition <- length <$> getCurrentLine
-  forM_ (ideclAs decl') \(L _ name) ->
+
+  forM_ (ideclAs decl') \(L _ name) -> do
     space >> putText "as" >> space >> putText (moduleNameString name)
+
   afterAliasPosition <- length <$> getCurrentLine
 
   when (isHiding decl) (space >> putText "hiding")

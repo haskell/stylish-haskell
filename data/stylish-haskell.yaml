@@ -275,21 +275,25 @@ steps:
       # Default: false
       space_surround: false
 
-      # Enabling this argument will use the new GHC lib parse to format imports.
+      # Post qualify option moves any qualifies found in import declarations
+      # to the end of the declaration. This also adjust padding for any
+      # unqualified import declarations.
       #
-      # This currently assumes a few things, it will assume that you want post
-      # qualified imports. It is also not as feature complete as the old
-      # imports formatting.
+      # - true: Qualified as <module name> is moved to the end of the
+      #   declaration.
       #
-      # It does not remove redundant lines or merge lines. As such, the full
-      # feature scope is still pending.
+      #   > import Data.Bar
+      #   > import Data.Foo qualified as F
       #
-      # It _is_ however, a fine alternative if you are using features that are
-      # not parseable by haskell src extensions and you're comfortable with the
-      # presets.
+      # - false: Qualified remains in the default location and unqualified
+      #   imports are padded to align with qualified imports.
+      #
+      #   > import           Data.Bar
+      #   > import qualified Data.Foo as F
       #
       # Default: false
-      ghc_lib_parser: false
+      post_qualify: false
+
 
   # Language pragmas
   - language_pragmas:
