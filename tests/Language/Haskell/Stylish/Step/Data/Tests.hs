@@ -75,6 +75,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 60" case60
     , testCase "case 61 (issue 282)" case61
     , testCase "case 62 (issue 273)" case62
+    , testCase "case 63" case63
     ]
 
 case00 :: Assertion
@@ -1375,6 +1376,18 @@ case62 = expected @=? testStep (step sameIndentStyle) input
       , "               -- ^ This is a comment below some line."
       , "               -- It can span multiple lines."
       , "             }"
+      ]
+
+case63 :: Assertion
+case63 = expected @=? testStep (step indentIndentStyle) input
+  where
+    input = unlines
+      [ "data Foo = Bar | Baz deriving (Eq, Generic)"
+      ]
+
+    expected = unlines
+      [ "data Foo = Bar | Baz"
+      , "  deriving (Eq, Generic)"
       ]
 
 sameSameStyle :: Config
