@@ -38,7 +38,7 @@ import           GHC.Hs.Types                     (ConDeclField (..),
                                                    HsConDetails (..), HsContext,
                                                    HsImplicitBndrs (..),
                                                    HsTyVarBndr (..),
-                                                   HsType (..), LHsQTyVars (..))
+                                                   HsType (..), LHsQTyVars (..), LHsKind)
 import           RdrName                          (RdrName)
 import           SrcLoc                           (GenLocated (..), Located,
                                                    RealLocated)
@@ -312,9 +312,11 @@ putName decl@MkDataDecl{..} =
     putRdrName dataDeclName
     space
     forM_ secondTvar putOutputable
+    maybePutKindSig
   else do
     putRdrName dataDeclName
     forM_ (hsq_explicit dataTypeVars) (\t -> space >> putOutputable t)
+    maybePutKindSig
 
   where
     firstTvar :: Maybe (Located (HsTyVarBndr GhcPs))
@@ -329,6 +331,12 @@ putName decl@MkDataDecl{..} =
       & hsq_explicit
       & drop 1
       & listToMaybe
+
+    maybePutKindSig :: Printer ()
+    maybePutKindSig = forM_ maybeKindSig (\k -> space >> putText "::" >> space >> putOutputable k)
+
+    maybeKindSig :: Maybe (LHsKind GhcPs)
+    maybeKindSig = dd_kindSig dataDefn
 
 putConstructor :: Config -> Int -> Located (ConDecl GhcPs) -> P ()
 putConstructor cfg consIndent (L _ cons) = case cons of
