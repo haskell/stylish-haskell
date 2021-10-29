@@ -75,6 +75,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 60" case60
     , testCase "case 61 (issue 282)" case61
     , testCase "case 62 (issue 273)" case62
+    , testCase "case 63 (issue 338)" case63
     ]
 
 case00 :: Assertion
@@ -1376,6 +1377,17 @@ case62 = expected @=? testStep (step sameIndentStyle) input
       , "               -- It can span multiple lines."
       , "             }"
       ]
+
+case63 :: Assertion
+case63 = expected @=? testStep (step indentIndentStyle) input
+  where
+    input = unlines
+      [ "module Herp where"
+      , ""
+      , "data Foo :: * -> * where"
+      , "  Bar :: () -> Foo ()"
+      ]
+    expected = input
 
 sameSameStyle :: Config
 sameSameStyle = Config SameLine SameLine 2 2 False True SameLine False True NoMaxColumns
