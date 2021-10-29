@@ -85,7 +85,7 @@ steps:
   #     # Sort typeclass names in the "deriving" list alphabetically.
   #     sort_deriving: true
   #
-  #     # Wheter or not to break enums onto several lines
+  #     # Whether or not to break enums onto several lines
   #     #
   #     # Default: false
   #     break_enums: false
