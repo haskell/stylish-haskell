@@ -146,9 +146,9 @@ formatImports
 formatImports maxCols options m moduleStats rawGroup =
   runPrinter_ (PrinterConfig maxCols) [] m do
   let
-
+    group :: NonEmpty (Located Import)
     group
-      = NonEmpty.sortWith unLocated rawGroup
+      = NonEmpty.sortBy (compareImports `on` unLocated) rawGroup
       & mergeImports
 
     unLocatedGroup = fmap unLocated $ toList group

@@ -15,11 +15,7 @@ module Language.Haskell.Stylish.GHC
   , unLocated
     -- * Outputable operators
   , showOutputable
-  , compareOutputable
   ) where
-
---------------------------------------------------------------------------------
-import           Data.Function     (on)
 
 --------------------------------------------------------------------------------
 import           DynFlags          (Settings (..), defaultDynFlags)
@@ -98,6 +94,3 @@ unLocated (L _ a) = a
 
 showOutputable :: GHC.Outputable a => a -> String
 showOutputable = GHC.showPpr baseDynFlags
-
-compareOutputable :: GHC.Outputable a => a -> a -> Ordering
-compareOutputable = compare `on` showOutputable
