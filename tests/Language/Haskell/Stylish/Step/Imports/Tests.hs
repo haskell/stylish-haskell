@@ -69,6 +69,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 35" case35
     , testCase "case 36" case36
     , testCase "case 37" case37
+    , testCase "case 38" case38
     ]
 
 
@@ -922,4 +923,14 @@ case37 = assertSnippet (step Nothing defaultOptions {postQualified = True})
     , "import Data.Aeson qualified as JSON (encode, decode)"
     ]
     [ "import Data.Aeson qualified as JSON (Value, decode, encode)"
+    ]
+
+--------------------------------------------------------------------------------
+case38 :: Assertion
+case38 = assertSnippet (step (Just 80) $ fromImportAlign File)
+    [ "import HSP"
+    , "import Happstack.Server"
+    ]
+    [ "import Happstack.Server"
+    , "import HSP"
     ]

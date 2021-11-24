@@ -10,7 +10,7 @@ module Language.Haskell.Stylish.Module
   ( -- * Data types
     Module (..)
   , ModuleHeader
-  , Import
+  , Import (..)
   , Decls
   , Comments
   , Lines
@@ -108,18 +108,6 @@ canMergeImport (Import i0) (Import i1) = and $ fmap (\f -> f i0 i1)
     hasMergableQualified QualifiedPre QualifiedPost = True
     hasMergableQualified QualifiedPost QualifiedPre = True
     hasMergableQualified q0 q1 = q0 == q1
-
-instance Eq Import where
-  i0 == i1 = canMergeImport i0 i1 && hasSameImports (unImport i0) (unImport i1)
-    where
-      hasSameImports = (==) `on` fmap snd . ideclHiding
-
-instance Ord Import where
-  compare (Import i0) (Import i1) =
-    ideclName i0 `compareOutputable` ideclName i1 <>
-    fmap showOutputable (ideclPkgQual i0) `compare`
-        fmap showOutputable (ideclPkgQual i1) <>
-    compareOutputable i0 i1
 
 -- | Comments associated with module
 newtype Comments = Comments [GHC.RealLocated GHC.AnnotationComment]

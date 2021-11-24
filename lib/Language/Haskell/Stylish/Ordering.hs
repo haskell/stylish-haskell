@@ -4,23 +4,37 @@
 -- utilities.
 {-# LANGUAGE LambdaCase #-}
 module Language.Haskell.Stylish.Ordering
-    ( compareLIE
+    ( compareImports
+    , compareLIE
     , compareWrappedName
+    , compareOutputableCI
     , unwrapName
     ) where
 
 
 --------------------------------------------------------------------------------
-import           Data.Char                    (isUpper)
-import           Data.Ord                     (comparing)
+import           Data.Char                       (isUpper, toLower)
+import           Data.Function                   (on)
+import           Data.Ord                        (comparing)
 import           GHC.Hs
-import           RdrName                      (RdrName)
-import           SrcLoc                       (unLoc)
+import           Language.Haskell.Stylish.GHC    (showOutputable)
+import           Language.Haskell.Stylish.Module (Import (..))
+import           Outputable                      (Outputable)
+import qualified Outputable                      as GHC
+import           RdrName                         (RdrName)
+import           SrcLoc                          (unLoc)
+
 
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.GHC (showOutputable)
-import           Outputable                   (Outputable)
+-- | Compare imports for sorting.  Cannot easily be a lawful instance due to
+-- case insensitivity.
+compareImports :: Import -> Import -> Ordering
+compareImports (Import i0) (Import i1) =
+    ideclName i0 `compareOutputableCI` ideclName i1 <>
+    fmap showOutputable (ideclPkgQual i0) `compare`
+        fmap showOutputable (ideclPkgQual i1) <>
+    compareOutputableCI i0 i1
 
 
 --------------------------------------------------------------------------------
@@ -59,3 +73,8 @@ nameKey n = case showOutputable n of
     o@('(' : _)             -> (2, o)
     o@(o0 : _) | isUpper o0 -> (0, o)
     o                       -> (1, o)
+
+
+--------------------------------------------------------------------------------
+compareOutputableCI :: GHC.Outputable a => a -> a -> Ordering
+compareOutputableCI = compare `on` (map toLower . showOutputable)

@@ -13,41 +13,45 @@ module Language.Haskell.Stylish.Step.Data
   ) where
 
 --------------------------------------------------------------------------------
-import           Prelude                          hiding (init)
+import           Prelude                           hiding (init)
 
 --------------------------------------------------------------------------------
-import           Control.Monad                    (forM_, unless, when)
-import           Data.Function                    ((&))
-import           Data.Functor                     ((<&>))
-import           Data.List                        (sortBy)
-import           Data.Maybe                       (listToMaybe)
+import           Control.Monad                     (forM_, unless, when)
+import           Data.Function                     ((&))
+import           Data.Functor                      ((<&>))
+import           Data.List                         (sortBy)
+import           Data.Maybe                        (listToMaybe)
 
 --------------------------------------------------------------------------------
-import           ApiAnnotation                    (AnnotationComment)
-import           BasicTypes                       (LexicalFixity (..))
-import           GHC.Hs.Decls                     (ConDecl (..),
-                                                   DerivStrategy (..),
-                                                   HsDataDefn (..), HsDecl (..),
-                                                   HsDerivingClause (..),
-                                                   NewOrData (..),
-                                                   TyClDecl (..))
-import           GHC.Hs.Extension                 (GhcPs, NoExtField (..),
-                                                   noExtCon)
-import           GHC.Hs.Types                     (ConDeclField (..),
-                                                   ForallVisFlag (..),
-                                                   HsConDetails (..), HsContext,
-                                                   HsImplicitBndrs (..),
-                                                   HsTyVarBndr (..),
-                                                   HsType (..), LHsQTyVars (..), LHsKind)
-import           RdrName                          (RdrName)
-import           SrcLoc                           (GenLocated (..), Located,
-                                                   RealLocated)
+import           ApiAnnotation                     (AnnotationComment)
+import           BasicTypes                        (LexicalFixity (..))
+import           GHC.Hs.Decls                      (ConDecl (..),
+                                                    DerivStrategy (..),
+                                                    HsDataDefn (..),
+                                                    HsDecl (..),
+                                                    HsDerivingClause (..),
+                                                    NewOrData (..),
+                                                    TyClDecl (..))
+import           GHC.Hs.Extension                  (GhcPs, NoExtField (..),
+                                                    noExtCon)
+import           GHC.Hs.Types                      (ConDeclField (..),
+                                                    ForallVisFlag (..),
+                                                    HsConDetails (..),
+                                                    HsContext,
+                                                    HsImplicitBndrs (..),
+                                                    HsTyVarBndr (..),
+                                                    HsType (..), LHsKind,
+                                                    LHsQTyVars (..))
+import           RdrName                           (RdrName)
+import           SrcLoc                            (GenLocated (..), Located,
+                                                    RealLocated)
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Block
 import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.GHC
 import           Language.Haskell.Stylish.Module
+import           Language.Haskell.Stylish.Ordering
 import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
 
@@ -290,7 +294,7 @@ putDeriving Config{..} (L pos clause) = do
       = clause
       & deriv_clause_tys
       & unLocated
-      & (if cSortDeriving then sortBy compareOutputable else id)
+      & (if cSortDeriving then sortBy compareOutputableCI else id)
       & fmap hsib_body
 
     headTy =
