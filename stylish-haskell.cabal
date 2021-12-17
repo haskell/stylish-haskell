@@ -61,20 +61,21 @@ Library
     Paths_stylish_haskell
 
   Build-depends:
-    aeson            >= 0.6    && < 1.6,
-    base             >= 4.8    && < 5,
-    bytestring       >= 0.9    && < 0.11,
-    Cabal            >= 2.4    && < 3.3,
-    containers       >= 0.3    && < 0.7,
-    directory        >= 1.2.3  && < 1.4,
-    filepath         >= 1.1    && < 1.5,
-    file-embed       >= 0.0.10 && < 0.1,
-    ghc-lib-parser   >= 8.10   && < 8.12,
-    mtl              >= 2.0    && < 2.3,
-    syb              >= 0.3    && < 0.8,
-    text             >= 1.2    && < 1.3,
-    HsYAML-aeson     >=0.2.0   && < 0.3,
-    HsYAML           >=0.2.0   && < 0.3
+    aeson             >= 0.6    && < 1.6,
+    base              >= 4.8    && < 5,
+    bytestring        >= 0.9    && < 0.11,
+    Cabal             >= 2.4    && < 3.5,
+    containers        >= 0.3    && < 0.7,
+    directory         >= 1.2.3  && < 1.4,
+    filepath          >= 1.1    && < 1.5,
+    file-embed        >= 0.0.10 && < 0.1,
+    ghc-lib-parser    >= 9.2    && < 9.3,
+    ghc-lib-parser-ex >= 9.2    && < 9.3,
+    mtl               >= 2.0    && < 2.3,
+    syb               >= 0.3    && < 0.8,
+    text              >= 1.2    && < 1.3,
+    HsYAML-aeson      >=0.2.0   && < 0.3,
+    HsYAML            >=0.2.0   && < 0.3
 
   if impl(ghc < 8.0)
     Build-depends:
@@ -91,19 +92,20 @@ Executable stylish-haskell
     strict               >= 0.3  && < 0.5,
     optparse-applicative >= 0.12 && < 0.17,
     -- Copied from regular dependencies...
-    aeson            >= 0.6    && < 1.6,
-    base             >= 4.8    && < 5,
-    bytestring       >= 0.9    && < 0.11,
-    Cabal            >= 2.4    && < 3.3,
-    containers       >= 0.3    && < 0.7,
-    directory        >= 1.2.3  && < 1.4,
-    filepath         >= 1.1    && < 1.5,
-    file-embed       >= 0.0.10 && < 0.1,
-    ghc-lib-parser   >= 8.10   && < 8.12,
-    mtl              >= 2.0    && < 2.3,
-    syb              >= 0.3    && < 0.8,
-    HsYAML-aeson     >=0.2.0   && < 0.3,
-    HsYAML           >=0.2.0   && < 0.3
+    aeson             >= 0.6    && < 1.6,
+    base              >= 4.8    && < 5,
+    bytestring        >= 0.9    && < 0.11,
+    Cabal             >= 2.4    && < 3.5,
+    containers        >= 0.3    && < 0.7,
+    directory         >= 1.2.3  && < 1.4,
+    filepath          >= 1.1    && < 1.5,
+    file-embed        >= 0.0.10 && < 0.1,
+    ghc-lib-parser    >= 9.2    && < 9.3,
+    ghc-lib-parser-ex >= 9.2    && < 9.3,
+    mtl               >= 2.0    && < 2.3,
+    syb               >= 0.3    && < 0.8,
+    HsYAML-aeson      >=0.2.0   && < 0.3,
+    HsYAML            >=0.2.0   && < 0.3
 
 Test-suite stylish-haskell-tests
   Ghc-options:      -Wall
@@ -163,20 +165,21 @@ Test-suite stylish-haskell-tests
     test-framework-hunit >= 0.2 && < 0.4,
     random               >= 1.1,
     -- Copied from regular dependencies...
-    aeson            >= 0.6    && < 1.6,
-    base             >= 4.8    && < 5,
-    bytestring       >= 0.9    && < 0.11,
-    Cabal            >= 2.4    && < 3.3,
-    containers       >= 0.3    && < 0.7,
-    directory        >= 1.2.3  && < 1.4,
-    filepath         >= 1.1    && < 1.5,
-    file-embed       >= 0.0.10 && < 0.1,
-    ghc-lib-parser   >= 8.10   && < 8.12,
-    mtl              >= 2.0    && < 2.3,
-    syb              >= 0.3    && < 0.8,
-    text             >= 1.2    && < 1.3,
-    HsYAML-aeson     >=0.2.0   && < 0.3,
-    HsYAML           >=0.2.0   && < 0.3
+    aeson             >= 0.6    && < 1.6,
+    base              >= 4.8    && < 5,
+    bytestring        >= 0.9    && < 0.11,
+    Cabal             >= 2.4    && < 3.5,
+    containers        >= 0.3    && < 0.7,
+    directory         >= 1.2.3  && < 1.4,
+    filepath          >= 1.1    && < 1.5,
+    file-embed        >= 0.0.10 && < 0.1,
+    ghc-lib-parser    >= 9.2    && < 9.3,
+    ghc-lib-parser-ex >= 9.2    && < 9.3,
+    mtl               >= 2.0    && < 2.3,
+    syb               >= 0.3    && < 0.8,
+    text              >= 1.2    && < 1.3,
+    HsYAML-aeson      >=0.2.0   && < 0.3,
+    HsYAML            >=0.2.0   && < 0.3
 
 Source-repository head
   Type:     git
