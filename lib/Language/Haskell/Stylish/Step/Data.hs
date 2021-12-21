@@ -76,6 +76,8 @@ data Config = Config
       -- ^ Indent before @deriving@ lines (measured from column 0)
     , cBreakEnums              :: !Bool
       -- ^ Break enums by newlines and follow the above rules
+    , cBreakNewtypes           :: !Bool
+      -- ^ Break newtypes by newlines and follow the above rules
     , cBreakSingleConstructors :: !Bool
       -- ^ Break single constructors when enabled, e.g. @Indent 2@ will not cause newline after @=@
     , cVia                     :: !Indent
@@ -95,6 +97,7 @@ defaultConfig = Config
     , cFieldComment    = 2
     , cDeriving        = 4
     , cBreakEnums      = True
+    , cBreakNewtypes   = True
     , cBreakSingleConstructors = False
     , cVia             = Indent 4
     , cSortDeriving    = True
@@ -154,7 +157,7 @@ formatDataDecl cfg@Config{..} m ldecl@(L declPos decl) =
             putEolComment declPos
             newline >> spaces x
             pure True
-          (_, _) | not (isNewtype decl) && singleConstructor decl && not cBreakSingleConstructors ->
+          (_, _) | if isNewtype decl then not cBreakNewtypes else singleConstructor decl && not cBreakSingleConstructors ->
             False <$ space
           (Indent x, _)
             | isEnum decl && not cBreakEnums -> False <$ space
