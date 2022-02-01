@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS_GHC -Wno-missing-fields #-}
 -- | Utility functions for working with the GHC AST
 module Language.Haskell.Stylish.GHC
@@ -28,6 +29,7 @@ import           GHC.Types.SrcLoc                                    (GenLocated
                                                                       srcSpanStartLine)
 import qualified GHC.Utils.Outputable                                as GHC
 import qualified Language.Haskell.GhclibParserEx.GHC.Settings.Config as GHCEx
+import qualified GHC.Parser.Annotation as GHC
 
 unsafeGetRealSrcSpan :: Located a -> RealSrcSpan
 unsafeGetRealSrcSpan = \case

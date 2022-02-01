@@ -16,43 +16,6 @@ module Language.Haskell.Stylish.Step.Data
 import           Prelude                           hiding (init)
 
 --------------------------------------------------------------------------------
-import           Control.Monad                     (forM_, unless, when)
-import           Data.Function                     ((&))
-import           Data.Functor                      ((<&>))
-import           Data.List                         (sortBy)
-import           Data.Maybe                        (listToMaybe)
-
---------------------------------------------------------------------------------
-import           ApiAnnotation                     (AnnotationComment)
-import           BasicTypes                        (LexicalFixity (..))
-import           GHC.Hs.Decls                      (ConDecl (..),
-                                                    DerivStrategy (..),
-                                                    HsDataDefn (..),
-                                                    HsDecl (..),
-                                                    HsDerivingClause (..),
-                                                    NewOrData (..),
-                                                    TyClDecl (..))
-import           GHC.Hs.Extension                  (GhcPs, NoExtField (..),
-                                                    noExtCon)
-import           GHC.Hs.Types                      (ConDeclField (..),
-                                                    ForallVisFlag (..),
-                                                    HsConDetails (..),
-                                                    HsContext,
-                                                    HsImplicitBndrs (..),
-                                                    HsTyVarBndr (..),
-                                                    HsType (..), LHsKind,
-                                                    LHsQTyVars (..))
-import           RdrName                           (RdrName)
-import           SrcLoc                            (GenLocated (..), Located,
-                                                    RealLocated)
-
---------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Block
-import           Language.Haskell.Stylish.Editor
-import           Language.Haskell.Stylish.GHC
-import           Language.Haskell.Stylish.Module
-import           Language.Haskell.Stylish.Ordering
-import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
 
 data Indent
@@ -103,6 +66,9 @@ defaultConfig = Config
     }
 
 step :: Config -> Step
+step _cfg = makeStep "Data" \ls _ -> ls
+
+{-
 step cfg = makeStep "Data" \ls m -> applyChanges (changes m) ls
   where
     changes :: Module -> [ChangeLine]
@@ -561,3 +527,5 @@ singleConstructor = (== 1) . length . dd_cons . dataDefn
 
 hasDeriving :: DataDecl -> Bool
 hasDeriving = not . null . unLocated . dd_derivs . dataDefn
+
+-}

@@ -8,24 +8,17 @@ module Language.Haskell.Stylish.Step.Squash
 
 
 --------------------------------------------------------------------------------
-import           Data.Maybe                      (mapMaybe)
-import qualified GHC.Hs                          as Hs
-import qualified SrcLoc                          as S
-
-
---------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.Step
-import           Language.Haskell.Stylish.Util
 
 
+{-
 --------------------------------------------------------------------------------
 squash
     :: (S.HasSrcSpan l, S.HasSrcSpan r)
     => l -> r -> Maybe (Change String)
 squash left right = do
-  lAnn <- toRealSrcSpan $ S.getLoc left
-  rAnn <- toRealSrcSpan $ S.getLoc right
+  lAnn <- toRealSrcSpan $ GHC.getLoc left
+  rAnn <- toRealSrcSpan $ GHC.getLoc right
   if S.srcSpanEndLine lAnn == S.srcSpanStartLine rAnn ||
       S.srcSpanEndLine lAnn + 1 == S.srcSpanStartLine rAnn
     then Just $
@@ -53,11 +46,15 @@ squashMatch (Hs.Match _ _ pats grhss) = do
     squash (last pats) body
 squashMatch (Hs.XMatch x) = Hs.noExtCon x
 
+-}
 
 --------------------------------------------------------------------------------
 step :: Step
+step = makeStep "Squash" $ \ls _ -> ls
+{-
 step = makeStep "Squash" $ \ls (module') ->
     let changes =
             mapMaybe squashFieldDecl (everything module') ++
             mapMaybe squashMatch (everything module') in
     applyChanges changes ls
+-}

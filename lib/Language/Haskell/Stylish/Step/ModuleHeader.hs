@@ -8,37 +8,9 @@ module Language.Haskell.Stylish.Step.ModuleHeader
   , step
   ) where
 
---------------------------------------------------------------------------------
-import           ApiAnnotation                         (AnnKeywordId (..),
-                                                        AnnotationComment (..))
-import           Control.Monad                         (forM_, join, when)
-import           Data.Bifunctor                        (second)
-import           Data.Foldable                         (find, toList)
-import           Data.Function                         ((&))
-import qualified Data.List                             as L
-import           Data.List.NonEmpty                    (NonEmpty (..))
-import qualified Data.List.NonEmpty                    as NonEmpty
-import           Data.Maybe                            (isJust, listToMaybe)
-import qualified GHC.Hs.Doc                            as GHC
-import           GHC.Hs.Extension                      (GhcPs)
-import qualified GHC.Hs.ImpExp                         as GHC
-import qualified Module                                as GHC
-import           SrcLoc                                (GenLocated (..),
-                                                        Located, RealLocated,
-                                                        SrcSpan (..),
-                                                        srcSpanEndLine,
-                                                        srcSpanStartLine, unLoc)
-import           Util                                  (notNull)
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Block
-import           Language.Haskell.Stylish.Editor
-import           Language.Haskell.Stylish.GHC
-import           Language.Haskell.Stylish.Module
-import           Language.Haskell.Stylish.Ordering
-import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
-import qualified Language.Haskell.Stylish.Step.Imports as Imports
 
 
 data Config = Config
@@ -71,6 +43,8 @@ defaultConfig = Config
     }
 
 step :: Maybe Int -> Config -> Step
+step _ _ = makeStep "Module header" $ \ls _ -> ls
+{-
 step maxCols = makeStep "Module header" . printModuleHeader maxCols
 
 printModuleHeader :: Maybe Int -> Config -> Lines -> Module -> Lines
@@ -300,3 +274,5 @@ printMultiLineExportList conf (L srcLoc exportsWithComments) = do
 -- 'Imports' and should be merged.
 printExport :: Config -> GHC.LIE GhcPs -> P ()
 printExport conf = Imports.printImport (separateLists conf) . unLoc
+
+-}

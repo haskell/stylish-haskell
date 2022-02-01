@@ -12,7 +12,7 @@ module Language.Haskell.Stylish.Step.Imports
   , ListPadding (..)
   , step
 
-  , printImport
+  -- , printImport
   ) where
 
 --------------------------------------------------------------------------------
@@ -28,27 +28,11 @@ import qualified Data.Map                        as Map
 import qualified Data.Set                        as Set
 
 
---------------------------------------------------------------------------------
-import           BasicTypes                      (StringLiteral (..),
-                                                  SourceText (..))
-import qualified FastString                      as FS
-import           GHC.Hs.Extension                (GhcPs)
-import qualified GHC.Hs.Extension                as GHC
-import           GHC.Hs.ImpExp
-import           Module                          (moduleNameString)
-import           RdrName                         (RdrName)
-import           SrcLoc                          (Located, GenLocated(..), unLoc)
 
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Block
 import           Language.Haskell.Stylish.Module
-import           Language.Haskell.Stylish.Ordering
-import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
-import           Language.Haskell.Stylish.Editor
-import           Language.Haskell.Stylish.GHC
-import           Language.Haskell.Stylish.Util
 
 
 --------------------------------------------------------------------------------
@@ -112,6 +96,8 @@ data LongListAlign
 
 --------------------------------------------------------------------------------
 step :: Maybe Int -> Options -> Step
+step _ _ = makeStep "Imports (ghc-lib-parser)" $ \ls _ -> ls
+{-
 step columns = makeStep "Imports (ghc-lib-parser)" . printImports columns
 
 
@@ -494,3 +480,5 @@ nubOn f = go Set.empty
     | otherwise          = x : go (Set.insert y acc) xs
    where
     y = f x
+
+-}

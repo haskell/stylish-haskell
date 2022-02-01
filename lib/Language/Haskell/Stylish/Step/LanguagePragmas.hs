@@ -19,9 +19,7 @@ import qualified Data.Text                       as T
 
 --------------------------------------------------------------------------------
 import qualified GHC.Hs                          as Hs
-import           SrcLoc                          (RealSrcSpan, realSrcSpanStart,
-                                                  srcLocLine, srcSpanEndLine,
-                                                  srcSpanStartLine)
+import         qualified  GHC.Types.SrcLoc as GHC
 
 
 --------------------------------------------------------------------------------
@@ -131,11 +129,11 @@ step' columns style align removeRedundant lngPrefix ls m
         | removeRedundant = isRedundant m
         | otherwise       = const False
 
-    languagePragmas = moduleLanguagePragmas m
+    languagePragmas = [] -- moduleLanguagePragmas m
 
-    convertFstToBlock :: [(RealSrcSpan, a)] -> [(Block String, a)]
+    convertFstToBlock :: [(GHC.RealSrcSpan, a)] -> [(Block String, a)]
     convertFstToBlock = fmap \(rspan, a) ->
-      (Block (srcSpanStartLine rspan) (srcSpanEndLine rspan), a)
+      (Block (GHC.srcSpanStartLine rspan) (GHC.srcSpanEndLine rspan), a)
 
     groupAdjacent' =
       fmap turnSndBackToNel . groupAdjacent . fmap (fmap toList)
@@ -156,15 +154,16 @@ step' columns style align removeRedundant lngPrefix ls m
 --------------------------------------------------------------------------------
 -- | Add a LANGUAGE pragma to a module if it is not present already.
 addLanguagePragma :: String -> String -> Module -> [Change String]
-addLanguagePragma lg prag modu
+addLanguagePragma lg prag _modu
     | prag `elem` present = []
     | otherwise           = [insert line ["{-# " ++ lg ++ " " ++ prag ++ " #-}"]]
   where
-    pragmas'      = moduleLanguagePragmas modu
+    -- pragmas'      = moduleLanguagePragmas modu
+    pragmas' = []
     present       = concatMap ((fmap T.unpack) . toList . snd) pragmas'
     line          = if null pragmas' then 1 else firstLocation pragmas'
-    firstLocation :: [(RealSrcSpan, NonEmpty Text)] -> Int
-    firstLocation = minimum . fmap (srcLocLine . realSrcSpanStart . fst)
+    firstLocation :: [(GHC.RealSrcSpan, NonEmpty Text)] -> Int
+    firstLocation = minimum . fmap (GHC.srcLocLine . GHC.realSrcSpanStart . fst)
 
 
 --------------------------------------------------------------------------------
@@ -200,7 +199,6 @@ isRedundantBangPatterns modul =
       _            -> []
 
     getMatchStrict :: Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> [()]
-    getMatchStrict (Hs.XMatch m) = Hs.noExtCon m
     getMatchStrict (Hs.Match _ ctx _ _) = case ctx of
       Hs.FunRhs _ _ Hs.SrcStrict -> [()]
       _                          -> []

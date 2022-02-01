@@ -5,22 +5,11 @@ module Language.Haskell.Stylish.Step.UnicodeSyntax
 
 
 --------------------------------------------------------------------------------
-import           Data.List                                     (isPrefixOf,
-                                                                sort)
-import           Data.Map                                      (Map)
-import qualified Data.Map                                      as M
-import           Data.Maybe                                    (maybeToList)
-import           GHC.Hs.Binds
-import           GHC.Hs.Extension                              (GhcPs)
-import           GHC.Hs.Types
---------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Block
-import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Step
-import           Language.Haskell.Stylish.Step.LanguagePragmas (addLanguagePragma)
-import           Language.Haskell.Stylish.Util
 
+
+{-
 --------------------------------------------------------------------------------
 unicodeReplacements :: Map String String
 unicodeReplacements = M.fromList
@@ -80,7 +69,7 @@ between (startRow, startCol) (endRow, endCol) needle =
     search (r, c) (x : xs)
         | needle `isPrefixOf` x = Just (r, c)
         | otherwise             = search (r, c + 1) (tail x : xs)
-
+-}
 
 --------------------------------------------------------------------------------
 step :: Bool -> String -> Step
@@ -89,9 +78,14 @@ step = (makeStep "UnicodeSyntax" .) . step'
 
 --------------------------------------------------------------------------------
 step' :: Bool -> String -> Lines -> Module -> Lines
+step' _alp _lg ls _module' = ls
+
+{-
 step' alp lg ls module' = applyChanges changes ls
   where
     changes = (if alp then addLanguagePragma lg "UnicodeSyntax" module' else []) ++
         replaceAll perLine
     toReplace = [ "::", "=>", "->" ]
     perLine = sort $ groupPerLine $ concatMap (findSymbol module' ls) toReplace
+
+-}
