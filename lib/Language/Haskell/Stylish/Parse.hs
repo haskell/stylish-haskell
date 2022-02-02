@@ -6,10 +6,12 @@ module Language.Haskell.Stylish.Parse
 
 
 --------------------------------------------------------------------------------
-import           Data.Maybe                                 (listToMaybe)
+import           Data.Maybe                                 (fromMaybe, listToMaybe)
 
 
 --------------------------------------------------------------------------------
+import qualified GHC.Hs                             as GHC
+import qualified GHC.Types.SrcLoc                             as GHC
 import           GHC.Driver.Ppr                             as GHC
 import qualified GHC.Driver.Session                         as GHC
 import qualified GHC.LanguageExtensions.Type                as LangExt
@@ -18,8 +20,11 @@ import qualified GHC.Parser.Lexer                           as GHC
 import qualified GHC.Utils.Error                            as GHC
 import qualified GHC.Utils.Outputable                       as GHC
 import qualified Language.Haskell.GhclibParserEx.GHC.Parser as GHCEx
-import           Language.Haskell.Stylish.GHC               (baseDynFlags)
+import qualified Language.Haskell.GhclibParserEx.Fixity     as GHCEx
+import           Language.Haskell.Stylish.GHC               (baseDynFlags, showOutputable)
 import           Language.Haskell.Stylish.Module
+import Debug.Trace
+
 
 type Extensions = [String]
 
@@ -54,7 +59,7 @@ parseModule _exts fp string =
           GHC.getMessages ps
   where
     -- TODO: Add extensions again.
-    dynFlags = baseDynFlags
+    dynFlags = baseDynFlags `GHC.gopt_set` GHC.Opt_KeepRawTokenStream
 
     removeCpp s = if GHC.xopt LangExt.Cpp dynFlags then unCpp s else s
 

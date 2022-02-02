@@ -193,7 +193,8 @@ step maxColumns config = makeStep "Cases" $ \ls module' ->
             -> (a -> [[Alignable GHC.RealSrcSpan]])
             -> [Change String]
         changes search toAlign =
-            (concatMap . concatMap) (align maxColumns) . map toAlign $ search module'
+            (concatMap . concatMap) (align maxColumns) . map toAlign $
+            search module'
 
         configured :: [Change String]
         configured = concat $

@@ -3,6 +3,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE RecordWildCards            #-}
 {-# LANGUAGE TupleSections              #-}
 module Language.Haskell.Stylish.Module
   ( -- * Data types
@@ -20,15 +21,19 @@ module Language.Haskell.Stylish.Module
     -- * Imports
   , canMergeImport
   , mergeModuleImport
+
+    -- * Pragmas
+  , moduleLanguagePragmas
   ) where
 
---------------------------------------------------------------------------------
-import           Data.Function                (on, (&))
-import           Data.Generics                (Typeable, everything, mkQ)
-import           Data.List                    (nubBy)
-import           Data.List.NonEmpty           (NonEmpty (..))
 
 --------------------------------------------------------------------------------
+import           Data.Char                    (toLower)
+import           Data.Function                (on, (&))
+import           Data.Generics                (Typeable, everything, mkQ)
+import qualified Data.List                    as L
+import           Data.List.NonEmpty           (NonEmpty (..))
+import           Data.Maybe                   (mapMaybe)
 import           GHC.Hs                       (ImportDecl (..),
                                                ImportDeclQualifiedStyle (..))
 import qualified GHC.Hs                       as GHC
@@ -39,8 +44,10 @@ import           GHC.Types.SrcLoc             (Located, unLoc)
 import qualified GHC.Types.SrcLoc             as GHC
 import           GHC.Utils.Outputable         (Outputable)
 
+
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.GHC
+
 
 --------------------------------------------------------------------------------
 type Lines = [String]
@@ -121,8 +128,24 @@ mergeModuleImport (L p0 (Import i0)) (L _p1 (Import i1)) =
         (Just x, Nothing) -> Just x
         (Nothing, Just x) -> Just x
     merge xs ys
-      = nubBy ((==) `on` showOutputable) (xs ++ ys)
+      = L.nubBy ((==) `on` showOutputable) (xs ++ ys)
 
 -- | Query the module AST using @f@
 queryModule :: Typeable a => (a -> [b]) -> Module -> [b]
 queryModule f = everything (++) (mkQ [] f)
+
+moduleLanguagePragmas :: Module -> [(RealSrcSpan, NonEmpty String)]
+moduleLanguagePragmas =
+    mapMaybe prag . GHC.priorComments . GHC.comments . GHC.hsmodAnn . GHC.unLoc
+  where
+    prag :: GHC.LEpaComment -> Maybe (GHC.RealSrcSpan, NonEmpty String)
+    prag comment = case GHC.ac_tok (GHC.unLoc comment) of
+        GHC.EpaBlockComment str
+            | lang : p1 : ps <- tokenize str, map toLower lang == "language" ->
+                pure (GHC.anchor (GHC.getLoc comment), p1 :| ps)
+        _ -> Nothing
+
+    tokenize = words .
+        map (\c -> if c == ',' then ' ' else c) .
+        takeWhile (/= '#') .
+        drop 1 . dropWhile (/= '#')
