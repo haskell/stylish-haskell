@@ -6,27 +6,33 @@ module Language.Haskell.Stylish.Parse
 
 
 --------------------------------------------------------------------------------
-import           Data.Maybe                                 (fromMaybe, listToMaybe)
-
-
---------------------------------------------------------------------------------
-import qualified GHC.Hs                             as GHC
-import qualified GHC.Types.SrcLoc                             as GHC
+import           Data.Maybe                                 (fromMaybe, listToMaybe, mapMaybe)
+import Data.List (stripPrefix)
+import Control.Monad ((>=>))
+import qualified GHC.Data.StringBuffer                      as GHC
+import qualified GHC.Hs                                     as GHC
+import qualified GHC.Types.SrcLoc                           as GHC
+import qualified GHC.Driver.Config                          as GHC
 import           GHC.Driver.Ppr                             as GHC
 import qualified GHC.Driver.Session                         as GHC
 import qualified GHC.LanguageExtensions.Type                as LangExt
 import qualified GHC.Parser.Errors.Ppr                      as GHC
 import qualified GHC.Parser.Lexer                           as GHC
+import qualified GHC.Parser.Header                          as GHC
 import qualified GHC.Utils.Error                            as GHC
 import qualified GHC.Utils.Outputable                       as GHC
 import qualified Language.Haskell.GhclibParserEx.GHC.Parser as GHCEx
-import qualified Language.Haskell.GhclibParserEx.Fixity     as GHCEx
+import qualified Language.Haskell.GhclibParserEx.GHC.Driver.Session as GHCEx
+
+
+--------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.GHC               (baseDynFlags, showOutputable)
 import           Language.Haskell.Stylish.Module
 import Debug.Trace
 
 
 type Extensions = [String]
+
 
 --------------------------------------------------------------------------------
 -- | Filter out lines which use CPP macros
@@ -39,6 +45,7 @@ unCpp = unlines . go False . lines
             nextMultiline = isCpp && not (null x) && last x == '\\'
         in (if isCpp then "" else x) : go nextMultiline xs
 
+
 --------------------------------------------------------------------------------
 -- | If the given string is prefixed with an UTF-8 Byte Order Mark, drop it
 -- because haskell-src-exts can't handle it.
@@ -50,8 +57,9 @@ dropBom str              = str
 --------------------------------------------------------------------------------
 -- | Abstraction over GHC lib's parsing
 parseModule :: Extensions -> Maybe FilePath -> String -> Either String Module
-parseModule _exts fp string =
+parseModule externalExts fp string =
     let input = removeCpp $ dropBom string in
+    (trace ("options: " ++ show (mapMaybe (optionToPragma . GHC.unLoc) parseOptions))) $
     case GHCEx.parseModule input dynFlags of
       GHC.POk _ m -> Right m
       GHC.PFailed ps -> Left . withFileName . GHC.showSDoc dynFlags . GHC.vcat .
@@ -59,8 +67,19 @@ parseModule _exts fp string =
           GHC.getMessages ps
   where
     -- TODO: Add extensions again.
-    dynFlags = baseDynFlags `GHC.gopt_set` GHC.Opt_KeepRawTokenStream
+    dynFlags0 = foldl'
+        (\flags extStr -> case GHCEx.readExtension extStr of
+            Nothing -> flags)
+        baseDynFlags
+        externalExts
+        `GHC.gopt_set` GHC.Opt_KeepRawTokenStream
+
+    parseOptions = GHC.getOptions dynFlags0
+        (GHC.stringToStringBuffer string)
+        (fromMaybe "-" fp)
 
     removeCpp s = if GHC.xopt LangExt.Cpp dynFlags then unCpp s else s
 
     withFileName x = maybe "" (<> ": ") fp <> x
+
+    optionToPragma = stripPrefix "-X" >=> GHCEx.readExtension
