@@ -5,8 +5,16 @@ module Language.Haskell.Stylish.Step.UnicodeSyntax
 
 
 --------------------------------------------------------------------------------
+import           Debug.Trace
+import qualified GHC.Hs                as GHC
+import qualified GHC.Parser.Annotation as GHC
+import qualified GHC.Types.SrcLoc      as GHC
+
+
+--------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Step
+import           Language.Haskell.Stylish.Util   (everything)
 
 
 {-
@@ -71,6 +79,15 @@ between (startRow, startCol) (endRow, endCol) needle =
         | otherwise             = search (r, c + 1) (tail x : xs)
 -}
 
+
+--------------------------------------------------------------------------------
+funTyChanges :: GHC.HsType GHC.GhcPs -> [GHC.RealSrcSpan]
+funTyChanges (GHC.HsFunTy xann arr _ _)
+    | GHC.HsUnrestrictedArrow GHC.NormalSyntax <- arr
+    , GHC.AddRarrowAnn (GHC.EpaSpan loc) <- GHC.anns xann = [loc]
+funTyChanges _ = []
+
+
 --------------------------------------------------------------------------------
 step :: Bool -> String -> Step
 step = (makeStep "UnicodeSyntax" .) . step'
@@ -78,7 +95,9 @@ step = (makeStep "UnicodeSyntax" .) . step'
 
 --------------------------------------------------------------------------------
 step' :: Bool -> String -> Lines -> Module -> Lines
-step' _alp _lg ls _module' = ls
+step' _alp _lg ls modu =
+    trace ("funs at: " ++ show (concatMap funTyChanges $ everything modu)) $
+    ls
 
 {-
 step' alp lg ls module' = applyChanges changes ls
