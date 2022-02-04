@@ -6,16 +6,16 @@ module Language.Haskell.Stylish.Step.UnicodeSyntax
 
 --------------------------------------------------------------------------------
 import qualified Data.Map              as M
-import           Data.Maybe            (mapMaybe)
-import           Debug.Trace
 import qualified GHC.Hs                as GHC
 import qualified GHC.Types.SrcLoc      as GHC
 
 
 --------------------------------------------------------------------------------
+import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Step
-import           Language.Haskell.Stylish.Util   (everything)
+import           Language.Haskell.Stylish.Step.LanguagePragmas (addLanguagePragma)
+import           Language.Haskell.Stylish.Util                 (everything)
 
 
 {-
@@ -71,14 +71,13 @@ applyReplacement (Replacement repl) ls = do
     go [] l = l
     go ((xstart, xend, x) : repls) l =
         let l' = take (xstart - 1) l ++ x ++ drop (xend - 1) l in
-        go (mapMaybe (adjust (xstart, xend, x)) repls) l'
+        go (adjust (xstart, xend, x) <$> repls) l'
 
     adjust (xstart, xend, x) (ystart, yend, y)
-        | yend < xstart  = Just (ystart, yend, y)
         | ystart > xend =
-            let offset = length x - (xend - xstart + 1) in
-            Just (ystart + offset, yend + offset, y)
-        | otherwise     = Nothing
+            let offset = length x - (xend - xstart) in
+            (ystart + offset, yend + offset, y)
+        | otherwise     = (ystart, yend, y)
 
 
 --------------------------------------------------------------------------------
@@ -110,20 +109,11 @@ step = (makeStep "UnicodeSyntax" .) . step'
 
 --------------------------------------------------------------------------------
 step' :: Bool -> String -> Lines -> Module -> Lines
-step' _alp _lg ls modu =
-    traceShow replacement $
+step' alp lg ls modu =
+    applyChanges
+        (if alp then addLanguagePragma lg "UnicodeSyntax" modu else []) $
     applyReplacement replacement ls
   where
     replacement =
         foldMap hsTyReplacements (everything modu) <>
         foldMap hsSigReplacements (everything modu)
-
-{-
-step' alp lg ls module' = applyChanges changes ls
-  where
-    changes = (if alp then addLanguagePragma lg "UnicodeSyntax" module' else []) ++
-        replaceAll perLine
-    toReplace = [ "::", "=>", "->" ]
-    perLine = sort $ groupPerLine $ concatMap (findSymbol module' ls) toReplace
-
--}

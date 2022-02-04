@@ -149,6 +149,7 @@ step' columns style align removeRedundant lngPrefix ls m
       | (b, pg) <- filterRedundant isRedundant' groups
       ]
 
+
 --------------------------------------------------------------------------------
 -- | Add a LANGUAGE pragma to a module if it is not present already.
 addLanguagePragma :: String -> String -> Module -> [Change String]
