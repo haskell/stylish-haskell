@@ -9,12 +9,10 @@ import qualified Data.Map              as M
 import           Data.Maybe            (mapMaybe)
 import           Debug.Trace
 import qualified GHC.Hs                as GHC
-import qualified GHC.Parser.Annotation as GHC
 import qualified GHC.Types.SrcLoc      as GHC
 
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.GHC    (showOutputable)
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util   (everything)
@@ -93,9 +91,12 @@ hsTyReplacements _ = mempty
 
 
 --------------------------------------------------------------------------------
-hsSigReplacements :: GHC.LHsSigType GHC.GhcPs -> Replacement
-hsSigReplacements (GHC.L l (GHC.HsSig xann _ _)) =
-    trace (showOutputable l) $ mempty
+hsSigReplacements :: GHC.Sig GHC.GhcPs -> Replacement
+hsSigReplacements (GHC.TypeSig ann _ _)
+    | GHC.AddEpAnn GHC.AnnDcolon epaLoc <- GHC.asDcolon $ GHC.anns ann
+    , GHC.EpaSpan loc <- epaLoc =
+        mkReplacement loc "∷"
+hsSigReplacements _ = mempty
 
 
 --------------------------------------------------------------------------------
