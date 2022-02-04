@@ -5,6 +5,8 @@ module Language.Haskell.Stylish.Step.UnicodeSyntax
 
 
 --------------------------------------------------------------------------------
+import qualified Data.Map              as M
+import           Data.Maybe            (mapMaybe)
 import           Debug.Trace
 import qualified GHC.Hs                as GHC
 import qualified GHC.Parser.Annotation as GHC
@@ -12,6 +14,7 @@ import qualified GHC.Types.SrcLoc      as GHC
 
 
 --------------------------------------------------------------------------------
+import           Language.Haskell.Stylish.GHC    (showOutputable)
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util   (everything)
@@ -29,63 +32,70 @@ unicodeReplacements = M.fromList
     , ("-<", "↢")
     , (">-", "↣")
     ]
-
-
---------------------------------------------------------------------------------
-replaceAll :: [(Int, [(Int, String)])] -> [Change String]
-replaceAll = map changeLine'
-  where
-    changeLine' (r, ns) = changeLine r $ \str -> return $
-        applyChanges
-            [ change (Block c ec) (const repl)
-            | (c, needle) <- sort ns
-            , let ec = c + length needle - 1
-            , repl <- maybeToList $ M.lookup needle unicodeReplacements
-            ] str
-
-
---------------------------------------------------------------------------------
-groupPerLine :: [((Int, Int), a)] -> [(Int, [(Int, a)])]
-groupPerLine = M.toList . M.fromListWith (++) .
-    map (\((r, c), x) -> (r, [(c, x)]))
-
--- | Find symbol positions in the module.  Currently only searches in type
--- signatures.
-findSymbol :: Module -> Lines -> String -> [((Int, Int), String)]
-findSymbol module' ls sym =
-    [ (pos, sym)
-    | TypeSig _ funLoc typeLoc <- everything (rawModuleDecls $ moduleDecls module') :: [Sig GhcPs]
-    , (funStart, _)            <- infoPoints funLoc
-    , (_, typeEnd)             <- infoPoints [hsSigWcType typeLoc]
-    , pos                      <- maybeToList $ between funStart typeEnd sym ls
-    ]
-
---------------------------------------------------------------------------------
--- | Search for a needle in a haystack of lines. Only part the inside (startRow,
--- startCol), (endRow, endCol) is searched. The return value is the position of
--- the needle.
-between :: (Int, Int) -> (Int, Int) -> String -> Lines -> Maybe (Int, Int)
-between (startRow, startCol) (endRow, endCol) needle =
-    search (startRow, startCol) .
-    withLast (take endCol) .
-    withHead (drop $ startCol - 1) .
-    take (endRow - startRow + 1) .
-    drop (startRow - 1)
-  where
-    search _      []            = Nothing
-    search (r, _) ([] : xs)     = search (r + 1, 1) xs
-    search (r, c) (x : xs)
-        | needle `isPrefixOf` x = Just (r, c)
-        | otherwise             = search (r, c + 1) (tail x : xs)
 -}
 
+--------------------------------------------------------------------------------
+-- Simple type that can do replacments on single lines (not spanning, removing
+-- or adding lines).
+newtype Replacement = Replacement
+    { unReplacement :: M.Map Int [(Int, Int, String)]
+    } deriving (Show)
+
 
 --------------------------------------------------------------------------------
-funTyChanges :: GHC.HsType GHC.GhcPs -> [GHC.RealSrcSpan]
-funTyChanges (GHC.HsFunTy xann arr _ _)
+instance Semigroup Replacement where
+    Replacement l <> Replacement r = Replacement $ M.unionWith (++) l r
+
+
+--------------------------------------------------------------------------------
+instance Monoid Replacement where
+    mempty = Replacement mempty
+
+
+--------------------------------------------------------------------------------
+mkReplacement :: GHC.RealSrcSpan -> String -> Replacement
+mkReplacement rss repl
+    | GHC.srcSpanStartLine rss /= GHC.srcSpanEndLine rss = Replacement mempty
+    | otherwise                                          = Replacement $
+        M.singleton
+            (GHC.srcSpanStartLine rss)
+            [(GHC.srcSpanStartCol rss, GHC.srcSpanEndCol rss, repl)]
+
+
+--------------------------------------------------------------------------------
+applyReplacement :: Replacement -> [String] -> [String]
+applyReplacement (Replacement repl) ls = do
+    (i, l) <- zip [1 ..] ls
+    case M.lookup i repl of
+        Nothing    -> pure l
+        Just repls -> pure $ go repls l
+  where
+    go [] l = l
+    go ((xstart, xend, x) : repls) l =
+        let l' = take (xstart - 1) l ++ x ++ drop (xend - 1) l in
+        go (mapMaybe (adjust (xstart, xend, x)) repls) l'
+
+    adjust (xstart, xend, x) (ystart, yend, y)
+        | yend < xstart  = Just (ystart, yend, y)
+        | ystart > xend =
+            let offset = length x - (xend - xstart + 1) in
+            Just (ystart + offset, yend + offset, y)
+        | otherwise     = Nothing
+
+
+--------------------------------------------------------------------------------
+hsTyReplacements :: GHC.HsType GHC.GhcPs -> Replacement
+hsTyReplacements (GHC.HsFunTy xann arr _ _)
     | GHC.HsUnrestrictedArrow GHC.NormalSyntax <- arr
-    , GHC.AddRarrowAnn (GHC.EpaSpan loc) <- GHC.anns xann = [loc]
-funTyChanges _ = []
+    , GHC.AddRarrowAnn (GHC.EpaSpan loc) <- GHC.anns xann =
+        mkReplacement loc "→"
+hsTyReplacements _ = mempty
+
+
+--------------------------------------------------------------------------------
+hsSigReplacements :: GHC.LHsSigType GHC.GhcPs -> Replacement
+hsSigReplacements (GHC.L l (GHC.HsSig xann _ _)) =
+    trace (showOutputable l) $ mempty
 
 
 --------------------------------------------------------------------------------
@@ -96,8 +106,12 @@ step = (makeStep "UnicodeSyntax" .) . step'
 --------------------------------------------------------------------------------
 step' :: Bool -> String -> Lines -> Module -> Lines
 step' _alp _lg ls modu =
-    trace ("funs at: " ++ show (concatMap funTyChanges $ everything modu)) $
-    ls
+    traceShow replacement $
+    applyReplacement replacement ls
+  where
+    replacement =
+        foldMap hsTyReplacements (everything modu) <>
+        foldMap hsSigReplacements (everything modu)
 
 {-
 step' alp lg ls module' = applyChanges changes ls
