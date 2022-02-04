@@ -87,6 +87,10 @@ hsTyReplacements (GHC.HsFunTy xann arr _ _)
     | GHC.HsUnrestrictedArrow GHC.NormalSyntax <- arr
     , GHC.AddRarrowAnn (GHC.EpaSpan loc) <- GHC.anns xann =
         mkReplacement loc "→"
+hsTyReplacements (GHC.HsQualTy _ (Just ctx) _)
+    | Just arrow <- GHC.ac_darrow . GHC.anns . GHC.ann $ GHC.getLoc ctx
+    , (GHC.NormalSyntax, GHC.EpaSpan loc) <- arrow =
+        mkReplacement loc "⇒"
 hsTyReplacements _ = mempty
 
 
