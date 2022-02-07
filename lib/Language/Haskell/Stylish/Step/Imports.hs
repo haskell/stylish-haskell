@@ -31,6 +31,7 @@ import qualified GHC.Hs                          as GHC
 import qualified GHC.Types.Name.Reader           as GHC
 import qualified GHC.Types.SourceText            as GHC
 import qualified GHC.Types.SrcLoc                as GHC
+import qualified GHC.Unit.Module.Name            as GHC
 import qualified GHC.Unit.Types                  as GHC
 
 
@@ -38,6 +39,7 @@ import qualified GHC.Unit.Types                  as GHC
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Ordering
+import           Language.Haskell.Stylish.Printer
 
 
 --------------------------------------------------------------------------------
@@ -309,56 +311,58 @@ printQualified Options{..} padNames stats (L _ decl) = do
 
 
 --------------------------------------------------------------------------------
-printImport :: Bool -> IE GhcPs -> P ()
-printImport _ (IEVar _ name) = do
+-}
+printImport :: Bool -> GHC.IE GHC.GhcPs -> P ()
+printImport _ (GHC.IEVar _ name) = do
     printIeWrappedName name
-printImport _ (IEThingAbs _ name) = do
+printImport _ (GHC.IEThingAbs _ name) = do
     printIeWrappedName name
-printImport separateLists (IEThingAll _ name) = do
+printImport separateLists (GHC.IEThingAll _ name) = do
     printIeWrappedName name
     when separateLists space
     putText "(..)"
-printImport _ (IEModuleContents _ (L _ m)) = do
+printImport _ (GHC.IEModuleContents _ modu) = do
     putText "module"
     space
-    putText (moduleNameString m)
-printImport separateLists (IEThingWith _ name wildcard imps _) = do
+    putText . GHC.moduleNameString $ GHC.unLoc modu
+printImport separateLists (GHC.IEThingWith _ name wildcard imps) = do
     printIeWrappedName name
     when separateLists space
     let ellipsis = case wildcard of
-          IEWildcard _position -> [putText ".."]
-          NoIEWildcard         -> []
+          GHC.IEWildcard _position -> [putText ".."]
+          GHC.NoIEWildcard         -> []
     parenthesize $
       sep (comma >> space) (ellipsis <> fmap printIeWrappedName imps)
-printImport _ (IEGroup _ _ _ ) =
+printImport _ (GHC.IEGroup _ _ _ ) =
     error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEGroup'"
-printImport _ (IEDoc _ _) =
+printImport _ (GHC.IEDoc _ _) =
     error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEDoc'"
-printImport _ (IEDocNamed _ _) =
+printImport _ (GHC.IEDocNamed _ _) =
     error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEDocNamed'"
-printImport _ (XIE ext) =
+printImport _ (GHC.XIE ext) =
     GHC.noExtCon ext
 
 
 --------------------------------------------------------------------------------
-printIeWrappedName :: LIEWrappedName RdrName -> P ()
-printIeWrappedName lie = unLocated lie & \case
-  IEName n -> putRdrName n
-  IEPattern n -> putText "pattern" >> space >> putRdrName n
-  IEType n -> putText "type" >> space >> putRdrName n
+printIeWrappedName :: GHC.LIEWrappedName GHC.RdrName -> P ()
+printIeWrappedName lie = case GHC.unLoc lie of
+    GHC.IEName      n -> putRdrName n
+    GHC.IEPattern _ n -> putText "pattern" >> space >> putRdrName n
+    GHC.IEType    _ n -> putText "type" >> space >> putRdrName n
 
-mergeImports :: NonEmpty (Located Import) -> NonEmpty (Located Import)
+
+mergeImports
+    :: NonEmpty (GHC.LImportDecl GHC.GhcPs)
+    -> NonEmpty (GHC.LImportDecl GHC.GhcPs)
 mergeImports (x :| []) = x :| []
 mergeImports (h :| (t : ts))
-  | canMergeImport (unLocated h) (unLocated t) = mergeImports (mergeModuleImport h t :| ts)
+  | canMergeImport (GHC.unLoc h) (GHC.unLoc t) = mergeImports (mergeModuleImport h t :| ts)
   | otherwise = h :| mergeImportsTail (t : ts)
   where
     mergeImportsTail (x : y : ys)
-      | canMergeImport (unLocated x) (unLocated y) = mergeImportsTail ((mergeModuleImport x y) : ys)
+      | canMergeImport (GHC.unLoc x) (GHC.unLoc y) = mergeImportsTail ((mergeModuleImport x y) : ys)
       | otherwise = x : mergeImportsTail (y : ys)
     mergeImportsTail xs = xs
-
--}
 
 
 --------------------------------------------------------------------------------
