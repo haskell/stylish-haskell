@@ -76,7 +76,6 @@ records modu = do
  where
   getConDecls :: Hs.HsDataDefn Hs.GhcPs -> [Hs.ConDecl Hs.GhcPs]
   getConDecls d@Hs.HsDataDefn {} = map GHC.unLoc $ Hs.dd_cons d
-  getConDecls (Hs.XHsDataDefn x) = Hs.noExtCon x
 
 
 --------------------------------------------------------------------------------
@@ -87,7 +86,6 @@ recordToAlignable conf = groupAlign (cRecords conf) . fromMaybe [] . traverse fi
 --------------------------------------------------------------------------------
 fieldDeclToAlignable
     :: GHC.LocatedA (Hs.ConDeclField Hs.GhcPs) -> Maybe (Alignable GHC.RealSrcSpan)
-fieldDeclToAlignable (GHC.L _ (Hs.XConDeclField x)) = Hs.noExtCon x
 fieldDeclToAlignable (GHC.L matchLoc (Hs.ConDeclField _ names ty _)) = do
   matchPos <- GHC.srcSpanToRealSrcSpan $ GHC.locA matchLoc
   leftPos  <- GHC.srcSpanToRealSrcSpan $ GHC.getLoc $ last names
@@ -105,7 +103,6 @@ matchGroupToAlignable
     :: Config
     -> Hs.MatchGroup Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)
     -> [[Alignable GHC.RealSrcSpan]]
-matchGroupToAlignable _conf (Hs.XMatchGroup x) = Hs.noExtCon x
 matchGroupToAlignable conf (Hs.MG _ alts _) = cases' ++ patterns'
   where
     (cases, patterns) = partitionEithers . fromMaybe [] $ traverse matchToAlignable (GHC.unLoc alts)
@@ -148,7 +145,6 @@ matchToAlignable (GHC.L matchLoc (Hs.Match _ (Hs.FunRhs name _ _) pats@(_ : _) g
     , aRight     = bodyPos
     , aRightLead = length "= "
     }
-matchToAlignable (GHC.L _ (Hs.XMatch x))      = Hs.noExtCon x
 matchToAlignable (GHC.L _ (Hs.Match _ _ _ _)) = Nothing
 
 
@@ -181,7 +177,6 @@ grhsToAlignable (GHC.L grhsloc (Hs.GRHS _ guards@(_ : _) body)) = do
         , aRight     = bodyPos
         , aRightLead = length "-> "
         }
-grhsToAlignable (GHC.L _ (Hs.XGRHS x)) = Hs.noExtCon x
 grhsToAlignable (GHC.L _ _)            = Nothing
 
 
