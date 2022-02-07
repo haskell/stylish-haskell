@@ -17,35 +17,40 @@ module Language.Haskell.Stylish.Step.Imports
 
 --------------------------------------------------------------------------------
 import           Control.Monad                   (forM_, when, void)
+import           Data.Foldable                   (toList)
 import           Data.Function                   ((&), on)
 import           Data.Functor                    (($>))
-import           Data.Foldable                   (toList)
-import           Data.Maybe                      (isJust)
-import           Data.List                       (sortBy)
 import           Data.List.NonEmpty              (NonEmpty(..))
+import           Data.List                       (sortBy)
+import           Data.Maybe                      (isJust)
 import qualified Data.List.NonEmpty              as NonEmpty
 import qualified Data.Map                        as Map
 import qualified Data.Set                        as Set
-
-
+import qualified GHC.Data.FastString             as GHC
+import qualified GHC.Hs                          as GHC
+import qualified GHC.Types.Name.Reader           as GHC
+import qualified GHC.Types.SourceText            as GHC
+import qualified GHC.Types.SrcLoc                as GHC
+import qualified GHC.Unit.Types                  as GHC
 
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Step
+import           Language.Haskell.Stylish.Ordering
 
 
 --------------------------------------------------------------------------------
 data Options = Options
-    { importAlign     :: ImportAlign
-    , listAlign       :: ListAlign
-    , padModuleNames  :: Bool
-    , longListAlign   :: LongListAlign
-    , emptyListAlign  :: EmptyListAlign
-    , listPadding     :: ListPadding
-    , separateLists   :: Bool
-    , spaceSurround   :: Bool
-    , postQualified   :: Bool
+    { importAlign    :: ImportAlign
+    , listAlign      :: ListAlign
+    , padModuleNames :: Bool
+    , longListAlign  :: LongListAlign
+    , emptyListAlign :: EmptyListAlign
+    , listPadding    :: ListPadding
+    , separateLists  :: Bool
+    , spaceSurround  :: Bool
+    , postQualified  :: Bool
     } deriving (Eq, Show)
 
 defaultOptions :: Options
@@ -353,12 +358,7 @@ mergeImports (h :| (t : ts))
       | otherwise = x : mergeImportsTail (y : ys)
     mergeImportsTail xs = xs
 
-moduleName :: Import -> String
-moduleName
-  = moduleNameString
-  . unLocated
-  . ideclName
-  . rawImport
+-}
 
 
 --------------------------------------------------------------------------------
@@ -381,49 +381,34 @@ instance Monoid ImportStats where
     mappend = (<>)
     mempty  = ImportStats 0 False False False
 
-importStats :: Import -> ImportStats
+importStats :: GHC.ImportDecl GHC.GhcPs -> ImportStats
 importStats i =
-    ImportStats (importModuleNameLength i) (isSource i) (isQualified i) (isSafe i)
+    ImportStats (importModuleNameLength i) (isSource i) (isQualified i) (GHC.ideclSafe  i)
 
 -- Computes length till module name, includes package name.
 -- TODO: this should reuse code with the printer
-importModuleNameLength :: Import -> Int
+importModuleNameLength :: GHC.ImportDecl GHC.GhcPs -> Int
 importModuleNameLength imp =
-    (case ideclPkgQual (rawImport imp) of
+    (case GHC.ideclPkgQual imp of
         Nothing -> 0
         Just sl -> 1 + length (stringLiteral sl)) +
-    (length $ moduleName imp)
+    (length $ importModuleName imp)
 
 
 --------------------------------------------------------------------------------
-stringLiteral :: StringLiteral -> String
-stringLiteral sl = case sl_st sl of
-    NoSourceText -> FS.unpackFS $ sl_fs sl
-    SourceText s -> s
+stringLiteral :: GHC.StringLiteral -> String
+stringLiteral = GHC.unpackFS . GHC.sl_fs
 
 
 --------------------------------------------------------------------------------
-isQualified :: Import -> Bool
-isQualified
-  = (/=) NotQualified
-  . ideclQualified
-  . rawImport
+isQualified :: GHC.ImportDecl GHC.GhcPs -> Bool
+isQualified = (/=) GHC.NotQualified . GHC.ideclQualified
 
-isHiding :: Import -> Bool
-isHiding
-  = maybe False fst
-  . ideclHiding
-  . rawImport
+isHiding :: GHC.ImportDecl GHC.GhcPs -> Bool
+isHiding = maybe False fst . GHC.ideclHiding
 
-isSource :: Import -> Bool
-isSource
-  = ideclSource
-  . rawImport
-
-isSafe :: Import -> Bool
-isSafe
-  = ideclSafe
-  . rawImport
+isSource :: GHC.ImportDecl GHC.GhcPs -> Bool
+isSource = (==) GHC.IsBoot . GHC.ideclSource
 
 --------------------------------------------------------------------------------
 -- | Cleans up an import item list.
@@ -431,42 +416,44 @@ isSafe
 -- * Sorts import items.
 -- * Sort inner import lists, e.g. `import Control.Monad (Monad (return, join))`
 -- * Removes duplicates from import lists.
-prepareImportList :: [LIE GhcPs] -> [LIE GhcPs]
+prepareImportList :: [GHC.LIE GHC.GhcPs] -> [GHC.LIE GHC.GhcPs]
 prepareImportList =
   sortBy compareLIE . map (fmap prepareInner) .
   concatMap (toList . snd) . Map.toAscList . mergeByName
  where
-  mergeByName :: [LIE GhcPs] -> Map.Map RdrName (NonEmpty (LIE GhcPs))
+  mergeByName
+      :: [GHC.LIE GHC.GhcPs]
+      -> Map.Map GHC.RdrName (NonEmpty (GHC.LIE GHC.GhcPs))
   mergeByName imports0 = Map.fromListWith
     -- Note that ideally every NonEmpty will just have a single entry and we
     -- will be able to merge everything into that entry.  Exotic imports can
     -- mess this up, though.  So they end up in the tail of the list.
-    (\(x :| xs) (y :| ys) -> case ieMerge (unLocated x) (unLocated y) of
-      Just z -> (x $> z) :| (xs ++ ys)  -- Keep source from `x`
+    (\(x :| xs) (y :| ys) -> case ieMerge (GHC.unLoc x) (GHC.unLoc y) of
+      Just z  -> (x $> z) :| (xs ++ ys)  -- Keep source from `x`
       Nothing -> x :| (xs ++ y : ys))
-    [(ieName $ unLocated imp, imp :| []) | imp <- imports0]
+    [(GHC.ieName $ GHC.unLoc imp, imp :| []) | imp <- imports0]
 
-  prepareInner :: IE GhcPs -> IE GhcPs
+  prepareInner :: GHC.IE GHC.GhcPs -> GHC.IE GHC.GhcPs
   prepareInner = \case
     -- Simplify `A ()` to `A`.
-    IEThingWith x n NoIEWildcard [] [] -> IEThingAbs x n
-    IEThingWith x n w ns fs ->
-      IEThingWith x n w (sortBy (compareWrappedName `on` unLoc) ns) fs
+    GHC.IEThingWith x n GHC.NoIEWildcard [] -> GHC.IEThingAbs x n
+    GHC.IEThingWith x n w ns ->
+      GHC.IEThingWith x n w (sortBy (compareWrappedName `on` GHC.unLoc) ns)
     ie -> ie
 
   -- Merge two import items, assuming they have the same name.
-  ieMerge :: IE GhcPs -> IE GhcPs -> Maybe (IE GhcPs)
-  ieMerge l@(IEVar _ _)      _                  = Just l
-  ieMerge _                  r@(IEVar _ _)      = Just r
-  ieMerge (IEThingAbs _ _)   r                  = Just r
-  ieMerge l                  (IEThingAbs _ _)   = Just l
-  ieMerge l@(IEThingAll _ _) _                  = Just l
-  ieMerge _                  r@(IEThingAll _ _) = Just r
-  ieMerge (IEThingWith x0 n0 w0 ns0 []) (IEThingWith _ _ w1 ns1 [])
+  ieMerge :: GHC.IE GHC.GhcPs -> GHC.IE GHC.GhcPs -> Maybe (GHC.IE GHC.GhcPs)
+  ieMerge l@(GHC.IEVar _ _)      _                  = Just l
+  ieMerge _                  r@(GHC.IEVar _ _)      = Just r
+  ieMerge (GHC.IEThingAbs _ _)   r                  = Just r
+  ieMerge l                  (GHC.IEThingAbs _ _)   = Just l
+  ieMerge l@(GHC.IEThingAll _ _) _                  = Just l
+  ieMerge _                  r@(GHC.IEThingAll _ _) = Just r
+  ieMerge (GHC.IEThingWith x0 n0 w0 ns0) (GHC.IEThingWith _ _ w1 ns1)
     | w0 /= w1  = Nothing
     | otherwise = Just $
         -- TODO: sort the `ns0 ++ ns1`?
-        IEThingWith x0 n0 w0 (nubOn (unwrapName . unLoc) $ ns0 ++ ns1) []
+        GHC.IEThingWith x0 n0 w0 (nubOn GHC.lieWrappedName $ ns0 ++ ns1)
   ieMerge _ _ = Nothing
 
 
@@ -480,5 +467,3 @@ nubOn f = go Set.empty
     | otherwise          = x : go (Set.insert y acc) xs
    where
     y = f x
-
--}

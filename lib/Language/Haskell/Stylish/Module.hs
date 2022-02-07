@@ -8,12 +8,10 @@
 module Language.Haskell.Stylish.Module
   ( -- * Data types
     Module
-  , Import (..)
   , Comments (..)
   , Lines
 
     -- * Getters
-  , moduleImports
   , moduleImportGroups
   , queryModule
   , groupByLine
@@ -21,6 +19,7 @@ module Language.Haskell.Stylish.Module
     -- * Imports
   , canMergeImport
   , mergeModuleImport
+  , importModuleName
 
     -- * Pragmas
   , moduleLanguagePragmas
@@ -33,7 +32,7 @@ import           Data.Function                (on, (&))
 import           Data.Generics                (Typeable, everything, mkQ)
 import qualified Data.List                    as L
 import           Data.List.NonEmpty           (NonEmpty (..))
-import           Data.Maybe                   (mapMaybe)
+import           Data.Maybe                   (fromMaybe, mapMaybe)
 import           GHC.Hs                       (ImportDecl (..),
                                                ImportDeclQualifiedStyle (..))
 import qualified GHC.Hs                       as GHC
@@ -43,6 +42,7 @@ import           GHC.Types.SrcLoc             (RealSrcSpan (..))
 import           GHC.Types.SrcLoc             (Located, unLoc)
 import qualified GHC.Types.SrcLoc             as GHC
 import           GHC.Utils.Outputable         (Outputable)
+import qualified GHC.Unit.Module.Name         as GHC
 
 
 --------------------------------------------------------------------------------
@@ -57,13 +57,12 @@ type Lines = [String]
 -- | Concrete module type
 type Module = GHC.Located GHC.HsModule
 
--- | Import declaration in module
-newtype Import = Import { unImport :: ImportDecl GhcPs }
-  deriving newtype (Outputable)
+importModuleName :: ImportDecl GhcPs -> String
+importModuleName = GHC.moduleNameString . GHC.unLoc . GHC.ideclName
 
 -- | Returns true if the two import declarations can be merged
-canMergeImport :: Import -> Import -> Bool
-canMergeImport (Import i0) (Import i1) = and $ fmap (\f -> f i0 i1)
+canMergeImport :: ImportDecl GhcPs -> ImportDecl GhcPs -> Bool
+canMergeImport i0 i1 = and $ fmap (\f -> f i0 i1)
   [ (==) `on` unLoc . ideclName
   , (==) `on` ideclPkgQual
   , (==) `on` ideclSource
@@ -80,14 +79,13 @@ canMergeImport (Import i0) (Import i1) = and $ fmap (\f -> f i0 i1)
 -- | Comments associated with module
 newtype Comments = Comments [GHC.RealLocated GHC.EpaComment]
 
--- | Get module imports
-moduleImports :: Module -> [Located Import]
-moduleImports (L _ m) =
-    GHC.hsmodImports m & fmap \(L pos i) -> L (GHC.locA pos) (Import i)
-
 -- | Get groups of imports from module
-moduleImportGroups :: Module -> [NonEmpty (Located Import)]
-moduleImportGroups = groupByLine unsafeGetRealSrcSpan . moduleImports
+moduleImportGroups :: Module -> [NonEmpty (GHC.LImportDecl GHC.GhcPs)]
+moduleImportGroups =
+    groupByLine (fromMaybe err . GHC.srcSpanToRealSrcSpan . GHC.getLocA) .
+    GHC.hsmodImports . GHC.unLoc
+  where
+    err = error "moduleImportGroups: import without soure span"
 
 -- The same logic as 'Language.Haskell.Stylish.Module.moduleImportGroups'.
 groupByLine :: (a -> RealSrcSpan) -> [a] -> [NonEmpty a]
@@ -117,9 +115,11 @@ groupByLine f = go [] Nothing
 --   comment imports themselves. It _is_ however, systemic and it'd be better
 --   if we processed comments beforehand and attached them to all AST nodes in
 --   our own representation.
-mergeModuleImport :: Located Import -> Located Import -> Located Import
-mergeModuleImport (L p0 (Import i0)) (L _p1 (Import i1)) =
-  L p0 $ Import i0 { ideclHiding = newImportNames }
+mergeModuleImport
+    :: GHC.LImportDecl GHC.GhcPs -> GHC.LImportDecl GHC.GhcPs
+    -> GHC.LImportDecl GHC.GhcPs
+mergeModuleImport (L p0 i0) (L _p1 i1) =
+  L p0 $ i0 { ideclHiding = newImportNames }
   where
     newImportNames =
       case (ideclHiding i0, ideclHiding i1) of

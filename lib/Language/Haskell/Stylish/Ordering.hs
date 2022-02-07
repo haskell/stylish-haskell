@@ -16,20 +16,20 @@ import           Data.Char                       (isUpper, toLower)
 import           Data.Function                   (on)
 import           Data.Ord                        (comparing)
 import           GHC.Hs
+import qualified GHC.Hs                          as GHC
 import           GHC.Types.Name.Reader           (RdrName)
 import           GHC.Types.SrcLoc                (unLoc)
 import           GHC.Utils.Outputable            (Outputable)
 import qualified GHC.Utils.Outputable            as GHC
 import           Language.Haskell.Stylish.GHC    (showOutputable)
-import           Language.Haskell.Stylish.Module (Import (..))
-
 
 
 --------------------------------------------------------------------------------
 -- | Compare imports for sorting.  Cannot easily be a lawful instance due to
 -- case insensitivity.
-compareImports :: Import -> Import -> Ordering
-compareImports (Import i0) (Import i1) =
+compareImports
+    :: GHC.ImportDecl GHC.GhcPs -> GHC.ImportDecl GHC.GhcPs -> Ordering
+compareImports i0 i1 =
     ideclName i0 `compareOutputableCI` ideclName i1 <>
     fmap showOutputable (ideclPkgQual i0) `compare`
         fmap showOutputable (ideclPkgQual i1) <>

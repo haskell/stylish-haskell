@@ -19,7 +19,6 @@ import           Control.Monad.Writer           (execWriter, tell)
 import           Data.List                      (intercalate)
 import           GHC.Exts                       (IsList (..))
 import           GHC.Hs.Dump                    (showAstData, BlankSrcSpan(..), BlankEpAnnotations (..))
-import           Language.Haskell.Stylish.GHC   (baseDynFlags)
 import           System.Directory               (createDirectory,
                                                  getCurrentDirectory,
                                                  getTemporaryDirectory,

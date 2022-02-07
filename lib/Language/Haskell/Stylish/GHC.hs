@@ -29,7 +29,6 @@ import           GHC.Types.SrcLoc                                    (GenLocated
                                                                       srcSpanStartLine)
 import qualified GHC.Utils.Outputable                                as GHC
 import qualified Language.Haskell.GhclibParserEx.GHC.Settings.Config as GHCEx
-import qualified GHC.Parser.Annotation as GHC
 
 unsafeGetRealSrcSpan :: Located a -> RealSrcSpan
 unsafeGetRealSrcSpan = \case
