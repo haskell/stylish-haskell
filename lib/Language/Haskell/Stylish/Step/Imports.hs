@@ -22,7 +22,7 @@ import           Data.Function                   ((&), on)
 import           Data.Functor                    (($>))
 import           Data.List.NonEmpty              (NonEmpty(..))
 import           Data.List                       (sortBy)
-import           Data.Maybe                      (isJust)
+import           Data.Maybe                      (fromMaybe, isJust)
 import qualified Data.List.NonEmpty              as NonEmpty
 import qualified Data.Map                        as Map
 import qualified Data.Set                        as Set
@@ -36,10 +36,13 @@ import qualified GHC.Unit.Types                  as GHC
 
 
 --------------------------------------------------------------------------------
+import           Language.Haskell.Stylish.Block
+import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.Module
-import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Ordering
 import           Language.Haskell.Stylish.Printer
+import           Language.Haskell.Stylish.Step
+import           Language.Haskell.Stylish.Util
 
 
 --------------------------------------------------------------------------------
@@ -103,8 +106,6 @@ data LongListAlign
 
 --------------------------------------------------------------------------------
 step :: Maybe Int -> Options -> Step
-step _ _ = makeStep "Imports (ghc-lib-parser)" $ \ls _ -> ls
-{-
 step columns = makeStep "Imports (ghc-lib-parser)" . printImports columns
 
 
@@ -113,38 +114,41 @@ printImports :: Maybe Int -> Options -> Lines -> Module -> Lines
 printImports maxCols align ls m = applyChanges changes ls
   where
     groups = moduleImportGroups m
-    moduleStats = foldMap importStats . fmap unLoc $ concatMap toList groups
+    moduleStats = foldMap importStats . fmap GHC.unLoc $ concatMap toList groups
     changes = do
         group <- groups
         pure $ formatGroup maxCols align m moduleStats group
 
 formatGroup
     :: Maybe Int -> Options -> Module -> ImportStats
-    -> NonEmpty (Located Import) -> Change String
+    -> NonEmpty (GHC.LImportDecl GHC.GhcPs) -> Change String
 formatGroup maxCols options m moduleStats imports =
     let newLines = formatImports maxCols options m moduleStats imports in
     change (importBlock imports) (const newLines)
 
-importBlock :: NonEmpty (Located a) -> Block String
+importBlock :: NonEmpty (GHC.LImportDecl GHC.GhcPs)  -> Block String
 importBlock group = Block
-    (getStartLineUnsafe $ NonEmpty.head group)
-    (getEndLineUnsafe   $ NonEmpty.last group)
+    (GHC.srcSpanStartLine . src $ NonEmpty.head group)
+    (GHC.srcSpanEndLine   . src $ NonEmpty.last group)
+  where
+    src = fromMaybe (error "importBlock: missing location") .
+        GHC.srcSpanToRealSrcSpan . GHC.getLocA
 
 formatImports
     :: Maybe Int    -- ^ Max columns.
     -> Options      -- ^ Options.
     -> Module       -- ^ Module.
     -> ImportStats  -- ^ Module stats.
-    -> NonEmpty (Located Import) -> Lines
+    -> NonEmpty (GHC.LImportDecl GHC.GhcPs) -> Lines
 formatImports maxCols options m moduleStats rawGroup =
   runPrinter_ (PrinterConfig maxCols) [] m do
   let
-    group :: NonEmpty (Located Import)
+    group :: NonEmpty (GHC.LImportDecl GHC.GhcPs)
     group
-      = NonEmpty.sortBy (compareImports `on` unLocated) rawGroup
+      = NonEmpty.sortBy (compareImports `on` GHC.unLoc) rawGroup
       & mergeImports
 
-    unLocatedGroup = fmap unLocated $ toList group
+    unLocatedGroup = fmap GHC.unLoc $ toList group
 
     align' = importAlign options
     padModuleNames' = padModuleNames options
@@ -158,151 +162,160 @@ formatImports maxCols options m moduleStats rawGroup =
 
   forM_ group \imp -> printQualified options padNames stats imp >> newline
 
+
 --------------------------------------------------------------------------------
-printQualified :: Options -> Bool -> ImportStats -> Located Import -> P ()
-printQualified Options{..} padNames stats (L _ decl) = do
-  let decl' = rawImport decl
+printQualified
+    :: Options -> Bool -> ImportStats -> GHC.LImportDecl GHC.GhcPs -> P ()
+printQualified Options{..} padNames stats ldecl = do
+    putText "import" >> space
 
-  putText "import" >> space
+    case (isSource decl, isAnySource stats) of
+      (True, _) -> putText "{-# SOURCE #-}" >> space
+      (_, True) -> putText "              " >> space
+      _         -> pure ()
 
-  case (isSource decl, isAnySource stats) of
-    (True, _) -> putText "{-# SOURCE #-}" >> space
-    (_, True) -> putText "              " >> space
-    _         -> pure ()
+    when (GHC.ideclSafe decl) (putText "safe" >> space)
 
-  when (isSafe decl) (putText "safe" >> space)
+    let module_ = do
+            moduleNamePosition <- length <$> getCurrentLine
+            forM_ (GHC.ideclPkgQual decl) $ \pkg ->
+                putText (stringLiteral pkg) >> space
+            putText (importModuleName decl)
 
-  let
-    module_ = do
-      moduleNamePosition <- length <$> getCurrentLine
-      forM_ (ideclPkgQual decl') $ \pkg -> putText (stringLiteral pkg) >> space
-      putText (moduleName decl)
-      -- Only print spaces if something follows.
-      when padNames $
-        when (isJust (ideclAs decl') || isHiding decl ||
-                not (null $ ideclHiding decl')) $
-          putText $
-            replicate (isLongestImport stats - importModuleNameLength decl) ' '
-      pure moduleNamePosition
+            -- Only print spaces if something follows.
+            let somethingFollows =
+                    isJust (GHC.ideclAs decl) || isHiding decl ||
+                    not (null $ GHC.ideclHiding decl)
+            when (padNames && somethingFollows) $ putText $ replicate
+                (isLongestImport stats - importModuleNameLength decl)
+                ' '
+            pure moduleNamePosition
 
-  moduleNamePosition <-
-    case (postQualified, isQualified decl, isAnyQualified stats) of
-      (False, True , _   ) -> putText "qualified" *> space *> module_
-      (False, _    , True) -> putText "         " *> space *> module_
-      (True , True , _   ) -> module_ <* space <* putText "qualified"
-      _                    -> module_
+    moduleNamePosition <-
+        case (postQualified, isQualified decl, isAnyQualified stats) of
+            (False, True , _   ) -> putText "qualified" *> space *> module_
+            (False, _    , True) -> putText "         " *> space *> module_
+            (True , True , _   ) -> module_ <* space <* putText "qualified"
+            _                    -> module_
 
-  beforeAliasPosition <- length <$> getCurrentLine
+    beforeAliasPosition <- length <$> getCurrentLine
+    forM_ (GHC.ideclAs decl) $ \lname -> do
+        space >> putText "as" >> space
+        putText . GHC.moduleNameString $ GHC.unLoc lname
 
-  forM_ (ideclAs decl') \(L _ name) -> do
-    space >> putText "as" >> space >> putText (moduleNameString name)
+    afterAliasPosition <- length <$> getCurrentLine
 
-  afterAliasPosition <- length <$> getCurrentLine
+    when (isHiding decl) (space >> putText "hiding")
 
-  when (isHiding decl) (space >> putText "hiding")
+    let putOffset = putText $ replicate offset ' '
+        offset = case listPadding of
+            LPConstant n -> n
+            LPModuleName -> moduleNamePosition
 
-  let putOffset = putText $ replicate offset ' '
-      offset = case listPadding of
-        LPConstant n -> n
-        LPModuleName -> moduleNamePosition
+    pure ()
 
-  case snd <$> ideclHiding decl' of
-    Nothing            -> pure ()
-    Just (L _ [])      -> case emptyListAlign of
-      RightAfter -> modifyCurrentLine trimRight >> space >> putText "()"
-      Inherit -> case listAlign of
-        NewLine ->
-          modifyCurrentLine trimRight >> newline >> putOffset >> putText "()"
-        _ -> space >> putText "()"
-    Just (L _ imports) -> do
-      let printedImports = flagEnds $ -- [P ()]
-            fmap ((printImport separateLists) . unLocated)
-            (prepareImportList imports)
+    case snd <$> GHC.ideclHiding decl of
+        Nothing -> pure ()
+        Just limports | null (GHC.unLoc limports) -> case emptyListAlign of
+            RightAfter -> modifyCurrentLine trimRight >> space >> putText "()"
+            Inherit -> case listAlign of
+                NewLine -> do
+                    modifyCurrentLine trimRight
+                    newline >> putOffset >> putText "()"
+                _ -> space >> putText "()"
 
-      -- Since we might need to output the import module name several times, we
-      -- need to save it to a variable:
-      wrapPrefix <- case listAlign of
-        AfterAlias -> pure $ replicate (afterAliasPosition + 1) ' '
-        WithAlias -> pure $ replicate (beforeAliasPosition + 1) ' '
-        Repeat -> fmap (++ " (") getCurrentLine
-        WithModuleName -> pure $ replicate (moduleNamePosition + offset) ' '
-        NewLine -> pure $ replicate offset ' '
+        Just limports -> do
+            let imports = GHC.unLoc limports
+                printedImports = flagEnds $ -- [P ()]
+                    (printImport separateLists) . GHC.unLoc <$>
+                    prepareImportList imports
 
-      let -- Helper
-          doSpaceSurround = when spaceSurround space
+            -- Since we might need to output the import module name several times, we
+            -- need to save it to a variable:
+            wrapPrefix <- case listAlign of
+                AfterAlias -> pure $ replicate (afterAliasPosition + 1) ' '
+                WithAlias -> pure $ replicate (beforeAliasPosition + 1) ' '
+                Repeat -> fmap (++ " (") getCurrentLine
+                WithModuleName -> pure $ replicate (moduleNamePosition + offset) ' '
+                NewLine -> pure $ replicate offset ' '
 
-          -- Try to put everything on one line.
-          printAsSingleLine = forM_ printedImports $ \(imp, start, end) -> do
-            when start $ putText "(" >> doSpaceSurround
-            imp
-            if end then doSpaceSurround >> putText ")" else comma >> space
+            -- Helper
+            let doSpaceSurround = when spaceSurround space
 
-          -- Try to put everything one by one, wrapping if that fails.
-          printAsInlineWrapping wprefix = forM_ printedImports $
-            \(imp, start, end) ->
-            patchForRepeatHiding $ wrapping
-              (do
-                if start then putText "(" >> doSpaceSurround else space
-                imp
-                if end then doSpaceSurround >> putText ")" else comma)
-              (do
-                case listAlign of
-                    -- In 'Repeat' mode, end lines with ')' rather than ','.
-                    Repeat | not start -> modifyCurrentLine . withLast $
-                        \c -> if c == ',' then ')' else c
-                    _ | start && spaceSurround ->
-                        -- Only necessary if spaceSurround is enabled.
-                        modifyCurrentLine trimRight
-                    _ -> pure ()
-                newline
-                void wprefix
-                case listAlign of
-                  -- '(' already included in repeat
-                  Repeat         -> pure ()
-                  -- Print the much needed '('
-                  _ | start      -> putText "(" >> doSpaceSurround
-                  -- Don't bother aligning if we're not in inline mode.
-                  _ | longListAlign /= Inline -> pure ()
-                  -- 'Inline + AfterAlias' is really where we want to be careful
-                  -- with spacing.
-                  AfterAlias -> space >> doSpaceSurround
-                  WithModuleName -> pure ()
-                  WithAlias -> pure ()
-                  NewLine -> pure ()
-                imp
-                if end then doSpaceSurround >> putText ")" else comma)
+            -- Try to put everything on one line.
+            let printAsSingleLine = forM_ printedImports $ \(imp, start, end) -> do
+                    when start $ putText "(" >> doSpaceSurround
+                    imp
+                    if end then doSpaceSurround >> putText ")" else comma >> space
 
-          -- Put everything on a separate line.  'spaceSurround' can be
-          -- ignored.
-          printAsMultiLine = forM_ printedImports $ \(imp, start, end) -> do
-            when start $ modifyCurrentLine trimRight  -- We added some spaces.
-            newline
-            putOffset
-            if start then putText "( " else putText ", "
-            imp
-            when end $ newline >> putOffset >> putText ")"
+            -- Try to put everything one by one, wrapping if that fails.
+            let printAsInlineWrapping wprefix = forM_ printedImports $
+                    \(imp, start, end) ->
+                    patchForRepeatHiding $ wrapping
+                       (do
+                         if start then putText "(" >> doSpaceSurround else space
+                         imp
+                         if end then doSpaceSurround >> putText ")" else comma)
+                      (do
+                        case listAlign of
+                            -- In 'Repeat' mode, end lines with ')' rather than ','.
+                            Repeat | not start -> modifyCurrentLine . withLast $
+                                \c -> if c == ',' then ')' else c
+                            _ | start && spaceSurround ->
+                                -- Only necessary if spaceSurround is enabled.
+                                modifyCurrentLine trimRight
+                            _ -> pure ()
+                        newline
+                        void wprefix
+                        case listAlign of
+                          -- '(' already included in repeat
+                          Repeat         -> pure ()
+                          -- Print the much needed '('
+                          _ | start      -> putText "(" >> doSpaceSurround
+                          -- Don't bother aligning if we're not in inline mode.
+                          _ | longListAlign /= Inline -> pure ()
+                          -- 'Inline + AfterAlias' is really where we want to be careful
+                          -- with spacing.
+                          AfterAlias -> space >> doSpaceSurround
+                          WithModuleName -> pure ()
+                          WithAlias -> pure ()
+                          NewLine -> pure ()
+                        imp
+                        if end then doSpaceSurround >> putText ")" else comma)
 
-      case longListAlign of
-        Multiline -> wrapping
-          (space >> printAsSingleLine)
-          printAsMultiLine
-        Inline | NewLine <- listAlign -> do
-          modifyCurrentLine trimRight
-          newline >> putOffset >> printAsInlineWrapping (putText wrapPrefix)
-        Inline -> space >> printAsInlineWrapping (putText wrapPrefix)
-        InlineWithBreak -> wrapping
-          (space >> printAsSingleLine)
-          (do
-            modifyCurrentLine trimRight
-            newline >> putOffset >> printAsInlineWrapping putOffset)
-        InlineToMultiline -> wrapping
-          (space >> printAsSingleLine)
-          (wrapping
-            (do
-              modifyCurrentLine trimRight
-              newline >> putOffset >> printAsSingleLine)
-            printAsMultiLine)
+            -- Put everything on a separate line.  'spaceSurround' can be
+            -- ignored.
+            let printAsMultiLine = forM_ printedImports $ \(imp, start, end) -> do
+                    when start $ modifyCurrentLine trimRight  -- We added some spaces.
+                    newline
+                    putOffset
+                    if start then putText "( " else putText ", "
+                    imp
+                    when end $ newline >> putOffset >> putText ")"
+
+            case longListAlign of
+              Multiline -> wrapping
+                (space >> printAsSingleLine)
+                printAsMultiLine
+              Inline | NewLine <- listAlign -> do
+                modifyCurrentLine trimRight
+                newline >> putOffset >> printAsInlineWrapping (putText wrapPrefix)
+              Inline -> space >> printAsInlineWrapping (putText wrapPrefix)
+              InlineWithBreak -> wrapping
+                (space >> printAsSingleLine)
+                (do
+                  modifyCurrentLine trimRight
+                  newline >> putOffset >> printAsInlineWrapping putOffset)
+              InlineToMultiline -> wrapping
+                (space >> printAsSingleLine)
+                (wrapping
+                  (do
+                    modifyCurrentLine trimRight
+                    newline >> putOffset >> printAsSingleLine)
+                  printAsMultiLine)
   where
+    decl = GHC.unLoc ldecl
+
     -- We cannot wrap/repeat 'hiding' imports since then we would get multiple
     -- imports hiding different things.
     patchForRepeatHiding = case listAlign of
@@ -311,7 +324,6 @@ printQualified Options{..} padNames stats (L _ decl) = do
 
 
 --------------------------------------------------------------------------------
--}
 printImport :: Bool -> GHC.IE GHC.GhcPs -> P ()
 printImport _ (GHC.IEVar _ name) = do
     printIeWrappedName name
@@ -339,8 +351,6 @@ printImport _ (GHC.IEDoc _ _) =
     error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEDoc'"
 printImport _ (GHC.IEDocNamed _ _) =
     error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEDocNamed'"
-printImport _ (GHC.XIE ext) =
-    GHC.noExtCon ext
 
 
 --------------------------------------------------------------------------------
@@ -401,7 +411,9 @@ importModuleNameLength imp =
 
 --------------------------------------------------------------------------------
 stringLiteral :: GHC.StringLiteral -> String
-stringLiteral = GHC.unpackFS . GHC.sl_fs
+stringLiteral sl = case GHC.sl_st sl of
+    GHC.NoSourceText -> show . GHC.unpackFS $ GHC.sl_fs sl
+    GHC.SourceText s -> s
 
 
 --------------------------------------------------------------------------------
@@ -413,6 +425,7 @@ isHiding = maybe False fst . GHC.ideclHiding
 
 isSource :: GHC.ImportDecl GHC.GhcPs -> Bool
 isSource = (==) GHC.IsBoot . GHC.ideclSource
+
 
 --------------------------------------------------------------------------------
 -- | Cleans up an import item list.
