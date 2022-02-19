@@ -28,7 +28,7 @@ module Language.Haskell.Stylish.Module
 
 --------------------------------------------------------------------------------
 import           Data.Char                    (toLower)
-import           Data.Function                (on, (&))
+import           Data.Function                (on)
 import           Data.Generics                (Typeable, everything, mkQ)
 import qualified Data.List                    as L
 import           Data.List.NonEmpty           (NonEmpty (..))
@@ -37,11 +37,9 @@ import           GHC.Hs                       (ImportDecl (..),
                                                ImportDeclQualifiedStyle (..))
 import qualified GHC.Hs                       as GHC
 import           GHC.Hs.Extension             (GhcPs)
-import           GHC.Types.SrcLoc             (GenLocated (..))
-import           GHC.Types.SrcLoc             (RealSrcSpan (..))
-import           GHC.Types.SrcLoc             (Located, unLoc)
+import           GHC.Types.SrcLoc             (GenLocated (..),
+                                               RealSrcSpan (..), unLoc)
 import qualified GHC.Types.SrcLoc             as GHC
-import           GHC.Utils.Outputable         (Outputable)
 import qualified GHC.Unit.Module.Name         as GHC
 
 

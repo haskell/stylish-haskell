@@ -21,7 +21,7 @@ import           Language.Haskell.Stylish.Tests.Util   (testStep', (@=??))
 
 --------------------------------------------------------------------------------
 tests :: Test
-tests = testGroup "Language.Haskell.Stylish.Step.ImportsGHC"
+tests = testGroup "Language.Haskell.Stylish.Step.Imports.FelixTests"
   [ testCase "Hello world" ex0
   , testCase "Sorted simple" ex1
   , testCase "Sorted import lists" ex2
