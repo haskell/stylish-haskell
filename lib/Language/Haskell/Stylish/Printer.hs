@@ -1,11 +1,10 @@
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE DoAndIfThenElse #-}
+{-# LANGUAGE BlockArguments             #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE DoAndIfThenElse            #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE RecordWildCards            #-}
 module Language.Haskell.Stylish.Printer
   ( Printer(..)
   , PrinterConfig(..)
@@ -58,26 +57,26 @@ module Language.Haskell.Stylish.Printer
 import           Prelude                         hiding (lines)
 
 --------------------------------------------------------------------------------
+import qualified GHC.Hs                          as GHC
 import           GHC.Hs.Extension                (GhcPs)
-import           GHC.Types.Name.Reader                        (RdrName(..))
-import           GHC.Types.SrcLoc                          (GenLocated(..))
-import           GHC.Utils.Outputable                      (Outputable)
-import qualified GHC.Hs as GHC
-import qualified GHC.Types.SrcLoc as GHC
-import qualified GHC.Unit.Module.Name as GHC
-import qualified GHC.Types.Basic as GHC
+import qualified GHC.Types.Basic                 as GHC
+import           GHC.Types.Name.Reader           (RdrName (..))
+import           GHC.Types.SrcLoc                (GenLocated (..))
+import qualified GHC.Types.SrcLoc                as GHC
+import qualified GHC.Unit.Module.Name            as GHC
+import           GHC.Utils.Outputable            (Outputable)
 
 --------------------------------------------------------------------------------
 import           Control.Monad                   (forM_, replicateM_)
-import           Control.Monad.Reader            (MonadReader, ReaderT(..), asks, local)
-import           Control.Monad.State             (MonadState, State)
-import           Control.Monad.State             (runState)
-import           Control.Monad.State             (get, gets, modify, put)
+import           Control.Monad.Reader            (MonadReader, ReaderT (..),
+                                                  asks, local)
+import           Control.Monad.State             (MonadState, State, get, gets,
+                                                  modify, put, runState)
 import           Data.List                       (foldl')
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Module (Module, Lines)
 import           Language.Haskell.Stylish.GHC    (showOutputable)
+import           Language.Haskell.Stylish.Module (Lines)
 
 -- | Shorthand for 'Printer' monad
 type P = Printer
@@ -93,24 +92,22 @@ data PrinterConfig = PrinterConfig
 
 -- | State of printer
 data PrinterState = PrinterState
-  { lines :: !Lines
-  , linePos :: !Int
+  { lines       :: !Lines
+  , linePos     :: !Int
   , currentLine :: !String
-  , pendingComments :: ![GHC.RealLocated GHC.EpaComment]
-  , parsedModule :: !Module
   }
 
 -- | Run printer to get printed lines out of module as well as return value of monad
-runPrinter :: PrinterConfig -> [GHC.RealLocated GHC.EpaComment] -> Module -> Printer a -> (a, Lines)
-runPrinter cfg comments m (Printer printer) =
+runPrinter :: PrinterConfig -> Printer a -> (a, Lines)
+runPrinter cfg (Printer printer) =
   let
-    (a, PrinterState parsedLines _ startedLine _ _) = runReaderT printer cfg `runState` PrinterState [] 0 "" comments m
+    (a, PrinterState parsedLines _ startedLine) = runReaderT printer cfg `runState` PrinterState [] 0 ""
   in
     (a, parsedLines <> if startedLine == [] then [] else [startedLine])
 
 -- | Run printer to get printed lines only
-runPrinter_ :: PrinterConfig -> [GHC.RealLocated GHC.EpaComment] -> Module -> Printer a -> Lines
-runPrinter_ cfg comments m printer = snd (runPrinter cfg comments m printer)
+runPrinter_ :: PrinterConfig -> Printer a -> Lines
+runPrinter_ cfg printer = snd (runPrinter cfg printer)
 
 -- | Print text
 putText :: String -> P ()
@@ -148,14 +145,14 @@ putAllSpanComments suff = \case
 -- | Print any comment
 putComment :: GHC.EpaComment -> P ()
 putComment epaComment = case GHC.ac_tok epaComment of
-  GHC.EpaLineComment s -> putText s
-  GHC.EpaDocCommentNext s -> putText s
-  GHC.EpaDocCommentPrev s -> putText s
+  GHC.EpaLineComment s     -> putText s
+  GHC.EpaDocCommentNext s  -> putText s
+  GHC.EpaDocCommentPrev s  -> putText s
   GHC.EpaDocCommentNamed s -> putText s
-  GHC.EpaDocSection _ s -> putText s
-  GHC.EpaDocOptions s -> putText s
-  GHC.EpaBlockComment s -> putText s
-  GHC.EpaEofComment -> pure ()
+  GHC.EpaDocSection _ s    -> putText s
+  GHC.EpaDocOptions s      -> putText s
+  GHC.EpaBlockComment s    -> putText s
+  GHC.EpaEofComment        -> pure ()
 
 -- | Given the current start line of 'SrcSpan', remove and put EOL comment for same line
 {-
@@ -198,17 +195,17 @@ nameAnnAdornments = foldl'
 
 nameAnnAdornment :: GHC.NameAnn -> (String, String)
 nameAnnAdornment = \case
-    GHC.NameAnn {..} -> fromAdornment nann_adornment
+    GHC.NameAnn {..}       -> fromAdornment nann_adornment
     GHC.NameAnnCommas {..} -> fromAdornment nann_adornment
-    GHC.NameAnnOnly {..} -> fromAdornment nann_adornment
-    GHC.NameAnnRArrow {} -> (mempty, mempty)
-    GHC.NameAnnQuote {} -> ("'", mempty)
+    GHC.NameAnnOnly {..}   -> fromAdornment nann_adornment
+    GHC.NameAnnRArrow {}   -> (mempty, mempty)
+    GHC.NameAnnQuote {}    -> ("'", mempty)
     GHC.NameAnnTrailing {} -> (mempty, mempty)
   where
-    fromAdornment GHC.NameParens = ("(", ")")
+    fromAdornment GHC.NameParens     = ("(", ")")
     fromAdornment GHC.NameBackquotes = ("`", "`")
     fromAdornment GHC.NameParensHash = ("#(", "#)")
-    fromAdornment GHC.NameSquare = ("[", "]")
+    fromAdornment GHC.NameSquare     = ("[", "]")
 
 -- | Print module name
 putModuleName :: GHC.ModuleName -> P ()
@@ -332,7 +329,7 @@ parenthesize action = putText "(" *> action <* putText ")"
 
 -- | Add separator between each element of the given printers
 sep :: P a -> [P a] -> P ()
-sep _ [] = pure ()
+sep _ []             = pure ()
 sep s (first : rest) = first >> forM_ rest ((>>) s)
 
 -- | Prefix a printer with another one

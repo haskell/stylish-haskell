@@ -46,6 +46,7 @@ Library
   Other-modules:
     Language.Haskell.Stylish.Align
     Language.Haskell.Stylish.Block
+    Language.Haskell.Stylish.Comments
     Language.Haskell.Stylish.Config
     Language.Haskell.Stylish.Config.Cabal
     Language.Haskell.Stylish.Config.Internal
@@ -118,6 +119,7 @@ Test-suite stylish-haskell-tests
     Language.Haskell.Stylish
     Language.Haskell.Stylish.Align
     Language.Haskell.Stylish.Block
+    Language.Haskell.Stylish.Comments
     Language.Haskell.Stylish.Config
     Language.Haskell.Stylish.Config.Cabal
     Language.Haskell.Stylish.Config.Internal

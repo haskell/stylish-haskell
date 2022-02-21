@@ -9,7 +9,9 @@
 -- when this is evaluated, we take into account that 4th line will become the
 -- 3rd line before it needs changing.
 module Language.Haskell.Stylish.Editor
-    ( Change
+    ( module Language.Haskell.Stylish.Block
+
+    , Change
     , applyChanges
 
     , change

@@ -134,7 +134,7 @@ queryModule f = everything (++) (mkQ [] f)
 
 moduleLanguagePragmas :: Module -> [(RealSrcSpan, NonEmpty String)]
 moduleLanguagePragmas =
-    mapMaybe prag . GHC.priorComments . GHC.comments . GHC.hsmodAnn . GHC.unLoc
+    mapMaybe prag . epAnnComments . GHC.hsmodAnn . GHC.unLoc
   where
     prag :: GHC.LEpaComment -> Maybe (GHC.RealSrcSpan, NonEmpty String)
     prag comment = case GHC.ac_tok (GHC.unLoc comment) of

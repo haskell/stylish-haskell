@@ -2,6 +2,7 @@
 module Language.Haskell.Stylish.Block
     ( Block (..)
     , LineBlock
+    , realSrcSpanToLineBlock
     , SpanBlock
     , blockLength
     , moveBlock
@@ -14,7 +15,8 @@ module Language.Haskell.Stylish.Block
 
 
 --------------------------------------------------------------------------------
-import qualified Data.IntSet as IS
+import qualified Data.IntSet      as IS
+import qualified GHC.Types.SrcLoc as GHC
 
 
 --------------------------------------------------------------------------------
@@ -22,8 +24,12 @@ import qualified Data.IntSet as IS
 data Block a = Block
     { blockStart :: Int
     , blockEnd   :: Int
-    }
-    deriving (Eq, Ord, Show)
+    } deriving (Eq, Ord, Show)
+
+
+--------------------------------------------------------------------------------
+instance Semigroup (Block a) where
+    (<>) = merge
 
 
 --------------------------------------------------------------------------------
@@ -35,8 +41,14 @@ type SpanBlock = Block Char
 
 
 --------------------------------------------------------------------------------
+realSrcSpanToLineBlock :: GHC.RealSrcSpan -> Block String
+realSrcSpanToLineBlock s = Block (GHC.srcSpanStartLine s) (GHC.srcSpanEndLine s)
+
+
+--------------------------------------------------------------------------------
 blockLength :: Block a -> Int
 blockLength (Block start end) = end - start + 1
+
 
 --------------------------------------------------------------------------------
 moveBlock :: Int -> Block a -> Block a
@@ -47,7 +59,7 @@ moveBlock offset (Block start end) = Block (start + offset) (end + offset)
 adjacent :: Block a -> Block a -> Bool
 adjacent b1 b2 = follows b1 b2 || follows b2 b1
   where
-    follows (Block _ e1) (Block s2 _) = e1 + 1 == s2
+    follows (Block _ e1) (Block s2 _) = e1 == s2 || e1 + 1 == s2
 
 
 --------------------------------------------------------------------------------

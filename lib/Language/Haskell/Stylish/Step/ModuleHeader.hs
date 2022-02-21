@@ -1,5 +1,6 @@
-{-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE LambdaCase     #-}
+{-# LANGUAGE BlockArguments  #-}
+{-# LANGUAGE LambdaCase      #-}
+{-# LANGUAGE RecordWildCards #-}
 module Language.Haskell.Stylish.Step.ModuleHeader
   ( Config (..)
   , BreakWhere (..)
@@ -10,7 +11,26 @@ module Language.Haskell.Stylish.Step.ModuleHeader
 
 
 --------------------------------------------------------------------------------
+import           Control.Applicative                   ((<|>))
+import           Control.Monad                         (guard, unless, when)
+import           Data.Foldable                         (forM_)
+import           Data.Maybe                            (fromMaybe, isJust,
+                                                        listToMaybe)
+import qualified GHC.Hs                                as GHC
+import qualified GHC.Types.SrcLoc                      as GHC
+import qualified GHC.Unit.Module.Name                  as GHC
+
+
+--------------------------------------------------------------------------------
+import           Language.Haskell.Stylish.Comments
+import           Language.Haskell.Stylish.Editor
+import           Language.Haskell.Stylish.GHC
+import           Language.Haskell.Stylish.Module
+import           Language.Haskell.Stylish.Ordering
+import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
+import qualified Language.Haskell.Stylish.Step.Imports as Imports
+import           Language.Haskell.Stylish.Util         (flagEnds)
 
 
 data Config = Config
@@ -43,236 +63,169 @@ defaultConfig = Config
     }
 
 step :: Maybe Int -> Config -> Step
-step _ _ = makeStep "Module header" $ \ls _ -> ls
-{-
 step maxCols = makeStep "Module header" . printModuleHeader maxCols
 
 printModuleHeader :: Maybe Int -> Config -> Lines -> Module -> Lines
-printModuleHeader maxCols conf ls m =
-  let
-    header = moduleHeader m
-    name = rawModuleName header
-    haddocks = rawModuleHaddocks header
-    exports = rawModuleExports header
-    annotations = rawModuleAnnotations m
+printModuleHeader maxCols conf ls lmodul =
+    let modul = GHC.unLoc lmodul
+        name = GHC.unLoc <$> GHC.hsmodName modul
+        haddocks = GHC.hsmodHaddockModHeader modul
 
-    relevantComments :: [RealLocated AnnotationComment]
-    relevantComments
-      = moduleComments m
-      & rawComments
-      & dropAfterLocated exports
-      & dropBeforeLocated name
+        startLine = fromMaybe 1 $ moduleLine <|>
+            (fmap GHC.srcSpanStartLine . GHC.srcSpanToRealSrcSpan $
+                GHC.getLoc lmodul)
 
-    printedModuleHeader = runPrinter_ (PrinterConfig maxCols) relevantComments
-        m (printHeader conf name exports haddocks)
+        endLine = fromMaybe 1 $ whereLine <|>
+            (do
+                loc <- GHC.getLocA <$> GHC.hsmodExports modul
+                GHC.srcSpanEndLine <$> GHC.srcSpanToRealSrcSpan loc)
 
-    getBlock loc =
-      Block <$> fmap getStartLineUnsafe loc <*> fmap getEndLineUnsafe loc
+        keywordLine kw = listToMaybe $ do
+            GHC.EpAnn {..} <- pure $ GHC.hsmodAnn modul
+            GHC.AddEpAnn kw' (GHC.EpaSpan s) <- GHC.am_main anns
+            guard $ kw == kw'
+            pure $ GHC.srcSpanEndLine s
 
-    adjustOffsetFrom :: Block a -> Block a -> Maybe (Block a)
-    adjustOffsetFrom (Block s0 _) b2@(Block s1 e1)
-      | s0 >= s1 && s0 >= e1 = Nothing
-      | s0 >= s1 = Just (Block (s0 + 1) e1)
-      | otherwise = Just b2
+        moduleLine = keywordLine GHC.AnnModule
+        whereLine = keywordLine GHC.AnnWhere
 
-    nameBlock =
-      getBlock name
+        commentOnLine l = listToMaybe $ do
+            comment <- epAnnComments $ GHC.hsmodAnn modul
+            guard $ GHC.srcSpanStartLine (GHC.anchor $ GHC.getLoc comment) == l
+            pure comment
 
-    exportsBlock =
-      join $ adjustOffsetFrom <$> nameBlock <*> getBlock exports
+        moduleComment = moduleLine >>= commentOnLine
+        whereComment =
+            guard (whereLine /= moduleLine) >> whereLine >>= commentOnLine
 
-    whereM :: Maybe SrcSpan
-    whereM
-      = annotations
-      & filter (\(((_, w), _)) -> w == AnnWhere)
-      & fmap (head . snd) -- get position of annot
-      & L.sort
-      & listToMaybe
+        exportGroups = case GHC.hsmodExports modul of
+            Nothing -> Nothing
+            Just lexports -> Just $ doSort $ commentGroups
+                (GHC.srcSpanToRealSrcSpan . GHC.getLocA)
+                (GHC.unLoc lexports)
+                (epAnnComments . GHC.ann $ GHC.getLoc lexports)
 
-    isModuleHeaderWhere :: Block a -> Bool
-    isModuleHeaderWhere w
-      = not
-      . overlapping
-      $ [w] <> toList nameBlock <> toList exportsBlock
+        printedModuleHeader = runPrinter_
+            (PrinterConfig maxCols)
+            (printHeader
+                conf name exportGroups haddocks moduleComment whereComment)
 
-    toLineBlock :: SrcSpan -> Block a
-    toLineBlock (RealSrcSpan s) = Block (srcSpanStartLine s) (srcSpanEndLine s)
-    toLineBlock s
-      = error
-      $ "'where' block was not a RealSrcSpan" <> show s
+        deletes = delete (Block startLine endLine)
 
-    whereBlock
-      = whereM
-      & fmap toLineBlock
-      & find isModuleHeaderWhere
+        additions = [insert startLine printedModuleHeader]
 
-    deletes =
-      fmap delete $ mergeAdjacent $ toList nameBlock <> toList exportsBlock <> toList whereBlock
+        changes = deletes : additions in
 
-    startLine =
-      maybe 1 blockStart nameBlock
-
-    additions = [insert startLine printedModuleHeader]
-
-    changes = deletes <> additions
-  in
     applyChanges changes ls
 
-printHeader
-  :: Config
-  -> Maybe (Located GHC.ModuleName)
-  -> Maybe (Located [GHC.LIE GhcPs])
-  -> Maybe GHC.LHsDocString
-  -> P ()
-printHeader conf mname mexps _ = do
-  forM_ mname \(L _ name) -> do
-    putText "module"
-    space
-    putText (showOutputable name)
-
-  case mexps of
-    Nothing -> when (isJust mname) do
-      forM_ mname \(L nloc _) -> attachEolComment nloc
-      case breakWhere conf of
-        Always -> do
-          newline
-          spaces (indent conf)
-        _      -> space
-      putText "where"
-    Just (L loc exps) -> do
-      moduleComment <- getModuleComment
-      exportsWithComments <- fmap (second doSort) <$> groupAttachedComments exps
-      case breakWhere conf of
-        Single
-          | Just exportsWithoutComments <- groupWithoutComments exportsWithComments
-          , length exportsWithoutComments <= 1
-          -> do
-              attachModuleComment moduleComment
-              printSingleLineExportList conf (L loc exportsWithoutComments)
-        Inline
-          | Just exportsWithoutComments <- groupWithoutComments exportsWithComments
-          -> do
-              wrapping
-               (   attachModuleComment moduleComment
-                >> printSingleLineExportList conf (L loc exportsWithoutComments))
-               (   attachOpenBracket
-                >> attachModuleComment moduleComment
-                >> printMultiLineExportList conf (L loc exportsWithComments))
-        _ -> do
-          attachOpenBracket
-          attachModuleComment moduleComment
-          printMultiLineExportList conf (L loc exportsWithComments)
   where
+    doSort = if sort conf then fmap (commentGroupSort compareLIE) else id
 
-    getModuleComment = do
-       maybemaybeComment <- traverse (\(L nloc _) -> removeModuleComment nloc) mname
-       pure $ join maybemaybeComment
+printHeader
+    :: Config
+    -> Maybe GHC.ModuleName
+    -> Maybe [CommentGroup (GHC.LIE GHC.GhcPs)]
+    -> Maybe GHC.LHsDocString
+    -> Maybe GHC.LEpaComment  -- Comment attached to 'module'
+    -> Maybe GHC.LEpaComment  -- Comment attached to 'where'
+    -> P ()
+printHeader conf mbName mbExps _ mbModuleComment mbWhereComment = do
+    forM_ mbName $ \name -> do
+        putText "module"
+        space
+        putText (showOutputable name)
 
-    attachModuleComment moduleComment =
-      mapM_ (\c -> space >> putComment c) moduleComment
+    case mbExps of
+        Nothing -> do
+            when (isJust mbName) $ case breakWhere conf of
+                Always -> do
+                    attachModuleComment
+                    newline
+                    spaces (indent conf)
+                _      -> space
+            putText "where"
+        Just exports -> case breakWhere conf of
+            Single  | [] <- exports -> do
+                printSingleLineExportList conf []
+                attachModuleComment
+            Single  | [egroup] <- exports
+                    , not (commentGroupHasComments egroup)
+                    , [(export, _)] <- (cgItems egroup) -> do
+                printSingleLineExportList conf [export]
+                attachModuleComment
+            Inline  | [] <- exports -> do
+                printSingleLineExportList conf []
+                attachModuleComment
+            Inline  | [egroup] <- exports, not (commentGroupHasComments egroup) -> do
+                wrapping
+                    (printSingleLineExportList conf $ map fst $ cgItems egroup)
+                    (do
+                        attachOpenBracket
+                        attachModuleComment
+                        printMultiLineExportList conf exports)
+            _ -> do
+                attachOpenBracket
+                attachModuleComment
+                printMultiLineExportList conf exports
 
-    doSort = if sort conf then NonEmpty.sortBy compareLIE else id
+    forM_ mbWhereComment $ \whereComment -> do
+        space
+        putComment $ GHC.unLoc whereComment
+
+  where
+    attachModuleComment = forM_ mbModuleComment $ \moduleComment -> do
+        space
+        putComment $ GHC.unLoc moduleComment
 
     attachOpenBracket
-      | openBracket conf == SameLine = putText " ("
-      | otherwise                    = pure ()
+        | openBracket conf == SameLine = putText " ("
+        | otherwise                    = pure ()
 
-removeModuleComment :: SrcSpan -> P (Maybe AnnotationComment)
-removeModuleComment = \case
-  UnhelpfulSpan _ -> pure Nothing
-  RealSrcSpan rspan ->
-    removeLineComment (srcSpanStartLine rspan)
-
-attachEolComment :: SrcSpan -> P ()
-attachEolComment = \case
-  UnhelpfulSpan _ -> pure ()
-  RealSrcSpan rspan ->
-    removeLineComment (srcSpanStartLine rspan) >>= mapM_ \c -> space >> putComment c
-
-attachEolCommentEnd :: SrcSpan -> P ()
-attachEolCommentEnd = \case
-  UnhelpfulSpan _ -> pure ()
-  RealSrcSpan rspan ->
-    removeLineComment (srcSpanEndLine rspan) >>= mapM_ \c -> space >> putComment c
-
-printSingleLineExportList :: Config -> Located [GHC.LIE GhcPs] -> P ()
-printSingleLineExportList conf (L srcLoc exports) = do
-  space >> putText "("
-  printInlineExports exports
-  putText ")" >> space >> putText "where" >> attachEolCommentEnd srcLoc
+printSingleLineExportList
+    :: Config -> [GHC.LIE GHC.GhcPs] -> P ()
+printSingleLineExportList conf exports = do
+    space >> putText "("
+    printExports exports
+    putText ")" >> space >> putText "where"
   where
-    printInlineExports :: [GHC.LIE GhcPs] -> P ()
-    printInlineExports = \case
-      []     -> pure ()
-      [e]    -> printExport conf e
-      (e:es) -> printExport conf e >> comma >> space >> printInlineExports es
+    printExports :: [GHC.LIE GHC.GhcPs] -> P ()
+    printExports = \case
+        []     -> pure ()
+        [e]    -> putExport conf e
+        (e:es) -> putExport conf e >> comma >> space >> printExports es
 
 printMultiLineExportList
      :: Config
-     -> Located [([AnnotationComment], NonEmpty (GHC.LIE GhcPs))]
+     -> [CommentGroup (GHC.LIE GHC.GhcPs)]
      -> P ()
-printMultiLineExportList conf (L srcLoc exportsWithComments) = do
-  newline
-  doIndent >> putText firstChar >> when (notNull exportsWithComments) space
-  printExports exportsWithComments
-
-  putText ")" >> space >> putText "where" >> attachEolCommentEnd srcLoc
+printMultiLineExportList conf exports = do
+    newline
+    doIndent >> putText firstChar >> unless (null exports) space
+    mapM_ printExport $ flagEnds exports
+    when (null exports) $ newline >> doIndent
+    putText ")" >> space >> putText "where"
   where
-    -- 'doIndent' is @x@:
-    --
-    -- > module Foo
-    -- > xxxx( foo
-    -- > xxxx, bar
-    -- > xxxx) where
-    --
-    -- 'doHang' is @y@:
-    --
-    -- > module Foo
-    -- > xxxx( -- Some comment
-    -- > xxxxyyfoo
-    -- > xxxx) where
+    printExport (CommentGroup {..}, firstGroup, _lastGroup) = do
+        forM_ (flagEnds cgPrior) $ \(cmt, start, _end) -> do
+            unless (firstGroup && start) $ space >> space
+            putComment $ GHC.unLoc cmt
+            newline >> doIndent
 
-    firstChar =
-      case openBracket conf of
+        forM_ (flagEnds cgItems) $ \((export, _), start, _end) -> do
+            if firstGroup && start then
+                unless (null cgPrior) $ space >> space
+            else
+                comma >> space
+            putExport conf export
+            newline >> doIndent
+
+    firstChar = case openBracket conf of
         SameLine -> " "
         NextLine -> "("
 
     doIndent = spaces (indent conf)
-    doHang = pad (indent conf + 2)
-
-    printExports :: [([AnnotationComment], NonEmpty (GHC.LIE GhcPs))] -> P ()
-    printExports (([], firstInGroup :| groupRest) : rest) = do
-      printExport conf firstInGroup
-      newline
-      doIndent
-      printExportsGroupTail groupRest
-      printExportsTail rest
-    printExports ((firstComment : comments, firstExport :| groupRest) : rest) = do
-      putComment firstComment >> newline >> doIndent
-      forM_ comments \c -> doHang >> putComment c >> newline >> doIndent
-      doHang
-      printExport conf firstExport
-      newline
-      doIndent
-      printExportsGroupTail groupRest
-      printExportsTail rest
-    printExports [] =
-      newline >> doIndent
-
-    printExportsTail :: [([AnnotationComment], NonEmpty (GHC.LIE GhcPs))] -> P ()
-    printExportsTail = mapM_ \(comments, exported) -> do
-      forM_ comments \c -> doHang >> putComment c >> newline >> doIndent
-      forM_ exported \export -> do
-        comma >> space >> printExport conf export
-        newline >> doIndent
-
-    printExportsGroupTail :: [GHC.LIE GhcPs] -> P ()
-    printExportsGroupTail (x : xs) = printExportsTail [([], x :| xs)]
-    printExportsGroupTail []       = pure ()
 
 -- NOTE(jaspervdj): This code is almost the same as the import printing in
 -- 'Imports' and should be merged.
-printExport :: Config -> GHC.LIE GhcPs -> P ()
-printExport conf = Imports.printImport (separateLists conf) . unLoc
-
--}
+putExport :: Config -> GHC.LIE GHC.GhcPs -> P ()
+putExport conf = Imports.printImport (separateLists conf) . GHC.unLoc

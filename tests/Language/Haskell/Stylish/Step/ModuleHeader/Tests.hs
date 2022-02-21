@@ -79,6 +79,7 @@ tests = testGroup "Language.Haskell.Stylish.Printer.ModuleHeader"
     , testCase "Single two exports, open_bracket = same_line" ex30a
     , testCase "Single one export with comment" ex31
     , testCase "Single one export with comment, open_bracket = same_line" ex31a
+    , testCase "Single one module comment" ex32
     ]
 
 --------------------------------------------------------------------------------
@@ -883,6 +884,13 @@ ex31a = assertSnippet (step Nothing $ defaultConfig {breakWhere = Single} & open
     , "      -- * Foo"
     , "      Foo"
     , "    ) where"
+    ]
+
+ex32 :: Assertion
+ex32 = assertSnippet (step Nothing $ defaultConfig {breakWhere = Single})
+    [ "module Foo (bar) where -- Foo"
+    ]
+    [ "module Foo (bar) where -- Foo"
     ]
 
 openBracketSameLine :: Config -> Config

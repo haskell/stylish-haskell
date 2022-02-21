@@ -12,7 +12,7 @@ module Language.Haskell.Stylish.Step.Imports
   , ListPadding (..)
   , step
 
-  -- , printImport
+  , printImport
   ) where
 
 --------------------------------------------------------------------------------
@@ -117,13 +117,13 @@ printImports maxCols align ls m = applyChanges changes ls
     moduleStats = foldMap importStats . fmap GHC.unLoc $ concatMap toList groups
     changes = do
         group <- groups
-        pure $ formatGroup maxCols align m moduleStats group
+        pure $ formatGroup maxCols align moduleStats group
 
 formatGroup
-    :: Maybe Int -> Options -> Module -> ImportStats
+    :: Maybe Int -> Options -> ImportStats
     -> NonEmpty (GHC.LImportDecl GHC.GhcPs) -> Change String
-formatGroup maxCols options m moduleStats imports =
-    let newLines = formatImports maxCols options m moduleStats imports in
+formatGroup maxCols options moduleStats imports =
+    let newLines = formatImports maxCols options moduleStats imports in
     change (importBlock imports) (const newLines)
 
 importBlock :: NonEmpty (GHC.LImportDecl GHC.GhcPs)  -> Block String
@@ -137,11 +137,10 @@ importBlock group = Block
 formatImports
     :: Maybe Int    -- ^ Max columns.
     -> Options      -- ^ Options.
-    -> Module       -- ^ Module.
     -> ImportStats  -- ^ Module stats.
     -> NonEmpty (GHC.LImportDecl GHC.GhcPs) -> Lines
-formatImports maxCols options m moduleStats rawGroup =
-  runPrinter_ (PrinterConfig maxCols) [] m do
+formatImports maxCols options moduleStats rawGroup =
+  runPrinter_ (PrinterConfig maxCols) do
   let
     group :: NonEmpty (GHC.LImportDecl GHC.GhcPs)
     group
