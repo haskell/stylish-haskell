@@ -1,16 +1,18 @@
 --------------------------------------------------------------------------------
+{-# LANGUAGE LambdaCase #-}
 module Language.Haskell.Stylish.Tests
     ( tests
     ) where
 
 
 --------------------------------------------------------------------------------
-import           Data.List                           (sort)
+import           Data.List                           (isInfixOf, sort)
 import           System.Directory                    (createDirectory)
 import           System.FilePath                     (normalise, (</>))
 import           Test.Framework                      (Test, testGroup)
 import           Test.Framework.Providers.HUnit      (testCase)
-import           Test.HUnit                          (Assertion, (@?=))
+import           Test.HUnit                          (Assertion, assertFailure,
+                                                      (@?=))
 
 
 --------------------------------------------------------------------------------
@@ -93,15 +95,21 @@ case03 = withTestDirTree $ do
                    , "               }"
                    ]
 
+
 --------------------------------------------------------------------------------
 case04 :: Assertion
-case04 = (@?= result) =<< format Nothing (Just fileLocation) input
+case04 = format Nothing (Just fileLocation) input >>= \case
+    Right _                      -> assertFailure "expected error"
+    Left err
+        | fileLocation `isInfixOf` err
+        , needle `isInfixOf` err -> pure ()
+        | otherwise              ->
+            assertFailure $ "Unexpected error: " ++ show err
   where
-    fileLocation = "directory/File.hs"
     input = "module Herp"
-    result = Left $
-      fileLocation <> ": RealSrcSpan SrcSpanPoint \"directory/File.hs\" 2 1:" 
-      <> " parse error (possibly incorrect indentation or mismatched brackets)\n"
+    fileLocation = "directory/File.hs"
+    needle = "possibly incorrect indentation or mismatched brackets"
+
 
 --------------------------------------------------------------------------------
 -- | When providing current dir including folders and files.
