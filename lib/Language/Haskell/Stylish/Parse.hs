@@ -27,10 +27,11 @@ import qualified Language.Haskell.GhclibParserEx.GHC.Parser         as GHCEx
 
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.GHC                       (baseDynFlags)
+import           Language.Haskell.Stylish.GHC
 import           Language.Haskell.Stylish.Module
 
 
+--------------------------------------------------------------------------------
 type Extensions = [String]
 
 
@@ -64,7 +65,7 @@ parseModule externalExts0 fp string = do
         Just e  -> Right e
 
     -- Build first dynflags.
-    let dynFlags0 = foldl' GHC.xopt_set baseDynFlags externalExts1
+    let dynFlags0 = foldl' turnOn baseDynFlags externalExts1
 
     -- Parse options from file
     let fileOptions = fmap GHC.unLoc $ GHC.getOptions dynFlags0
@@ -75,7 +76,7 @@ parseModule externalExts0 fp string = do
             fileOptions
 
     -- Set further dynflags.
-    let dynFlags1 = foldl' GHC.xopt_set dynFlags0 fileExtensions
+    let dynFlags1 = foldl' turnOn dynFlags0 fileExtensions
             `GHC.gopt_set` GHC.Opt_KeepRawTokenStream
 
     -- Possibly strip CPP.
@@ -90,3 +91,8 @@ parseModule externalExts0 fp string = do
             GHC.getMessages ps
   where
     withFileName x = maybe "" (<> ": ") fp <> x
+
+    turnOn dynFlags ext = foldl'
+        turnOn
+        (GHC.xopt_set dynFlags ext)
+        [rhs | (lhs, True, rhs) <- GHC.impliedXFlags, lhs == ext]
