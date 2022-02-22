@@ -168,14 +168,9 @@ printHeader conf mbName mbExps _ mbModuleComment mbWhereComment = do
                 attachModuleComment
                 printMultiLineExportList conf exports
 
-    forM_ mbWhereComment $ \whereComment -> do
-        space
-        putComment $ GHC.unLoc whereComment
-
+    putMaybeLineComment $ GHC.unLoc <$> mbWhereComment
   where
-    attachModuleComment = forM_ mbModuleComment $ \moduleComment -> do
-        space
-        putComment $ GHC.unLoc moduleComment
+    attachModuleComment = putMaybeLineComment $ GHC.unLoc <$> mbModuleComment
 
     attachOpenBracket
         | openBracket conf == SameLine = putText " ("
@@ -211,12 +206,13 @@ printMultiLineExportList conf exports = do
             putComment $ GHC.unLoc cmt
             newline >> doIndent
 
-        forM_ (flagEnds cgItems) $ \((export, _), start, _end) -> do
+        forM_ (flagEnds cgItems) $ \((export, mbComment), start, _end) -> do
             if firstGroup && start then
                 unless (null cgPrior) $ space >> space
             else
                 comma >> space
             putExport conf export
+            putMaybeLineComment $ GHC.unLoc <$> mbComment
             newline >> doIndent
 
     firstChar = case openBracket conf of

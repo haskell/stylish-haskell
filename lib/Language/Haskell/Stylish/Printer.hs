@@ -29,6 +29,7 @@ module Language.Haskell.Stylish.Printer
   -- , peekNextCommentPos
   , prefix
   , putComment
+  , putMaybeLineComment
   -- , putEolComment
   , putOutputable
   -- , putAllSpanComments
@@ -153,6 +154,11 @@ putComment epaComment = case GHC.ac_tok epaComment of
   GHC.EpaDocOptions s      -> putText s
   GHC.EpaBlockComment s    -> putText s
   GHC.EpaEofComment        -> pure ()
+
+putMaybeLineComment :: Maybe GHC.EpaComment -> P ()
+putMaybeLineComment = \case
+    Nothing -> pure ()
+    Just cmt -> space >> putComment cmt
 
 -- | Given the current start line of 'SrcSpan', remove and put EOL comment for same line
 {-
