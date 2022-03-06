@@ -157,7 +157,7 @@ putComment epaComment = case GHC.ac_tok epaComment of
 
 putMaybeLineComment :: Maybe GHC.EpaComment -> P ()
 putMaybeLineComment = \case
-    Nothing -> pure ()
+    Nothing  -> pure ()
     Just cmt -> space >> putComment cmt
 
 -- | Given the current start line of 'SrcSpan', remove and put EOL comment for same line
@@ -223,7 +223,10 @@ putType ltp = case GHC.unLoc ltp of
   GHC.HsFunTy _ arrowTp argTp funTp -> do
     putOutputable argTp
     space
-    putOutputable arrowTp
+    case arrowTp of
+        GHC.HsUnrestrictedArrow {} -> putText "->"
+        GHC.HsLinearArrow {}       -> putText "%1 ->"
+        GHC.HsExplicitMult {}      -> putOutputable arrowTp
     space
     putType funTp
   GHC.HsAppTy _ t1 t2 ->
