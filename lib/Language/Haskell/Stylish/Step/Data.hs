@@ -102,7 +102,8 @@ step cfg = makeStep "Data" \ls m ->
         loc <- maybeToList $ GHC.srcSpanToRealSrcSpan $ GHC.getLocA ldecl
         case tycld of
             GHC.DataDecl {..} -> pure $ MkDataDecl
-                { dataLoc      = loc
+                { dataComments = epAnnComments tcdDExt
+                , dataLoc      = loc
                 , dataDeclName = tcdLName
                 , dataTypeVars = tcdTyVars
                 , dataDefn     = tcdDataDefn
@@ -113,7 +114,8 @@ step cfg = makeStep "Data" \ls m ->
 type ChangeLine = Change String
 
 data DataDecl = MkDataDecl
-    { dataLoc      :: GHC.RealSrcSpan
+    { dataComments :: [GHC.LEpaComment]
+    , dataLoc      :: GHC.RealSrcSpan
     , dataDeclName :: GHC.LocatedN GHC.RdrName
     , dataTypeVars :: GHC.LHsQTyVars GHC.GhcPs
     , dataDefn     :: GHC.HsDataDefn GHC.GhcPs
