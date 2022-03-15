@@ -8,7 +8,7 @@ module Language.Haskell.Stylish.Step.LanguagePragmas.Tests
 --------------------------------------------------------------------------------
 import Test.Framework                 (Test, testGroup)
 import Test.Framework.Providers.HUnit (testCase)
-import Test.HUnit                     (Assertion, (@=?))
+import Test.HUnit                     (Assertion)
 
 
 --------------------------------------------------------------------------------
@@ -231,22 +231,18 @@ case13 = assertSnippet
 
 --------------------------------------------------------------------------------
 case14 :: Assertion
-case14 = expected @=? testStep (step Nothing VerticalCompact False False "language") input
-  where
-    input = unlines
-        [ "{-# LANGUAGE ViewPatterns, OverloadedStrings #-}"
-        , "{-# LANGUAGE TemplateHaskell, ViewPatterns #-}"
-        , "{-# LANGUAGE ScopedTypeVariables, NoImplicitPrelude #-}"
-        , "module Main where"
-        ]
-
-    expected = unlines
-        [ "{-# language"
-        , "    NoImplicitPrelude"
-        , "  , OverloadedStrings"
-        , "  , ScopedTypeVariables"
-        , "  , TemplateHaskell"
-        , "  , ViewPatterns"
-        , "  #-}"
-        , "module Main where"
-        ]
+case14 = assertSnippet (step Nothing VerticalCompact False False "language")
+    [ "{-# LANGUAGE ViewPatterns, OverloadedStrings #-}"
+    , "{-# LANGUAGE TemplateHaskell, ViewPatterns #-}"
+    , "{-# LANGUAGE ScopedTypeVariables, NoImplicitPrelude #-}"
+    , "module Main where"
+    ]
+    [ "{-# language"
+    , "    NoImplicitPrelude"
+    , "  , OverloadedStrings"
+    , "  , ScopedTypeVariables"
+    , "  , TemplateHaskell"
+    , "  , ViewPatterns"
+    , "  #-}"
+    , "module Main where"
+    ]

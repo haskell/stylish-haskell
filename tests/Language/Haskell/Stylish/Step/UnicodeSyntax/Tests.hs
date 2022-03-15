@@ -1,13 +1,14 @@
 --------------------------------------------------------------------------------
+{-# LANGUAGE OverloadedLists #-}
 module Language.Haskell.Stylish.Step.UnicodeSyntax.Tests
     ( tests
     ) where
 
 
 --------------------------------------------------------------------------------
-import           Test.Framework                    (Test, testGroup)
-import           Test.Framework.Providers.HUnit    (testCase)
-import           Test.HUnit                        (Assertion, (@=?))
+import           Test.Framework                              (Test, testGroup)
+import           Test.Framework.Providers.HUnit              (testCase)
+import           Test.HUnit                                  (Assertion)
 
 
 --------------------------------------------------------------------------------
@@ -25,31 +26,23 @@ tests = testGroup "Language.Haskell.Stylish.Step.UnicodeSyntax.Tests"
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testStep (step True "LANGUAGE") input
-  where
-    input = unlines
-        [ "sort :: Ord a => [a] -> [a]"
-        , "sort _ = []"
-        ]
-
-    expected = unlines
-        [ "{-# LANGUAGE UnicodeSyntax #-}"
-        , "sort ∷ Ord a ⇒ [a] → [a]"
-        , "sort _ = []"
-        ]
+case01 = assertSnippet (step True "LANGUAGE")
+    [ "sort :: Ord a => [a] -> [a]"
+    , "sort _ = []"
+    ]
+    [ "{-# LANGUAGE UnicodeSyntax #-}"
+    , "sort ∷ Ord a ⇒ [a] → [a]"
+    , "sort _ = []"
+    ]
 
 
 --------------------------------------------------------------------------------
 case02 :: Assertion
-case02 = expected @=? testStep (step True "LaNgUaGe") input
-  where
-    input = unlines
-        [ "sort :: Ord a => [a] -> [a]"
-        , "sort _ = []"
-        ]
-
-    expected = unlines
-        [ "{-# LaNgUaGe UnicodeSyntax #-}"
-        , "sort ∷ Ord a ⇒ [a] → [a]"
-        , "sort _ = []"
-        ]
+case02 = assertSnippet (step True "LaNgUaGe")
+    [ "sort :: Ord a => [a] -> [a]"
+    , "sort _ = []"
+    ]
+    [ "{-# LaNgUaGe UnicodeSyntax #-}"
+    , "sort ∷ Ord a ⇒ [a] → [a]"
+    , "sort _ = []"
+    ]
