@@ -30,11 +30,13 @@ import           Prelude                           hiding (init)
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Editor
+import           Language.Haskell.Stylish.Comments
 import           Language.Haskell.Stylish.GHC
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Ordering
 import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
+import           Language.Haskell.Stylish.Util
 
 
 --------------------------------------------------------------------------------
@@ -374,31 +376,48 @@ putConstructor cfg consIndent lcons = case GHC.unLoc lcons of
         let fieldPos = bracePos + 2
         space
 
+        let commented = commentGroups
+                (GHC.srcSpanToRealSrcSpan . GHC.getLocA)
+                (GHC.unLoc largs)
+                (epAnnComments . GHC.ann $ GHC.getLoc largs)
+
+        forM_ (flagEnds commented) $ \(CommentGroup {..}, firstCommentGroup, lastCommentGroup) -> do
+
         -- Unless everything's configured to be on the same line, put pending
         -- comments
         -- unless (cFirstField cfg == SameLine) do
         --   removeCommentTo posFirst >>= mapM_ \c -> putComment c >> sepDecl bracePos
+          forM_ cgPrior $ \lc -> do
+            pad fieldPos
+            putComment $ GHC.unLoc lc
+            sepDecl bracePos -- >> spaces (cFieldComment cfg)
 
-        -- Put first decl field
-        pad fieldPos >> putConDeclField cfg (GHC.unLoc firstArg)
-        -- unless (cFirstField cfg == SameLine) (putEolComment posFirst)
+          forM_ (flagEnds cgItems) $ \((item, mbInlineComment), firstItem, lastItem) -> do
+            if firstCommentGroup && firstItem
+                then pad fieldPos
+                else do
+                    comma
+                    space
+            putConDeclField cfg $ GHC.unLoc item
+            case mbInlineComment of
+                Just c | cFirstField cfg == SameLine ->
+                    putMaybeLineComment . Just $ GHC.unLoc c
+                Just c -> do
+                    sepDecl bracePos >> spaces (cFieldComment cfg)
+                    putComment $ GHC.unLoc c
+                _ -> pure ()
+            sepDecl bracePos
 
-        -- Put tail decl fields
-        forM_ (GHC.unLoc <$> args) $ \arg -> do
-          sepDecl bracePos
-          -- removeCommentTo pos >>= mapM_ \c ->
-          --   spaces (cFieldComment cfg) >> putComment c >> sepDecl bracePos
-          comma
-          space
-          putConDeclField cfg arg
-          -- putEolComment pos
-
+          forM_ cgFollowing $ \lc -> do
+            spaces (cFieldComment cfg)
+            putComment $ GHC.unLoc lc
+            sepDecl bracePos
         -- Print docstr after final field
         -- removeCommentToEnd recPos >>= mapM_ \c ->
         --   sepDecl bracePos >> spaces (cFieldComment cfg) >> putComment c
 
         -- Print whitespace to closing brace
-        sepDecl bracePos >> putText "}"
+        putText "}"
       GHC.RecCon _ -> do
         skipToBrace >> putText "{"
         skipToBrace >> putText "}"
