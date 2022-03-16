@@ -20,29 +20,19 @@ module Language.Haskell.Stylish.Printer
     -- ** Combinators
   , comma
   , dot
-  -- , getAnnot
   , getCurrentLine
   , getCurrentLineLength
-  -- , getDocstrPrev
   , newline
   , parenthesize
-  -- , peekNextCommentPos
   , prefix
   , putComment
   , putMaybeLineComment
-  -- , putEolComment
   , putOutputable
-  -- , putAllSpanComments
   , putCond
   , putType
   , putRdrName
   , putText
-  -- , removeCommentTo
-  -- , removeCommentToEnd
-  -- , removeLineComment
   , sep
-  -- , groupAttachedComments
-  -- , groupWithoutComments
   , space
   , spaces
   , suffix
@@ -159,23 +149,6 @@ putMaybeLineComment :: Maybe GHC.EpaComment -> P ()
 putMaybeLineComment = \case
     Nothing  -> pure ()
     Just cmt -> space >> putComment cmt
-
--- | Given the current start line of 'SrcSpan', remove and put EOL comment for same line
-{-
-putEolComment :: SrcSpan -> P ()
-putEolComment = \case
-  RealSrcSpan rspan -> do
-    cmt <- removeComment \case
-      L rloc epaComment | GHC.EpaLineComment s <- GHC.ac_tok epaComment ->
-        and
-          [ srcSpanStartLine rspan == srcSpanStartLine rloc
-          , not ("-- ^" `isPrefixOf` s)
-          , not ("-- |" `isPrefixOf` s)
-          ]
-      _ -> False
-    forM_ cmt (\c -> space >> putComment c)
-  UnhelpfulSpan _ -> pure ()
--}
 
 -- | Print a 'RdrName'
 putRdrName :: GenLocated GHC.SrcSpanAnnN RdrName -> P ()
@@ -295,21 +268,6 @@ putType ltp = case GHC.unLoc ltp of
   GHC.XHsType _ ->
     putOutputable ltp
 
--- | Get a docstring on the start line of 'SrcSpan' that is a @-- ^@ comment
-{-
-getDocstrPrev :: SrcSpan -> P (Maybe GHC.EpaComment)
-getDocstrPrev = \case
-  UnhelpfulSpan _ -> pure Nothing
-  RealSrcSpan rspan -> do
-    removeComment \case
-      L rloc epaComment | GHC.EpaLineComment s <- GHC.ac_tok epaComment ->
-        and
-          [ srcSpanStartLine rspan == srcSpanStartLine rloc
-          , "-- ^" `isPrefixOf` s
-          ]
-      _ -> False
--}
-
 -- | Print a newline
 newline :: P ()
 newline = do
@@ -356,60 +314,6 @@ pad n = do
     len <- length <$> getCurrentLine
     spaces $ n - len
 
-{-
--- | Gets comment on supplied 'line' and removes it from the state
-removeLineComment :: Int -> P (Maybe GHC.EpaComment)
-removeLineComment line =
-  removeComment (\(L rloc _) -> srcSpanStartLine rloc == line)
-
--- | Removes comments from the state up to start line of 'SrcSpan' and returns
---   the ones that were removed
-removeCommentTo :: SrcSpan -> P [GHC.EpaComment]
-removeCommentTo = \case
-  UnhelpfulSpan _ -> pure []
-  RealSrcSpan rspan -> removeCommentTo' (srcSpanStartLine rspan)
-
--- | Removes comments from the state up to end line of 'SrcSpan' and returns
---   the ones that were removed
-removeCommentToEnd :: SrcSpan -> P [GHC.EpaComment]
-removeCommentToEnd = \case
-  UnhelpfulSpan _ -> pure []
-  RealSrcSpan rspan -> removeCommentTo' (srcSpanEndLine rspan)
-
--- | Removes comments to the line number given and returns the ones removed
-removeCommentTo' :: Int -> P [GHC.EpaComment]
-removeCommentTo' line =
-  removeComment (\(L rloc _) -> srcSpanStartLine rloc < line) >>= \case
-    Nothing -> pure []
-    Just c -> do
-      rest <- removeCommentTo' line
-      pure (c : rest)
-
--- | Removes comments from the state while given predicate 'p' is true
-removeComments :: (GHC.RealLocated GHC.EpaComment -> Bool) -> P [GHC.EpaComment]
-removeComments p =
-  removeComment p >>= \case
-    Just c -> do
-      rest <- removeComments p
-      pure (c : rest)
-    Nothing -> pure []
-
--- | Remove a comment from the state given predicate 'p'
-removeComment :: (GHC.RealLocated GHC.EpaComment -> Bool) -> P (Maybe GHC.EpaComment)
-removeComment p = do
-  comments <- gets pendingComments
-
-  let
-    foundComment =
-      find p comments
-
-    newPendingComments =
-      maybe comments (`delete` comments) foundComment
-
-  modify \s -> s { pendingComments = newPendingComments }
-  pure $ fmap (\(L _ c) -> c) foundComment
--}
-
 -- | Get current line
 getCurrentLine :: P String
 getCurrentLine = gets currentLine
@@ -417,49 +321,6 @@ getCurrentLine = gets currentLine
 -- | Get current line length
 getCurrentLineLength :: P Int
 getCurrentLineLength = fmap length getCurrentLine
-
--- | Peek at the next comment in the state
-{-
-peekNextCommentPos :: P (Maybe SrcSpan)
-peekNextCommentPos = do
-  gets pendingComments <&> \case
-    (L next _ : _) -> Just (RealSrcSpan next)
-    [] -> Nothing
--}
-
--- | Get attached comments belonging to '[Located a]' given
-{-
-groupAttachedComments :: [Located a] -> P [([GHC.EpaComment], NonEmpty (Located a))]
-groupAttachedComments = go
-  where
-    go :: [Located a] -> P [([GHC.EpaComment], NonEmpty (Located a))]
-    go (L rspan x : xs) = do
-      comments <- removeCommentTo rspan
-      nextGroupStartM <- peekNextCommentPos
-
-      let
-        sameGroupOf = maybe xs \nextGroupStart ->
-          takeWhile (\(L p _)-> p < nextGroupStart) xs
-
-        restOf = maybe [] \nextGroupStart ->
-          dropWhile (\(L p _) -> p <= nextGroupStart) xs
-
-      restGroups <- go (restOf nextGroupStartM)
-      pure $ (comments, L rspan x :| sameGroupOf nextGroupStartM) : restGroups
-
-    go _ = pure []
-
--- | A view on 'groupAttachedComments': return 'Just' when there is just a
---   one big group without any comments.
-groupWithoutComments
-    :: [([GHC.EpaComment], NonEmpty (Located a))]
-    -> Maybe [Located a]
-groupWithoutComments grouped
-    | all (null . fst) grouped
-    = Just $ concatMap (toList . snd) grouped
-    | otherwise
-    = Nothing
--}
 
 modifyCurrentLine :: (String -> String) -> P ()
 modifyCurrentLine f = do

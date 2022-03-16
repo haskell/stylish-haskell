@@ -20,7 +20,6 @@ module Language.Haskell.Stylish.Step.Data
 import           Control.Monad                     (forM_, unless, when)
 import           Data.List                         (sortBy)
 import           Data.Maybe                        (listToMaybe, maybeToList)
-import           Debug.Trace
 import qualified GHC.Hs                            as GHC
 import qualified GHC.Types.Fixity                  as GHC
 import qualified GHC.Types.Name.Reader             as GHC
@@ -91,7 +90,7 @@ step :: Config -> Step
 step cfg = makeStep "Data" \ls m -> applyChanges (changes m) ls
   where
     changes :: Module -> [ChangeLine]
-    changes m = formatDataDecl cfg m <$> dataDecls m
+    changes m = formatDataDecl cfg <$> dataDecls m
 
     dataDecls :: Module -> [DataDecl]
     dataDecls m = do
@@ -121,18 +120,10 @@ data DataDecl = MkDataDecl
     }
 
 
-formatDataDecl :: Config -> Module -> DataDecl -> ChangeLine
-formatDataDecl cfg@Config{..} m decl@MkDataDecl {..} =
+formatDataDecl :: Config -> DataDecl -> ChangeLine
+formatDataDecl cfg@Config{..} decl@MkDataDecl {..} =
     change originalDeclBlock (const printedDecl)
   where
-    {-
-    relevantComments :: [RealLocated AnnotationComment]
-    relevantComments
-      = moduleComments m
-      & rawComments
-      & dropBeforeAndAfter ldecl
-    -}
-
     originalDeclBlock = Block
         (GHC.srcSpanStartLine dataLoc)
         (GHC.srcSpanEndLine dataLoc)
@@ -164,21 +155,16 @@ putDataDecl cfg@Config {..} decl = do
     when (isGADT decl) (space >> putText "where")
 
     when (hasConstructors decl) do
-        breakLineBeforeEq <- case (cEquals, cFirstField) of
-            (_, Indent x) | isEnum decl && cBreakEnums -> do
-                newline >> spaces x
-                pure True
+        case (cEquals, cFirstField) of
+            (_, Indent x) | isEnum decl && cBreakEnums -> newline >> spaces x
             (_, _)
                 | not (isNewtype decl)
                 , singleConstructor decl && not cBreakSingleConstructors ->
-                    False <$ space
+                    space
             (Indent x, _)
-                | onelineEnum -> False <$ space
-                | otherwise -> do
-                    newline >> spaces x
-                    pure True
-            (SameLine, _) -> False <$ space
-        pure ()
+                | onelineEnum -> space
+                | otherwise -> newline >> spaces x
+            (SameLine, _) -> space
 
         lineLengthAfterEq <- fmap (+2) getCurrentLineLength
 
@@ -360,7 +346,7 @@ putConstructor cfg consIndent lcons = case GHC.unLoc lcons of
             GHC.HsOuterImplicit {} -> False
             GHC.HsOuterExplicit {} -> True)
         (case GHC.unLoc con_bndrs of
-            GHC.HsOuterImplicit {..} -> []
+            GHC.HsOuterImplicit {}   -> []
             GHC.HsOuterExplicit {..} -> hso_bndrs)
     forM_ con_mb_cxt $ putContext cfg
     case con_g_args of
@@ -383,11 +369,11 @@ putConstructor cfg consIndent lcons = case GHC.unLoc lcons of
         putRdrName con_name
         space
         putType $ GHC.hsScaledThing arg2
-      GHC.PrefixCon tyargs args -> do
+      GHC.PrefixCon _tyargs args -> do
         putRdrName con_name
         unless (null args) space
         sep space (fmap putOutputable args)
-      GHC.RecCon largs | firstArg : args <- GHC.unLoc largs -> do
+      GHC.RecCon largs | _ : _ <- GHC.unLoc largs -> do
         putRdrName con_name
         skipToBrace
         bracePos <- getCurrentLineLength
@@ -400,18 +386,16 @@ putConstructor cfg consIndent lcons = case GHC.unLoc lcons of
                 (GHC.unLoc largs)
                 (epAnnComments . GHC.ann $ GHC.getLoc largs)
 
-        forM_ (flagEnds commented) $ \(CommentGroup {..}, firstCommentGroup, lastCommentGroup) -> do
+        forM_ (flagEnds commented) $ \(CommentGroup {..}, firstCommentGroup, _) -> do
 
         -- Unless everything's configured to be on the same line, put pending
         -- comments
-        -- unless (cFirstField cfg == SameLine) do
-        --   removeCommentTo posFirst >>= mapM_ \c -> putComment c >> sepDecl bracePos
           forM_ cgPrior $ \lc -> do
             pad fieldPos
             putComment $ GHC.unLoc lc
-            sepDecl bracePos -- >> spaces (cFieldComment cfg)
+            sepDecl bracePos
 
-          forM_ (flagEnds cgItems) $ \((item, mbInlineComment), firstItem, lastItem) -> do
+          forM_ (flagEnds cgItems) $ \((item, mbInlineComment), firstItem, _) -> do
             if firstCommentGroup && firstItem
                 then pad fieldPos
                 else do
@@ -433,9 +417,6 @@ putConstructor cfg consIndent lcons = case GHC.unLoc lcons of
                 Indent n -> n
             putComment $ GHC.unLoc lc
             sepDecl bracePos
-        -- Print docstr after final field
-        -- removeCommentToEnd recPos >>= mapM_ \c ->
-        --   sepDecl bracePos >> spaces (cFieldComment cfg) >> putComment c
 
         -- Print whitespace to closing brace
         putText "}"
@@ -474,7 +455,7 @@ putNewtypeConstructor cfg lcons = case GHC.unLoc lcons of
         putConDeclField cfg $ GHC.unLoc firstArg
         space
         putText "}"
-      GHC.RecCon largs ->
+      GHC.RecCon {} ->
         error . mconcat $
           [ "Language.Haskell.Stylish.Step.Data.putNewtypeConstructor: "
           , "encountered newtype with several arguments"
