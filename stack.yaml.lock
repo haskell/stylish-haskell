@@ -3,10 +3,24 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: ghc-lib-parser-9.2.1.20211101@sha256:c7f5649391acb4ceec6770acce3b77dea8aad3fd442b2a32a1d0dbaede080c0b,12705
+    pantry-tree:
+      size: 27578
+      sha256: 445b7dd1908b8187dfdab87673a68f1ca42e2bcfd7dd68f04a3ad91a2215e3e2
+  original:
+    hackage: ghc-lib-parser-9.2.1.20211101
+- completed:
+    hackage: ghc-lib-parser-ex-9.2.0.1@sha256:37444e3274afd4daaa96819bb4e05835524c2e16021a56861d6f8f014584992d,3605
+    pantry-tree:
+      size: 2121
+      sha256: 8cf2d2a4fa196121c7faef816474038d8a82b8ff8a8480ecf4a5cf256c380c4c
+  original:
+    hackage: ghc-lib-parser-ex-9.2.0.1
 snapshots:
 - completed:
-    size: 587113
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/6.yaml
-    sha256: f74c482d7c93739ecf3abfbc0f2dea1c20a2dfb2462c689846ed55a9653b66f7
-  original: lts-18.6
+    size: 586296
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/18.yaml
+    sha256: 63539429076b7ebbab6daa7656cfb079393bf644971156dc349d7c0453694ac2
+  original: lts-18.18

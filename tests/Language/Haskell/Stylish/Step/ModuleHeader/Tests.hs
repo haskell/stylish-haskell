@@ -79,6 +79,8 @@ tests = testGroup "Language.Haskell.Stylish.Printer.ModuleHeader"
     , testCase "Single two exports, open_bracket = same_line" ex30a
     , testCase "Single one export with comment" ex31
     , testCase "Single one export with comment, open_bracket = same_line" ex31a
+    , testCase "Single one module comment" ex32
+    , testCase "Inline comments" ex33
     ]
 
 --------------------------------------------------------------------------------
@@ -882,6 +884,30 @@ ex31a = assertSnippet (step Nothing $ defaultConfig {breakWhere = Single} & open
     [ "module Foo ("
     , "      -- * Foo"
     , "      Foo"
+    , "    ) where"
+    ]
+
+ex32 :: Assertion
+ex32 = assertSnippet (step Nothing $ defaultConfig {breakWhere = Single})
+    [ "module Foo (bar) where -- Foo"
+    ]
+    [ "module Foo (bar) where -- Foo"
+    ]
+
+ex33 :: Assertion
+ex33 = assertSnippet (step Nothing $ defaultConfig)
+    [ "module Foo ("
+    , "  -- Bar"
+    , "  bar, -- Inline bar"
+    , "  -- Foo"
+    , "  foo -- Inline foo"
+    , ") where"
+    ]
+    [ "module Foo"
+    , "    ( -- Bar"
+    , "      bar -- Inline bar"
+    , "      -- Foo"  -- NOTE(jaspervdj): I would prefer to have the `,` here
+    , "    , foo -- Inline foo"
     , "    ) where"
     ]
 

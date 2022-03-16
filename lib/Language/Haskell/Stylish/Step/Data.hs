@@ -1,8 +1,11 @@
-{-# LANGUAGE BlockArguments  #-}
-{-# LANGUAGE DoAndIfThenElse #-}
-{-# LANGUAGE LambdaCase      #-}
-{-# LANGUAGE NamedFieldPuns  #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE BlockArguments   #-}
+{-# LANGUAGE DataKinds        #-}
+{-# LANGUAGE DoAndIfThenElse  #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase       #-}
+{-# LANGUAGE MultiWayIf       #-}
+{-# LANGUAGE NamedFieldPuns   #-}
+{-# LANGUAGE RecordWildCards  #-}
 module Language.Haskell.Stylish.Step.Data
   ( Config(..)
   , defaultConfig
@@ -12,49 +15,30 @@ module Language.Haskell.Stylish.Step.Data
   , step
   ) where
 
---------------------------------------------------------------------------------
-import           Prelude                           hiding (init)
 
 --------------------------------------------------------------------------------
 import           Control.Monad                     (forM_, unless, when)
-import           Data.Function                     ((&))
-import           Data.Functor                      ((<&>))
 import           Data.List                         (sortBy)
-import           Data.Maybe                        (listToMaybe)
+import           Data.Maybe                        (listToMaybe, maybeToList)
+import qualified GHC.Hs                            as GHC
+import qualified GHC.Types.Fixity                  as GHC
+import qualified GHC.Types.Name.Reader             as GHC
+import qualified GHC.Types.SrcLoc                  as GHC
+import           Prelude                           hiding (init)
+
 
 --------------------------------------------------------------------------------
-import           ApiAnnotation                     (AnnotationComment)
-import           BasicTypes                        (LexicalFixity (..))
-import           GHC.Hs.Decls                      (ConDecl (..),
-                                                    DerivStrategy (..),
-                                                    HsDataDefn (..),
-                                                    HsDecl (..),
-                                                    HsDerivingClause (..),
-                                                    NewOrData (..),
-                                                    TyClDecl (..))
-import           GHC.Hs.Extension                  (GhcPs, NoExtField (..),
-                                                    noExtCon)
-import           GHC.Hs.Types                      (ConDeclField (..),
-                                                    ForallVisFlag (..),
-                                                    HsConDetails (..),
-                                                    HsContext,
-                                                    HsImplicitBndrs (..),
-                                                    HsTyVarBndr (..),
-                                                    HsType (..), LHsKind,
-                                                    LHsQTyVars (..))
-import           RdrName                           (RdrName)
-import           SrcLoc                            (GenLocated (..), Located,
-                                                    RealLocated)
-
---------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Block
 import           Language.Haskell.Stylish.Editor
+import           Language.Haskell.Stylish.Comments
 import           Language.Haskell.Stylish.GHC
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Ordering
 import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
+import           Language.Haskell.Stylish.Util
 
+
+--------------------------------------------------------------------------------
 data Indent
     = SameLine
     | Indent !Int
@@ -106,208 +90,214 @@ step :: Config -> Step
 step cfg = makeStep "Data" \ls m -> applyChanges (changes m) ls
   where
     changes :: Module -> [ChangeLine]
-    changes m = fmap (formatDataDecl cfg m) (dataDecls m)
+    changes m = formatDataDecl cfg <$> dataDecls m
 
-    dataDecls :: Module -> [Located DataDecl]
-    dataDecls = queryModule \case
-      L pos (TyClD _ (DataDecl _ name tvars fixity defn)) -> pure . L pos $ MkDataDecl
-        { dataDeclName = name
-        , dataTypeVars = tvars
-        , dataDefn = defn
-        , dataFixity = fixity
-        }
-      _ -> []
+    dataDecls :: Module -> [DataDecl]
+    dataDecls m = do
+        ldecl <- GHC.hsmodDecls $ GHC.unLoc m
+        GHC.TyClD _ tycld <- pure $ GHC.unLoc ldecl
+        loc <- maybeToList $ GHC.srcSpanToRealSrcSpan $ GHC.getLocA ldecl
+        case tycld of
+            GHC.DataDecl {..} -> pure $ MkDataDecl
+                { dataComments = epAnnComments tcdDExt
+                , dataLoc      = loc
+                , dataDeclName = tcdLName
+                , dataTypeVars = tcdTyVars
+                , dataDefn     = tcdDataDefn
+                , dataFixity   = tcdFixity
+                }
+            _ -> []
 
 type ChangeLine = Change String
 
-formatDataDecl :: Config -> Module -> Located DataDecl -> ChangeLine
-formatDataDecl cfg@Config{..} m ldecl@(L declPos decl) =
-  change originalDeclBlock (const printedDecl)
+data DataDecl = MkDataDecl
+    { dataComments :: [GHC.LEpaComment]
+    , dataLoc      :: GHC.RealSrcSpan
+    , dataDeclName :: GHC.LocatedN GHC.RdrName
+    , dataTypeVars :: GHC.LHsQTyVars GHC.GhcPs
+    , dataDefn     :: GHC.HsDataDefn GHC.GhcPs
+    , dataFixity   :: GHC.LexicalFixity
+    }
+
+
+formatDataDecl :: Config -> DataDecl -> ChangeLine
+formatDataDecl cfg@Config{..} decl@MkDataDecl {..} =
+    change originalDeclBlock (const printedDecl)
   where
-    relevantComments :: [RealLocated AnnotationComment]
-    relevantComments
-      = moduleComments m
-      & rawComments
-      & dropBeforeAndAfter ldecl
-
-    defn = dataDefn decl
-
-    originalDeclBlock =
-      Block (getStartLineUnsafe ldecl) (getEndLineUnsafe ldecl)
+    originalDeclBlock = Block
+        (GHC.srcSpanStartLine dataLoc)
+        (GHC.srcSpanEndLine dataLoc)
 
     printerConfig = PrinterConfig
-      { columns = case cMaxColumns of
-          NoMaxColumns -> Nothing
-          MaxColumns n -> Just n
-      }
+        { columns = case cMaxColumns of
+            NoMaxColumns -> Nothing
+            MaxColumns n -> Just n
+        }
 
-    printedDecl = runPrinter_ printerConfig relevantComments m do
-      putText (newOrData decl)
-      space
-      putName decl
+    printedDecl = runPrinter_ printerConfig $ putDataDecl cfg decl
 
-      when (isGADT decl) (space >> putText "where")
+putDataDecl :: Config -> DataDecl -> P ()
+putDataDecl cfg@Config {..} decl = do
+    let defn = dataDefn decl
+        constructorComments = commentGroups
+            (GHC.srcSpanToRealSrcSpan . GHC.getLocA)
+            (GHC.dd_cons defn)
+            (dataComments decl)
 
-      when (hasConstructors decl) do
-        breakLineBeforeEq <- case (cEquals, cFirstField) of
-          (_, Indent x) | isEnum decl && cBreakEnums -> do
-            putEolComment declPos
-            newline >> spaces x
-            pure True
-          (_, _) | not (isNewtype decl) && singleConstructor decl && not cBreakSingleConstructors ->
-            False <$ space
-          (Indent x, _)
-            | isEnum decl && not cBreakEnums -> False <$ space
-            | otherwise -> do
-              putEolComment declPos
-              newline >> spaces x
-              pure True
-          (SameLine, _) -> False <$ space
+        onelineEnum =
+            isEnum decl && not cBreakEnums &&
+            all (not . commentGroupHasComments) constructorComments
+
+    putText $ newOrData decl
+    space
+    putName decl
+
+    when (isGADT decl) (space >> putText "where")
+
+    when (hasConstructors decl) do
+        case (cEquals, cFirstField) of
+            (_, Indent x) | isEnum decl && cBreakEnums -> newline >> spaces x
+            (_, _)
+                | not (isNewtype decl)
+                , singleConstructor decl && not cBreakSingleConstructors ->
+                    space
+            (Indent x, _)
+                | onelineEnum -> space
+                | otherwise -> newline >> spaces x
+            (SameLine, _) -> space
 
         lineLengthAfterEq <- fmap (+2) getCurrentLineLength
 
-        if isEnum decl && not cBreakEnums then
-          putText "=" >> space >> putUnbrokenEnum cfg decl
-        else if isNewtype decl then
-          putText "=" >> space >> forM_ (dd_cons defn) (putNewtypeConstructor cfg)
-        else
-          case dd_cons defn of
-            [] -> pure ()
-            lcon@(L pos _) : consRest -> do
-              when breakLineBeforeEq do
-                removeCommentTo pos >>= mapM_ \c -> putComment c >> consIndent lineLengthAfterEq
+        if  | onelineEnum ->
+                putText "=" >> space >> putUnbrokenEnum cfg decl
+            | isNewtype decl -> do
+                putText "=" >> space
+                forM_ (GHC.dd_cons defn) $ putNewtypeConstructor cfg
+            | not . null $ GHC.dd_cons defn -> do
+                forM_ (flagEnds constructorComments) $ \(CommentGroup {..}, firstGroup, lastGroup) -> do
+                    forM_ cgPrior $ \lc -> do
+                        putComment $ GHC.unLoc lc
+                        consIndent lineLengthAfterEq
 
-              unless
-                (isGADT decl)
-                (putText "=" >> space)
+                    forM_ (flagEnds cgItems) $ \((lcon, mbInlineComment), firstItem, lastItem) -> do
+                        unless (isGADT decl) $ do
+                            putText $ if firstGroup && firstItem then "=" else "|"
+                            space
+                        putConstructor cfg lineLengthAfterEq lcon
+                        putMaybeLineComment $ GHC.unLoc <$> mbInlineComment
+                        unless (lastGroup && lastItem) $
+                            consIndent lineLengthAfterEq
 
-              putConstructor cfg lineLengthAfterEq lcon
-              forM_ consRest \con@(L conPos _) -> do
-                unless (cFirstField == SameLine) do
-                  removeCommentTo conPos >>= mapM_ \c -> consIndent lineLengthAfterEq >> putComment c
-                consIndent lineLengthAfterEq
+                    forM_ cgFollowing $ \lc -> do
+                        consIndent lineLengthAfterEq
+                        putComment $ GHC.unLoc lc
 
-                unless
-                  (isGADT decl)
-                  (putText "|" >> space)
+            | otherwise ->
+                pure ()
 
-                putConstructor cfg lineLengthAfterEq con
-                putEolComment conPos
+    let derivingComments = deepAnnComments (GHC.dd_derivs defn)
 
-        when (hasDeriving decl) do
-          if isEnum decl && not cBreakEnums then
+    when (hasDeriving decl) do
+        if onelineEnum && null derivingComments then
             space
-          else do
-            removeCommentTo (defn & dd_derivs & \(L pos _) -> pos) >>=
-              mapM_ \c -> newline >> spaces cDeriving >> putComment c
+        else do
+            forM_ derivingComments $ \lc -> do
+                newline
+                spaces cDeriving
+                putComment $ GHC.unLoc lc
             newline
             spaces cDeriving
 
-        sep (newline >> spaces cDeriving) $ defn & dd_derivs & \(L pos ds) -> ds <&> \d -> do
-          putAllSpanComments (newline >> spaces cDeriving) pos
-          putDeriving cfg d
-
-    consIndent eqIndent = newline >> case (cEquals, cFirstField) of
-      (SameLine, SameLine) -> spaces (eqIndent - 2)
-      (SameLine, Indent y) -> spaces (eqIndent + y - 4)
-      (Indent x, Indent _) -> spaces x
-      (Indent x, SameLine) -> spaces x
-
-data DataDecl = MkDataDecl
-  { dataDeclName :: Located RdrName
-  , dataTypeVars :: LHsQTyVars GhcPs
-  , dataDefn     :: HsDataDefn GhcPs
-  , dataFixity   :: LexicalFixity
-  }
-
-putDeriving :: Config -> Located (HsDerivingClause GhcPs) -> P ()
-putDeriving Config{..} (L pos clause) = do
-  putText "deriving"
-
-  forM_ (deriv_clause_strategy clause) \case
-    L _ StockStrategy    -> space >> putText "stock"
-    L _ AnyclassStrategy -> space >> putText "anyclass"
-    L _ NewtypeStrategy  -> space >> putText "newtype"
-    L _ (ViaStrategy _)  -> pure ()
-
-  putCond
-    withinColumns
-    oneLinePrint
-    multilinePrint
-
-  forM_ (deriv_clause_strategy clause) \case
-    L _ (ViaStrategy tp) -> do
-      case cVia of
-        SameLine -> space
-        Indent x -> newline >> spaces (x + cDeriving)
-
-      putText "via"
-      space
-      putType (getType tp)
-    _ -> pure ()
-
-  putEolComment pos
-
+        sep (newline >> spaces cDeriving) $ map
+            (putDeriving cfg)
+            (GHC.dd_derivs defn)
   where
-    getType = \case
-      HsIB _ tp          -> tp
-      XHsImplicitBndrs x -> noExtCon x
+    consIndent eqIndent = newline >> case (cEquals, cFirstField) of
+        (SameLine, SameLine) -> spaces (eqIndent - 2)
+        (SameLine, Indent y) -> spaces (eqIndent + y - 4)
+        (Indent x, Indent _) -> spaces x
+        (Indent x, SameLine) -> spaces x
 
+derivingClauseTypes
+    :: GHC.HsDerivingClause GHC.GhcPs -> [GHC.LHsSigType GHC.GhcPs]
+derivingClauseTypes GHC.HsDerivingClause {..} =
+    case GHC.unLoc deriv_clause_tys of
+        GHC.DctSingle _ t -> [t]
+        GHC.DctMulti _ ts -> ts
+
+putDeriving :: Config -> GHC.LHsDerivingClause GHC.GhcPs -> P ()
+putDeriving Config{..} lclause = do
+    let clause@GHC.HsDerivingClause {..} = GHC.unLoc lclause
+        tys = (if cSortDeriving then sortBy compareOutputableCI else id) $
+            map (GHC.sig_body . GHC.unLoc) $
+            derivingClauseTypes clause
+        headTy = listToMaybe tys
+        tailTy = drop 1 tys
+
+    putText "deriving"
+
+    forM_ deriv_clause_strategy $ \lstrat -> case GHC.unLoc lstrat of
+        GHC.StockStrategy    {} -> space >> putText "stock"
+        GHC.AnyclassStrategy {} -> space >> putText "anyclass"
+        GHC.NewtypeStrategy  {} -> space >> putText "newtype"
+        GHC.ViaStrategy      {} -> pure ()
+
+    putCond
+        withinColumns
+        do
+            space
+            putText "("
+            sep
+                (comma >> space)
+                (fmap putOutputable tys)
+            putText ")"
+        do
+            newline
+            spaces indentation
+            putText "("
+
+            forM_ headTy \t ->
+                space >> putOutputable t
+
+            forM_ tailTy \t -> do
+                newline
+                spaces indentation
+                comma
+                space
+                putOutputable t
+
+            newline
+            spaces indentation
+            putText ")"
+
+    forM_ deriv_clause_strategy $ \lstrat -> case GHC.unLoc lstrat of
+        GHC.ViaStrategy tp -> do
+            case cVia of
+                SameLine -> space
+                Indent x -> newline >> spaces (x + cDeriving)
+
+            putText "via"
+            space
+            putType $ case tp of
+                GHC.XViaStrategyPs _ ty -> GHC.sig_body $ GHC.unLoc ty
+        _ -> pure ()
+
+    -- putEolComment pos
+  where
     withinColumns PrinterState{currentLine} =
       case cMaxColumns of
         MaxColumns maxCols -> length currentLine <= maxCols
         NoMaxColumns       -> True
-
-    oneLinePrint = do
-      space
-      putText "("
-      sep
-        (comma >> space)
-        (fmap putOutputable tys)
-      putText ")"
-
-    multilinePrint = do
-      newline
-      spaces indentation
-      putText "("
-
-      forM_ headTy \t ->
-        space >> putOutputable t
-
-      forM_ tailTy \t -> do
-        newline
-        spaces indentation
-        comma
-        space
-        putOutputable t
-
-      newline
-      spaces indentation
-      putText ")"
 
     indentation =
       cDeriving + case cFirstField of
         Indent x -> x
         SameLine -> 0
 
-    tys
-      = clause
-      & deriv_clause_tys
-      & unLocated
-      & (if cSortDeriving then sortBy compareOutputableCI else id)
-      & fmap hsib_body
-
-    headTy =
-      listToMaybe tys
-
-    tailTy =
-      drop 1 tys
-
 putUnbrokenEnum :: Config -> DataDecl -> P ()
-putUnbrokenEnum cfg decl =
-  sep
+putUnbrokenEnum cfg decl = sep
     (space >> putText "|" >> space)
-    (fmap (putConstructor cfg 0) . dd_cons . dataDefn $ decl)
+    (fmap (putConstructor cfg 0) . GHC.dd_cons . dataDefn $ decl)
 
 putName :: DataDecl -> P ()
 putName decl@MkDataDecl{..} =
@@ -319,47 +309,29 @@ putName decl@MkDataDecl{..} =
     maybePutKindSig
   else do
     putRdrName dataDeclName
-    forM_ (hsq_explicit dataTypeVars) (\t -> space >> putOutputable t)
+    forM_ (GHC.hsq_explicit dataTypeVars) (\t -> space >> putOutputable t)
     maybePutKindSig
 
   where
-    firstTvar :: Maybe (Located (HsTyVarBndr GhcPs))
-    firstTvar
-      = dataTypeVars
-      & hsq_explicit
-      & listToMaybe
+    firstTvar :: Maybe (GHC.LHsTyVarBndr () GHC.GhcPs)
+    firstTvar = listToMaybe $ GHC.hsq_explicit dataTypeVars
 
-    secondTvar :: Maybe (Located (HsTyVarBndr GhcPs))
-    secondTvar
-      = dataTypeVars
-      & hsq_explicit
-      & drop 1
-      & listToMaybe
+    secondTvar :: Maybe (GHC.LHsTyVarBndr () GHC.GhcPs)
+    secondTvar = listToMaybe . drop 1 $ GHC.hsq_explicit dataTypeVars
 
     maybePutKindSig :: Printer ()
     maybePutKindSig = forM_ maybeKindSig (\k -> space >> putText "::" >> space >> putOutputable k)
 
-    maybeKindSig :: Maybe (LHsKind GhcPs)
-    maybeKindSig = dd_kindSig dataDefn
+    maybeKindSig :: Maybe (GHC.LHsKind GHC.GhcPs)
+    maybeKindSig = GHC.dd_kindSig dataDefn
 
-putConstructor :: Config -> Int -> Located (ConDecl GhcPs) -> P ()
-putConstructor cfg consIndent (L _ cons) = case cons of
-  ConDeclGADT{..} -> do
+putConstructor :: Config -> Int -> GHC.LConDecl GHC.GhcPs -> P ()
+putConstructor cfg consIndent lcons = case GHC.unLoc lcons of
+  GHC.ConDeclGADT {..} -> do
     -- Put argument to constructor first:
-    case con_args of
-      PrefixCon _ -> do
-        sep
-          (comma >> space)
-          (fmap putRdrName con_names)
-
-      InfixCon arg1 arg2 -> do
-        putType arg1
-        space
-        forM_ con_names putRdrName
-        space
-        putType arg2
-      RecCon _ ->
-        error . mconcat $
+    case con_g_args of
+      GHC.PrefixConGADT _ -> sep (comma >> space) $ fmap putRdrName con_names
+      GHC.RecConGADT _ -> error . mconcat $
           [ "Language.Haskell.Stylish.Step.Data.putConstructor: "
           , "encountered a GADT with record constructors, not supported yet"
           ]
@@ -369,27 +341,39 @@ putConstructor cfg consIndent (L _ cons) = case cons of
     putText "::"
     space
 
-    putForAll con_forall $ hsq_explicit con_qvars
-    forM_ con_mb_cxt (putContext cfg . unLocated)
+    putForAll
+        (case GHC.unLoc con_bndrs of
+            GHC.HsOuterImplicit {} -> False
+            GHC.HsOuterExplicit {} -> True)
+        (case GHC.unLoc con_bndrs of
+            GHC.HsOuterImplicit {}   -> []
+            GHC.HsOuterExplicit {..} -> hso_bndrs)
+    forM_ con_mb_cxt $ putContext cfg
+    case con_g_args of
+        GHC.PrefixConGADT scaledTys -> forM_ scaledTys $ \scaledTy -> do
+            putType $ GHC.hsScaledThing scaledTy
+            space >> putText "->" >> space
+        GHC.RecConGADT _ -> error . mconcat $
+            [ "Language.Haskell.Stylish.Step.Data.putConstructor: "
+            , "encountered a GADT with record constructors, not supported yet"
+            ]
     putType con_res_ty
 
-  XConDecl x ->
-    noExtCon x
-  ConDeclH98{..} -> do
+  GHC.ConDeclH98 {..} -> do
     putForAll con_forall con_ex_tvs
-    forM_ con_mb_cxt (putContext cfg . unLocated)
+    forM_ con_mb_cxt $ putContext cfg
     case con_args of
-      InfixCon arg1 arg2 -> do
-        putType arg1
+      GHC.InfixCon arg1 arg2 -> do
+        putType $ GHC.hsScaledThing arg1
         space
         putRdrName con_name
         space
-        putType arg2
-      PrefixCon xs -> do
+        putType $ GHC.hsScaledThing arg2
+      GHC.PrefixCon _tyargs args -> do
         putRdrName con_name
-        unless (null xs) space
-        sep space (fmap putOutputable xs)
-      RecCon (L recPos (L posFirst firstArg : args)) -> do
+        unless (null args) space
+        sep space (fmap putOutputable args)
+      GHC.RecCon largs | _ : _ <- GHC.unLoc largs -> do
         putRdrName con_name
         skipToBrace
         bracePos <- getCurrentLineLength
@@ -397,32 +381,42 @@ putConstructor cfg consIndent (L _ cons) = case cons of
         let fieldPos = bracePos + 2
         space
 
+        let commented = commentGroups
+                (GHC.srcSpanToRealSrcSpan . GHC.getLocA)
+                (GHC.unLoc largs)
+                (epAnnComments . GHC.ann $ GHC.getLoc largs)
+
+        forM_ (flagEnds commented) $ \(CommentGroup {..}, firstCommentGroup, _) -> do
+
         -- Unless everything's configured to be on the same line, put pending
         -- comments
-        unless (cFirstField cfg == SameLine) do
-          removeCommentTo posFirst >>= mapM_ \c -> putComment c >> sepDecl bracePos
+          forM_ cgPrior $ \lc -> do
+            pad fieldPos
+            putComment $ GHC.unLoc lc
+            sepDecl bracePos
 
-        -- Put first decl field
-        pad fieldPos >> putConDeclField cfg firstArg
-        unless (cFirstField cfg == SameLine) (putEolComment posFirst)
+          forM_ (flagEnds cgItems) $ \((item, mbInlineComment), firstItem, _) -> do
+            if firstCommentGroup && firstItem
+                then pad fieldPos
+                else do
+                    comma
+                    space
+            putConDeclField cfg $ GHC.unLoc item
+            case mbInlineComment of
+                Just c -> do
+                    sepDecl bracePos >> spaces (cFieldComment cfg)
+                    putComment $ GHC.unLoc c
+                _ -> pure ()
+            sepDecl bracePos
 
-        -- Put tail decl fields
-        forM_ args \(L pos arg) -> do
-          sepDecl bracePos
-          removeCommentTo pos >>= mapM_ \c ->
-            spaces (cFieldComment cfg) >> putComment c >> sepDecl bracePos
-          comma
-          space
-          putConDeclField cfg arg
-          putEolComment pos
-
-        -- Print docstr after final field
-        removeCommentToEnd recPos >>= mapM_ \c ->
-          sepDecl bracePos >> spaces (cFieldComment cfg) >> putComment c
+          forM_ cgFollowing $ \lc -> do
+            spaces $ cFieldComment cfg
+            putComment $ GHC.unLoc lc
+            sepDecl bracePos
 
         -- Print whitespace to closing brace
-        sepDecl bracePos >> putText "}"
-      RecCon (L _ []) -> do
+        putText "}"
+      GHC.RecCon _ -> do
         skipToBrace >> putText "{"
         skipToBrace >> putText "}"
 
@@ -438,126 +432,124 @@ putConstructor cfg consIndent (L _ cons) = case cons of
       -- Jump to the next declaration.
       sepDecl bracePos = newline >> spaces case (cEquals cfg, cFirstField cfg) of
         (_, Indent y) | not (cBreakSingleConstructors cfg) -> y
-        (SameLine, SameLine) -> bracePos
-        (Indent x, Indent y) -> x + y + 2
-        (SameLine, Indent y) -> bracePos + y - 2
-        (Indent x, SameLine) -> bracePos + x - 2
+        (SameLine, SameLine)                               -> bracePos
+        (Indent x, Indent y)                               -> x + y + 2
+        (SameLine, Indent y)                               -> bracePos + y - 2
+        (Indent x, SameLine)                               -> bracePos + x - 2
 
-putNewtypeConstructor :: Config -> Located (ConDecl GhcPs) -> P ()
-putNewtypeConstructor cfg (L _ cons) = case cons of
-  ConDeclH98{..} ->
+putNewtypeConstructor :: Config -> GHC.LConDecl GHC.GhcPs -> P ()
+putNewtypeConstructor cfg lcons = case GHC.unLoc lcons of
+  GHC.ConDeclH98{..} ->
     putRdrName con_name >> case con_args of
-      PrefixCon xs -> do
-        unless (null xs) space
-        sep space (fmap putOutputable xs)
-      RecCon (L _ [L _posFirst firstArg]) -> do
+      GHC.PrefixCon _ args -> do
+        unless (null args) space
+        sep space (fmap putOutputable args)
+      GHC.RecCon largs | [firstArg] <- GHC.unLoc largs -> do
         space
         putText "{"
         space
-        putConDeclField cfg firstArg
+        putConDeclField cfg $ GHC.unLoc firstArg
         space
         putText "}"
-      RecCon (L _ _args) ->
+      GHC.RecCon {} ->
         error . mconcat $
           [ "Language.Haskell.Stylish.Step.Data.putNewtypeConstructor: "
           , "encountered newtype with several arguments"
           ]
-      InfixCon {} ->
+      GHC.InfixCon {} ->
         error . mconcat $
           [ "Language.Haskell.Stylish.Step.Data.putNewtypeConstructor: "
           , "infix newtype constructor"
           ]
-  XConDecl x ->
-    noExtCon x
-  ConDeclGADT{} ->
+  GHC.ConDeclGADT{} ->
     error . mconcat $
       [ "Language.Haskell.Stylish.Step.Data.putNewtypeConstructor: "
       , "GADT encountered in newtype"
       ]
 
-putForAll :: Located Bool -> [Located (HsTyVarBndr GhcPs)] -> P ()
-putForAll forall ex_tvs =
-  when (unLocated forall) do
+putForAll
+    :: GHC.OutputableBndrFlag s 'GHC.Parsed
+    => Bool -> [GHC.LHsTyVarBndr s GHC.GhcPs] -> P ()
+putForAll forall ex_tvs = when forall do
     putText "forall"
     space
-    sep space (fmap putOutputable ex_tvs)
+    sep space $ putOutputable . GHC.unLoc <$> ex_tvs
     dot
     space
 
-putContext :: Config -> HsContext GhcPs -> P ()
-putContext Config{..} = suffix (space >> putText "=>" >> space) . \case
-  [L _ (HsParTy _ tp)] | cCurriedContext ->
-    putType tp
-  [ctx] ->
-    putType ctx
-  ctxs | cCurriedContext ->
-    sep (space >> putText "=>" >> space) (fmap putType ctxs)
-  ctxs ->
-    parenthesize $ sep (comma >> space) (fmap putType ctxs)
+putContext :: Config -> GHC.LHsContext GHC.GhcPs -> P ()
+putContext Config{..} lctx = suffix (space >> putText "=>" >> space) $
+    case ltys of
+        [lty] | GHC.HsParTy _ tp <- GHC.unLoc lty, cCurriedContext ->
+          putType tp
+        [ctx] ->
+          putType ctx
+        ctxs | cCurriedContext ->
+          sep (space >> putText "=>" >> space) (fmap putType ctxs)
+        ctxs ->
+          parenthesize $ sep (comma >> space) (fmap putType ctxs)
+  where
+    ltys = GHC.unLoc lctx :: [GHC.LHsType GHC.GhcPs]
 
-putConDeclField :: Config -> ConDeclField GhcPs -> P ()
-putConDeclField cfg = \case
-  ConDeclField{..} -> do
+putConDeclField :: Config -> GHC.ConDeclField GHC.GhcPs -> P ()
+putConDeclField cfg GHC.ConDeclField {..} = do
     sep
-      (comma >> space)
-      (fmap putOutputable cd_fld_names)
+        (comma >> space)
+        (fmap putOutputable cd_fld_names)
     space
     putText "::"
     space
     putType' cfg cd_fld_type
-  XConDeclField{} ->
-    error . mconcat $
-      [ "Language.Haskell.Stylish.Step.Data.putConDeclField: "
-      , "XConDeclField encountered"
-      ]
 
 -- | A variant of 'putType' that takes 'cCurriedContext' into account
-putType' :: Config -> Located (HsType GhcPs) -> P ()
-putType' cfg = \case
-  L _ (HsForAllTy NoExtField vis bndrs tp) -> do
-    putText "forall"
-    space
-    sep space (fmap putOutputable bndrs)
-    putText
-      if vis == ForallVis then "->"
-      else "."
-    space
-    putType' cfg tp
-  L _ (HsQualTy NoExtField ctx tp) -> do
-    putContext cfg (unLocated ctx)
-    putType' cfg tp
-  other -> putType other
+putType' :: Config -> GHC.LHsType GHC.GhcPs -> P ()
+putType' cfg lty = case GHC.unLoc lty of
+    GHC.HsForAllTy GHC.NoExtField tele tp -> do
+        putText "forall"
+        space
+        sep space $ case tele of
+            GHC.HsForAllVis   {..} -> putOutputable . GHC.unLoc <$> hsf_vis_bndrs
+            GHC.HsForAllInvis {..} -> putOutputable . GHC.unLoc <$> hsf_invis_bndrs
+        case tele of
+            GHC.HsForAllVis   {} -> space >> putText "->"
+            GHC.HsForAllInvis {} -> putText "."
+        space
+        putType' cfg tp
+    GHC.HsQualTy GHC.NoExtField ctx tp -> do
+        forM_ ctx $ putContext cfg
+        putType' cfg tp
+    _ -> putType lty
 
 newOrData :: DataDecl -> String
 newOrData decl = if isNewtype decl then "newtype" else "data"
 
 isGADT :: DataDecl -> Bool
-isGADT = any isGADTCons . dd_cons . dataDefn
+isGADT = any isGADTCons . GHC.dd_cons . dataDefn
   where
-    isGADTCons = \case
-      L _ (ConDeclGADT {}) -> True
-      _                    -> False
+    isGADTCons c = case GHC.unLoc c of
+      GHC.ConDeclGADT {} -> True
+      _                  -> False
 
 isNewtype :: DataDecl -> Bool
-isNewtype = (== NewType) . dd_ND . dataDefn
+isNewtype = (== GHC.NewType) . GHC.dd_ND . dataDefn
 
 isInfix :: DataDecl -> Bool
-isInfix = (== Infix) . dataFixity
+isInfix = (== GHC.Infix) . dataFixity
 
 isEnum :: DataDecl -> Bool
-isEnum = all isUnary . dd_cons . dataDefn
+isEnum = all isUnary . GHC.dd_cons . dataDefn
   where
-    isUnary = \case
-      L _ (ConDeclH98 {..}) -> case con_args of
-        PrefixCon [] -> True
-        _            -> False
+    isUnary c = case GHC.unLoc c of
+      GHC.ConDeclH98 {..} -> case con_args of
+        GHC.PrefixCon tyargs args -> null tyargs && null args
+        _                         -> False
       _ -> False
 
 hasConstructors :: DataDecl -> Bool
-hasConstructors = not . null . dd_cons . dataDefn
+hasConstructors = not . null . GHC.dd_cons . dataDefn
 
 singleConstructor :: DataDecl -> Bool
-singleConstructor = (== 1) . length . dd_cons . dataDefn
+singleConstructor = (== 1) . length . GHC.dd_cons . dataDefn
 
 hasDeriving :: DataDecl -> Bool
-hasDeriving = not . null . unLocated . dd_derivs . dataDefn
+hasDeriving = not . null . GHC.dd_derivs . dataDefn

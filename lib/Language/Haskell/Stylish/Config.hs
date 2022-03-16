@@ -260,17 +260,14 @@ parseRecords c o = Data.step
       maybe Data.NoMaxColumns Data.MaxColumns (configColumns c)
 
 parseIndent :: A.Value -> A.Parser Data.Indent
-parseIndent = A.withText "Indent" $ \t ->
-  if t == "same_line"
-     then return Data.SameLine
-     else
-         if "indent " `T.isPrefixOf` t
-             then
-                 case readMaybe (T.unpack $ T.drop 7 t) of
-                     Just n -> return $ Data.Indent n
-                     Nothing -> fail $ "Indent: not a number" <> T.unpack (T.drop 7 t)
-             else fail $ "can't parse indent setting: " <> T.unpack t
-
+parseIndent = \case
+    A.String "same_line" -> return Data.SameLine
+    A.String t | "indent " `T.isPrefixOf` t ->
+        case readMaybe (T.unpack $ T.drop 7 t) of
+             Just n -> return $ Data.Indent n
+             Nothing -> fail $ "Indent: not a number" <> T.unpack (T.drop 7 t)
+    A.String t -> fail $ "can't parse indent setting: " <> T.unpack t
+    _ -> fail "Expected string for indent value"
 
 --------------------------------------------------------------------------------
 parseSquash :: Config -> A.Object -> A.Parser Step

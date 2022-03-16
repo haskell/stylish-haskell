@@ -23,133 +23,61 @@ Extra-source-files:
   README.markdown,
   data/stylish-haskell.yaml
 
-Library
-  Hs-source-dirs:   lib
+Common depends
   Ghc-options:      -Wall
   Default-language: Haskell2010
 
-  Exposed-modules:
-    Language.Haskell.Stylish
-    Language.Haskell.Stylish.GHC
-    Language.Haskell.Stylish.Module
-    Language.Haskell.Stylish.Printer
-    Language.Haskell.Stylish.Step.Data
-    Language.Haskell.Stylish.Step.Imports
-    Language.Haskell.Stylish.Step.ModuleHeader
-    Language.Haskell.Stylish.Step.LanguagePragmas
-    Language.Haskell.Stylish.Step.SimpleAlign
-    Language.Haskell.Stylish.Step.Squash
-    Language.Haskell.Stylish.Step.Tabs
-    Language.Haskell.Stylish.Step.TrailingWhitespace
-    Language.Haskell.Stylish.Step.UnicodeSyntax
-
-  Other-modules:
-    Language.Haskell.Stylish.Align
-    Language.Haskell.Stylish.Block
-    Language.Haskell.Stylish.Config
-    Language.Haskell.Stylish.Config.Cabal
-    Language.Haskell.Stylish.Config.Internal
-    Language.Haskell.Stylish.Editor
-    Language.Haskell.Stylish.Ordering
-    Language.Haskell.Stylish.Parse
-    Language.Haskell.Stylish.Step
-    Language.Haskell.Stylish.Util
-    Language.Haskell.Stylish.Verbose
-    Paths_stylish_haskell
-
-  Autogen-modules:
-    Paths_stylish_haskell
-
   Build-depends:
-    aeson            >= 0.6    && < 1.6,
-    base             >= 4.8    && < 5,
-    bytestring       >= 0.9    && < 0.11,
-    Cabal            >= 2.4    && < 3.3,
-    containers       >= 0.3    && < 0.7,
-    directory        >= 1.2.3  && < 1.4,
-    filepath         >= 1.1    && < 1.5,
-    file-embed       >= 0.0.10 && < 0.1,
-    ghc-lib-parser   >= 8.10   && < 8.12,
-    mtl              >= 2.0    && < 2.3,
-    syb              >= 0.3    && < 0.8,
-    text             >= 1.2    && < 1.3,
-    HsYAML-aeson     >=0.2.0   && < 0.3,
-    HsYAML           >=0.2.0   && < 0.3
+    aeson             >= 0.6    && < 2.1,
+    base              >= 4.8    && < 5,
+    bytestring        >= 0.9    && < 0.11,
+    Cabal             >= 3.4    && < 3.7,
+    containers        >= 0.3    && < 0.7,
+    directory         >= 1.2.3  && < 1.4,
+    filepath          >= 1.1    && < 1.5,
+    file-embed        >= 0.0.10 && < 0.1,
+    ghc-lib-parser    >= 9.2    && < 9.3,
+    ghc-lib-parser-ex >= 9.2    && < 9.3,
+    mtl               >= 2.0    && < 2.3,
+    syb               >= 0.3    && < 0.8,
+    text              >= 1.2    && < 1.3,
+    HsYAML-aeson      >=0.2.0   && < 0.3,
+    HsYAML            >=0.2.0   && < 0.3
 
   if impl(ghc < 8.0)
     Build-depends:
       semigroups     >= 0.18   && < 0.20
 
-Executable stylish-haskell
-  Ghc-options:      -Wall
-  Hs-source-dirs:   src
-  Main-is:          Main.hs
-  Default-language: Haskell2010
+Library
+  Import:         depends
+  Hs-source-dirs: lib
 
-  Build-depends:
-    stylish-haskell,
-    strict               >= 0.3  && < 0.5,
-    optparse-applicative >= 0.12 && < 0.17,
-    -- Copied from regular dependencies...
-    aeson            >= 0.6    && < 1.6,
-    base             >= 4.8    && < 5,
-    bytestring       >= 0.9    && < 0.11,
-    Cabal            >= 2.4    && < 3.3,
-    containers       >= 0.3    && < 0.7,
-    directory        >= 1.2.3  && < 1.4,
-    filepath         >= 1.1    && < 1.5,
-    file-embed       >= 0.0.10 && < 0.1,
-    ghc-lib-parser   >= 8.10   && < 8.12,
-    mtl              >= 2.0    && < 2.3,
-    syb              >= 0.3    && < 0.8,
-    HsYAML-aeson     >=0.2.0   && < 0.3,
-    HsYAML           >=0.2.0   && < 0.3
-
-Test-suite stylish-haskell-tests
-  Ghc-options:      -Wall
-  Hs-source-dirs:   tests lib
-  Main-is:          TestSuite.hs
-  Type:             exitcode-stdio-1.0
-  Default-language: Haskell2010
-
-  Other-modules:
+  Exposed-modules:
     Language.Haskell.Stylish
-    Language.Haskell.Stylish.Align
-    Language.Haskell.Stylish.Block
     Language.Haskell.Stylish.Config
-    Language.Haskell.Stylish.Config.Cabal
-    Language.Haskell.Stylish.Config.Internal
-    Language.Haskell.Stylish.Config.Tests
-    Language.Haskell.Stylish.Editor
     Language.Haskell.Stylish.GHC
-    Language.Haskell.Stylish.Ordering
     Language.Haskell.Stylish.Module
     Language.Haskell.Stylish.Parse
-    Language.Haskell.Stylish.Parse.Tests
     Language.Haskell.Stylish.Printer
     Language.Haskell.Stylish.Step
-    Language.Haskell.Stylish.Step.Imports
-    Language.Haskell.Stylish.Step.Imports.Tests
-    Language.Haskell.Stylish.Step.Imports.FelixTests
     Language.Haskell.Stylish.Step.Data
-    Language.Haskell.Stylish.Step.Data.Tests
-    Language.Haskell.Stylish.Step.ModuleHeader
-    Language.Haskell.Stylish.Step.ModuleHeader.Tests
+    Language.Haskell.Stylish.Step.Imports
     Language.Haskell.Stylish.Step.LanguagePragmas
-    Language.Haskell.Stylish.Step.LanguagePragmas.Tests
+    Language.Haskell.Stylish.Step.ModuleHeader
     Language.Haskell.Stylish.Step.SimpleAlign
-    Language.Haskell.Stylish.Step.SimpleAlign.Tests
     Language.Haskell.Stylish.Step.Squash
-    Language.Haskell.Stylish.Step.Squash.Tests
     Language.Haskell.Stylish.Step.Tabs
-    Language.Haskell.Stylish.Step.Tabs.Tests
     Language.Haskell.Stylish.Step.TrailingWhitespace
-    Language.Haskell.Stylish.Step.TrailingWhitespace.Tests
     Language.Haskell.Stylish.Step.UnicodeSyntax
-    Language.Haskell.Stylish.Step.UnicodeSyntax.Tests
-    Language.Haskell.Stylish.Regressions
-    Language.Haskell.Stylish.Tests
-    Language.Haskell.Stylish.Tests.Util
+
+  Other-modules:
+    Language.Haskell.Stylish.Align
+    Language.Haskell.Stylish.Block
+    Language.Haskell.Stylish.Comments
+    Language.Haskell.Stylish.Config.Cabal
+    Language.Haskell.Stylish.Config.Internal
+    Language.Haskell.Stylish.Editor
+    Language.Haskell.Stylish.Ordering
     Language.Haskell.Stylish.Util
     Language.Haskell.Stylish.Verbose
     Paths_stylish_haskell
@@ -157,26 +85,45 @@ Test-suite stylish-haskell-tests
   Autogen-modules:
     Paths_stylish_haskell
 
+Executable stylish-haskell
+  Import:         depends
+  Hs-source-dirs: src
+  Main-is:        Main.hs
+
   Build-depends:
-    HUnit                >= 1.2 && < 1.7,
-    test-framework       >= 0.4 && < 0.9,
-    test-framework-hunit >= 0.2 && < 0.4,
+    stylish-haskell,
+    strict               >= 0.3  && < 0.5,
+    optparse-applicative >= 0.12 && < 0.18
+
+Test-suite stylish-haskell-tests
+  Import:         depends
+  Hs-source-dirs: tests
+  Main-is:        TestSuite.hs
+  Type:           exitcode-stdio-1.0
+
+  Other-modules:
+    Language.Haskell.Stylish.Config.Tests
+    Language.Haskell.Stylish.Parse.Tests
+    Language.Haskell.Stylish.Regressions
+    Language.Haskell.Stylish.Step.Data.Tests
+    Language.Haskell.Stylish.Step.Imports.FelixTests
+    Language.Haskell.Stylish.Step.Imports.Tests
+    Language.Haskell.Stylish.Step.LanguagePragmas.Tests
+    Language.Haskell.Stylish.Step.ModuleHeader.Tests
+    Language.Haskell.Stylish.Step.SimpleAlign.Tests
+    Language.Haskell.Stylish.Step.Squash.Tests
+    Language.Haskell.Stylish.Step.Tabs.Tests
+    Language.Haskell.Stylish.Step.TrailingWhitespace.Tests
+    Language.Haskell.Stylish.Step.UnicodeSyntax.Tests
+    Language.Haskell.Stylish.Tests
+    Language.Haskell.Stylish.Tests.Util
+
+  Build-depends:
+    stylish-haskell,
+    HUnit                >= 1.2   && < 1.7,
     random               >= 1.1,
-    -- Copied from regular dependencies...
-    aeson            >= 0.6    && < 1.6,
-    base             >= 4.8    && < 5,
-    bytestring       >= 0.9    && < 0.11,
-    Cabal            >= 2.4    && < 3.3,
-    containers       >= 0.3    && < 0.7,
-    directory        >= 1.2.3  && < 1.4,
-    filepath         >= 1.1    && < 1.5,
-    file-embed       >= 0.0.10 && < 0.1,
-    ghc-lib-parser   >= 8.10   && < 8.12,
-    mtl              >= 2.0    && < 2.3,
-    syb              >= 0.3    && < 0.8,
-    text             >= 1.2    && < 1.3,
-    HsYAML-aeson     >=0.2.0   && < 0.3,
-    HsYAML           >=0.2.0   && < 0.3
+    test-framework       >= 0.4   && < 0.9,
+    test-framework-hunit >= 0.2   && < 0.4,
 
 Source-repository head
   Type:     git

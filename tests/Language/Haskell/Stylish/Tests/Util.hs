@@ -3,40 +3,34 @@
 module Language.Haskell.Stylish.Tests.Util
     ( dumpAst
     , dumpModule
-    , testStep
-    , testStep'
     , Snippet (..)
-    , testSnippet
     , assertSnippet
     , withTestDirTree
-    , (@=??)
     ) where
 
 
 --------------------------------------------------------------------------------
-import           Control.Exception              (bracket, try)
-import           Control.Monad.Writer           (execWriter, tell)
-import           Data.List                      (intercalate)
-import           GHC.Exts                       (IsList (..))
-import           GHC.Hs.Dump                    (showAstData, BlankSrcSpan(..))
-import           Language.Haskell.Stylish.GHC   (baseDynFlags)
-import           System.Directory               (createDirectory,
-                                                 getCurrentDirectory,
-                                                 getTemporaryDirectory,
-                                                 removeDirectoryRecursive,
-                                                 setCurrentDirectory)
-import           System.FilePath                ((</>))
-import           System.IO.Error                (isAlreadyExistsError)
-import           System.Random                  (randomIO)
-import           Test.HUnit                     (Assertion, assertFailure,
-                                                 (@=?))
-import           Outputable                     (showSDoc)
-import           Data.Data                      (Data(..))
+import           Control.Exception               (bracket, try)
+import           Data.Data                       (Data (..))
+import           GHC.Exts                        (IsList (..))
+import           GHC.Hs.Dump                     (BlankEpAnnotations (..),
+                                                  BlankSrcSpan (..),
+                                                  showAstData)
+import           System.Directory                (createDirectory,
+                                                  getCurrentDirectory,
+                                                  getTemporaryDirectory,
+                                                  removeDirectoryRecursive,
+                                                  setCurrentDirectory)
+import           System.FilePath                 ((</>))
+import           System.IO.Error                 (isAlreadyExistsError)
+import           System.Random                   (randomIO)
+import           Test.HUnit                      (Assertion, (@=?))
 
 --------------------------------------------------------------------------------
+import           Language.Haskell.Stylish.GHC    (showOutputable)
+import           Language.Haskell.Stylish.Module (Module)
 import           Language.Haskell.Stylish.Parse
 import           Language.Haskell.Stylish.Step
-import           Language.Haskell.Stylish.Module (Module)
 
 --------------------------------------------------------------------------------
 -- | Takes a Haskell source as an argument and parse it into a Module.
@@ -49,8 +43,8 @@ dumpAst :: Data a => (Module -> a) -> String -> String
 dumpAst extract str =
   let Right(theModule) = parseModule [] Nothing str
       ast              = extract theModule
-      sdoc             = showAstData BlankSrcSpan ast
-  in  showSDoc baseDynFlags sdoc
+      sdoc             = showAstData BlankSrcSpan BlankEpAnnotations ast
+  in  showOutputable sdoc
 
 dumpModule :: String -> String
 dumpModule = dumpAst id
@@ -64,11 +58,6 @@ testStep s str = case s of
       Right module' -> unlines $ step ls module'
   where
     ls = lines str
-
-
---------------------------------------------------------------------------------
-testStep' :: Step -> Lines -> Lines
-testStep' s ls = lines $ testStep s (unlines ls)
 
 
 --------------------------------------------------------------------------------
@@ -124,15 +113,3 @@ withTestDirTree action = bracket
         setCurrentDirectory current *>
         removeDirectoryRecursive temp)
     (\(_, temp) -> setCurrentDirectory temp *> action)
-
-(@=??) :: Lines -> Lines -> Assertion
-expected @=?? actual =
-  if expected == actual then pure ()
-  else assertFailure $ intercalate "\n" $ execWriter do
-    tell ["Expected:"]
-    printLines expected
-    tell ["Got:"]
-    printLines actual
-  where
-    printLines =
-      mapM_ \line -> tell ["  " <> line]

@@ -1,4 +1,5 @@
 --------------------------------------------------------------------------------
+{-# LANGUAGE OverloadedLists #-}
 module Language.Haskell.Stylish.Step.Tabs.Tests
     ( tests
     ) where
@@ -7,7 +8,7 @@ module Language.Haskell.Stylish.Step.Tabs.Tests
 --------------------------------------------------------------------------------
 import           Test.Framework                 (Test, testGroup)
 import           Test.Framework.Providers.HUnit (testCase)
-import           Test.HUnit                     (Assertion, (@=?))
+import           Test.HUnit                     (Assertion)
 
 
 --------------------------------------------------------------------------------
@@ -24,20 +25,16 @@ tests = testGroup "Language.Haskell.Stylish.Step.Tabs.Tests"
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testStep (step 4) input
-  where
-    input = unlines
-        [ "module Main"
-        , "\t\twhere"
-        , "data Foo"
-        , "\t= Bar"
-        , "    | Qux"
-        ]
-
-    expected = unlines
-        [ "module Main"
-        , "        where"
-        , "data Foo"
-        , "    = Bar"
-        , "    | Qux"
-        ]
+case01 = assertSnippet (step 4)
+    [ "module Main"
+    , "\t\twhere"
+    , "data Foo"
+    , "\t= Bar"
+    , "    | Qux"
+    ]
+    [ "module Main"
+    , "        where"
+    , "data Foo"
+    , "    = Bar"
+    , "    | Qux"
+    ]

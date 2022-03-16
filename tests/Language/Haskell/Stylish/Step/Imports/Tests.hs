@@ -8,7 +8,7 @@ module Language.Haskell.Stylish.Step.Imports.Tests
 --------------------------------------------------------------------------------
 import           Test.Framework                        (Test, testGroup)
 import           Test.Framework.Providers.HUnit        (testCase)
-import           Test.HUnit                            (Assertion, (@=?))
+import           Test.HUnit                            (Assertion)
 
 
 --------------------------------------------------------------------------------
@@ -601,21 +601,17 @@ case19input = Snippet
 
 --------------------------------------------------------------------------------
 case20 :: Assertion
-case20 = expected
-    @=? testSnippet (step (Just 80) defaultOptions) input'
-  where
-    expected = Snippet
-        [ "import {-# SOURCE #-}           Data.ByteString as BS"
-        , "import                qualified Data.Map        as Map"
-        , "import                          Data.Set        (empty)"
-        , "import {-# SOURCE #-} qualified Data.Text       as T"
-        ]
-    input' = Snippet
-        [ "import {-# SOURCE #-}    Data.ByteString as BS"
-        , "import {-# SOURCE #-} qualified Data.Text as T"
-        , "import qualified   Data.Map as Map"
-        , "import Data.Set (empty)"
-        ]
+case20 = assertSnippet (step (Just 80) defaultOptions)
+    [ "import {-# SOURCE #-}    Data.ByteString as BS"
+    , "import {-# SOURCE #-} qualified Data.Text as T"
+    , "import qualified   Data.Map as Map"
+    , "import Data.Set (empty)"
+    ]
+    [ "import {-# SOURCE #-}           Data.ByteString as BS"
+    , "import                qualified Data.Map        as Map"
+    , "import                          Data.Set        (empty)"
+    , "import {-# SOURCE #-} qualified Data.Text       as T"
+    ]
 
 
 --------------------------------------------------------------------------------

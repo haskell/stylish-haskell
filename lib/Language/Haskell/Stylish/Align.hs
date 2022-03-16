@@ -8,7 +8,7 @@ module Language.Haskell.Stylish.Align
 
 --------------------------------------------------------------------------------
 import           Data.List                       (nub)
-import qualified SrcLoc                          as S
+import qualified GHC.Types.SrcLoc                          as GHC
 
 
 --------------------------------------------------------------------------------
@@ -55,9 +55,9 @@ data Alignable a = Alignable
 -- | Create changes that perform the alignment.
 
 align
-  :: Maybe Int                    -- ^ Max columns
-  -> [Alignable S.RealSrcSpan]    -- ^ Alignables
-  -> [Change String]              -- ^ Changes performing the alignment
+  :: Maybe Int                      -- ^ Max columns
+  -> [Alignable GHC.RealSrcSpan]    -- ^ Alignables
+  -> [Change String]                -- ^ Changes performing the alignment
 align _ [] = []
 align maxColumns alignment
   -- Do not make an changes if we would go past the maximum number of columns
@@ -70,17 +70,17 @@ align maxColumns alignment
       Just c  -> i > c
 
     -- The longest thing in the left column
-    longestLeft = maximum $ map (S.srcSpanEndCol . aLeft) alignment
+    longestLeft = maximum $ map (GHC.srcSpanEndCol . aLeft) alignment
 
     -- The longest thing in the right column
     longestRight = maximum
-      [ S.srcSpanEndCol (aRight a) - S.srcSpanStartCol (aRight a)
+      [ GHC.srcSpanEndCol (aRight a) - GHC.srcSpanStartCol (aRight a)
           + aRightLead a
       | a <- alignment
       ]
 
-    align' a = changeLine (S.srcSpanStartLine $ aContainer a) $ \str ->
-      let column = S.srcSpanEndCol $ aLeft a
+    align' a = changeLine (GHC.srcSpanStartLine $ aContainer a) $ \str ->
+      let column = GHC.srcSpanEndCol $ aLeft a
           (pre, post) = splitAt column str
       in [padRight longestLeft (trimRight pre) ++ trimLeft post] 
 
@@ -88,11 +88,11 @@ align maxColumns alignment
 -- | Checks that all the alignables appear on a single line, and that they do
 -- not overlap.
 
-fixable :: [Alignable S.RealSrcSpan] -> Bool
+fixable :: [Alignable GHC.RealSrcSpan] -> Bool
 fixable []     = False
 fixable [_]    = False
 fixable fields = all singleLine containers && nonOverlapping containers
   where
     containers        = map aContainer fields
-    singleLine s      = S.srcSpanStartLine s == S.srcSpanEndLine s
-    nonOverlapping ss = length ss == length (nub $ map S.srcSpanStartLine ss)
+    singleLine s      = GHC.srcSpanStartLine s == GHC.srcSpanEndLine s
+    nonOverlapping ss = length ss == length (nub $ map GHC.srcSpanStartLine ss)

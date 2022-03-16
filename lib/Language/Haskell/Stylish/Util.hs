@@ -5,7 +5,6 @@ module Language.Haskell.Stylish.Util
     ( indent
     , padRight
     , everything
-    , infoPoints
     , trimLeft
     , trimRight
     , wrap
@@ -19,8 +18,6 @@ module Language.Haskell.Stylish.Util
     , withTail
     , withLast
     , flagEnds
-
-    , toRealSrcSpan
 
     , traceOutputable
     , traceOutputableM
@@ -40,12 +37,13 @@ import           Data.Maybe                    (maybeToList)
 import           Data.Typeable                 (cast)
 import           Debug.Trace                   (trace)
 import qualified GHC.Hs                        as Hs
-import qualified Outputable
-import qualified SrcLoc                        as S
+import qualified GHC.Types.SrcLoc as GHC
+import qualified GHC.Utils.Outputable                                as GHC
 
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Step
+import           Language.Haskell.Stylish.GHC (showOutputable)
 
 
 --------------------------------------------------------------------------------
@@ -69,6 +67,7 @@ everything = G.everything (++) (maybeToList . cast)
 
 
 --------------------------------------------------------------------------------
+{-
 infoPoints :: [S.Located pass] -> [((Int, Int), (Int, Int))]
 infoPoints = fmap (helper . S.getLoc)
   where
@@ -79,7 +78,7 @@ infoPoints = fmap (helper . S.getLoc)
                 end = S.realSrcSpanEnd s
                ((S.srcLocLine start, S.srcLocCol start), (S.srcLocLine end, S.srcLocCol end))
     helper _                   = ((-1,-1), (-1,-1))
-
+-}
 
 --------------------------------------------------------------------------------
 trimLeft :: String -> String
@@ -213,35 +212,28 @@ flagEnds = \case
 
 
 --------------------------------------------------------------------------------
-traceOutputable :: Outputable.Outputable a => String -> a -> b -> b
+traceOutputable :: GHC.Outputable a => String -> a -> b -> b
 traceOutputable title x =
-    trace (title ++ ": " ++ (Outputable.showSDocUnsafe $ Outputable.ppr x))
+    trace (title ++ ": " ++ (showOutputable x))
 
 
 --------------------------------------------------------------------------------
-traceOutputableM :: (Outputable.Outputable a, Monad m) => String -> a -> m ()
+traceOutputableM :: (GHC.Outputable a, Monad m) => String -> a -> m ()
 traceOutputableM title x = traceOutputable title x $ pure ()
-
-
---------------------------------------------------------------------------------
--- take the (Maybe) RealSrcSpan out of the SrcSpan
-toRealSrcSpan :: S.SrcSpan -> Maybe S.RealSrcSpan
-toRealSrcSpan (S.RealSrcSpan s) = Just s
-toRealSrcSpan _                 = Nothing
 
 
 --------------------------------------------------------------------------------
 -- Utility: grab the body out of guarded RHSs if it's a single unguarded one.
 unguardedRhsBody :: Hs.GRHSs Hs.GhcPs a -> Maybe a
 unguardedRhsBody (Hs.GRHSs _ [grhs] _)
-    | Hs.GRHS _ [] body <- S.unLoc grhs = Just body
+    | Hs.GRHS _ [] body <- GHC.unLoc grhs = Just body
 unguardedRhsBody _ = Nothing
 
 
 -- Utility: grab the body out of guarded RHSs
 rhsBody :: Hs.GRHSs Hs.GhcPs a -> Maybe a
 rhsBody (Hs.GRHSs _ [grhs] _)
-    | Hs.GRHS _ _ body <- S.unLoc grhs = Just body
+    | Hs.GRHS _ _ body <- GHC.unLoc grhs = Just body
 rhsBody _ = Nothing
 
 
@@ -251,17 +243,14 @@ getGuards :: Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> [Hs.GuardLStmt Hs.GhcPs]
 getGuards (Hs.Match _ _ _ grhss) =
   let
     lgrhs = getLocGRHS grhss -- []
-    grhs  = map S.unLoc lgrhs
+    grhs  = map GHC.unLoc lgrhs
   in
     concatMap getGuardLStmts grhs
-getGuards (Hs.XMatch x) = Hs.noExtCon x
 
 
 getLocGRHS :: Hs.GRHSs Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> [Hs.LGRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)]
 getLocGRHS (Hs.GRHSs _ guardeds _) = guardeds
-getLocGRHS (Hs.XGRHSs x)           = Hs.noExtCon x
 
 
 getGuardLStmts :: Hs.GRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> [Hs.GuardLStmt Hs.GhcPs]
 getGuardLStmts (Hs.GRHS _ guards _) = guards
-getGuardLStmts (Hs.XGRHS x)         = Hs.noExtCon x

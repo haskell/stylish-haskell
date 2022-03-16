@@ -5,22 +5,20 @@ module Language.Haskell.Stylish.Step.UnicodeSyntax
 
 
 --------------------------------------------------------------------------------
-import           Data.List                                     (isPrefixOf,
-                                                                sort)
-import           Data.Map                                      (Map)
-import qualified Data.Map                                      as M
-import           Data.Maybe                                    (maybeToList)
-import           GHC.Hs.Binds
-import           GHC.Hs.Extension                              (GhcPs)
-import           GHC.Hs.Types
+import qualified Data.Map              as M
+import qualified GHC.Hs                as GHC
+import qualified GHC.Types.SrcLoc      as GHC
+
+
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Block
 import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Step.LanguagePragmas (addLanguagePragma)
-import           Language.Haskell.Stylish.Util
+import           Language.Haskell.Stylish.Util                 (everything)
 
+
+{-
 --------------------------------------------------------------------------------
 unicodeReplacements :: Map String String
 unicodeReplacements = M.fromList
@@ -32,54 +30,76 @@ unicodeReplacements = M.fromList
     , ("-<", "↢")
     , (">-", "↣")
     ]
+-}
+
+--------------------------------------------------------------------------------
+-- Simple type that can do replacments on single lines (not spanning, removing
+-- or adding lines).
+newtype Replacement = Replacement
+    { unReplacement :: M.Map Int [(Int, Int, String)]
+    } deriving (Show)
 
 
 --------------------------------------------------------------------------------
-replaceAll :: [(Int, [(Int, String)])] -> [Change String]
-replaceAll = map changeLine'
+instance Semigroup Replacement where
+    Replacement l <> Replacement r = Replacement $ M.unionWith (++) l r
+
+
+--------------------------------------------------------------------------------
+instance Monoid Replacement where
+    mempty = Replacement mempty
+
+
+--------------------------------------------------------------------------------
+mkReplacement :: GHC.RealSrcSpan -> String -> Replacement
+mkReplacement rss repl
+    | GHC.srcSpanStartLine rss /= GHC.srcSpanEndLine rss = Replacement mempty
+    | otherwise                                          = Replacement $
+        M.singleton
+            (GHC.srcSpanStartLine rss)
+            [(GHC.srcSpanStartCol rss, GHC.srcSpanEndCol rss, repl)]
+
+
+--------------------------------------------------------------------------------
+applyReplacement :: Replacement -> [String] -> [String]
+applyReplacement (Replacement repl) ls = do
+    (i, l) <- zip [1 ..] ls
+    case M.lookup i repl of
+        Nothing    -> pure l
+        Just repls -> pure $ go repls l
   where
-    changeLine' (r, ns) = changeLine r $ \str -> return $
-        applyChanges
-            [ change (Block c ec) (const repl)
-            | (c, needle) <- sort ns
-            , let ec = c + length needle - 1
-            , repl <- maybeToList $ M.lookup needle unicodeReplacements
-            ] str
+    go [] l = l
+    go ((xstart, xend, x) : repls) l =
+        let l' = take (xstart - 1) l ++ x ++ drop (xend - 1) l in
+        go (adjust (xstart, xend, x) <$> repls) l'
+
+    adjust (xstart, xend, x) (ystart, yend, y)
+        | ystart > xend =
+            let offset = length x - (xend - xstart) in
+            (ystart + offset, yend + offset, y)
+        | otherwise     = (ystart, yend, y)
 
 
 --------------------------------------------------------------------------------
-groupPerLine :: [((Int, Int), a)] -> [(Int, [(Int, a)])]
-groupPerLine = M.toList . M.fromListWith (++) .
-    map (\((r, c), x) -> (r, [(c, x)]))
+hsTyReplacements :: GHC.HsType GHC.GhcPs -> Replacement
+hsTyReplacements (GHC.HsFunTy xann arr _ _)
+    | GHC.HsUnrestrictedArrow GHC.NormalSyntax <- arr
+    , GHC.AddRarrowAnn (GHC.EpaSpan loc) <- GHC.anns xann =
+        mkReplacement loc "→"
+hsTyReplacements (GHC.HsQualTy _ (Just ctx) _)
+    | Just arrow <- GHC.ac_darrow . GHC.anns . GHC.ann $ GHC.getLoc ctx
+    , (GHC.NormalSyntax, GHC.EpaSpan loc) <- arrow =
+        mkReplacement loc "⇒"
+hsTyReplacements _ = mempty
 
--- | Find symbol positions in the module.  Currently only searches in type
--- signatures.
-findSymbol :: Module -> Lines -> String -> [((Int, Int), String)]
-findSymbol module' ls sym =
-    [ (pos, sym)
-    | TypeSig _ funLoc typeLoc <- everything (rawModuleDecls $ moduleDecls module') :: [Sig GhcPs]
-    , (funStart, _)            <- infoPoints funLoc
-    , (_, typeEnd)             <- infoPoints [hsSigWcType typeLoc]
-    , pos                      <- maybeToList $ between funStart typeEnd sym ls
-    ]
 
 --------------------------------------------------------------------------------
--- | Search for a needle in a haystack of lines. Only part the inside (startRow,
--- startCol), (endRow, endCol) is searched. The return value is the position of
--- the needle.
-between :: (Int, Int) -> (Int, Int) -> String -> Lines -> Maybe (Int, Int)
-between (startRow, startCol) (endRow, endCol) needle =
-    search (startRow, startCol) .
-    withLast (take endCol) .
-    withHead (drop $ startCol - 1) .
-    take (endRow - startRow + 1) .
-    drop (startRow - 1)
-  where
-    search _      []            = Nothing
-    search (r, _) ([] : xs)     = search (r + 1, 1) xs
-    search (r, c) (x : xs)
-        | needle `isPrefixOf` x = Just (r, c)
-        | otherwise             = search (r, c + 1) (tail x : xs)
+hsSigReplacements :: GHC.Sig GHC.GhcPs -> Replacement
+hsSigReplacements (GHC.TypeSig ann _ _)
+    | GHC.AddEpAnn GHC.AnnDcolon epaLoc <- GHC.asDcolon $ GHC.anns ann
+    , GHC.EpaSpan loc <- epaLoc =
+        mkReplacement loc "∷"
+hsSigReplacements _ = mempty
 
 
 --------------------------------------------------------------------------------
@@ -89,9 +109,11 @@ step = (makeStep "UnicodeSyntax" .) . step'
 
 --------------------------------------------------------------------------------
 step' :: Bool -> String -> Lines -> Module -> Lines
-step' alp lg ls module' = applyChanges changes ls
+step' alp lg ls modu =
+    applyChanges
+        (if alp then addLanguagePragma lg "UnicodeSyntax" modu else []) $
+    applyReplacement replacement ls
   where
-    changes = (if alp then addLanguagePragma lg "UnicodeSyntax" module' else []) ++
-        replaceAll perLine
-    toReplace = [ "::", "=>", "->" ]
-    perLine = sort $ groupPerLine $ concatMap (findSymbol module' ls) toReplace
+    replacement =
+        foldMap hsTyReplacements (everything modu) <>
+        foldMap hsSigReplacements (everything modu)

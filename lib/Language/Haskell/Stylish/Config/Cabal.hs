@@ -11,7 +11,6 @@ import           Data.Maybe                               (maybeToList)
 import qualified Distribution.PackageDescription          as Cabal
 import qualified Distribution.PackageDescription.Parsec   as Cabal
 import qualified Distribution.Simple.Utils                as Cabal
-import qualified Distribution.Types.CondTree              as Cabal
 import qualified Distribution.Verbosity                   as Cabal
 import qualified Language.Haskell.Extension               as Language
 import           Language.Haskell.Stylish.Verbose

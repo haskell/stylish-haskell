@@ -8,9 +8,10 @@ module Language.Haskell.Stylish.Step.Squash
 
 
 --------------------------------------------------------------------------------
-import           Data.Maybe                      (mapMaybe)
-import qualified GHC.Hs                          as Hs
-import qualified SrcLoc                          as S
+import           Control.Monad    (guard)
+import           Data.Maybe       (mapMaybe)
+import qualified GHC.Types.SrcLoc as GHC
+import qualified GHC.Hs           as GHC
 
 
 --------------------------------------------------------------------------------
@@ -20,38 +21,34 @@ import           Language.Haskell.Stylish.Util
 
 
 --------------------------------------------------------------------------------
-squash
-    :: (S.HasSrcSpan l, S.HasSrcSpan r)
-    => l -> r -> Maybe (Change String)
+squash :: GHC.SrcSpan -> GHC.SrcSpan -> Maybe (Change String)
 squash left right = do
-  lAnn <- toRealSrcSpan $ S.getLoc left
-  rAnn <- toRealSrcSpan $ S.getLoc right
-  if S.srcSpanEndLine lAnn == S.srcSpanStartLine rAnn ||
-      S.srcSpanEndLine lAnn + 1 == S.srcSpanStartLine rAnn
-    then Just $
-          changeLine (S.srcSpanEndLine lAnn) $ \str ->
-          let (pre, post) = splitAt (S.srcSpanEndCol lAnn) str
-          in [trimRight pre ++ " " ++ trimLeft post]
-    else Nothing
+  l <- GHC.srcSpanToRealSrcSpan left
+  r <- GHC.srcSpanToRealSrcSpan right
+  guard $
+      GHC.srcSpanEndLine l == GHC.srcSpanStartLine r ||
+      GHC.srcSpanEndLine l + 1 == GHC.srcSpanStartLine r
+  pure $ changeLine (GHC.srcSpanEndLine l) $ \str ->
+      let (pre, post) = splitAt (GHC.srcSpanEndCol l) str
+      in [trimRight pre ++ " " ++ trimLeft post]
 
 
 --------------------------------------------------------------------------------
-squashFieldDecl :: Hs.ConDeclField Hs.GhcPs -> Maybe (Change String)
-squashFieldDecl (Hs.ConDeclField _ names type' _)
+squashFieldDecl :: GHC.ConDeclField GHC.GhcPs -> Maybe (Change String)
+squashFieldDecl (GHC.ConDeclField _ names type' _)
   | null names = Nothing
-  | otherwise  = squash (last names) type'
-squashFieldDecl (Hs.XConDeclField x) = Hs.noExtCon x
+  | otherwise  = squash (GHC.getLoc $ last names) (GHC.getLocA type')
 
 
 --------------------------------------------------------------------------------
-squashMatch :: Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> Maybe (Change String)
-squashMatch (Hs.Match _ (Hs.FunRhs name _ _) [] grhss) = do
+squashMatch
+    :: GHC.Match GHC.GhcPs (GHC.LHsExpr GHC.GhcPs) -> Maybe (Change String)
+squashMatch (GHC.Match _ (GHC.FunRhs name _ _) [] grhss) = do
     body <- unguardedRhsBody grhss
-    squash name body
-squashMatch (Hs.Match _ _ pats grhss) = do
+    squash (GHC.getLocA name) (GHC.getLocA body)
+squashMatch (GHC.Match _ _ pats grhss) = do
     body <- unguardedRhsBody grhss
-    squash (last pats) body
-squashMatch (Hs.XMatch x) = Hs.noExtCon x
+    squash (GHC.getLocA $ last pats) (GHC.getLocA body)
 
 
 --------------------------------------------------------------------------------

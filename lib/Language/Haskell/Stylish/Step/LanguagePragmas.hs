@@ -13,15 +13,11 @@ module Language.Haskell.Stylish.Step.LanguagePragmas
 --------------------------------------------------------------------------------
 import           Data.List.NonEmpty              (NonEmpty, fromList, toList)
 import qualified Data.Set                        as S
-import           Data.Text                       (Text)
-import qualified Data.Text                       as T
 
 
 --------------------------------------------------------------------------------
-import qualified GHC.Hs                          as Hs
-import           SrcLoc                          (RealSrcSpan, realSrcSpanStart,
-                                                  srcLocLine, srcSpanEndLine,
-                                                  srcSpanStartLine)
+import qualified GHC.Hs                          as GHC
+import         qualified  GHC.Types.SrcLoc as GHC
 
 
 --------------------------------------------------------------------------------
@@ -103,9 +99,9 @@ prettyPragmas lp _    _       _     VerticalCompact = verticalCompactPragmas lp
 --------------------------------------------------------------------------------
 -- | Filter redundant (and duplicate) pragmas out of the groups. As a side
 -- effect, we also sort the pragmas in their group...
-filterRedundant :: (Text -> Bool)
-                -> [(l, NonEmpty Text)]
-                -> [(l, [Text])]
+filterRedundant :: (String -> Bool)
+                -> [(l, NonEmpty String)]
+                -> [(l, [String])]
 filterRedundant isRedundant' = snd . foldr filterRedundant' (S.empty, []) . fmap (fmap toList)
   where
     filterRedundant' (l, xs) (known, zs)
@@ -133,9 +129,9 @@ step' columns style align removeRedundant lngPrefix ls m
 
     languagePragmas = moduleLanguagePragmas m
 
-    convertFstToBlock :: [(RealSrcSpan, a)] -> [(Block String, a)]
+    convertFstToBlock :: [(GHC.RealSrcSpan, a)] -> [(Block String, a)]
     convertFstToBlock = fmap \(rspan, a) ->
-      (Block (srcSpanStartLine rspan) (srcSpanEndLine rspan), a)
+      (Block (GHC.srcSpanStartLine rspan) (GHC.srcSpanEndLine rspan), a)
 
     groupAdjacent' =
       fmap turnSndBackToNel . groupAdjacent . fmap (fmap toList)
@@ -143,15 +139,16 @@ step' columns style align removeRedundant lngPrefix ls m
         turnSndBackToNel (a, bss) = (a, fromList . concat $ bss)
 
     longest :: Int
-    longest  = maximum $ map T.length $ toList . snd =<< languagePragmas
+    longest  = maximum $ map length $ toList . snd =<< languagePragmas
 
-    groups :: [(Block String, NonEmpty Text)]
+    groups :: [(Block String, NonEmpty String)]
     groups = [(b, pgs) | (b, pgs) <- groupAdjacent' (convertFstToBlock languagePragmas)]
 
     changes =
-      [ change b (const $ prettyPragmas lngPrefix columns longest align style (fmap T.unpack pg))
+      [ change b (const $ prettyPragmas lngPrefix columns longest align style pg)
       | (b, pg) <- filterRedundant isRedundant' groups
       ]
+
 
 --------------------------------------------------------------------------------
 -- | Add a LANGUAGE pragma to a module if it is not present already.
@@ -161,16 +158,16 @@ addLanguagePragma lg prag modu
     | otherwise           = [insert line ["{-# " ++ lg ++ " " ++ prag ++ " #-}"]]
   where
     pragmas'      = moduleLanguagePragmas modu
-    present       = concatMap ((fmap T.unpack) . toList . snd) pragmas'
+    present       = concatMap (toList . snd) pragmas'
     line          = if null pragmas' then 1 else firstLocation pragmas'
-    firstLocation :: [(RealSrcSpan, NonEmpty Text)] -> Int
-    firstLocation = minimum . fmap (srcLocLine . realSrcSpanStart . fst)
+    firstLocation :: [(GHC.RealSrcSpan, NonEmpty String)] -> Int
+    firstLocation = minimum . fmap (GHC.srcLocLine . GHC.realSrcSpanStart . fst)
 
 
 --------------------------------------------------------------------------------
 -- | Check if a language pragma is redundant. We can't do this for all pragmas,
 -- but we do a best effort.
-isRedundant :: Module -> Text -> Bool
+isRedundant :: Module -> String -> Bool
 isRedundant m "ViewPatterns" = isRedundantViewPatterns m
 isRedundant m "BangPatterns" = isRedundantBangPatterns m
 isRedundant _ _              = False
@@ -181,10 +178,10 @@ isRedundant _ _              = False
 isRedundantViewPatterns :: Module -> Bool
 isRedundantViewPatterns = null . queryModule getViewPat
   where
-    getViewPat :: Hs.Pat Hs.GhcPs -> [()]
+    getViewPat :: GHC.Pat GHC.GhcPs -> [()]
     getViewPat = \case
-      Hs.ViewPat{} -> [()]
-      _            -> []
+      GHC.ViewPat{} -> [()]
+      _             -> []
 
 
 --------------------------------------------------------------------------------
@@ -194,13 +191,12 @@ isRedundantBangPatterns modul =
     (null $ queryModule getBangPat modul) &&
     (null $ queryModule getMatchStrict modul)
   where
-    getBangPat :: Hs.Pat Hs.GhcPs -> [()]
+    getBangPat :: GHC.Pat GHC.GhcPs -> [()]
     getBangPat = \case
-      Hs.BangPat{} -> [()]
-      _            -> []
+      GHC.BangPat{} -> [()]
+      _             -> []
 
-    getMatchStrict :: Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs) -> [()]
-    getMatchStrict (Hs.XMatch m) = Hs.noExtCon m
-    getMatchStrict (Hs.Match _ ctx _ _) = case ctx of
-      Hs.FunRhs _ _ Hs.SrcStrict -> [()]
-      _                          -> []
+    getMatchStrict :: GHC.Match GHC.GhcPs (GHC.LHsExpr GHC.GhcPs) -> [()]
+    getMatchStrict (GHC.Match _ ctx _ _) = case ctx of
+      GHC.FunRhs _ _ GHC.SrcStrict -> [()]
+      _                            -> []

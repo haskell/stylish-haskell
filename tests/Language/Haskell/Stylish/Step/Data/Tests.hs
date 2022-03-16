@@ -5,10 +5,10 @@ module Language.Haskell.Stylish.Step.Data.Tests
     ) where
 
 import           Language.Haskell.Stylish.Step.Data
-import           Language.Haskell.Stylish.Tests.Util (assertSnippet, testStep)
+import           Language.Haskell.Stylish.Tests.Util (assertSnippet)
 import           Test.Framework                      (Test, testGroup)
 import           Test.Framework.Providers.HUnit      (testCase)
-import           Test.HUnit                          (Assertion, (@=?))
+import           Test.HUnit                          (Assertion)
 
 tests :: Test
 tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
@@ -76,182 +76,158 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 61 (issue 282)" case61
     , testCase "case 62 (issue 273)" case62
     , testCase "case 63 (issue 338)" case63
+    , testCase "case 64" case64
+    , testCase "case 65" case65
     ]
 
 case00 :: Assertion
-case00 = expected @=? testStep (step sameSameStyle) input
+case00 = assertSnippet (step sameSameStyle) input input
   where
-    input = unlines
-      [ "module Herp where"
-      , ""
-      , "data Foo"
-      ]
-
-    expected = input
+    input =
+        [ "module Herp where"
+        , ""
+        , "data Foo"
+        ]
 
 case01 :: Assertion
-case01 = expected @=? testStep (step indentIndentStyle) input
-  where
-    input = unlines
-      [ "module Herp where"
-      , ""
-      , "data Foo = Foo { a :: Int }"
-      ]
-
-    expected = unlines
-       [ "module Herp where"
-       , ""
-       , "data Foo"
-       , "  = Foo"
-       , "      { a :: Int"
-       , "      }"
-       ]
+case01 = assertSnippet (step indentIndentStyle)
+    [ "module Herp where"
+    , ""
+    , "data Foo = Foo { a :: Int }"
+    ]
+    [ "module Herp where"
+    , ""
+    , "data Foo"
+    , "  = Foo"
+    , "      { a :: Int"
+    , "      }"
+    ]
 
 case02 :: Assertion
-case02 = expected @=? testStep (step indentIndentStyle) input
-  where
-    input = unlines
-      [ "module Herp where"
-      , ""
-      , "data Foo = Foo { a :: Int, a2 :: String }"
-      ]
-    expected = unlines
-       [ "module Herp where"
-       , ""
-       , "data Foo"
-       , "  = Foo"
-       , "      { a :: Int"
-       , "      , a2 :: String"
-       , "      }"
-       ]
+case02 = assertSnippet (step indentIndentStyle)
+    [ "module Herp where"
+    , ""
+    , "data Foo = Foo { a :: Int, a2 :: String }"
+    ]
+    [ "module Herp where"
+    , ""
+    , "data Foo"
+    , "  = Foo"
+    , "      { a :: Int"
+    , "      , a2 :: String"
+    , "      }"
+    ]
 
 case03 :: Assertion
-case03 = expected @=? testStep (step indentIndentStyle) input
-  where
-    input = unlines
-      [ "module Herp where"
-      , ""
-      , "data Foo a = Foo { a :: a, a2 :: String }"
-      ]
-    expected = unlines
-       [ "module Herp where"
-       , ""
-       , "data Foo a"
-       , "  = Foo"
-       , "      { a :: a"
-       , "      , a2 :: String"
-       , "      }"
-       ]
+case03 = assertSnippet (step indentIndentStyle)
+    [ "module Herp where"
+    , ""
+    , "data Foo a = Foo { a :: a, a2 :: String }"
+    ]
+    [ "module Herp where"
+    , ""
+    , "data Foo a"
+    , "  = Foo"
+    , "      { a :: a"
+    , "      , a2 :: String"
+    , "      }"
+    ]
 
 case04 :: Assertion
-case04 = expected @=? testStep (step indentIndentStyle) input
-  where
-    input = unlines
-      [ "module Herp where"
-      , ""
-      , "data Foo a = Foo { a :: a, a2 :: String } | Bar { b :: a }"
-      ]
-    expected = unlines
-       [ "module Herp where"
-       , ""
-       , "data Foo a"
-       , "  = Foo"
-       , "      { a :: a"
-       , "      , a2 :: String"
-       , "      }"
-       , "  | Bar"
-       , "      { b :: a"
-       , "      }"
-       ]
+case04 = assertSnippet (step indentIndentStyle)
+    [ "module Herp where"
+    , ""
+    , "data Foo a = Foo { a :: a, a2 :: String } | Bar { b :: a }"
+    ]
+    [ "module Herp where"
+    , ""
+    , "data Foo a"
+    , "  = Foo"
+    , "      { a :: a"
+    , "      , a2 :: String"
+    , "      }"
+    , "  | Bar"
+    , "      { b :: a"
+    , "      }"
+    ]
 
 case05 :: Assertion
-case05 = expected @=? testStep (step indentIndentStyle) input
-  where
-    input = unlines
-       [ "module Herp where"
-       , ""
-       , "data Foo = Foo {"
-       , "  a :: Int"
-       , "  , a2 :: String"
-       , "  }"
-       ]
-    expected = unlines
-       [ "module Herp where"
-       , ""
-       , "data Foo"
-       , "  = Foo"
-       , "      { a :: Int"
-       , "      , a2 :: String"
-       , "      }"
-       ]
+case05 = assertSnippet (step indentIndentStyle)
+    [ "module Herp where"
+    , ""
+    , "data Foo = Foo {"
+    , "  a :: Int"
+    , "  , a2 :: String"
+    , "  }"
+    ]
+    [ "module Herp where"
+    , ""
+    , "data Foo"
+    , "  = Foo"
+    , "      { a :: Int"
+    , "      , a2 :: String"
+    , "      }"
+    ]
 
 case06 :: Assertion
-case06 = expected @=? testStep (step sameSameStyle) input
+case06 = assertSnippet (step sameSameStyle) input input
   where
-    input = unlines
-      [ "module Herp where"
-      , ""
-      , "data Foo = Foo Int String"
-      ]
-    expected = input
+    input =
+        [ "module Herp where"
+        , ""
+        , "data Foo = Foo Int String"
+        ]
 
 case07 :: Assertion
-case07 = expected @=? testStep (step sameSameStyle) input
+case07 = assertSnippet (step sameSameStyle) input input
   where
-    input = unlines
-      [ "module Herp where"
-      , ""
-      , "data Phantom a = Phantom"
-      ]
-    expected = input
+    input =
+        [ "module Herp where"
+        , ""
+        , "data Phantom a = Phantom"
+        ]
 
 case08 :: Assertion
-case08 = expected @=? testStep (step sameSameStyle) input
-  where
-    input = unlines
-      [ "module Herp where"
-      , ""
-      , "data Phantom a ="
-      , "  Phantom"
-      ]
-    expected = unlines
-      [ "module Herp where"
-      , ""
-      , "data Phantom a = Phantom"
-      ]
+case08 = assertSnippet (step sameSameStyle)
+    [ "module Herp where"
+    , ""
+    , "data Phantom a ="
+    , "  Phantom"
+    ]
+    [ "module Herp where"
+    , ""
+    , "data Phantom a = Phantom"
+    ]
 
 case09 :: Assertion
-case09 = expected @=? testStep (step indentIndentStyle4) input
-  where
-    input = unlines
-      [ "module Herp where"
-      , ""
-      , "data Foo a b = Foo { a :: a, a2 :: String } | Bar { b :: a, c:: b }"
-      ]
-    expected = unlines
-       [ "module Herp where"
-       , ""
-       , "data Foo a b"
-       , "    = Foo"
-       , "          { a :: a"
-       , "          , a2 :: String"
-       , "          }"
-       , "    | Bar"
-       , "          { b :: a"
-       , "          , c :: b"
-       , "          }"
-       ]
+case09 = assertSnippet (step indentIndentStyle4)
+    [ "module Herp where"
+    , ""
+    , "data Foo a b = Foo { a :: a, a2 :: String } | Bar { b :: a, c:: b }"
+    ]
+    [ "module Herp where"
+    , ""
+    , "data Foo a b"
+    , "    = Foo"
+    , "          { a :: a"
+    , "          , a2 :: String"
+    , "          }"
+    , "    | Bar"
+    , "          { b :: a"
+    , "          , c :: b"
+    , "          }"
+    ]
 
 case10 :: Assertion
-case10 = expected @=? testStep (step indentIndentStyle) input
+case10 = assertSnippet (step indentIndentStyle) input expected
   where
-    input = unlines
+    input =
       [ "module Herp where"
       , ""
       , "data Foo = Foo { a :: Int } deriving (Eq, Generic) deriving (Show)"
       ]
 
-    expected = unlines
+    expected =
        [ "module Herp where"
        , ""
        , "data Foo"
@@ -263,16 +239,16 @@ case10 = expected @=? testStep (step indentIndentStyle) input
        ]
 
 case11 :: Assertion
-case11 = expected @=? testStep (step indentIndentStyle) input
+case11 = assertSnippet (step indentIndentStyle) input expected
   where
-    input = unlines
+    input =
       [ "{-# LANGUAGE DerivingStrategies #-}"
       , "module Herp where"
       , ""
       , "data Foo = Foo { a :: Int } deriving stock (Show)"
       ]
 
-    expected = unlines
+    expected =
        [ "{-# LANGUAGE DerivingStrategies #-}"
        , "module Herp where"
        , ""
@@ -284,15 +260,15 @@ case11 = expected @=? testStep (step indentIndentStyle) input
        ]
 
 case12 :: Assertion
-case12 = expected @=? testStep (step indentIndentStyle4) input
+case12 = assertSnippet (step indentIndentStyle4) input expected
   where
-    input = unlines
+    input =
       [ "module Herp where"
       , ""
       , "data Point = Point { pointX, pointY :: Double , pointName :: String} deriving (Show)"
       ]
 
-    expected = unlines
+    expected =
        [ "module Herp where"
        , ""
        , "data Point"
@@ -304,15 +280,15 @@ case12 = expected @=? testStep (step indentIndentStyle4) input
        ]
 
 case13 :: Assertion
-case13 = expected @=? testStep (step indentIndentStyle) input
+case13 = assertSnippet (step indentIndentStyle) input expected
   where
-    input = unlines
+    input =
       [ "module Herp where"
       , ""
       , "-- this is a comment"
       , "data Foo = Foo { a :: Int }"
       ]
-    expected = unlines
+    expected =
       [ "module Herp where"
       , ""
       , "-- this is a comment"
@@ -323,16 +299,16 @@ case13 = expected @=? testStep (step indentIndentStyle) input
       ]
 
 case14 :: Assertion
-case14 = expected @=? testStep (step indentIndentStyle) input
+case14 = assertSnippet (step indentIndentStyle) input expected
   where
-    input = unlines
+    input =
       [ "module Herp where"
       , ""
       , "{- this is"
       , "   a comment -}"
       , "data Foo = Foo { a :: Int }"
       ]
-    expected = unlines
+    expected =
       [ "module Herp where"
       , ""
       , "{- this is"
@@ -344,122 +320,108 @@ case14 = expected @=? testStep (step indentIndentStyle) input
       ]
 
 case15 :: Assertion
-case15 = expected @=? testStep (step indentIndentStyle) input
-  where
-    input = unlines
-       [ "module Herp where"
-       , ""
-       , "data Foo a = Foo"
-       , "  { a :: a, -- comment"
-       , "   a2 :: String"
-       , "  }"
-       ]
-    expected = unlines
-       [ "module Herp where"
-       , ""
-       , "data Foo a"
-       , "  = Foo"
-       , "      { a :: a -- comment"
-       , "      , a2 :: String"
-       , "      }"
-       ]
+case15 = assertSnippet (step indentIndentStyle)
+    [ "module Herp where"
+    , ""
+    , "data Foo a = Foo"
+    , "  { a :: a, -- comment"
+    , "   a2 :: String"
+    , "  }"
+    ]
+    [ "module Herp where"
+    , ""
+    , "data Foo a"
+    , "  = Foo"
+    , "      { a :: a"
+    , "        -- comment"
+    , "      , a2 :: String"
+    , "      }"
+    ]
 
 case16 :: Assertion
-case16 = expected @=? testStep (step indentIndentStyle) input
-  where
-    input = unlines
-      [ "module Herp where"
-      , ""
-      , "data Foo = Foo {"
-      , "   a :: Int -- ^ comment"
-      , "  }"
-      ]
-    expected = unlines
-      [ "module Herp where"
-      , ""
-      , "data Foo"
-      , "  = Foo"
-      , "      { a :: Int"
-      , "        -- ^ comment"
-      , "      }"
-      ]
+case16 = assertSnippet (step indentIndentStyle)
+    [ "module Herp where"
+    , ""
+    , "data Foo = Foo {"
+    , "   a :: Int -- ^ comment"
+    , "  }"
+    ]
+    [ "module Herp where"
+    , ""
+    , "data Foo"
+    , "  = Foo"
+    , "      { a :: Int"
+    , "        -- ^ comment"
+    , "      }"
+    ]
 
 case17 :: Assertion
-case17 = expected @=? testStep (step indentIndentStyle) input
-  where
-    input = unlines
-       [ "module Herp where"
-       , ""
-       , "data Foo a = Foo"
-       , "  { a :: a,"
-       , "-- comment"
-       , "   a2 :: String"
-       , "  }"
-       ]
-    expected = unlines
-       [ "module Herp where"
-       , ""
-       , "data Foo a"
-       , "  = Foo"
-       , "      { a :: a"
-       , "        -- comment"
-       , "      , a2 :: String"
-       , "      }"
-       ]
+case17 = assertSnippet (step indentIndentStyle)
+    [ "module Herp where"
+    , ""
+    , "data Foo a = Foo"
+    , "  { a :: a,"
+    , "-- comment"
+    , "   a2 :: String"
+    , "  }"
+    ]
+    [ "module Herp where"
+    , ""
+    , "data Foo a"
+    , "  = Foo"
+    , "      { a :: a"
+    , "        -- comment"
+    , "      , a2 :: String"
+    , "      }"
+    ]
 
 case18 :: Assertion
-case18 = expected @=? testStep (step indentIndentStyle) input
-  where
-    input = unlines
-       [ "module Herp where"
-       , ""
-       , "data Foo a = Foo"
-       , "  { a :: a,"
-       , "-- ^ comment"
-       , "   a2 :: String"
-       , "  }"
-       ]
-    expected = unlines
-       [ "module Herp where"
-       , ""
-       , "data Foo a"
-       , "  = Foo"
-       , "      { a :: a"
-       , "        -- ^ comment"
-       , "      , a2 :: String"
-       , "      }"
-       ]
+case18 = assertSnippet (step indentIndentStyle)
+    [ "module Herp where"
+    , ""
+    , "data Foo a = Foo"
+    , "  { a :: a,"
+    , "-- ^ comment"
+    , "   a2 :: String"
+    , "  }"
+    ]
+    [ "module Herp where"
+    , ""
+    , "data Foo a"
+    , "  = Foo"
+    , "      { a :: a"
+    , "        -- ^ comment"
+    , "      , a2 :: String"
+    , "      }"
+    ]
 
 case19 :: Assertion
-case19 = expected @=? testStep (step indentIndentStyle) input
-  where
-    input = unlines
-       [ "module Herp where"
-       , ""
-       , "data Foo a = Foo"
-       , "  { firstName, lastName :: String,"
-       , "-- ^ names"
-       , "   age :: Int"
-       , "  }"
-       ]
-    expected = unlines
-       [ "module Herp where"
-       , ""
-       , "data Foo a"
-       , "  = Foo"
-       , "      { firstName, lastName :: String"
-       , "        -- ^ names"
-       , "      , age :: Int"
-       , "      }"
-       ]
+case19 = assertSnippet (step indentIndentStyle)
+    [ "module Herp where"
+    , ""
+    , "data Foo a = Foo"
+    , "  { firstName, lastName :: String,"
+    , "-- ^ names"
+    , "   age :: Int"
+    , "  }"
+    ]
+    [ "module Herp where"
+    , ""
+    , "data Foo a"
+    , "  = Foo"
+    , "      { firstName, lastName :: String"
+    , "        -- ^ names"
+    , "      , age :: Int"
+    , "      }"
+    ]
 
 -- | Should not break Enums (data without records) formatting
 --
 -- See https://github.com/haskell/stylish-haskell/issues/262
 case20 :: Assertion
-case20 = input @=? testStep (step indentIndentStyle) input
+case20 = assertSnippet (step indentIndentStyle) input input
   where
-    input = unlines
+    input =
        [ "module Herp where"
        , ""
        , "data Tag = Title | Text deriving (Eq, Show)"
@@ -467,98 +429,94 @@ case20 = input @=? testStep (step indentIndentStyle) input
 
 case21 :: Assertion
 case21 = assertSnippet (step sameSameStyle)
-   [ "data Foo a"
-   , "  = Foo { a :: Int,"
-   , "          a2 :: String"
-   , "          -- ^ some haddock"
-   , "        }"
-   , "  | Bar { b :: a }  deriving (Eq, Show)"
-   , "  deriving (ToJSON)"
-   ]
-   [ "data Foo a = Foo { a :: Int"
-   , "                 , a2 :: String"
-   , "                   -- ^ some haddock"
-   , "                 }"
-   , "           | Bar { b :: a"
-   , "                 }"
-   , "  deriving (Eq, Show)"
-   , "  deriving (ToJSON)"
-   ]
+    [ "data Foo a"
+    , "  = Foo { a :: Int,"
+    , "          a2 :: String"
+    , "          -- ^ some haddock"
+    , "        }"
+    , "  | Bar { b :: a }  deriving (Eq, Show)"
+    , "  deriving (ToJSON)"
+    ]
+    [ "data Foo a = Foo { a :: Int"
+    , "                 , a2 :: String"
+    , "                   -- ^ some haddock"
+    , "                 }"
+    , "           | Bar { b :: a"
+    , "                 }"
+    , "  deriving (Eq, Show)"
+    , "  deriving (ToJSON)"
+    ]
 
 case22 :: Assertion
 case22 = assertSnippet (step sameIndentStyle)
-   [ "data Foo a"
-   , "  = Foo { a :: Int,"
-   , "          a2 :: String"
-   , "          -- ^ some haddock"
-   , "        }"
-   , "  | Bar { b :: a }  deriving (Eq, Show)"
-   , "  deriving (ToJSON)"
-   ]
-   [ "data Foo a = Foo"
-   , "               { a :: Int"
-   , "               , a2 :: String"
-   , "                 -- ^ some haddock"
-   , "               }"
-   , "           | Bar"
-   , "               { b :: a"
-   , "               }"
-   , "  deriving (Eq, Show)"
-   , "  deriving (ToJSON)"
-   ]
+    [ "data Foo a"
+    , "  = Foo { a :: Int,"
+    , "          a2 :: String"
+    , "          -- ^ some haddock"
+    , "        }"
+    , "  | Bar { b :: a }  deriving (Eq, Show)"
+    , "  deriving (ToJSON)"
+    ]
+    [ "data Foo a = Foo"
+    , "               { a :: Int"
+    , "               , a2 :: String"
+    , "                 -- ^ some haddock"
+    , "               }"
+    , "           | Bar"
+    , "               { b :: a"
+    , "               }"
+    , "  deriving (Eq, Show)"
+    , "  deriving (ToJSON)"
+    ]
 
 case23 :: Assertion
 case23 = assertSnippet (step indentSameStyle)
-   [ "data Foo a"
-   , "  = Foo { a :: Int,"
-   , "          a2 :: String"
-   , "          -- ^ some haddock"
-   , "        }"
-   , "  | Bar { b :: a }  deriving (Eq, Show)"
-   , "  deriving (ToJSON)"
-   ]
-   [ "data Foo a"
-   , "  = Foo { a :: Int"
-   , "        , a2 :: String"
-   , "          -- ^ some haddock"
-   , "        }"
-   , "  | Bar { b :: a"
-   , "        }"
-   , "  deriving (Eq, Show)"
-   , "  deriving (ToJSON)"
-   ]
+    [ "data Foo a"
+    , "  = Foo { a :: Int,"
+    , "          a2 :: String"
+    , "          -- ^ some haddock"
+    , "        }"
+    , "  | Bar { b :: a }  deriving (Eq, Show)"
+    , "  deriving (ToJSON)"
+    ]
+    [ "data Foo a"
+    , "  = Foo { a :: Int"
+    , "        , a2 :: String"
+    , "          -- ^ some haddock"
+    , "        }"
+    , "  | Bar { b :: a"
+    , "        }"
+    , "  deriving (Eq, Show)"
+    , "  deriving (ToJSON)"
+    ]
 
 case24 :: Assertion
-case24 = expected @=? testStep (step indentIndentStyle) input
-  where
-    input = unlines
-       [ "data Foo a"
-       , "  = Foo { a :: Int,"
-       , "          a2 :: String"
-       , "          -- ^ some haddock"
-       , "        }"
-       , "  | Bar { b :: a }  deriving (Eq, Show)"
-       , "  deriving (ToJSON)"
-       ]
-
-    expected = unlines
-       [ "data Foo a"
-       , "  = Foo"
-       , "      { a :: Int"
-       , "      , a2 :: String"
-       , "        -- ^ some haddock"
-       , "      }"
-       , "  | Bar"
-       , "      { b :: a"
-       , "      }"
-       , "  deriving (Eq, Show)"
-       , "  deriving (ToJSON)"
-       ]
+case24 = assertSnippet (step indentIndentStyle)
+    [ "data Foo a"
+    , "  = Foo { a :: Int,"
+    , "          a2 :: String"
+    , "          -- ^ some haddock"
+    , "        }"
+    , "  | Bar { b :: a }  deriving (Eq, Show)"
+    , "  deriving (ToJSON)"
+    ]
+    [ "data Foo a"
+    , "  = Foo"
+    , "      { a :: Int"
+    , "      , a2 :: String"
+    , "        -- ^ some haddock"
+    , "      }"
+    , "  | Bar"
+    , "      { b :: a"
+    , "      }"
+    , "  deriving (Eq, Show)"
+    , "  deriving (ToJSON)"
+    ]
 
 case25 :: Assertion
-case25 = expected @=? testStep (step indentIndentStyle { cBreakSingleConstructors = False }) input
+case25 = assertSnippet (step indentIndentStyle { cBreakSingleConstructors = False }) input expected
   where
-    input = unlines
+    input =
        [ "data Foo a"
        , "  = Foo { a :: Int,"
        , "          a2 :: String"
@@ -568,7 +526,7 @@ case25 = expected @=? testStep (step indentIndentStyle { cBreakSingleConstructor
        , "  deriving (ToJSON)"
        ]
 
-    expected = unlines
+    expected =
        [ "data Foo a = Foo"
        , "  { a :: Int"
        , "  , a2 :: String"
@@ -579,15 +537,15 @@ case25 = expected @=? testStep (step indentIndentStyle { cBreakSingleConstructor
        ]
 
 case26 :: Assertion
-case26 = expected @=? testStep (step indentIndentStyle) input
+case26 = assertSnippet (step indentIndentStyle) input expected
   where
-    input = unlines
+    input =
       [ "module Herp where"
       , ""
       , "data Foo = Foo { a :: Int } deriving (FromJSON) via Bla Foo"
       ]
 
-    expected = unlines
+    expected =
        [ "module Herp where"
        , ""
        , "data Foo"
@@ -598,15 +556,15 @@ case26 = expected @=? testStep (step indentIndentStyle) input
        ]
 
 case27 :: Assertion
-case27 = expected @=? testStep (step sameIndentStyle { cBreakEnums = True }) input
+case27 = assertSnippet (step sameIndentStyle { cBreakEnums = True }) input expected
   where
-    input = unlines
+    input =
       [ "module Herp where"
       , ""
       , "data Foo = Foo | Bar | Baz deriving (Eq, Show)"
       ]
 
-    expected = unlines
+    expected =
       [ "module Herp where"
       , ""
       , "data Foo"
@@ -617,9 +575,9 @@ case27 = expected @=? testStep (step sameIndentStyle { cBreakEnums = True }) inp
       ]
 
 case28 :: Assertion
-case28 = expected @=? testStep (step sameIndentStyle { cBreakEnums = True }) input
+case28 = assertSnippet (step sameIndentStyle { cBreakEnums = True }) input expected
   where
-    input = unlines
+    input =
       [ "module Some.Types where"
       , ""
       , "newtype BankCode = BankCode {"
@@ -645,7 +603,7 @@ case28 = expected @=? testStep (step sameIndentStyle { cBreakEnums = True }) inp
       , "  deriving (ToJSON, FromJSON) via SnakeCaseCapsEnumEncoding MandateStatus"
       ]
 
-    expected = unlines
+    expected =
       [ "module Some.Types where"
       , ""
       , "newtype BankCode = BankCode { unBankCode :: Text }"
@@ -670,26 +628,26 @@ case28 = expected @=? testStep (step sameIndentStyle { cBreakEnums = True }) inp
       ]
 
 case29 :: Assertion
-case29 = expected @=? testStep (step sameIndentStyle) input
+case29 = assertSnippet (step sameIndentStyle) input expected
   where
-    input = unlines
+    input =
       [ "module Some.Types where"
       , ""
       , "data NonEmpty a"
       , "  = a :| [a]"
       ]
 
-    expected = unlines
+    expected =
       [ "module Some.Types where"
       , ""
       , "data NonEmpty a = a :| [a]"
       ]
 
 case30 :: Assertion
-case30 = expected @=? testStep (step sameIndentStyle { cBreakEnums = True }) input
+case30 = assertSnippet (step sameIndentStyle { cBreakEnums = True }) input expected
   where
     expected = input
-    input = unlines
+    input =
       [ "data ReasonCode"
       , "  = MissingTenantId"
       , "  -- Transaction errors:"
@@ -710,10 +668,10 @@ case30 = expected @=? testStep (step sameIndentStyle { cBreakEnums = True }) inp
 
 
 case31 :: Assertion
-case31 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True }) input
+case31 = assertSnippet (step indentIndentStyle { cBreakEnums = True }) input expected
   where
     expected = input
-    input = unlines
+    input =
       [ "data ConfiguredLogger"
       , "  -- | Logs to file"
       , "  = LogTo FilePath"
@@ -725,10 +683,10 @@ case31 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True }) i
       ]
 
 case32 :: Assertion
-case32 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True }) input
+case32 = assertSnippet (step indentIndentStyle { cBreakEnums = True }) input expected
   where
     expected = input
-    input = unlines
+    input =
       [ "data RejectionReason"
       , "  -- InvalidState"
       , "  = CancellationFailed"
@@ -743,15 +701,15 @@ case32 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True }) i
       ]
 
 case33 :: Assertion
-case33 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False }) input
+case33 = assertSnippet (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False }) input expected
   where
-    input = unlines
+    input =
       [ "module Some.Types where"
       , ""
       , "newtype NonEmpty a = NonEmpty { unNonEmpty :: a }"
       ]
 
-    expected = unlines
+    expected =
       [ "module Some.Types where"
       , ""
       , "newtype NonEmpty a"
@@ -759,16 +717,16 @@ case33 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       ]
 
 case34 :: Assertion
-case34 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) input
+case34 = assertSnippet (step indentIndentStyle { cVia = Indent 2 }) input expected
   where
-    input = unlines
+    input =
       [ "module Some.Types where"
       , ""
       , "newtype NonEmpty a = NonEmpty { unNonEmpty :: a }"
       , "     deriving (ToJSON, FromJSON) via Something Magic (NonEmpty a)"
       ]
 
-    expected = unlines
+    expected =
       [ "module Some.Types where"
       , ""
       , "newtype NonEmpty a"
@@ -778,9 +736,9 @@ case34 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) inpu
       ]
 
 case35 :: Assertion
-case35 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False }) input
+case35 = assertSnippet (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False }) input expected
   where
-    input = unlines
+    input =
       [ "module Some.Types where"
       , ""
       , "data Foo = Foo"
@@ -790,7 +748,7 @@ case35 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       , "  }"
       ]
 
-    expected = unlines
+    expected =
       [ "module Some.Types where"
       , ""
       , "data Foo = Foo"
@@ -799,9 +757,9 @@ case35 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       ]
 
 case36 :: Assertion
-case36 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False }) input
+case36 = assertSnippet (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False }) input expected
   where
-    input = unlines
+    input =
       [ "module Some.Types where"
       , ""
       , "data Foo = Foo"
@@ -811,7 +769,7 @@ case36 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       , "  }"
       ]
 
-    expected = unlines
+    expected =
       [ "module Some.Types where"
       , ""
       , "data Foo = Foo"
@@ -820,9 +778,9 @@ case36 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       ]
 
 case37 :: Assertion
-case37 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) input
+case37 = assertSnippet (step indentIndentStyle { cVia = Indent 2 }) input expected
   where
-    input = unlines
+    input =
       [ "module Some.Types where"
       , ""
       , "newtype UndoFlowData"
@@ -834,7 +792,7 @@ case37 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) inpu
       , "                     \"reversal_indicator\" := \"Undo\"] FlowDataDetails"
       ]
 
-    expected = unlines
+    expected =
       [ "module Some.Types where"
       , ""
       , "newtype UndoFlowData"
@@ -845,9 +803,9 @@ case37 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) inpu
       ]
 
 case38 :: Assertion
-case38 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) input
+case38 = assertSnippet (step indentIndentStyle { cVia = Indent 2 }) input expected
   where
-    input = unlines
+    input =
       [ "data Flat = Flat"
       , "  { foo :: Int"
       , "  , bar :: Text"
@@ -866,7 +824,7 @@ case38 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) inpu
       , "      Flat"
       ]
 
-    expected = unlines
+    expected =
       [ "data Flat"
       , "  = Flat"
       , "      { foo :: Int"
@@ -880,9 +838,9 @@ case38 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) inpu
       ]
 
 case39 :: Assertion
-case39 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) input
+case39 = assertSnippet (step indentIndentStyle { cVia = Indent 2 }) input expected
   where
-    input = unlines
+    input =
       [ "data CreditTransfer = CreditTransfer"
       , "  { nestedCreditorInfo :: CreditorInfo"
       , "  }"
@@ -903,7 +861,7 @@ case39 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) inpu
       , "    )"
       ]
 
-    expected = unlines
+    expected =
       [ "data CreditTransfer"
       , "  = CreditTransfer"
       , "      { nestedCreditorInfo :: CreditorInfo"
@@ -914,27 +872,27 @@ case39 = expected @=? testStep (step indentIndentStyle { cVia = Indent 2 }) inpu
       ]
 
 case40 :: Assertion
-case40 = expected @=? testStep (step indentIndentStyle { cBreakSingleConstructors = False }) input
+case40 = assertSnippet (step indentIndentStyle { cBreakSingleConstructors = False }) input expected
   where
-    input = unlines
+    input =
       [ "module X where"
       , ""
       , "data a :==> b    ="
       , "                  Arr a b"
       ]
 
-    expected = unlines
+    expected =
       [ "module X where"
       , ""
       , "data a :==> b = Arr a b"
       ]
 
 case41 :: Assertion
-case41 = expected @=? testStep (step indentIndentStyle) input
+case41 = assertSnippet (step indentIndentStyle) input expected
   where
     input = expected
 
-    expected = unlines
+    expected =
       [ "module X where"
       , ""
       , "data Callback"
@@ -957,11 +915,11 @@ case41 = expected @=? testStep (step indentIndentStyle) input
       ]
 
 case42 :: Assertion
-case42 = expected @=? testStep (step indentIndentStyle) input
+case42 = assertSnippet (step indentIndentStyle) input expected
   where
     input = expected
 
-    expected = unlines
+    expected =
       [ "module X where"
       , ""
       , "data SignupError"
@@ -971,11 +929,11 @@ case42 = expected @=? testStep (step indentIndentStyle) input
       ]
 
 case43 :: Assertion
-case43 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False }) input
+case43 = assertSnippet (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False }) input expected
   where
     input = expected
 
-    expected = unlines
+    expected =
       [ "module X where"
       , ""
       , "data CallbackResult"
@@ -994,9 +952,9 @@ case43 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
 -- This means that we've needed to make the decision to put all inline comments
 -- before the deriving clause itself
 case44 :: Assertion
-case44 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False, cVia = Indent 2 }) input
+case44 = assertSnippet (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False, cVia = Indent 2 }) input expected
   where
-    input = unlines
+    input =
       [ "module X where"
       , ""
       , " data CreditTransfer = CreditTransfer"
@@ -1013,7 +971,7 @@ case44 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       , "        ]"
       , "        (UntaggedEncoded CreditTransfer)"
       ]
-    expected = unlines
+    expected =
       [ "module X where"
       , ""
       , "data CreditTransfer = CreditTransfer"
@@ -1030,10 +988,10 @@ case44 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       ]
 
 case45 :: Assertion
-case45 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False, cVia = Indent 2 }) input
+case45 = assertSnippet (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False, cVia = Indent 2 }) input expected
   where
     input = expected
-    expected = unlines
+    expected =
       [ "module X where"
       , ""
       , "data CreditTransfer = CreditTransfer"
@@ -1050,10 +1008,10 @@ case45 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       ]
 
 case46 :: Assertion
-case46 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False, cVia = Indent 2 }) input
+case46 = assertSnippet (step indentIndentStyle { cBreakEnums = True, cBreakSingleConstructors = False, cVia = Indent 2 }) input expected
   where
     input = expected
-    expected = unlines
+    expected =
       [ "module X where"
       , ""
       , "-- | A format detailing which encoding to use for the settlement events"
@@ -1068,10 +1026,10 @@ case46 = expected @=? testStep (step indentIndentStyle { cBreakEnums = True, cBr
       ]
 
 case47 :: Assertion
-case47 = expected @=? testStep (step indentIndentStyle) input
+case47 = assertSnippet (step indentIndentStyle) input expected
   where
     input = expected
-    expected = unlines
+    expected =
       [ "module X where"
       , ""
       , "-- | A GADT example"
@@ -1082,10 +1040,10 @@ case47 = expected @=? testStep (step indentIndentStyle) input
       ]
 
 case48 :: Assertion
-case48 = expected @=? testStep (step indentIndentStyle) input
+case48 = assertSnippet (step indentIndentStyle) input expected
   where
     input = expected
-    expected = unlines
+    expected =
       [ "module X where"
       , ""
       , "-- | A GADT example"
@@ -1096,10 +1054,10 @@ case48 = expected @=? testStep (step indentIndentStyle) input
       ]
 
 case49 :: Assertion
-case49 = expected @=? testStep (step indentIndentStyle) input
+case49 = assertSnippet (step indentIndentStyle) input expected
   where
     input = expected
-    expected = unlines
+    expected =
       [ "module X where"
       , ""
       , "-- | A GADT example"
@@ -1110,10 +1068,10 @@ case49 = expected @=? testStep (step indentIndentStyle) input
       ]
 
 case50 :: Assertion
-case50 = expected @=? testStep (step indentIndentStyle { cCurriedContext = True }) input
+case50 = assertSnippet (step indentIndentStyle { cCurriedContext = True }) input expected
   where
     input = expected
-    expected = unlines
+    expected =
       [ "module X where"
       , ""
       , "-- | A GADT example"
@@ -1124,9 +1082,9 @@ case50 = expected @=? testStep (step indentIndentStyle { cCurriedContext = True 
       ]
 
 case51 :: Assertion
-case51 = expected @=? testStep (step indentIndentStyle { cCurriedContext = True }) input
+case51 = assertSnippet (step indentIndentStyle { cCurriedContext = True }) input expected
   where
-    input = unlines
+    input =
       [ "module X where"
       , ""
       , "-- | A GADT example"
@@ -1135,7 +1093,7 @@ case51 = expected @=? testStep (step indentIndentStyle { cCurriedContext = True 
       , "  D2 :: T Bool"
       , "  D3 :: forall a. (Eq a) => (a, a) -> T [a]"
       ]
-    expected = unlines
+    expected =
       [ "module X where"
       , ""
       , "-- | A GADT example"
@@ -1146,16 +1104,16 @@ case51 = expected @=? testStep (step indentIndentStyle { cCurriedContext = True 
       ]
 
 case52 :: Assertion
-case52 = expected @=? testStep (step indentIndentStyle { cBreakSingleConstructors = False, cCurriedContext = True }) input
+case52 = assertSnippet (step indentIndentStyle { cBreakSingleConstructors = False, cCurriedContext = True }) input expected
   where
-    input = unlines
+    input =
       [ "module X where"
       , ""
       , "data Foo = Foo"
       , "  { foo :: forall a b. (Eq a, Bounded b) => a -> b -> [(a, b)]"
       , "  }"
       ]
-    expected = unlines
+    expected =
       [ "module X where"
       , ""
       , "data Foo = Foo"
@@ -1164,14 +1122,14 @@ case52 = expected @=? testStep (step indentIndentStyle { cBreakSingleConstructor
       ]
 
 case53 :: Assertion
-case53 = expected @=? testStep (step indentIndentStyle { cMaxColumns = MaxColumns 80 }) input
+case53 = assertSnippet (step indentIndentStyle { cMaxColumns = MaxColumns 80 }) input expected
   where
-    input = unlines
+    input =
       [ "newtype Foo m a"
       , "  = Foo (m a)"
       , "  deriving newtype (Functor, Applicative, Monad, MonadError, MonadCatch, Foldable, Monoid)"
       ]
-    expected = unlines
+    expected =
       [ "newtype Foo m a"
       , "  = Foo (m a)"
       , "  deriving newtype"
@@ -1186,23 +1144,23 @@ case53 = expected @=? testStep (step indentIndentStyle { cMaxColumns = MaxColumn
       ]
 
 case54 :: Assertion
-case54 = expected @=? testStep (step indentIndentStyle { cMaxColumns = MaxColumns 80 }) input
+case54 = assertSnippet (step indentIndentStyle { cMaxColumns = MaxColumns 80 }) input expected
   where
-    input = unlines
+    input =
       [ "newtype Foo m a"
       , "  = Foo (m a)"
       , "  deriving newtype (Functor, Applicative, Monad)"
       ]
-    expected = unlines
+    expected =
       [ "newtype Foo m a"
       , "  = Foo (m a)"
       , "  deriving newtype (Applicative, Functor, Monad)"
       ]
 
 case55 :: Assertion
-case55 = expected @=? testStep (step sameSameNoSortStyle) input
+case55 = assertSnippet (step sameSameNoSortStyle) input expected
   where
-    input = unlines
+    input =
        [ "data Foo = Foo deriving (Z, Y, X, Bar, Abcd)"
        ]
 
@@ -1284,9 +1242,9 @@ case57 = assertSnippet (step defaultConfig)
 --
 -- See https://github.com/haskell/stylish-haskell/issues/330
 case58 :: Assertion
-case58 = expected @=? testStep (step sameIndentStyle) input
+case58 = assertSnippet (step sameIndentStyle) input expected
   where
-    input = unlines
+    input =
       [ "module Herp where"
       , ""
       , "data Foo a = Foo"
@@ -1316,9 +1274,9 @@ case60 = assertSnippet (step defaultConfig)
 --
 -- Regression test for https://github.com/haskell/stylish-haskell/issues/282
 case61 :: Assertion
-case61 = expected @=? testStep (step sameIndentStyle) input
+case61 = assertSnippet (step sameIndentStyle) input expected
   where
-    input = unlines
+    input =
       [ "module Herp where"
       , ""
       , "data Game = Game { _board    :: Board -- ^ Board state"
@@ -1329,7 +1287,7 @@ case61 = expected @=? testStep (step sameIndentStyle) input
       , "                }"
       ]
 
-    expected = unlines
+    expected =
       [ "module Herp where"
       , ""
       , "data Game = Game"
@@ -1350,44 +1308,64 @@ case61 = expected @=? testStep (step sameIndentStyle) input
 --
 -- Regression test for https://github.com/haskell/stylish-haskell/issues/273
 case62 :: Assertion
-case62 = expected @=? testStep (step sameIndentStyle) input
-  where
-    input = unlines
-      [ "module Herp where"
-      , ""
-      , "data Foo = Foo"
-      , "   { -- | This is a comment above some line."
-      , "    -- It can span multiple lines."
-      , "     fooName :: String"
-      , "   , fooAge :: Int"
-      , "     -- ^ This is a comment below some line."
-      , "     -- It can span multiple lines."
-      , "   }"
-      ]
-
-    expected = unlines
-      [ "module Herp where"
-      , ""
-      , "data Foo = Foo"
-      , "             { -- | This is a comment above some line."
-      , "             -- It can span multiple lines."
-      , "               fooName :: String"
-      , "             , fooAge :: Int"
-      , "               -- ^ This is a comment below some line."
-      , "               -- It can span multiple lines."
-      , "             }"
-      ]
+case62 = assertSnippet (step sameIndentStyle)
+    [ "module Herp where"
+    , ""
+    , "data Foo = Foo"
+    , "   { -- | This is a comment above some line."
+    , "    -- It can span multiple lines."
+    , "     fooName :: String"
+    , "   , fooAge :: Int"
+    , "     -- ^ This is a comment below some line."
+    , "     -- It can span multiple lines."
+    , "   }"
+    ]
+    [ "module Herp where"
+    , ""
+    , "data Foo = Foo"
+    , "             { -- | This is a comment above some line."
+    , "               -- It can span multiple lines."
+    , "               fooName :: String"
+    , "             , fooAge :: Int"
+    , "               -- ^ This is a comment below some line."
+    , "               -- It can span multiple lines."
+    , "             }"
+    ]
 
 case63 :: Assertion
-case63 = expected @=? testStep (step indentIndentStyle) input
+case63 = assertSnippet (step indentIndentStyle) input expected
   where
-    input = unlines
+    input =
       [ "module Herp where"
       , ""
       , "data Foo :: * -> * where"
       , "  Bar :: () -> Foo ()"
       ]
     expected = input
+
+case64 :: Assertion
+case64 = assertSnippet (step indentIndentStyle) input input
+  where
+    input =
+        [ "data Foo"
+        , "  = Bar Int"
+        , "  -- ^ Following comment"
+        , "  | Qux Int"
+        , "  -- ^ Second following comment"
+        , "  deriving (Show)"
+        ]
+
+case65 :: Assertion
+case65 = assertSnippet (step indentIndentStyle) input input
+  where
+    input =
+        [ "data Foo"
+        , "  = Bar"
+        , "  -- ^ Following comment"
+        , "  | Qux"
+        , "  -- ^ Second following comment"
+        , "  deriving (Show)"
+        ]
 
 sameSameStyle :: Config
 sameSameStyle = Config SameLine SameLine 2 2 False True SameLine False True NoMaxColumns

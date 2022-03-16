@@ -1,4 +1,5 @@
 --------------------------------------------------------------------------------
+{-# LANGUAGE OverloadedLists #-}
 module Language.Haskell.Stylish.Step.TrailingWhitespace.Tests
     ( tests
     ) where
@@ -7,7 +8,7 @@ module Language.Haskell.Stylish.Step.TrailingWhitespace.Tests
 --------------------------------------------------------------------------------
 import           Test.Framework                         (Test, testGroup)
 import           Test.Framework.Providers.HUnit         (testCase)
-import           Test.HUnit                             (Assertion, (@=?))
+import           Test.HUnit                             (Assertion)
 
 
 --------------------------------------------------------------------------------
@@ -24,20 +25,16 @@ tests = testGroup "Language.Haskell.Stylish.Step.TrailingWhitespace.Tests"
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testStep step input
-  where
-    input = unlines
-        [ "module Main where"
-        , " \t"
-        , "data Foo = Bar | Qux\t "
-        , "\12"    -- page break
-        , "   \12" -- malformed page break
-        ]
-
-    expected = unlines
-        [ "module Main where"
-        , ""
-        , "data Foo = Bar | Qux"
-        , "\12" -- page break
-        , ""
-        ]
+case01 = assertSnippet step
+    [ "module Main where"
+    , " \t"
+    , "data Foo = Bar | Qux\t "
+    , "\12"    -- page break
+    , "   \12" -- malformed page break
+    ]
+    [ "module Main where"
+    , ""
+    , "data Foo = Bar | Qux"
+    , "\12" -- page break
+    , ""
+    ]

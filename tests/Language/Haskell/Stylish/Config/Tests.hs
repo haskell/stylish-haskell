@@ -137,7 +137,7 @@ dotCabal includeExtensions = unlines $
   , "license:         BSD3"
   , "author:          Angela Author"
   , "build-type:      Simple"
-  , "cabal-version:   >= 1.2"
+  , "cabal-version:   >= 1.10"
   , ""
   , "library"
   , "   build-depends:   HUnit"
