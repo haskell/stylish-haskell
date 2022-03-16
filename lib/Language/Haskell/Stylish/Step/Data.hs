@@ -55,7 +55,7 @@ data Config = Config
       -- ^ Indent between type constructor and @=@ sign (measured from column 0)
     , cFirstField              :: !Indent
       -- ^ Indent between data constructor and @{@ line (measured from column with data constructor name)
-    , cFieldComment            :: !Int
+    , cFieldComment            :: !Indent
       -- ^ Indent between column with @{@ and start of field line comment (this line has @cFieldComment = 2@)
     , cDeriving                :: !Int
       -- ^ Indent before @deriving@ lines (measured from column 0)
@@ -77,7 +77,7 @@ defaultConfig :: Config
 defaultConfig = Config
     { cEquals          = Indent 4
     , cFirstField      = Indent 4
-    , cFieldComment    = 2
+    , cFieldComment    = Indent 2
     , cDeriving        = 4
     , cBreakEnums      = True
     , cBreakSingleConstructors = False
@@ -88,9 +88,7 @@ defaultConfig = Config
     }
 
 step :: Config -> Step
-step cfg = makeStep "Data" \ls m ->
-    let ls' = applyChanges (changes m) ls
-    in ls  -- TODO: ls'
+step cfg = makeStep "Data" \ls m -> applyChanges (changes m) ls
   where
     changes :: Module -> [ChangeLine]
     changes m = formatDataDecl cfg m <$> dataDecls m
@@ -150,6 +148,15 @@ formatDataDecl cfg@Config{..} m decl@MkDataDecl {..} =
 putDataDecl :: Config -> DataDecl -> P ()
 putDataDecl cfg@Config {..} decl = do
     let defn = dataDefn decl
+        constructorComments = commentGroups
+            (GHC.srcSpanToRealSrcSpan . GHC.getLocA)
+            (GHC.dd_cons defn)
+            (dataComments decl)
+
+        onelineEnum =
+            isEnum decl && not cBreakEnums &&
+            all (not . commentGroupHasComments) constructorComments
+
     putText $ newOrData decl
     space
     putName decl
@@ -159,7 +166,6 @@ putDataDecl cfg@Config {..} decl = do
     when (hasConstructors decl) do
         breakLineBeforeEq <- case (cEquals, cFirstField) of
             (_, Indent x) | isEnum decl && cBreakEnums -> do
-                -- putEolComment declPos
                 newline >> spaces x
                 pure True
             (_, _)
@@ -167,9 +173,8 @@ putDataDecl cfg@Config {..} decl = do
                 , singleConstructor decl && not cBreakSingleConstructors ->
                     False <$ space
             (Indent x, _)
-                | isEnum decl && not cBreakEnums -> False <$ space
+                | onelineEnum -> False <$ space
                 | otherwise -> do
-                    -- putEolComment declPos
                     newline >> spaces x
                     pure True
             (SameLine, _) -> False <$ space
@@ -177,41 +182,48 @@ putDataDecl cfg@Config {..} decl = do
 
         lineLengthAfterEq <- fmap (+2) getCurrentLineLength
 
-        if  | isEnum decl && not cBreakEnums ->
+        if  | onelineEnum ->
                 putText "=" >> space >> putUnbrokenEnum cfg decl
             | isNewtype decl -> do
                 putText "=" >> space
                 forM_ (GHC.dd_cons defn) $ putNewtypeConstructor cfg
-            | lcon : lcons <- GHC.dd_cons defn -> do
-                -- when breakLineBeforeEq do
-                --     removeCommentTo pos >>= mapM_ \c -> putComment c >> consIndent lineLengthAfterEq
-                unless (isGADT decl) (putText "=" >> space)
-                putConstructor cfg lineLengthAfterEq lcon
-                forM_ lcons $ \con -> do
-                    -- unless (cFirstField == SameLine) do
-                    --     removeCommentTo conPos >>= mapM_ \c -> consIndent lineLengthAfterEq >> putComment c
-                    consIndent lineLengthAfterEq
+            | not . null $ GHC.dd_cons defn -> do
+                forM_ (flagEnds constructorComments) $ \(CommentGroup {..}, firstGroup, lastGroup) -> do
+                    forM_ cgPrior $ \lc -> do
+                        putComment $ GHC.unLoc lc
+                        consIndent lineLengthAfterEq
 
-                    unless (isGADT decl) (putText "|" >> space)
+                    forM_ (flagEnds cgItems) $ \((lcon, mbInlineComment), firstItem, lastItem) -> do
+                        unless (isGADT decl) $ do
+                            putText $ if firstGroup && firstItem then "=" else "|"
+                            space
+                        putConstructor cfg lineLengthAfterEq lcon
+                        putMaybeLineComment $ GHC.unLoc <$> mbInlineComment
+                        unless (lastGroup && lastItem) $
+                            consIndent lineLengthAfterEq
 
-                    putConstructor cfg lineLengthAfterEq con
-                    -- putEolComment conPos
+                    forM_ cgFollowing $ \lc -> do
+                        consIndent lineLengthAfterEq
+                        putComment $ GHC.unLoc lc
+
             | otherwise ->
                 pure ()
 
+    let derivingComments = deepAnnComments (GHC.dd_derivs defn)
+
     when (hasDeriving decl) do
-        if isEnum decl && not cBreakEnums then
+        if onelineEnum && null derivingComments then
             space
         else do
-            -- removeCommentTo (defn & dd_derivs & \(L pos _) -> pos) >>=
-            --     mapM_ \c -> newline >> spaces cDeriving >> putComment c
+            forM_ derivingComments $ \lc -> do
+                newline
+                spaces cDeriving
+                putComment $ GHC.unLoc lc
             newline
             spaces cDeriving
 
         sep (newline >> spaces cDeriving) $ map
-            (\d -> do
-                -- putAllSpanComments (newline >> spaces cDeriving) pos
-                putDeriving cfg d)
+            (putDeriving cfg)
             (GHC.dd_derivs defn)
   where
     consIndent eqIndent = newline >> case (cEquals, cFirstField) of
@@ -220,14 +232,19 @@ putDataDecl cfg@Config {..} decl = do
         (Indent x, Indent _) -> spaces x
         (Indent x, SameLine) -> spaces x
 
+derivingClauseTypes
+    :: GHC.HsDerivingClause GHC.GhcPs -> [GHC.LHsSigType GHC.GhcPs]
+derivingClauseTypes GHC.HsDerivingClause {..} =
+    case GHC.unLoc deriv_clause_tys of
+        GHC.DctSingle _ t -> [t]
+        GHC.DctMulti _ ts -> ts
+
 putDeriving :: Config -> GHC.LHsDerivingClause GHC.GhcPs -> P ()
 putDeriving Config{..} lclause = do
-    let GHC.HsDerivingClause {..} = GHC.unLoc lclause
+    let clause@GHC.HsDerivingClause {..} = GHC.unLoc lclause
         tys = (if cSortDeriving then sortBy compareOutputableCI else id) $
             map (GHC.sig_body . GHC.unLoc) $
-            case GHC.unLoc deriv_clause_tys of
-                GHC.DctSingle _ t -> [t]
-                GHC.DctMulti _ ts -> ts
+            derivingClauseTypes clause
         headTy = listToMaybe tys
         tailTy = drop 1 tys
 
@@ -402,16 +419,18 @@ putConstructor cfg consIndent lcons = case GHC.unLoc lcons of
                     space
             putConDeclField cfg $ GHC.unLoc item
             case mbInlineComment of
-                Just c | cFirstField cfg == SameLine ->
-                    putMaybeLineComment . Just $ GHC.unLoc c
-                Just c -> do
-                    sepDecl bracePos >> spaces (cFieldComment cfg)
+                Just c | Indent s <- cFieldComment cfg -> do
+                    sepDecl bracePos >> spaces s
                     putComment $ GHC.unLoc c
+                Just c | SameLine <- cFieldComment cfg -> do
+                    putMaybeLineComment . Just $ GHC.unLoc c
                 _ -> pure ()
             sepDecl bracePos
 
           forM_ cgFollowing $ \lc -> do
-            spaces (cFieldComment cfg)
+            spaces $ case cFieldComment cfg of
+                SameLine -> 2  -- or indent to previous inline comment?
+                Indent n -> n
             putComment $ GHC.unLoc lc
             sepDecl bracePos
         -- Print docstr after final field

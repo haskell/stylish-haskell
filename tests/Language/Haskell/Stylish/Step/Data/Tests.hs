@@ -76,6 +76,8 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 61 (issue 282)" case61
     , testCase "case 62 (issue 273)" case62
     , testCase "case 63 (issue 338)" case63
+    , testCase "case 64" case64
+    , testCase "case 65" case65
     ]
 
 case00 :: Assertion
@@ -318,25 +320,22 @@ case14 = assertSnippet (step indentIndentStyle) input expected
       ]
 
 case15 :: Assertion
-case15 = assertSnippet (step indentIndentStyle) input expected
-  where
-    input =
-       [ "module Herp where"
-       , ""
-       , "data Foo a = Foo"
-       , "  { a :: a, -- comment"
-       , "   a2 :: String"
-       , "  }"
-       ]
-    expected =
-       [ "module Herp where"
-       , ""
-       , "data Foo a"
-       , "  = Foo"
-       , "      { a :: a -- comment"
-       , "      , a2 :: String"
-       , "      }"
-       ]
+case15 = assertSnippet (step indentIndentStyle {cFieldComment = SameLine})
+    [ "module Herp where"
+    , ""
+    , "data Foo a = Foo"
+    , "  { a :: a, -- comment"
+    , "   a2 :: String"
+    , "  }"
+    ]
+    [ "module Herp where"
+    , ""
+    , "data Foo a"
+    , "  = Foo"
+    , "      { a :: a -- comment"
+    , "      , a2 :: String"
+    , "      }"
+    ]
 
 case16 :: Assertion
 case16 = assertSnippet (step indentIndentStyle)
@@ -1308,33 +1307,29 @@ case61 = assertSnippet (step sameIndentStyle) input expected
 --
 -- Regression test for https://github.com/haskell/stylish-haskell/issues/273
 case62 :: Assertion
-case62 = assertSnippet (step sameIndentStyle) input expected
-  where
-    input =
-      [ "module Herp where"
-      , ""
-      , "data Foo = Foo"
-      , "   { -- | This is a comment above some line."
-      , "    -- It can span multiple lines."
-      , "     fooName :: String"
-      , "   , fooAge :: Int"
-      , "     -- ^ This is a comment below some line."
-      , "     -- It can span multiple lines."
-      , "   }"
-      ]
-
-    expected =
-      [ "module Herp where"
-      , ""
-      , "data Foo = Foo"
-      , "             { -- | This is a comment above some line."
-      , "             -- It can span multiple lines."
-      , "               fooName :: String"
-      , "             , fooAge :: Int"
-      , "               -- ^ This is a comment below some line."
-      , "               -- It can span multiple lines."
-      , "             }"
-      ]
+case62 = assertSnippet (step sameIndentStyle)
+    [ "module Herp where"
+    , ""
+    , "data Foo = Foo"
+    , "   { -- | This is a comment above some line."
+    , "    -- It can span multiple lines."
+    , "     fooName :: String"
+    , "   , fooAge :: Int"
+    , "     -- ^ This is a comment below some line."
+    , "     -- It can span multiple lines."
+    , "   }"
+    ]
+    [ "module Herp where"
+    , ""
+    , "data Foo = Foo"
+    , "             { -- | This is a comment above some line."
+    , "               -- It can span multiple lines."
+    , "               fooName :: String"
+    , "             , fooAge :: Int"
+    , "               -- ^ This is a comment below some line."
+    , "               -- It can span multiple lines."
+    , "             }"
+    ]
 
 case63 :: Assertion
 case63 = assertSnippet (step indentIndentStyle) input expected
@@ -1347,20 +1342,44 @@ case63 = assertSnippet (step indentIndentStyle) input expected
       ]
     expected = input
 
+case64 :: Assertion
+case64 = assertSnippet (step indentIndentStyle) input input
+  where
+    input =
+        [ "data Foo"
+        , "  = Bar Int"
+        , "  -- ^ Following comment"
+        , "  | Qux Int"
+        , "  -- ^ Second following comment"
+        , "  deriving (Show)"
+        ]
+
+case65 :: Assertion
+case65 = assertSnippet (step indentIndentStyle) input input
+  where
+    input =
+        [ "data Foo"
+        , "  = Bar"
+        , "  -- ^ Following comment"
+        , "  | Qux"
+        , "  -- ^ Second following comment"
+        , "  deriving (Show)"
+        ]
+
 sameSameStyle :: Config
-sameSameStyle = Config SameLine SameLine 2 2 False True SameLine False True NoMaxColumns
+sameSameStyle = Config SameLine SameLine (Indent 2) 2 False True SameLine False True NoMaxColumns
 
 sameIndentStyle :: Config
-sameIndentStyle = Config SameLine (Indent 2) 2 2 False True SameLine False True NoMaxColumns
+sameIndentStyle = Config SameLine (Indent 2) (Indent 2) 2 False True SameLine False True NoMaxColumns
 
 indentSameStyle :: Config
-indentSameStyle = Config (Indent 2) SameLine 2 2 False True SameLine False True NoMaxColumns
+indentSameStyle = Config (Indent 2) SameLine (Indent 2) 2 False True SameLine False True NoMaxColumns
 
 indentIndentStyle :: Config
-indentIndentStyle = Config (Indent 2) (Indent 2) 2 2 False True SameLine False True NoMaxColumns
+indentIndentStyle = Config (Indent 2) (Indent 2) (Indent 2) 2 False True SameLine False True NoMaxColumns
 
 indentIndentStyle4 :: Config
-indentIndentStyle4 = Config (Indent 4) (Indent 4) 4 4 False True SameLine False True NoMaxColumns
+indentIndentStyle4 = Config (Indent 4) (Indent 4) (Indent 4) 4 False True SameLine False True NoMaxColumns
 
 sameSameNoSortStyle :: Config
-sameSameNoSortStyle = Config SameLine SameLine 2 2 False True SameLine False False NoMaxColumns
+sameSameNoSortStyle = Config SameLine SameLine (Indent 2) 2 False True SameLine False False NoMaxColumns
