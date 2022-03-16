@@ -28,7 +28,7 @@ Common depends
   Default-language: Haskell2010
 
   Build-depends:
-    aeson             >= 0.6    && < 1.6,
+    aeson             >= 0.6    && < 2.1,
     base              >= 4.8    && < 5,
     bytestring        >= 0.9    && < 0.11,
     Cabal             >= 3.4    && < 3.7,
@@ -93,7 +93,7 @@ Executable stylish-haskell
   Build-depends:
     stylish-haskell,
     strict               >= 0.3  && < 0.5,
-    optparse-applicative >= 0.12 && < 0.17
+    optparse-applicative >= 0.12 && < 0.18
 
 Test-suite stylish-haskell-tests
   Import:         depends
