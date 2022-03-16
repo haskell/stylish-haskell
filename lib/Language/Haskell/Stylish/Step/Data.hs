@@ -54,7 +54,7 @@ data Config = Config
       -- ^ Indent between type constructor and @=@ sign (measured from column 0)
     , cFirstField              :: !Indent
       -- ^ Indent between data constructor and @{@ line (measured from column with data constructor name)
-    , cFieldComment            :: !Indent
+    , cFieldComment            :: !Int
       -- ^ Indent between column with @{@ and start of field line comment (this line has @cFieldComment = 2@)
     , cDeriving                :: !Int
       -- ^ Indent before @deriving@ lines (measured from column 0)
@@ -76,7 +76,7 @@ defaultConfig :: Config
 defaultConfig = Config
     { cEquals          = Indent 4
     , cFirstField      = Indent 4
-    , cFieldComment    = Indent 2
+    , cFieldComment    = 2
     , cDeriving        = 4
     , cBreakEnums      = True
     , cBreakSingleConstructors = False
@@ -403,18 +403,14 @@ putConstructor cfg consIndent lcons = case GHC.unLoc lcons of
                     space
             putConDeclField cfg $ GHC.unLoc item
             case mbInlineComment of
-                Just c | Indent s <- cFieldComment cfg -> do
-                    sepDecl bracePos >> spaces s
+                Just c -> do
+                    sepDecl bracePos >> spaces (cFieldComment cfg)
                     putComment $ GHC.unLoc c
-                Just c | SameLine <- cFieldComment cfg -> do
-                    putMaybeLineComment . Just $ GHC.unLoc c
                 _ -> pure ()
             sepDecl bracePos
 
           forM_ cgFollowing $ \lc -> do
-            spaces $ case cFieldComment cfg of
-                SameLine -> 2  -- or indent to previous inline comment?
-                Indent n -> n
+            spaces $ cFieldComment cfg
             putComment $ GHC.unLoc lc
             sepDecl bracePos
 

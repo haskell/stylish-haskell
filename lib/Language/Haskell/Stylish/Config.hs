@@ -247,7 +247,7 @@ parseRecords c o = Data.step
     <$> (Data.Config
         <$> (o A..: "equals" >>= parseIndent)
         <*> (o A..: "first_field" >>= parseIndent)
-        <*> (o A..: "field_comment" >>= parseIndent)
+        <*> (o A..: "field_comment")
         <*> (o A..: "deriving")
         <*> (o A..:? "break_enums" A..!= False)
         <*> (o A..:? "break_single_constructors" A..!= True)
@@ -261,14 +261,13 @@ parseRecords c o = Data.step
 
 parseIndent :: A.Value -> A.Parser Data.Indent
 parseIndent = \case
-    num@(A.Number _) -> Data.Indent <$> A.parseJSON num
     A.String "same_line" -> return Data.SameLine
     A.String t | "indent " `T.isPrefixOf` t ->
         case readMaybe (T.unpack $ T.drop 7 t) of
              Just n -> return $ Data.Indent n
              Nothing -> fail $ "Indent: not a number" <> T.unpack (T.drop 7 t)
     A.String t -> fail $ "can't parse indent setting: " <> T.unpack t
-    _ -> fail "Expected int or string for indent value"
+    _ -> fail "Expected string for indent value"
 
 --------------------------------------------------------------------------------
 parseSquash :: Config -> A.Object -> A.Parser Step
