@@ -1,5 +1,10 @@
 # CHANGELOG
 
+- 0.14.0.0 (2022-03-16)
+     *  Port to GHC 9.2 AST (by jaspervdj)
+     *  Case insensitive import sort (by vlatkoB)
+     *  Fix issue with dissappearing GADT kind signatures (by Łukasz Gołębiewski)
+
 - 0.13.0.0 (2021-09-15)
      *  Don't remove ticks on promoted data types (by Jim McStanton)
      *  Add break_only_where option (by 1Computer1)
