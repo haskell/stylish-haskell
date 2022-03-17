@@ -1,6 +1,6 @@
 Cabal-version: 2.4
 Name:          stylish-haskell
-Version:       0.14.0.0
+Version:       0.14.0.1
 Synopsis:      Haskell code prettifier
 Homepage:      https://github.com/haskell/stylish-haskell
 License:       BSD-3-Clause

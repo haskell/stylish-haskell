@@ -1,5 +1,9 @@
 # CHANGELOG
 
+- 0.14.0.1 (2022-03-17)
+     *  Use GHC API directly if >= 9.2.2
+     *  Bump `bytestring` upper bound to 0.12
+
 - 0.14.0.0 (2022-03-16)
      *  Port to GHC 9.2 AST (by jaspervdj)
      *  Case insensitive import sort (by vlatkoB)
