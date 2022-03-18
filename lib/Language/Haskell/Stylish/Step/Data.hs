@@ -28,8 +28,8 @@ import           Prelude                           hiding (init)
 
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Editor
 import           Language.Haskell.Stylish.Comments
+import qualified Language.Haskell.Stylish.Editor   as Editor
 import           Language.Haskell.Stylish.GHC
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Ordering
@@ -87,10 +87,10 @@ defaultConfig = Config
     }
 
 step :: Config -> Step
-step cfg = makeStep "Data" \ls m -> applyChanges (changes m) ls
+step cfg = makeStep "Data" \ls m -> Editor.apply (changes m) ls
   where
-    changes :: Module -> [ChangeLine]
-    changes m = formatDataDecl cfg <$> dataDecls m
+    changes :: Module -> Editor.Edits
+    changes = foldMap (formatDataDecl cfg) . dataDecls
 
     dataDecls :: Module -> [DataDecl]
     dataDecls m = do
@@ -108,8 +108,6 @@ step cfg = makeStep "Data" \ls m -> applyChanges (changes m) ls
                 }
             _ -> []
 
-type ChangeLine = Change String
-
 data DataDecl = MkDataDecl
     { dataComments :: [GHC.LEpaComment]
     , dataLoc      :: GHC.RealSrcSpan
@@ -120,11 +118,11 @@ data DataDecl = MkDataDecl
     }
 
 
-formatDataDecl :: Config -> DataDecl -> ChangeLine
+formatDataDecl :: Config -> DataDecl -> Editor.Edits
 formatDataDecl cfg@Config{..} decl@MkDataDecl {..} =
-    change originalDeclBlock (const printedDecl)
+    Editor.changeLines originalDeclBlock (const printedDecl)
   where
-    originalDeclBlock = Block
+    originalDeclBlock = Editor.Block
         (GHC.srcSpanStartLine dataLoc)
         (GHC.srcSpanEndLine dataLoc)
 

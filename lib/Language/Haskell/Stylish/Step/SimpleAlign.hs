@@ -21,7 +21,7 @@ import qualified GHC.Types.SrcLoc as GHC
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Align
-import           Language.Haskell.Stylish.Editor
+import          qualified Language.Haskell.Stylish.Editor as Editor
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
@@ -186,14 +186,14 @@ step maxColumns config = makeStep "Cases" $ \ls module' ->
     let changes
             :: (GHC.Located Hs.HsModule -> [a])
             -> (a -> [[Alignable GHC.RealSrcSpan]])
-            -> [Change String]
-        changes search toAlign =
-            (concatMap . concatMap) (align maxColumns) . map toAlign $
-            search module'
+            -> Editor.Edits
+        changes search toAlign = mconcat $ do
+            item <- search module'
+            pure $ foldMap (align maxColumns) (toAlign item)
 
-        configured :: [Change String]
-        configured = concat $
-            [changes records (recordToAlignable config)] ++
-            [changes everything (matchGroupToAlignable config)] ++
-            [changes everything (multiWayIfToAlignable config)] in
-    applyChanges configured ls
+        configured :: Editor.Edits
+        configured =
+            changes records (recordToAlignable config) <>
+            changes everything (matchGroupToAlignable config) <>
+            changes everything (multiWayIfToAlignable config) in
+    Editor.apply configured ls

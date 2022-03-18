@@ -23,7 +23,7 @@ import qualified GHC.Unit.Module.Name                  as GHC
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Comments
-import           Language.Haskell.Stylish.Editor
+import qualified Language.Haskell.Stylish.Editor       as Editor
 import           Language.Haskell.Stylish.GHC
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Ordering
@@ -110,14 +110,11 @@ printModuleHeader maxCols conf ls lmodul =
             (printHeader
                 conf name exportGroups haddocks moduleComment whereComment)
 
-        deletes = delete (Block startLine endLine)
+        changes = Editor.changeLines
+            (Editor.Block startLine endLine)
+            (const printedModuleHeader) in
 
-        additions = [insert startLine printedModuleHeader]
-
-        changes = deletes : additions in
-
-    applyChanges changes ls
-
+    Editor.apply changes ls
   where
     doSort = if sort conf then fmap (commentGroupSort compareLIE) else id
 

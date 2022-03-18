@@ -9,13 +9,13 @@ module Language.Haskell.Stylish.Step.Squash
 
 
 --------------------------------------------------------------------------------
-import           Data.Maybe                            (listToMaybe)
-import qualified GHC.Hs                                as GHC
-import qualified GHC.Types.SrcLoc                      as GHC
+import           Data.Maybe                      (listToMaybe)
+import qualified GHC.Hs                          as GHC
+import qualified GHC.Types.SrcLoc                as GHC
 
 
 --------------------------------------------------------------------------------
-import qualified Language.Haskell.Stylish.Replacements as Rpl
+import qualified Language.Haskell.Stylish.Editor as Editor
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
 
@@ -23,11 +23,11 @@ import           Language.Haskell.Stylish.Util
 --------------------------------------------------------------------------------
 -- | Removes anything between two RealSrcSpans, providing they are on the same
 -- line.
-squash :: GHC.RealSrcSpan -> GHC.RealSrcSpan -> Rpl.Replacements
+squash :: GHC.RealSrcSpan -> GHC.RealSrcSpan -> Editor.Edits
 squash l r
     | GHC.srcSpanEndLine l /= GHC.srcSpanStartLine r = mempty
     | GHC.srcSpanEndCol l >= GHC.srcSpanStartCol r = mempty
-    | otherwise = Rpl.replace
+    | otherwise = Editor.replace
         (GHC.srcSpanEndLine l)
         (GHC.srcSpanEndCol l)
         (GHC.srcSpanStartCol r)
@@ -35,7 +35,7 @@ squash l r
 
 
 --------------------------------------------------------------------------------
-squashFieldDecl :: GHC.ConDeclField GHC.GhcPs -> Rpl.Replacements
+squashFieldDecl :: GHC.ConDeclField GHC.GhcPs -> Editor.Edits
 squashFieldDecl (GHC.ConDeclField ext names@(_ : _) type' _)
     | Just left <- GHC.srcSpanToRealSrcSpan . GHC.getLoc $ last names
     , Just sep <- fieldDeclSeparator ext
@@ -54,7 +54,7 @@ fieldDeclSeparator _ = Nothing
 
 --------------------------------------------------------------------------------
 squashMatch
-    :: GHC.LMatch GHC.GhcPs (GHC.LHsExpr GHC.GhcPs) -> Rpl.Replacements
+    :: GHC.LMatch GHC.GhcPs (GHC.LHsExpr GHC.GhcPs) -> Editor.Edits
 squashMatch lmatch = case GHC.m_grhss match of
     GHC.GRHSs _ [lgrhs] _
         | GHC.GRHS ext [] body <- GHC.unLoc lgrhs
@@ -86,4 +86,4 @@ step = makeStep "Squash" $ \ls (module') ->
     let changes =
             foldMap squashFieldDecl (everything module') <>
             foldMap squashMatch (everything module') in
-    Rpl.apply changes ls
+    Editor.apply changes ls

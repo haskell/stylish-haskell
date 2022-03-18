@@ -16,28 +16,28 @@ module Language.Haskell.Stylish.Step.Imports
   ) where
 
 --------------------------------------------------------------------------------
-import           Control.Monad                   (forM_, when, void)
-import           Data.Foldable                   (toList)
-import           Data.Function                   ((&), on)
-import           Data.Functor                    (($>))
-import           Data.List.NonEmpty              (NonEmpty(..))
-import           Data.List                       (sortBy)
-import           Data.Maybe                      (fromMaybe, isJust)
-import qualified Data.List.NonEmpty              as NonEmpty
-import qualified Data.Map                        as Map
-import qualified Data.Set                        as Set
-import qualified GHC.Data.FastString             as GHC
-import qualified GHC.Hs                          as GHC
-import qualified GHC.Types.Name.Reader           as GHC
-import qualified GHC.Types.SourceText            as GHC
-import qualified GHC.Types.SrcLoc                as GHC
-import qualified GHC.Unit.Module.Name            as GHC
-import qualified GHC.Unit.Types                  as GHC
+import           Control.Monad                     (forM_, void, when)
+import           Data.Foldable                     (toList)
+import           Data.Function                     (on, (&))
+import           Data.Functor                      (($>))
+import           Data.List                         (sortBy)
+import           Data.List.NonEmpty                (NonEmpty (..))
+import qualified Data.List.NonEmpty                as NonEmpty
+import qualified Data.Map                          as Map
+import           Data.Maybe                        (fromMaybe, isJust)
+import qualified Data.Set                          as Set
+import qualified GHC.Data.FastString               as GHC
+import qualified GHC.Hs                            as GHC
+import qualified GHC.Types.Name.Reader             as GHC
+import qualified GHC.Types.SourceText              as GHC
+import qualified GHC.Types.SrcLoc                  as GHC
+import qualified GHC.Unit.Module.Name              as GHC
+import qualified GHC.Unit.Types                    as GHC
 
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Block
-import           Language.Haskell.Stylish.Editor
+import qualified Language.Haskell.Stylish.Editor   as Editor
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Ordering
 import           Language.Haskell.Stylish.Printer
@@ -111,20 +111,18 @@ step columns = makeStep "Imports (ghc-lib-parser)" . printImports columns
 
 --------------------------------------------------------------------------------
 printImports :: Maybe Int -> Options -> Lines -> Module -> Lines
-printImports maxCols align ls m = applyChanges changes ls
+printImports maxCols align ls m = Editor.apply changes ls
   where
     groups = moduleImportGroups m
     moduleStats = foldMap importStats . fmap GHC.unLoc $ concatMap toList groups
-    changes = do
-        group <- groups
-        pure $ formatGroup maxCols align moduleStats group
+    changes = foldMap (formatGroup maxCols align moduleStats) groups
 
 formatGroup
     :: Maybe Int -> Options -> ImportStats
-    -> NonEmpty (GHC.LImportDecl GHC.GhcPs) -> Change String
+    -> NonEmpty (GHC.LImportDecl GHC.GhcPs) -> Editor.Edits
 formatGroup maxCols options moduleStats imports =
     let newLines = formatImports maxCols options moduleStats imports in
-    change (importBlock imports) (const newLines)
+    Editor.changeLines (importBlock imports) (const newLines)
 
 importBlock :: NonEmpty (GHC.LImportDecl GHC.GhcPs)  -> Block String
 importBlock group = Block
