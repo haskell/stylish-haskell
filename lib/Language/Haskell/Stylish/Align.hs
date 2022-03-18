@@ -8,11 +8,11 @@ module Language.Haskell.Stylish.Align
 
 --------------------------------------------------------------------------------
 import           Data.List                       (nub)
-import qualified GHC.Types.SrcLoc                          as GHC
+import qualified GHC.Types.SrcLoc                as GHC
 
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Editor
+import qualified Language.Haskell.Stylish.Editor as Editor
 import           Language.Haskell.Stylish.Util
 
 
@@ -57,13 +57,13 @@ data Alignable a = Alignable
 align
   :: Maybe Int                      -- ^ Max columns
   -> [Alignable GHC.RealSrcSpan]    -- ^ Alignables
-  -> [Change String]                -- ^ Changes performing the alignment
-align _ [] = []
+  -> Editor.Edits                   -- ^ Changes performing the alignment
+align _ [] = mempty
 align maxColumns alignment
   -- Do not make an changes if we would go past the maximum number of columns
-  | exceedsColumns (longestLeft + longestRight)  = []
-  | not (fixable alignment)                      = []
-  | otherwise                                    = map align' alignment
+  | exceedsColumns (longestLeft + longestRight)  = mempty
+  | not (fixable alignment)                      = mempty
+  | otherwise                                    = foldMap align' alignment
   where
     exceedsColumns i = case maxColumns of
       Nothing -> False
@@ -79,10 +79,10 @@ align maxColumns alignment
       | a <- alignment
       ]
 
-    align' a = changeLine (GHC.srcSpanStartLine $ aContainer a) $ \str ->
+    align' a = Editor.changeLine (GHC.srcSpanStartLine $ aContainer a) $ \str ->
       let column = GHC.srcSpanEndCol $ aLeft a
           (pre, post) = splitAt column str
-      in [padRight longestLeft (trimRight pre) ++ trimLeft post] 
+      in [padRight longestLeft (trimRight pre) ++ trimLeft post]
 
 --------------------------------------------------------------------------------
 -- | Checks that all the alignables appear on a single line, and that they do

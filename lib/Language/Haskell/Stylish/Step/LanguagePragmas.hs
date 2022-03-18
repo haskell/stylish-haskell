@@ -17,12 +17,12 @@ import qualified Data.Set                        as S
 
 --------------------------------------------------------------------------------
 import qualified GHC.Hs                          as GHC
-import         qualified  GHC.Types.SrcLoc as GHC
+import qualified GHC.Types.SrcLoc                as GHC
 
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Block
-import           Language.Haskell.Stylish.Editor
+import qualified Language.Haskell.Stylish.Editor as Editor
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
@@ -121,7 +121,7 @@ step = ((((makeStep "LanguagePragmas" .) .) .) .) . step'
 step' :: Maybe Int -> Style -> Bool -> Bool -> String -> Lines -> Module -> Lines
 step' columns style align removeRedundant lngPrefix ls m
   | null languagePragmas = ls
-  | otherwise = applyChanges changes ls
+  | otherwise = Editor.apply changes ls
   where
     isRedundant'
         | removeRedundant = isRedundant m
@@ -144,18 +144,18 @@ step' columns style align removeRedundant lngPrefix ls m
     groups :: [(Block String, NonEmpty String)]
     groups = [(b, pgs) | (b, pgs) <- groupAdjacent' (convertFstToBlock languagePragmas)]
 
-    changes =
-      [ change b (const $ prettyPragmas lngPrefix columns longest align style pg)
+    changes = mconcat
+      [ Editor.changeLines b (const $ prettyPragmas lngPrefix columns longest align style pg)
       | (b, pg) <- filterRedundant isRedundant' groups
       ]
 
 
 --------------------------------------------------------------------------------
 -- | Add a LANGUAGE pragma to a module if it is not present already.
-addLanguagePragma :: String -> String -> Module -> [Change String]
+addLanguagePragma :: String -> String -> Module -> Editor.Edits
 addLanguagePragma lg prag modu
-    | prag `elem` present = []
-    | otherwise           = [insert line ["{-# " ++ lg ++ " " ++ prag ++ " #-}"]]
+    | prag `elem` present = mempty
+    | otherwise           = Editor.insertLines line ["{-# " ++ lg ++ " " ++ prag ++ " #-}"]
   where
     pragmas'      = moduleLanguagePragmas modu
     present       = concatMap (toList . snd) pragmas'
