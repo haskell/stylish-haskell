@@ -13,7 +13,7 @@ import           Test.HUnit                          (Assertion)
 
 tests :: Test
 tests = testGroup "Language.Haskell.Stylish.Regressions"
-    [ testCase "case 00 (#198)" case00
+    [ testCase "case 00 (issue #198)" case00
     ]
 
 -- | Error parsing '(,) #198

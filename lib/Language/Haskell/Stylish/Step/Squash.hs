@@ -1,6 +1,7 @@
 --------------------------------------------------------------------------------
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE PatternGuards         #-}
+{-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE TypeFamilies          #-}
 module Language.Haskell.Stylish.Step.Squash
     ( step
@@ -8,53 +9,81 @@ module Language.Haskell.Stylish.Step.Squash
 
 
 --------------------------------------------------------------------------------
-import           Control.Monad    (guard)
-import           Data.Maybe       (mapMaybe)
-import qualified GHC.Types.SrcLoc as GHC
-import qualified GHC.Hs           as GHC
+import           Data.Maybe                            (listToMaybe)
+import qualified GHC.Hs                                as GHC
+import qualified GHC.Types.SrcLoc                      as GHC
 
 
 --------------------------------------------------------------------------------
-import           Language.Haskell.Stylish.Editor
+import qualified Language.Haskell.Stylish.Replacements as Rpl
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
 
 
 --------------------------------------------------------------------------------
-squash :: GHC.SrcSpan -> GHC.SrcSpan -> Maybe (Change String)
-squash left right = do
-  l <- GHC.srcSpanToRealSrcSpan left
-  r <- GHC.srcSpanToRealSrcSpan right
-  guard $
-      GHC.srcSpanEndLine l == GHC.srcSpanStartLine r ||
-      GHC.srcSpanEndLine l + 1 == GHC.srcSpanStartLine r
-  pure $ changeLine (GHC.srcSpanEndLine l) $ \str ->
-      let (pre, post) = splitAt (GHC.srcSpanEndCol l) str
-      in [trimRight pre ++ " " ++ trimLeft post]
+-- | Removes anything between two RealSrcSpans, providing they are on the same
+-- line.
+squash :: GHC.RealSrcSpan -> GHC.RealSrcSpan -> Rpl.Replacements
+squash l r
+    | GHC.srcSpanEndLine l /= GHC.srcSpanStartLine r = mempty
+    | GHC.srcSpanEndCol l >= GHC.srcSpanStartCol r = mempty
+    | otherwise = Rpl.replace
+        (GHC.srcSpanEndLine l)
+        (GHC.srcSpanEndCol l)
+        (GHC.srcSpanStartCol r)
+        " "
 
 
 --------------------------------------------------------------------------------
-squashFieldDecl :: GHC.ConDeclField GHC.GhcPs -> Maybe (Change String)
-squashFieldDecl (GHC.ConDeclField _ names type' _)
-  | null names = Nothing
-  | otherwise  = squash (GHC.getLoc $ last names) (GHC.getLocA type')
+squashFieldDecl :: GHC.ConDeclField GHC.GhcPs -> Rpl.Replacements
+squashFieldDecl (GHC.ConDeclField ext names@(_ : _) type' _)
+    | Just left <- GHC.srcSpanToRealSrcSpan . GHC.getLoc $ last names
+    , Just sep <- fieldDeclSeparator ext
+    , Just right <- GHC.srcSpanToRealSrcSpan $ GHC.getLocA type' =
+        squash left sep <> squash sep right
+squashFieldDecl _ = mempty
+
+
+--------------------------------------------------------------------------------
+fieldDeclSeparator :: GHC.EpAnn [GHC.AddEpAnn]-> Maybe GHC.RealSrcSpan
+fieldDeclSeparator GHC.EpAnn {..} = listToMaybe $ do
+    GHC.AddEpAnn GHC.AnnDcolon (GHC.EpaSpan s) <- anns
+    pure s
+fieldDeclSeparator _ = Nothing
 
 
 --------------------------------------------------------------------------------
 squashMatch
-    :: GHC.Match GHC.GhcPs (GHC.LHsExpr GHC.GhcPs) -> Maybe (Change String)
-squashMatch (GHC.Match _ (GHC.FunRhs name _ _) [] grhss) = do
-    body <- unguardedRhsBody grhss
-    squash (GHC.getLocA name) (GHC.getLocA body)
-squashMatch (GHC.Match _ _ pats grhss) = do
-    body <- unguardedRhsBody grhss
-    squash (GHC.getLocA $ last pats) (GHC.getLocA body)
+    :: GHC.LMatch GHC.GhcPs (GHC.LHsExpr GHC.GhcPs) -> Rpl.Replacements
+squashMatch lmatch = case GHC.m_grhss match of
+    GHC.GRHSs _ [lgrhs] _
+        | GHC.GRHS ext [] body <- GHC.unLoc lgrhs
+        , Just left <- mbLeft
+        , Just sep <- matchSeparator ext
+        , Just right <- GHC.srcSpanToRealSrcSpan $ GHC.getLocA body ->
+            squash left sep <> squash sep right
+    _ -> mempty
+  where
+    match = GHC.unLoc lmatch
+    mbLeft = case match of
+        GHC.Match _ (GHC.FunRhs name _ _) [] _ ->
+            GHC.srcSpanToRealSrcSpan $ GHC.getLocA name
+        GHC.Match _ _ pats@(_ : _) _ ->
+            GHC.srcSpanToRealSrcSpan . GHC.getLocA $ last pats
+        _ -> Nothing
+
+
+--------------------------------------------------------------------------------
+matchSeparator :: GHC.EpAnn GHC.GrhsAnn -> Maybe GHC.RealSrcSpan
+matchSeparator GHC.EpAnn {..}
+    | GHC.AddEpAnn _ (GHC.EpaSpan s) <- GHC.ga_sep anns = Just s
+matchSeparator _ = Nothing
 
 
 --------------------------------------------------------------------------------
 step :: Step
 step = makeStep "Squash" $ \ls (module') ->
     let changes =
-            mapMaybe squashFieldDecl (everything module') ++
-            mapMaybe squashMatch (everything module') in
-    applyChanges changes ls
+            foldMap squashFieldDecl (everything module') <>
+            foldMap squashMatch (everything module') in
+    Rpl.apply changes ls

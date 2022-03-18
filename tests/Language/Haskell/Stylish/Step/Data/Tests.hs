@@ -32,7 +32,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 17" case17
     , testCase "case 18" case18
     , testCase "case 19" case19
-    , testCase "case 20 (issue 262)" case20
+    , testCase "case 20 (issue #262)" case20
     , testCase "case 21" case21
     , testCase "case 22" case22
     , testCase "case 23" case23
@@ -73,9 +73,9 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 58" case58
     , testCase "case 59" case59
     , testCase "case 60" case60
-    , testCase "case 61 (issue 282)" case61
-    , testCase "case 62 (issue 273)" case62
-    , testCase "case 63 (issue 338)" case63
+    , testCase "case 61 (issue #282)" case61
+    , testCase "case 62 (issue #273)" case62
+    , testCase "case 63 (issue #338)" case63
     , testCase "case 64" case64
     , testCase "case 65" case65
     ]

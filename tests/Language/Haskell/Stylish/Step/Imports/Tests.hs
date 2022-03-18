@@ -57,7 +57,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 23b" case23b
     , testCase "case 24" case24
     , testCase "case 25" case25
-    , testCase "case 26 (issue 185)" case26
+    , testCase "case 26 (issue #185)" case26
     , testCase "case 27" case27
     , testCase "case 28" case28
     , testCase "case 29" case29

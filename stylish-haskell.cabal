@@ -90,6 +90,7 @@ Library
     Language.Haskell.Stylish.Ordering
     Language.Haskell.Stylish.Util
     Language.Haskell.Stylish.Verbose
+    Language.Haskell.Stylish.Replacements
     Paths_stylish_haskell
 
   Autogen-modules:
