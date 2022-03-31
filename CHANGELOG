@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- 0.14.1.0 (2022-03-31)
+     *  Unify the Editor modules, deal with overlap better
+
 - 0.14.0.1 (2022-03-17)
      *  Use GHC API directly if >= 9.2.2
      *  Bump `bytestring` upper bound to 0.12
