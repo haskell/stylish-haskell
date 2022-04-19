@@ -16,6 +16,7 @@ hsPkgs.shellFor {
   tools = {
     cabal = "3.6.2.0";
     hlint = "3.3.6";
+    haskell-language-server = "1.6.1.1";
   };
   # See overlays/tools.nix for more details
 
@@ -24,7 +25,6 @@ hsPkgs.shellFor {
     pkgs.ghcid
     pkgs.nixpkgs-fmt
     pkgs.stylish-haskell
-    pkgs.haskell-language-server
   ];
 
   # Prevents cabal from choosing alternate plans, so that
