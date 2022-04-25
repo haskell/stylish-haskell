@@ -23,6 +23,12 @@ Extra-source-files:
   README.markdown,
   data/stylish-haskell.yaml
 
+Flag ghc-lib
+  Default: False
+  Manual:  True
+  Description:
+    Force dependency on ghc-lib-parser even if GHC API in the ghc package is supported
+
 Common depends
   Ghc-options:      -Wall
   Default-language: Haskell2010
@@ -46,7 +52,7 @@ Common depends
     Build-depends:
       semigroups >= 0.18 && < 0.20
 
-  if impl(ghc >= 9.2.2)
+  if impl(ghc >= 9.2.2) && (!flag(ghc-lib))
     Build-depends:
       ghc >= 9.2 && < 9.3,
       ghc-boot,
