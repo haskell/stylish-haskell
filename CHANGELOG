@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- 0.14.2.0 (2022-04-27)
+     *  Add a build flag to force the use of ghc-lib-parser
+
 - 0.14.1.0 (2022-03-31)
      *  Unify the Editor modules, deal with overlap better
 
