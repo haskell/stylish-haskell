@@ -21,6 +21,7 @@ tests :: Test
 tests = testGroup "Language.Haskell.Stylish.Step.UnicodeSyntax.Tests"
     [ testCase "case 01" case01
     , testCase "case 02" case02
+    , testCase "case 03" case03
     ]
 
 
@@ -45,4 +46,15 @@ case02 = assertSnippet (step True "LaNgUaGe")
     [ "{-# LaNgUaGe UnicodeSyntax #-}"
     , "sort ∷ Ord a ⇒ [a] → [a]"
     , "sort _ = []"
+    ]
+
+
+--------------------------------------------------------------------------------
+case03 :: Assertion
+case03 = assertSnippet (step False "LANGUAGE")
+    [ "x :: Int -> Int -> Int"
+    , "x = undefined"
+    ]
+    [ "x ∷ Int → Int → Int"
+    , "x = undefined"
     ]
