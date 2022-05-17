@@ -14,9 +14,9 @@ hsPkgs.shellFor {
   # You might want some extra tools in the shell (optional).
   # Some common tools can be added with the `tools` argument
   tools = {
-    cabal = "3.2.0.0";
-    hlint = "2.2.11";
-    stylish-haskell = "0.12.2.0";
+    cabal = "3.6.2.0";
+    hlint = "3.3.6";
+    haskell-language-server = "1.6.1.1";
   };
   # See overlays/tools.nix for more details
 
@@ -24,6 +24,7 @@ hsPkgs.shellFor {
   buildInputs = [
     pkgs.ghcid
     pkgs.nixpkgs-fmt
+    pkgs.stylish-haskell
   ];
 
   # Prevents cabal from choosing alternate plans, so that
