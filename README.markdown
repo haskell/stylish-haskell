@@ -168,8 +168,8 @@ for stylish-haskell. By changing the formatting provider option
 can use stylish-haskell for formatting.
 
 [HLS]: https://github.com/haskell/haskell-language-server
-[HLS option]: https://github.com/haskell/haskell-language-server#language-specific-server-options
-[HLS stylish-haskell Plugin]: https://github.com/haskell/haskell-language-server/blob/master/plugins/default/src/Ide/Plugin/StylishHaskell.hs
+[HLS option]: https://haskell-language-server.readthedocs.io/en/latest/configuration.html#language-specific-server-options
+[HLS stylish-haskell Plugin]: https://github.com/haskell/haskell-language-server/blob/master/plugins/hls-stylish-haskell-plugin/src/Ide/Plugin/StylishHaskell.hs
 [LSP]: https://microsoft.github.io/language-server-protocol/
 
 ### VIM integration
