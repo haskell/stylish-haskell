@@ -30,6 +30,7 @@ tests = testGroup "Language.Haskell.Stylish.Parse"
     , testCase "UnicodeSyntax extension"     testUnicodeSyntax
     , testCase "XmlSyntax regression"        testXmlSyntaxRegression
     , testCase "MagicHash regression"        testMagicHashRegression
+    , testCase "Disabling extensions"        testDisableExtensions
     ]
 
 --------------------------------------------------------------------------------
@@ -137,6 +138,13 @@ testMagicHashRegression :: Assertion
 testMagicHashRegression = returnsRight $ parseModule [] Nothing $ unlines
   [ "xs = \"foo\"#|1#|'a'#|bar#|Nil"
   ]
+
+testDisableExtensions :: Assertion
+testDisableExtensions = returnsRight $
+    parseModule ["NoImplicitPrelude"] Nothing $ unlines
+    [ "{-# NoStarIsType #-}"
+    , "main = return ()"
+    ]
 
 --------------------------------------------------------------------------------
 returnsRight :: HasCallStack => Show a => Either a b -> Assertion
