@@ -1,11 +1,7 @@
-resolver: lts-18.18
-compiler: ghc-9.0.1
+resolver: lts-19.12
 
 extra-deps:
 - 'ghc-lib-parser-9.2.2.20220307'
 - 'ghc-lib-parser-ex-9.2.0.3'
 
 save-hackage-creds: false
-nix:
-  packages:
-  - 'haskell.compiler.ghc901'
