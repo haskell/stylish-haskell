@@ -5,13 +5,11 @@ module Language.Haskell.Stylish.Parse
 
 
 --------------------------------------------------------------------------------
-import           Control.Monad                                      ((>=>))
 import           Data.List                                          (foldl',
                                                                      stripPrefix)
 import           Data.Maybe                                         (fromMaybe,
                                                                      listToMaybe,
                                                                      mapMaybe)
-import           Data.Traversable                                   (for)
 import qualified GHC.Data.StringBuffer                              as GHC
 import           GHC.Driver.Ppr                                     as GHC
 import qualified GHC.Driver.Session                                 as GHC
@@ -33,6 +31,15 @@ import           Language.Haskell.Stylish.Module
 
 --------------------------------------------------------------------------------
 type Extensions = [String]
+
+
+--------------------------------------------------------------------------------
+parseExtension :: String -> Either String (LangExt.Extension, Bool)
+parseExtension str = case GHCEx.readExtension str of
+    Just e  -> Right (e, True)
+    Nothing -> case str of
+        'N' : 'o' : str' -> fmap not <$> parseExtension str'
+        _                -> Left $ "Unknown extension: " ++ show str
 
 
 --------------------------------------------------------------------------------
@@ -60,23 +67,24 @@ dropBom str              = str
 parseModule :: Extensions -> Maybe FilePath -> String -> Either String Module
 parseModule externalExts0 fp string = do
     -- Parse extensions.
-    externalExts1 <- for externalExts0 $ \s -> case GHCEx.readExtension s of
-        Nothing -> Left $ "Unknown extension: " ++ show s
-        Just e  -> Right e
+    externalExts1 <- traverse parseExtension externalExts0
 
     -- Build first dynflags.
-    let dynFlags0 = foldl' turnOn baseDynFlags externalExts1
+    let dynFlags0 = foldl' toggleExt baseDynFlags externalExts1
 
     -- Parse options from file
     let fileOptions = fmap GHC.unLoc $ GHC.getOptions dynFlags0
             (GHC.stringToStringBuffer string)
             (fromMaybe "-" fp)
-        fileExtensions = mapMaybe
-            (stripPrefix "-X" >=> GHCEx.readExtension)
+        fileExtensions = mapMaybe (\str -> do
+            str' <- stripPrefix "-X" str
+            case parseExtension str' of
+                Left _  -> Nothing
+                Right x -> pure x)
             fileOptions
 
     -- Set further dynflags.
-    let dynFlags1 = foldl' turnOn dynFlags0 fileExtensions
+    let dynFlags1 = foldl' toggleExt dynFlags0 fileExtensions
             `GHC.gopt_set` GHC.Opt_KeepRawTokenStream
 
     -- Possibly strip CPP.
@@ -92,7 +100,7 @@ parseModule externalExts0 fp string = do
   where
     withFileName x = maybe "" (<> ": ") fp <> x
 
-    turnOn dynFlags ext = foldl'
-        turnOn
-        (GHC.xopt_set dynFlags ext)
-        [rhs | (lhs, True, rhs) <- GHC.impliedXFlags, lhs == ext]
+    toggleExt dynFlags (ext, onOff) = foldl'
+        toggleExt
+        ((if onOff then GHC.xopt_set else GHC.xopt_unset) dynFlags ext)
+        [(rhs, onOff') | (lhs, onOff', rhs) <- GHC.impliedXFlags, lhs == ext]
