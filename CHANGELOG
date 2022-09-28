@@ -1,5 +1,10 @@
 # CHANGELOG
 
+- 0.14.3.0 (2022-09-28)
+     * Fix parsing of NoXyz extensions
+     * Bump `Cabal` upper bound to 4.0
+     * Add option to automatically group imports (by Tikhon Jelvis)
+
 - 0.14.2.0 (2022-04-27)
      *  Add a build flag to force the use of ghc-lib-parser
 
