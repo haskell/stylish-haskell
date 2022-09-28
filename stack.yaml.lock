@@ -20,7 +20,7 @@ packages:
     hackage: ghc-lib-parser-ex-9.2.0.3
 snapshots:
 - completed:
-    size: 586296
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/18.yaml
-    sha256: 63539429076b7ebbab6daa7656cfb079393bf644971156dc349d7c0453694ac2
-  original: lts-18.18
+    size: 619158
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/12.yaml
+    sha256: d4d7a4ac80485f3c21d0c6bfe5e7a21c3f71ca4fdfea022f98574047ebb58ebb
+  original: lts-19.12
