@@ -1,4 +1,4 @@
-resolver: lts-19.12
+resolver: nightly-2022-06-06
 
 extra-deps:
 - 'ghc-lib-parser-9.2.2.20220307'
