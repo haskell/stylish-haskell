@@ -31,6 +31,7 @@ tests = testGroup "Language.Haskell.Stylish.Parse"
     , testCase "XmlSyntax regression"        testXmlSyntaxRegression
     , testCase "MagicHash regression"        testMagicHashRegression
     , testCase "Disabling extensions"        testDisableExtensions
+    , testCase "Safe extension"              testSafeExtension
     ]
 
 --------------------------------------------------------------------------------
@@ -142,7 +143,14 @@ testMagicHashRegression = returnsRight $ parseModule [] Nothing $ unlines
 testDisableExtensions :: Assertion
 testDisableExtensions = returnsRight $
     parseModule ["NoImplicitPrelude"] Nothing $ unlines
-    [ "{-# NoStarIsType #-}"
+    [ "{-# LANGUAGE NoStarIsType #-}"
+    , "main = return ()"
+    ]
+
+testSafeExtension :: Assertion
+testSafeExtension = returnsRight $
+    parseModule ["TrustWorthy"] Nothing $ unlines
+    [ "{-# LANGUAGE Safe #-}"
     , "main = return ()"
     ]
 

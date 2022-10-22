@@ -5,11 +5,14 @@ module Language.Haskell.Stylish.Parse
 
 
 --------------------------------------------------------------------------------
+import           Data.Char                                          (toLower)
 import           Data.List                                          (foldl',
                                                                      stripPrefix)
-import           Data.Maybe                                         (fromMaybe,
+import           Data.Maybe                                         (catMaybes,
+                                                                     fromMaybe,
                                                                      listToMaybe,
                                                                      mapMaybe)
+import           Data.Traversable                                   (for)
 import qualified GHC.Data.StringBuffer                              as GHC
 import           GHC.Driver.Ppr                                     as GHC
 import qualified GHC.Driver.Session                                 as GHC
@@ -34,12 +37,27 @@ type Extensions = [String]
 
 
 --------------------------------------------------------------------------------
-parseExtension :: String -> Either String (LangExt.Extension, Bool)
-parseExtension str = case GHCEx.readExtension str of
-    Just e  -> Right (e, True)
-    Nothing -> case str of
-        'N' : 'o' : str' -> fmap not <$> parseExtension str'
-        _                -> Left $ "Unknown extension: " ++ show str
+data ParseExtensionResult
+    -- | Actual extension, and whether we want to turn it on or off.
+    = ExtensionOk LangExt.Extension Bool
+    -- | Failed to parse extension.
+    | ExtensionError String
+    -- | Other LANGUAGE things that aren't really extensions, like 'Safe'.
+    | ExtensionIgnore
+
+
+--------------------------------------------------------------------------------
+parseExtension :: String -> ParseExtensionResult
+parseExtension str
+    | Just x <- GHCEx.readExtension str = ExtensionOk x True
+    | 'N' : 'o' : str' <- str           = case parseExtension str' of
+        ExtensionOk x onOff -> ExtensionOk x (not onOff)
+        result              -> result
+    | map toLower str `elem` ignores    = ExtensionIgnore
+    | otherwise                         = ExtensionError $
+        "Unknown extension: " ++ show str
+  where
+    ignores = ["unsafe", "trustworthy", "safe"]
 
 
 --------------------------------------------------------------------------------
@@ -67,7 +85,10 @@ dropBom str              = str
 parseModule :: Extensions -> Maybe FilePath -> String -> Either String Module
 parseModule externalExts0 fp string = do
     -- Parse extensions.
-    externalExts1 <- traverse parseExtension externalExts0
+    externalExts1 <- fmap catMaybes . for externalExts0 $ \str -> case parseExtension str of
+        ExtensionError err  -> Left err
+        ExtensionIgnore     -> pure Nothing
+        ExtensionOk x onOff -> pure $ Just (x, onOff)
 
     -- Build first dynflags.
     let dynFlags0 = foldl' toggleExt baseDynFlags externalExts1
@@ -79,8 +100,8 @@ parseModule externalExts0 fp string = do
         fileExtensions = mapMaybe (\str -> do
             str' <- stripPrefix "-X" str
             case parseExtension str' of
-                Left _  -> Nothing
-                Right x -> pure x)
+                ExtensionOk x onOff -> Just (x, onOff)
+                _                   -> Nothing)
             fileOptions
 
     -- Set further dynflags.
