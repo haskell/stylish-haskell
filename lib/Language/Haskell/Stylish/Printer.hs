@@ -136,14 +136,11 @@ putAllSpanComments suff = \case
 -- | Print any comment
 putComment :: GHC.EpaComment -> P ()
 putComment epaComment = case GHC.ac_tok epaComment of
-  GHC.EpaLineComment s     -> putText s
-  GHC.EpaDocCommentNext s  -> putText s
-  GHC.EpaDocCommentPrev s  -> putText s
-  GHC.EpaDocCommentNamed s -> putText s
-  GHC.EpaDocSection _ s    -> putText s
-  GHC.EpaDocOptions s      -> putText s
-  GHC.EpaBlockComment s    -> putText s
-  GHC.EpaEofComment        -> pure ()
+  GHC.EpaDocComment hs  -> putText $ show hs
+  GHC.EpaLineComment s  -> putText s
+  GHC.EpaDocOptions s   -> putText s
+  GHC.EpaBlockComment s -> putText s
+  GHC.EpaEofComment     -> pure ()
 
 putMaybeLineComment :: Maybe GHC.EpaComment -> P ()
 putMaybeLineComment = \case
@@ -176,6 +173,7 @@ nameAnnAdornment :: GHC.NameAnn -> (String, String)
 nameAnnAdornment = \case
     GHC.NameAnn {..}       -> fromAdornment nann_adornment
     GHC.NameAnnCommas {..} -> fromAdornment nann_adornment
+    GHC.NameAnnBars {..}   -> fromAdornment nann_adornment
     GHC.NameAnnOnly {..}   -> fromAdornment nann_adornment
     GHC.NameAnnRArrow {}   -> (mempty, mempty)
     GHC.NameAnnQuote {}    -> ("'", mempty)
@@ -216,7 +214,7 @@ putType ltp = case GHC.unLoc ltp of
       (comma >> space)
       (fmap putType xs)
     putText ")"
-  GHC.HsOpTy _ lhs op rhs -> do
+  GHC.HsOpTy _ _ lhs op rhs -> do
     putType lhs
     space
     putRdrName op

@@ -329,7 +329,7 @@ putConstructor cfg consIndent lcons = case GHC.unLoc lcons of
     -- Put argument to constructor first:
     case con_g_args of
       GHC.PrefixConGADT _ -> sep (comma >> space) $ fmap putRdrName con_names
-      GHC.RecConGADT _ -> error . mconcat $
+      GHC.RecConGADT _ _ -> error . mconcat $
           [ "Language.Haskell.Stylish.Step.Data.putConstructor: "
           , "encountered a GADT with record constructors, not supported yet"
           ]
@@ -351,7 +351,7 @@ putConstructor cfg consIndent lcons = case GHC.unLoc lcons of
         GHC.PrefixConGADT scaledTys -> forM_ scaledTys $ \scaledTy -> do
             putType $ GHC.hsScaledThing scaledTy
             space >> putText "->" >> space
-        GHC.RecConGADT _ -> error . mconcat $
+        GHC.RecConGADT _ _ -> error . mconcat $
             [ "Language.Haskell.Stylish.Step.Data.putConstructor: "
             , "encountered a GADT with record constructors, not supported yet"
             ]
@@ -370,7 +370,7 @@ putConstructor cfg consIndent lcons = case GHC.unLoc lcons of
       GHC.PrefixCon _tyargs args -> do
         putRdrName con_name
         unless (null args) space
-        sep space (fmap putOutputable args)
+        sep space (fmap (putOutputable . GHC.hsScaledThing) args)
       GHC.RecCon largs | _ : _ <- GHC.unLoc largs -> do
         putRdrName con_name
         skipToBrace
@@ -441,7 +441,7 @@ putNewtypeConstructor cfg lcons = case GHC.unLoc lcons of
     putRdrName con_name >> case con_args of
       GHC.PrefixCon _ args -> do
         unless (null args) space
-        sep space (fmap putOutputable args)
+        sep space (fmap (putOutputable . GHC.hsScaledThing) args)
       GHC.RecCon largs | [firstArg] <- GHC.unLoc largs -> do
         space
         putText "{"
@@ -514,7 +514,7 @@ putType' cfg lty = case GHC.unLoc lty of
         space
         putType' cfg tp
     GHC.HsQualTy GHC.NoExtField ctx tp -> do
-        forM_ ctx $ putContext cfg
+        putContext cfg ctx
         putType' cfg tp
     _ -> putType lty
 

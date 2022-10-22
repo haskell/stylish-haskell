@@ -11,15 +11,14 @@ import           Data.Maybe                                         (fromMaybe,
                                                                      listToMaybe,
                                                                      mapMaybe)
 import qualified GHC.Data.StringBuffer                              as GHC
+import qualified GHC.Driver.Config.Parser                           as GHC
 import           GHC.Driver.Ppr                                     as GHC
 import qualified GHC.Driver.Session                                 as GHC
 import qualified GHC.LanguageExtensions.Type                        as LangExt
-import qualified GHC.Parser.Errors.Ppr                              as GHC
 import qualified GHC.Parser.Header                                  as GHC
 import qualified GHC.Parser.Lexer                                   as GHC
 import qualified GHC.Types.SrcLoc                                   as GHC
 import qualified GHC.Utils.Error                                    as GHC
-import qualified GHC.Utils.Outputable                               as GHC
 import qualified Language.Haskell.GhclibParserEx.GHC.Driver.Session as GHCEx
 import qualified Language.Haskell.GhclibParserEx.GHC.Parser         as GHCEx
 
@@ -73,7 +72,7 @@ parseModule externalExts0 fp string = do
     let dynFlags0 = foldl' toggleExt baseDynFlags externalExts1
 
     -- Parse options from file
-    let fileOptions = fmap GHC.unLoc $ GHC.getOptions dynFlags0
+    let fileOptions = fmap GHC.unLoc $ snd $ GHC.getOptions (GHC.initParserOpts dynFlags0)
             (GHC.stringToStringBuffer string)
             (fromMaybe "-" fp)
         fileExtensions = mapMaybe (\str -> do
@@ -94,9 +93,11 @@ parseModule externalExts0 fp string = do
     -- Actual parse.
     case GHCEx.parseModule input dynFlags1 of
         GHC.POk _ m -> Right m
-        GHC.PFailed ps -> Left . withFileName . GHC.showSDoc dynFlags1 .
-            GHC.vcat . GHC.pprMsgEnvelopeBagWithLoc . fmap GHC.pprError . snd $
-            GHC.getMessages ps
+        -- GHC.PFailed ps -> Left . withFileName . GHC.showSDoc dynFlags1 .
+        --     GHC.vcat . GHC.pprMsgEnvelopeBagWithLoc . fmap GHC.pprError . snd $
+        --     GHC.getMessages ps
+        GHC.PFailed ps -> Left . withFileName . GHC.showSDoc dynFlags1 . GHC.pprMessages . snd $
+            GHC.getPsMessages ps
   where
     withFileName x = maybe "" (<> ": ") fp <> x
 

@@ -4,6 +4,7 @@
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE RecordWildCards            #-}
+{-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TupleSections              #-}
 module Language.Haskell.Stylish.Module
   ( -- * Data types
@@ -37,6 +38,7 @@ import           GHC.Hs                       (ImportDecl (..),
                                                ImportDeclQualifiedStyle (..))
 import qualified GHC.Hs                       as GHC
 import           GHC.Hs.Extension             (GhcPs)
+import qualified GHC.Types.PkgQual            as GHC
 import           GHC.Types.SrcLoc             (GenLocated (..),
                                                RealSrcSpan (..), unLoc)
 import qualified GHC.Types.SrcLoc             as GHC
@@ -49,6 +51,9 @@ import           Language.Haskell.Stylish.GHC
 
 --------------------------------------------------------------------------------
 type Lines = [String]
+
+deriving instance Eq GHC.RawPkgQual
+-- deriving instance Functor GHC.RawPkgQual
 
 
 --------------------------------------------------------------------------------

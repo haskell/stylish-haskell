@@ -37,13 +37,13 @@ import           Data.Maybe                    (maybeToList)
 import           Data.Typeable                 (cast)
 import           Debug.Trace                   (trace)
 import qualified GHC.Hs                        as Hs
-import qualified GHC.Types.SrcLoc as GHC
-import qualified GHC.Utils.Outputable                                as GHC
+import qualified GHC.Types.SrcLoc              as GHC
+import qualified GHC.Utils.Outputable          as GHC
 
 
 --------------------------------------------------------------------------------
+import           Language.Haskell.Stylish.GHC  (showOutputable)
 import           Language.Haskell.Stylish.Step
-import           Language.Haskell.Stylish.GHC (showOutputable)
 
 
 --------------------------------------------------------------------------------
@@ -202,8 +202,8 @@ withTail f (x : xs) = x : map f xs
 -- first and last element.
 flagEnds :: [a] -> [(a, Bool, Bool)]
 flagEnds = \case
-    [] -> []
-    [x] -> [(x, True, True)]
+    []         -> []
+    [x]        -> [(x, True, True)]
     x : y : zs -> (x, True, False) : go (y : zs)
   where
     go (x : y : zs) = (x, False, False) : go (y : zs)

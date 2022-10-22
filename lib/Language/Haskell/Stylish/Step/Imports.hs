@@ -41,12 +41,13 @@ import qualified Data.Text                         as T
 import qualified GHC.Data.FastString               as GHC
 import qualified GHC.Hs                            as GHC
 import qualified GHC.Types.Name.Reader             as GHC
+import qualified GHC.Types.PkgQual                 as GHC
 import qualified GHC.Types.SourceText              as GHC
 import qualified GHC.Types.SrcLoc                  as GHC
 import qualified GHC.Unit.Module.Name              as GHC
 import qualified GHC.Unit.Types                    as GHC
-import           Text.Regex.TDFA                   (Regex)
 import qualified Text.Regex.TDFA                   as Regex
+import           Text.Regex.TDFA                   (Regex)
 import           Text.Regex.TDFA.ReadRegex         (parseRegex)
 
 --------------------------------------------------------------------------------
@@ -358,8 +359,9 @@ printQualified Options{..} padNames stats ldecl = do
 
     let module_ = do
             moduleNamePosition <- length <$> getCurrentLine
-            forM_ (GHC.ideclPkgQual decl) $ \pkg ->
-                putText (stringLiteral pkg) >> space
+            case GHC.ideclPkgQual decl of
+              GHC.NoRawPkgQual   -> pure ()
+              GHC.RawPkgQual pkg -> putText (stringLiteral pkg) >> space
             putText (importModuleName decl)
 
             -- Only print spaces if something follows.
@@ -584,8 +586,8 @@ importStats i =
 importModuleNameLength :: GHC.ImportDecl GHC.GhcPs -> Int
 importModuleNameLength imp =
     (case GHC.ideclPkgQual imp of
-        Nothing -> 0
-        Just sl -> 1 + length (stringLiteral sl)) +
+        GHC.NoRawPkgQual  -> 0
+        GHC.RawPkgQual sl -> 1 + length (stringLiteral sl)) +
     (length $ importModuleName imp)
 
 
