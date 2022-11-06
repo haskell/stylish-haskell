@@ -97,9 +97,10 @@ step cfg = makeStep "Data" \ls m -> Editor.apply (changes m) ls
         ldecl <- GHC.hsmodDecls $ GHC.unLoc m
         GHC.TyClD _ tycld <- pure $ GHC.unLoc ldecl
         loc <- maybeToList $ GHC.srcSpanToRealSrcSpan $ GHC.getLocA ldecl
+        let lastInlineComment = GHC.ann $ GHC.getLoc ldecl
         case tycld of
             GHC.DataDecl {..} -> pure $ MkDataDecl
-                { dataComments = epAnnComments tcdDExt
+                { dataComments = epAnnComments lastInlineComment <> epAnnComments tcdDExt
                 , dataLoc      = loc
                 , dataDeclName = tcdLName
                 , dataTypeVars = tcdTyVars
