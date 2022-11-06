@@ -1368,6 +1368,9 @@ case65 = assertSnippet (step indentIndentStyle) input input
         , "  deriving (Show)"
         ]
 
+-- | Deriving alignment for enums
+--
+-- Regression test for https://github.com/haskell/stylish-haskell/issues/411
 case66 :: Assertion
 case66 = assertSnippet (step indentIndentStyle) input input
   where
@@ -1375,6 +1378,7 @@ case66 = assertSnippet (step indentIndentStyle) input input
       [ "data Tmp1 = A | B | C"
       , "  deriving (Eq, Show)"
       ]
+
 sameSameStyle :: Config
 sameSameStyle = Config SameLine SameLine 2 2 False True SameLine False True NoMaxColumns
 
