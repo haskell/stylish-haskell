@@ -425,7 +425,8 @@ case20 = assertSnippet (step indentIndentStyle) input input
     input =
        [ "module Herp where"
        , ""
-       , "data Tag = Title | Text deriving (Eq, Show)"
+       , "data Tag = Title | Text"
+       , "  deriving (Eq, Show)"
        ]
 
 case21 :: Assertion
@@ -1162,7 +1163,8 @@ case55 :: Assertion
 case55 = assertSnippet (step sameSameNoSortStyle) input expected
   where
     input =
-       [ "data Foo = Foo deriving (Z, Y, X, Bar, Abcd)"
+       [ "data Foo = Foo"
+       , "  deriving (Z, Y, X, Bar, Abcd)"
        ]
 
     expected = input
