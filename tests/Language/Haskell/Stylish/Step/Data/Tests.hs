@@ -78,6 +78,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 63 (issue #338)" case63
     , testCase "case 64" case64
     , testCase "case 65" case65
+    , testCase "case 66 (issue #411)" case66
     ]
 
 case00 :: Assertion
@@ -1367,6 +1368,13 @@ case65 = assertSnippet (step indentIndentStyle) input input
         , "  deriving (Show)"
         ]
 
+case66 :: Assertion
+case66 = assertSnippet (step indentIndentStyle) input input
+  where
+    input =
+      [ "data Tmp1 = A | B | C"
+      , "  deriving (Eq, Show)"
+      ]
 sameSameStyle :: Config
 sameSameStyle = Config SameLine SameLine 2 2 False True SameLine False True NoMaxColumns
 
