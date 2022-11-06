@@ -1,4 +1,4 @@
-resolver: nightly-2022-06-06
+resolver: nightly-2022-11-05
 
 extra-deps:
   - ghc-lib-parser-9.4.2.20220822@sha256:566b1ddecee9e526f62dadc98dfc89e0f72f5d0d03ebc628c528f9d51b4a5681,14156
