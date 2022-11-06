@@ -93,9 +93,6 @@ parseModule externalExts0 fp string = do
     -- Actual parse.
     case GHCEx.parseModule input dynFlags1 of
         GHC.POk _ m -> Right m
-        -- GHC.PFailed ps -> Left . withFileName . GHC.showSDoc dynFlags1 .
-        --     GHC.vcat . GHC.pprMsgEnvelopeBagWithLoc . fmap GHC.pprError . snd $
-        --     GHC.getMessages ps
         GHC.PFailed ps -> Left . withFileName . GHC.showSDoc dynFlags1 . GHC.pprMessages . snd $
             GHC.getPsMessages ps
   where

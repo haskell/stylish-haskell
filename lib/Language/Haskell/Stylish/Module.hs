@@ -53,8 +53,6 @@ import           Language.Haskell.Stylish.GHC
 type Lines = [String]
 
 deriving instance Eq GHC.RawPkgQual
--- deriving instance Functor GHC.RawPkgQual
-
 
 --------------------------------------------------------------------------------
 -- | Concrete module type
