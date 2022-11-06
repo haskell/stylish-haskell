@@ -1377,7 +1377,7 @@ case66 :: Assertion
 case66 = assertSnippet (step indentIndentStyle) input input
   where
     input =
-      [ "data Tmp1 = A | B | C"
+      [ "data Foo = A | B | C"
       , "  deriving (Eq, Show)"
       ]
 
