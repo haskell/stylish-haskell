@@ -196,8 +196,9 @@ putDataDecl cfg@Config {..} decl = do
     let derivingComments = deepAnnComments (GHC.dd_derivs defn)
 
     when (hasDeriving decl) do
-        if onelineEnum && null derivingComments then
-            space
+        if onelineEnum && null derivingComments then do
+            newline
+            spaces cDeriving
         else do
             forM_ derivingComments $ \lc -> do
                 newline
