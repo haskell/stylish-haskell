@@ -9,7 +9,7 @@ import           Data.Either                              (isRight)
 import           Data.List                                (nub)
 import           Data.Maybe                               (maybeToList)
 import qualified Distribution.PackageDescription          as Cabal
-import qualified Distribution.PackageDescription.Parsec   as Cabal
+import qualified Distribution.Simple.PackageDescription   as Cabal
 import qualified Distribution.Simple.Utils                as Cabal
 import qualified Distribution.Verbosity                   as Cabal
 import qualified Language.Haskell.Extension               as Language
@@ -40,7 +40,7 @@ findCabalFile verbose = do
     _ -> do
       verbose $ ".cabal file not found, directories searched: " <>
         show potentialProjectRoots
-      verbose $ "Stylish Haskell will work basing on LANGUAGE pragmas in source files."
+      verbose "Stylish Haskell will work basing on LANGUAGE pragmas in source files."
       return Nothing
 
 
