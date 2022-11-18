@@ -163,6 +163,7 @@ file sa conf mfp = do
                 Just _    | not (saInPlace sa) -> putStrNewline new
                 Just path | not (null new) && old /= new  ->
                     IO.withFile path IO.WriteMode $ \h -> do
+                        IO.hSetEncoding h IO.utf8
                         setNewlineMode h
                         IO.hPutStr h new
                 _ -> return ()
