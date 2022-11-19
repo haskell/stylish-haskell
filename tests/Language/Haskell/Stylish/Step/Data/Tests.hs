@@ -80,6 +80,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 65" case65
     , testCase "case 66 (issue #411)" case66
     , testCase "case 67 (issue #425)" case67
+    , testCase "case 68 (issue #426)" case68
     ]
 
 case00 :: Assertion
@@ -1398,6 +1399,23 @@ case67 = assertSnippet (step indentIndentStyle) input input
       , "  = Foo' Int -- ^ foo"
       , "  | Bar' Int -- ^ bar"
       , "  | Baz' Int -- ^ baz"
+      ]
+
+-- | Inline comment at the different line, than the start of the block
+-- (record constructor)
+--
+-- Regression test for https://github.com/haskell/stylish-haskell/issues/426
+case68 :: Assertion
+case68 = assertSnippet (step indentIndentStyle) input input
+  where
+    input =
+      [ "data Foo"
+      , "  = Foo"
+      , "      { foo :: Int"
+      , "      } -- ^ foo"
+      , "  | Bar"
+      , "      { bar :: Int"
+      , "      } -- ^ bar"
       ]
 
 sameSameStyle :: Config
