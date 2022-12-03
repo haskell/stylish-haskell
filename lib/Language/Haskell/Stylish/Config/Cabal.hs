@@ -5,16 +5,21 @@ module Language.Haskell.Stylish.Config.Cabal
 
 
 --------------------------------------------------------------------------------
+import           Control.Monad                            (unless)
+import qualified Data.ByteString.Char8                    as BS
 import           Data.Either                              (isRight)
+import           Data.Foldable                            (traverse_)
 import           Data.List                                (nub)
 import           Data.Maybe                               (maybeToList)
 import qualified Distribution.PackageDescription          as Cabal
 import qualified Distribution.PackageDescription.Parsec   as Cabal
+import qualified Distribution.Parsec                      as Cabal
 import qualified Distribution.Simple.Utils                as Cabal
 import qualified Distribution.Verbosity                   as Cabal
 import qualified Language.Haskell.Extension               as Language
 import           Language.Haskell.Stylish.Verbose
-import           System.Directory                         (getCurrentDirectory)
+import           System.Directory                         (doesFileExist,
+                                                           getCurrentDirectory)
 
 
 --------------------------------------------------------------------------------
@@ -49,7 +54,7 @@ findCabalFile verbose = do
 readDefaultLanguageExtensions :: Verbose -> FilePath -> IO [Language.KnownExtension]
 readDefaultLanguageExtensions verbose cabalFile = do
   verbose $ "Parsing " <> cabalFile <> "..."
-  packageDescription <- Cabal.readGenericPackageDescription Cabal.silent cabalFile
+  packageDescription <- readGenericPackageDescription Cabal.silent cabalFile
   let library :: [Cabal.Library]
       library = maybeToList $ fst . Cabal.ignoreConditions <$>
         Cabal.condLibrary packageDescription
@@ -89,3 +94,23 @@ readDefaultLanguageExtensions verbose cabalFile = do
                         "invalid LANGUAGE pragma:  " <> show x
   verbose $ "Gathered default-extensions: " <> show defaultExtensions
   pure $ nub defaultExtensions
+
+readGenericPackageDescription :: Cabal.Verbosity -> FilePath -> IO Cabal.GenericPackageDescription
+readGenericPackageDescription = readAndParseFile Cabal.parseGenericPackageDescription
+  where
+    readAndParseFile parser verbosity fpath = do
+      exists <- doesFileExist fpath
+      unless exists $
+        Cabal.die' verbosity $
+          "Error Parsing: file \"" ++ fpath ++ "\" doesn't exist. Cannot continue."
+      bs <- BS.readFile fpath
+      parseString parser verbosity fpath bs
+
+    parseString parser verbosity name bs = do
+      let (warnings, result) = Cabal.runParseResult (parser bs)
+      traverse_ (Cabal.warn verbosity . Cabal.showPWarning name) warnings
+      case result of
+          Right x -> return x
+          Left (_, errors) -> do
+              traverse_ (Cabal.warn verbosity . Cabal.showPError name) errors
+              Cabal.die' verbosity $ "Failed parsing \"" ++ name ++ "\"."

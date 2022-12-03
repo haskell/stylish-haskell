@@ -15,13 +15,13 @@ import           Data.Foldable                   (toList)
 import           Data.List                       (foldl', foldl1', sortOn)
 import           Data.Maybe                      (fromMaybe)
 import qualified GHC.Hs                          as Hs
-import qualified GHC.Parser.Annotation as GHC
-import qualified GHC.Types.SrcLoc as GHC
+import qualified GHC.Parser.Annotation           as GHC
+import qualified GHC.Types.SrcLoc                as GHC
 
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Align
-import          qualified Language.Haskell.Stylish.Editor as Editor
+import qualified Language.Haskell.Stylish.Editor as Editor
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
@@ -88,7 +88,7 @@ fieldDeclToAlignable
     :: GHC.LocatedA (Hs.ConDeclField Hs.GhcPs) -> Maybe (Alignable GHC.RealSrcSpan)
 fieldDeclToAlignable (GHC.L matchLoc (Hs.ConDeclField _ names ty _)) = do
   matchPos <- GHC.srcSpanToRealSrcSpan $ GHC.locA matchLoc
-  leftPos  <- GHC.srcSpanToRealSrcSpan $ GHC.getLoc $ last names
+  leftPos  <- GHC.srcSpanToRealSrcSpan $ GHC.getLocA $ last names
   tyPos    <- GHC.srcSpanToRealSrcSpan $ GHC.getLocA ty
   Just $ Alignable
     { aContainer = matchPos
@@ -162,9 +162,9 @@ multiWayIfToAlignable _conf _ = []
 
 --------------------------------------------------------------------------------
 grhsToAlignable
-    :: GHC.Located (Hs.GRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs))
+    :: GHC.GenLocated (GHC.SrcSpanAnn' a) (Hs.GRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs))
     -> Maybe (Alignable GHC.RealSrcSpan)
-grhsToAlignable (GHC.L grhsloc (Hs.GRHS _ guards@(_ : _) body)) = do
+grhsToAlignable (GHC.L (GHC.SrcSpanAnn _ grhsloc) (Hs.GRHS _ guards@(_ : _) body)) = do
     let guardsLocs = map GHC.getLocA guards
         bodyLoc    = GHC.getLocA $ body
         left       = foldl1' GHC.combineSrcSpans guardsLocs

@@ -69,7 +69,6 @@ printModuleHeader :: Maybe Int -> Config -> Lines -> Module -> Lines
 printModuleHeader maxCols conf ls lmodul =
     let modul = GHC.unLoc lmodul
         name = GHC.unLoc <$> GHC.hsmodName modul
-        haddocks = GHC.hsmodHaddockModHeader modul
 
         startLine = fromMaybe 1 $ moduleLine <|>
             (fmap GHC.srcSpanStartLine . GHC.srcSpanToRealSrcSpan $
@@ -108,7 +107,7 @@ printModuleHeader maxCols conf ls lmodul =
         printedModuleHeader = runPrinter_
             (PrinterConfig maxCols)
             (printHeader
-                conf name exportGroups haddocks moduleComment whereComment)
+                conf name exportGroups moduleComment whereComment)
 
         changes = Editor.changeLines
             (Editor.Block startLine endLine)
@@ -122,11 +121,10 @@ printHeader
     :: Config
     -> Maybe GHC.ModuleName
     -> Maybe [CommentGroup (GHC.LIE GHC.GhcPs)]
-    -> Maybe GHC.LHsDocString
     -> Maybe GHC.LEpaComment  -- Comment attached to 'module'
     -> Maybe GHC.LEpaComment  -- Comment attached to 'where'
     -> P ()
-printHeader conf mbName mbExps _ mbModuleComment mbWhereComment = do
+printHeader conf mbName mbExps mbModuleComment mbWhereComment = do
     forM_ mbName $ \name -> do
         putText "module"
         space
