@@ -37,7 +37,7 @@ squash l r
 --------------------------------------------------------------------------------
 squashFieldDecl :: GHC.ConDeclField GHC.GhcPs -> Editor.Edits
 squashFieldDecl (GHC.ConDeclField ext names@(_ : _) type' _)
-    | Just left <- GHC.srcSpanToRealSrcSpan . GHC.getLoc $ last names
+    | Just left <- GHC.srcSpanToRealSrcSpan . GHC.getLocA $ last names
     , Just sep <- fieldDeclSeparator ext
     , Just right <- GHC.srcSpanToRealSrcSpan $ GHC.getLocA type' =
         squash left sep <> squash sep right
