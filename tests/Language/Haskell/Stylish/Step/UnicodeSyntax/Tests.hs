@@ -28,6 +28,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.UnicodeSyntax.Tests"
     , testCase "case 07 (do notation)" case07
     , testCase "case 08 (arrow syntax)" case08
     , testCase "case 09 (TH quotes)" case09
+    , testCase "case 10 (Star type)" case10
     ]
 
 
@@ -165,4 +166,15 @@ case09 = assertSnippet (step False "LANGUAGE")
     [ "{-# LANGUAGE QuasiQuotes #-}"
     , ""
     , "exp = ⟦ 2 + 2 ⟧"
+    ]
+
+case10 :: Assertion
+case10 = assertSnippet (step False "LANGUAGE")
+    [ "{-# LANGUAGE KindSignatures #-}"
+    , ""
+    , "data A (a :: *) = A a"
+    ]
+    [ "{-# LANGUAGE KindSignatures #-}"
+    , ""
+    , "data A (a ∷ ★) = A a"
     ]

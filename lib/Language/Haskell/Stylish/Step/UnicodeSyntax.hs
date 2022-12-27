@@ -2,6 +2,7 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE PartialTypeSignatures #-}
 module Language.Haskell.Stylish.Step.UnicodeSyntax
     ( step
     ) where
@@ -63,6 +64,15 @@ hsAddEpAnnReplacements _ = mempty
 
 
 --------------------------------------------------------------------------------
+hsStarTyReplacements :: GHC.LHsKind GHC.GhcPs -> Editor.Edits
+hsStarTyReplacements (GHC.L loc (GHC.HsStarTy _ False))
+    | (GHC.SrcSpanAnn _ (GHC.RealSrcSpan l _)) <- loc =
+    Editor.replaceRealSrcSpan l "★"
+hsStarTyReplacements _ = mempty
+
+
+
+--------------------------------------------------------------------------------
 step :: Bool -> String -> Step
 step = (makeStep "UnicodeSyntax" .) . step'
 
@@ -71,7 +81,9 @@ step = (makeStep "UnicodeSyntax" .) . step'
 step' :: Bool -> String -> Lines -> Module -> Lines
 step' alp lg ls modu = Editor.apply edits ls
   where
-    edits = foldMap hsArrowReplacements  (everything  modu) <>
+    edits =
+        foldMap hsArrowReplacements (everything modu) <>
         foldMap hsAnnContextReplacements (everything modu) <>
         foldMap hsAddEpAnnReplacements (everything modu) <>
+        foldMap hsStarTyReplacements (everything modu) <>
         (if alp then addLanguagePragma lg "UnicodeSyntax" modu else mempty)
