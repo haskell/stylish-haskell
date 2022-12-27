@@ -22,6 +22,8 @@ tests = testGroup "Language.Haskell.Stylish.Step.UnicodeSyntax.Tests"
     [ testCase "case 01" case01
     , testCase "case 02" case02
     , testCase "case 03" case03
+    , testCase "case 04 (GADTs)" case04
+    , testCase "case 05 (Linear types)" case05
     ]
 
 
@@ -57,4 +59,38 @@ case03 = assertSnippet (step False "LANGUAGE")
     ]
     [ "x ∷ Int → Int → Int"
     , "x = undefined"
+    ]
+
+case04 :: Assertion
+case04 = assertSnippet (step False "LANGUAGE")
+    [ "data Foo where"
+    , "  Foo0 :: Foo"
+    , "  Foo1 :: Int -> Foo"
+    , "  Foo2 :: Int -> Bool -> Foo"
+    , "  FooC :: Show a => a -> Foo"
+    ]
+    [ "data Foo where"
+    , "  Foo0 ∷ Foo"
+    , "  Foo1 ∷ Int → Foo"
+    , "  Foo2 ∷ Int → Bool → Foo"
+    , "  FooC ∷ Show a ⇒ a → Foo"
+    ]
+
+case05 :: Assertion
+case05 = assertSnippet (step False "LANGUAGE")
+    [ "{-# LANGUAGE LinearTypes #-}"
+    , ""
+    , "construct :: Int -> a %1 -> T1 a"
+    , "construct _ x = MkT1 x"
+    , ""
+    , "data T3 a m where"
+    , "  MkT3 :: a %m -> T3 a m"
+    ]
+    [ "{-# LANGUAGE LinearTypes #-}"
+    , ""
+    , "construct ∷ Int → a %1 → T1 a"
+    , "construct _ x = MkT1 x"
+    , ""
+    , "data T3 a m where"
+    , "  MkT3 ∷ a %m → T3 a m"
     ]
