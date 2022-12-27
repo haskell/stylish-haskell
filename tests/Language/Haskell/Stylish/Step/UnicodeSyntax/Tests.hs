@@ -24,6 +24,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.UnicodeSyntax.Tests"
     , testCase "case 03" case03
     , testCase "case 04 (GADTs)" case04
     , testCase "case 05 (Linear types)" case05
+    , testCase "case 06 (Forall)" case06
     ]
 
 
@@ -93,4 +94,29 @@ case05 = assertSnippet (step False "LANGUAGE")
     , ""
     , "data T3 a m where"
     , "  MkT3 ∷ a %m → T3 a m"
+    ]
+
+case06 :: Assertion
+case06 = assertSnippet (step False "LANGUAGE")
+    [ "{-# LANGUAGE ScopedTypeVariables #-}"
+    , ""
+    , "err :: forall a. a"
+    , "err = undefined"
+    , ""
+    , "foo :: forall a. Int -> (forall b. Show b => b -> a) -> Bool"
+    , "foo = undefined"
+    , ""
+    , "data Foo where"
+    , "  Foo :: forall a. Show a => a -> Foo"
+    ]
+    [ "{-# LANGUAGE ScopedTypeVariables #-}"
+    , ""
+    , "err ∷ ∀ a. a"
+    , "err = undefined"
+    , ""
+    , "foo ∷ ∀ a. Int → (∀ b. Show b ⇒ b → a) → Bool"
+    , "foo = undefined"
+    , ""
+    , "data Foo where"
+    , "  Foo ∷ ∀ a. Show a ⇒ a → Foo"
     ]

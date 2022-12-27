@@ -41,9 +41,10 @@ hsAnnContextReplacements (GHC.AnnContext{GHC.ac_darrow})
 
 --------------------------------------------------------------------------------
 hsAddEpAnnReplacements :: GHC.AddEpAnn -> Editor.Edits
-hsAddEpAnnReplacements (GHC.AddEpAnn GHC.AnnDcolon epaLoc)
-    | GHC.EpaSpan loc <- epaLoc =
-        Editor.replaceRealSrcSpan loc "∷"
+hsAddEpAnnReplacements (GHC.AddEpAnn el (GHC.EpaSpan loc)) = case el of
+    GHC.AnnDcolon -> Editor.replaceRealSrcSpan loc "∷"
+    GHC.AnnForall -> Editor.replaceRealSrcSpan loc "∀"
+    _ -> mempty
 hsAddEpAnnReplacements _ = mempty
 
 
