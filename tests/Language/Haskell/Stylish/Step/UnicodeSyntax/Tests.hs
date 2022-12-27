@@ -25,6 +25,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.UnicodeSyntax.Tests"
     , testCase "case 04 (GADTs)" case04
     , testCase "case 05 (Linear types)" case05
     , testCase "case 06 (Forall)" case06
+    , testCase "case 07 (do notation)" case07
     ]
 
 
@@ -119,4 +120,17 @@ case06 = assertSnippet (step False "LANGUAGE")
     , ""
     , "data Foo where"
     , "  Foo ∷ ∀ a. Show a ⇒ a → Foo"
+    ]
+
+case07 :: Assertion
+case07 = assertSnippet (step False "LANGUAGE")
+    [ "main :: IO ()"
+    , "  main = do"
+    , "  s <- getLine"
+    , "  putStrLn s"
+    ]
+    [ "main ∷ IO ()"
+    , "  main = do"
+    , "  s ← getLine"
+    , "  putStrLn s"
     ]
