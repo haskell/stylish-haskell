@@ -26,6 +26,8 @@ tests = testGroup "Language.Haskell.Stylish.Step.UnicodeSyntax.Tests"
     , testCase "case 05 (Linear types)" case05
     , testCase "case 06 (Forall)" case06
     , testCase "case 07 (do notation)" case07
+    , testCase "case 08 (arrow syntax)" case08
+    , testCase "case 09 (TH quotes)" case09
     ]
 
 
@@ -133,4 +135,34 @@ case07 = assertSnippet (step False "LANGUAGE")
     , "  main = do"
     , "  s ← getLine"
     , "  putStrLn s"
+    ]
+
+case08 :: Assertion
+case08 = assertSnippet (step False "LANGUAGE")
+    [ "{-# LANGUAGE Arrows #-}"
+    , ""
+    , "a = proc x -> do"
+    , "  y <- f -< x+1"
+    , "  (|untilA (increment -< x+y) (within 0.5 -< x)|)"
+    , ""
+    , "b = proc x -> f x -<< x+1"
+    ]
+    [ "{-# LANGUAGE Arrows #-}"
+    , ""
+    , "a = proc x → do"
+    , "  y ← f ⤙ x+1"
+    , "  ⦇untilA (increment ⤙ x+y) (within 0.5 ⤙ x)⦈"
+    , ""
+    , "b = proc x → f x ⤛ x+1"
+    ]
+
+case09 :: Assertion
+case09 = assertSnippet (step False "LANGUAGE")
+    [ "{-# LANGUAGE QuasiQuotes #-}"
+    , ""
+    , "exp = [| 2 + 2 |]"
+    ]
+    [ "{-# LANGUAGE QuasiQuotes #-}"
+    , ""
+    , "exp = ⟦ 2 + 2 ⟧"
     ]

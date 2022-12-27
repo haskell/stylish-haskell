@@ -45,6 +45,19 @@ hsAddEpAnnReplacements (GHC.AddEpAnn el (GHC.EpaSpan loc)) = case el of
     GHC.AnnDcolon -> Editor.replaceRealSrcSpan loc "∷"
     GHC.AnnForall -> Editor.replaceRealSrcSpan loc "∀"
     GHC.AnnLarrow -> Editor.replaceRealSrcSpan loc "←"
+    GHC.Annlarrowtail -> Editor.replaceRealSrcSpan loc "⤙"
+    GHC.Annrarrowtail -> Editor.replaceRealSrcSpan loc "→"
+    GHC.AnnLarrowtail -> Editor.replaceRealSrcSpan loc "⤛"
+    GHC.AnnRarrowtail -> Editor.replaceRealSrcSpan loc "⤜"
+    GHC.AnnOpenB  -> Editor.replaceRealSrcSpan loc "⦇"
+    GHC.AnnCloseB -> Editor.replaceRealSrcSpan loc "⦈"
+    GHC.AnnOpenEQ -> Editor.replaceRealSrcSpan loc "⟦"
+    GHC.AnnCloseQ -> Editor.replaceRealSrcSpan loc "⟧"
+    -- doesn't work here, as far as I can see, so implemented
+    -- in separate functions:
+    GHC.AnnDarrow -> Editor.replaceRealSrcSpan loc "⇒"
+    GHC.AnnRarrow -> Editor.replaceRealSrcSpan loc "→"
+
     _ -> mempty
 hsAddEpAnnReplacements _ = mempty
 
