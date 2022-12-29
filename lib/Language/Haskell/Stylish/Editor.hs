@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE BlockArguments #-}
 
 --------------------------------------------------------------------------------
 -- | This module provides you with a line-based editor. It's main feature is
@@ -24,12 +25,18 @@ module Language.Haskell.Stylish.Editor
 
 --------------------------------------------------------------------------------
 import qualified Data.Map                       as M
-import           Data.Maybe                     (fromMaybe)
+import           Data.Maybe                     (fromMaybe, mapMaybe)
 import qualified GHC.Types.SrcLoc               as GHC
 
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Block
+import Language.Haskell.Stylish.Module (Module)
+import Language.Haskell.Stylish.Util (everything)
+import qualified GHC.Hs as GHC
+import Data.Char (toLower)
+import Data.List (sortOn)
+import Data.Foldable (foldl')
 
 
 --------------------------------------------------------------------------------
@@ -41,6 +48,16 @@ data Change
     -- | Replace (startCol, endCol) by the given string on this line.
     | CLine Int Int String
 
+
+changeLength :: Change -> Int
+changeLength (CBlock n _) = n
+changeLength _            = 1
+
+--------------------------------------------------------------------------------
+type RowRange = (Int, Int)
+
+disjoint :: RowRange -> RowRange -> Bool
+disjoint (l1, r1) (l2, r2) = r1 < l2 || r2 < l1
 
 --------------------------------------------------------------------------------
 -- | Due to the function in CBlock we cannot write a lawful Ord instance, but
@@ -165,12 +182,13 @@ conflicts (Edits edits) = M.toAscList edits >>= uncurry checkChanges
 
 
 --------------------------------------------------------------------------------
-apply :: Edits -> [String] -> [String]
-apply (Edits edits) = case conflicts (Edits edits) of
+apply :: Edits -> Module -> [String] -> [String]
+apply allEdits modul  = case conflicts edits of
     c : _ -> error $ "Language.Haskell.Stylish.Editor: " ++ prettyConflict c
     _     -> go 1 (editsFor 1)
   where
-    editsFor i = fromMaybe [] $ M.lookup i edits
+    edits = filterEdits allEdits modul
+    editsFor i = fromMaybe [] $ M.lookup i (unEdits edits)
 
     go _ _ [] = []
     go i [] (l : ls) = l : go (i + 1) (editsFor $ i + 1) ls
@@ -189,3 +207,33 @@ apply (Edits edits) = case conflicts (Edits edits) of
             let offset = length x - (xend - xstart) in
             CLine (ystart + offset) (yend + offset) y
         | otherwise     = CLine ystart yend y
+
+-------------------------------------------------------------------------------
+filterEdits :: Edits -> Module -> Edits
+filterEdits (Edits allEdits) modu = Edits $ M.mapWithKey filt allEdits
+    where
+        filt start = filter \change ->
+            let rng = (start, start + changeLength change)
+             in all (rng `disjoint`) disRngs
+        switches = sortOn fst . mapMaybe getSwitch $ everything modu
+        disRngs = fst $ foldl' step ([], Nothing) switches
+
+        step (xs, Nothing) (start, StylishDisable)
+            = (xs, Just start)
+        step (xs, Just start) (stop, StylishEnable)
+            = (xs ++ [(start, stop)], Nothing)
+        step state _ = state
+
+data Switch = StylishEnable | StylishDisable
+    deriving (Eq, Ord, Show)
+
+getSwitch :: GHC.LEpaComment -> Maybe (Int, Switch)
+getSwitch (GHC.L l (GHC.EpaComment comm _))
+    | GHC.EpaBlockComment str <- comm
+    , ["{-", str', "-}"] <- words str
+    , line <- GHC.srcLocLine (GHC.realSrcSpanStart (GHC.anchor l))
+                = case toLower <$> str' of
+                    "stylish_disable" -> Just (line, StylishDisable)
+                    "stylish_enable"  -> Just (line, StylishEnable)
+                    _                 -> Nothing
+    | otherwise = Nothing

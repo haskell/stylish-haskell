@@ -87,7 +87,7 @@ defaultConfig = Config
     }
 
 step :: Config -> Step
-step cfg = makeStep "Data" \ls m -> Editor.apply (changes m) ls
+step cfg = makeStep "Data" \ls m -> Editor.apply (changes m) m ls
   where
     changes :: Module -> Editor.Edits
     changes = foldMap (formatDataDecl cfg) . dataDecls

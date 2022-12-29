@@ -113,7 +113,7 @@ printModuleHeader maxCols conf ls lmodul =
             (Editor.Block startLine endLine)
             (const printedModuleHeader) in
 
-    Editor.apply changes ls
+    Editor.apply changes lmodul ls
   where
     doSort = if sort conf then fmap (commentGroupSort compareLIE) else id
 

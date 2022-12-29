@@ -44,7 +44,7 @@ step = (makeStep "UnicodeSyntax" .) . step'
 
 --------------------------------------------------------------------------------
 step' :: Bool -> String -> Lines -> Module -> Lines
-step' alp lg ls modu = Editor.apply edits ls
+step' alp lg ls modu = Editor.apply edits modu ls
   where
     edits =
         foldMap hsTyReplacements (everything modu) <>

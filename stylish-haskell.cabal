@@ -122,6 +122,7 @@ Test-suite stylish-haskell-tests
     Language.Haskell.Stylish.Config.Tests
     Language.Haskell.Stylish.Parse.Tests
     Language.Haskell.Stylish.Regressions
+    Language.Haskell.Stylish.Disabling
     Language.Haskell.Stylish.Step.Data.Tests
     Language.Haskell.Stylish.Step.Imports.FelixTests
     Language.Haskell.Stylish.Step.Imports.Tests

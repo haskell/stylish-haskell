@@ -196,4 +196,4 @@ step maxColumns config = makeStep "Cases" $ \ls module' ->
             changes records (recordToAlignable config) <>
             changes everything (matchGroupToAlignable config) <>
             changes everything (multiWayIfToAlignable config) in
-    Editor.apply configured ls
+    Editor.apply configured module' ls
