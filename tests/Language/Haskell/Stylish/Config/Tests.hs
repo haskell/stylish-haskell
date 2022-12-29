@@ -29,6 +29,10 @@ tests = testGroup "Language.Haskell.Stylish.Config"
                testExtensionsFromDotStylish
     , testCase "Extensions extracted correctly from .stylish-haskell.yaml and .cabal files"
                testExtensionsFromBoth
+    , testCase "NoXyz extensions from .stylish-haskell.yaml file"
+               testStylishNoXyz
+    , testCase "NoXyz extensions from .cabal file"
+               testCabalNoXyz
     , testCase "Correctly read .stylish-haskell.yaml file with default max column number"
                testDefaultColumns
     , testCase "Correctly read .stylish-haskell.yaml file with specified max column number"
@@ -111,6 +115,16 @@ testExtensionsFromBoth = testExtensions
     [ cabalCfg dotCabal ["ScopedTypeVariables"] ["DataKinds"]
     , stylishCfg dotStylish ["TemplateHaskell", "QuasiQuotes"]
     ]
+
+--------------------------------------------------------------------------------
+testStylishNoXyz :: Assertion
+testStylishNoXyz = testExtensions
+    [ stylishCfg dotStylish ["NoStarIsType", "NoTypeOperators"] ]
+
+--------------------------------------------------------------------------------
+testCabalNoXyz :: Assertion
+testCabalNoXyz = testExtensions
+    [ cabalCfg dotCabal ["NoStarIsType"] ["NoTypeOperators"] ]
 
 
 --------------------------------------------------------------------------------
