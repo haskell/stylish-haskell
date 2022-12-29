@@ -24,10 +24,11 @@ import           System.Directory                         (doesFileExist,
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Config.Internal
+import GHC.Data.Maybe (mapMaybe)
 
 
 --------------------------------------------------------------------------------
-findLanguageExtensions :: Verbose -> IO [Language.KnownExtension]
+findLanguageExtensions :: Verbose -> IO [(Language.KnownExtension, Bool)]
 findLanguageExtensions verbose =
     findCabalFile verbose >>=
     maybe (pure []) (readDefaultLanguageExtensions verbose)
@@ -51,7 +52,7 @@ findCabalFile verbose = do
 
 --------------------------------------------------------------------------------
 -- | Extract @default-extensions@ fields from a @.cabal@ file
-readDefaultLanguageExtensions :: Verbose -> FilePath -> IO [Language.KnownExtension]
+readDefaultLanguageExtensions :: Verbose -> FilePath -> IO [(Language.KnownExtension, Bool)]
 readDefaultLanguageExtensions verbose cabalFile = do
   verbose $ "Parsing " <> cabalFile <> "..."
   packageDescription <- readGenericPackageDescription Cabal.silent cabalFile
@@ -82,16 +83,12 @@ readDefaultLanguageExtensions verbose cabalFile = do
                          map Cabal.testBuildInfo testSuites <>
                          map Cabal.benchmarkBuildInfo benchmarks
 
-      defaultExtensions :: [Language.KnownExtension]
-      defaultExtensions = map fromEnabled . filter isEnabled $
+      defaultExtensions :: [(Language.KnownExtension, Bool)]
+      defaultExtensions = mapMaybe toPair $
         concatMap Cabal.defaultExtensions gatherBuildInfos
-        where isEnabled (Language.EnableExtension _) = True
-              isEnabled _                            = False
-
-              fromEnabled (Language.EnableExtension x) = x
-              fromEnabled x                             =
-                error $ "Language.Haskell.Stylish.Config.readLanguageExtensions: " <>
-                        "invalid LANGUAGE pragma:  " <> show x
+        where toPair (Language.EnableExtension x)  = Just (x, True)
+              toPair (Language.DisableExtension x) = Just (x, False)
+              toPair _                             = Nothing
   verbose $ "Gathered default-extensions: " <> show defaultExtensions
   pure $ nub defaultExtensions
 
