@@ -49,9 +49,12 @@ data Change
     | CLine Int Int String
 
 
-changeLength :: Change -> Int
-changeLength (CBlock n _) = n
-changeLength _            = 1
+-- | Used for filtering changes from the disabled blocks
+-- Returns `Nothing` if the change shouldn't be reverted in any case
+changeLength :: Change -> Maybe Int
+changeLength (CInsert _)  = Nothing
+changeLength (CBlock n _) = Just n
+changeLength (CLine{})    = Just 1
 
 --------------------------------------------------------------------------------
 type RowRange = (Int, Int)
@@ -213,10 +216,13 @@ filterEdits :: Edits -> Module -> Edits
 filterEdits (Edits allEdits) modu = Edits $ M.mapWithKey filt allEdits
     where
         filt start = filter \change ->
-            let rng = (start, start + changeLength change)
-             in all (rng `disjoint`) disRngs
+            case changeLength change of
+                Just len -> all ((start, start + len - 1) `disjoint`) disRngs
+                Nothing  -> True
         switches = sortOn fst . mapMaybe getSwitch $ everything modu
-        disRngs = fst $ foldl' step ([], Nothing) switches
+        disRngs = addLast $ foldl' step ([], Nothing) switches
+        addLast (xs, Just start) = xs ++ [(start, maxBound)]
+        addLast (xs, Nothing)    = xs
 
         step (xs, Nothing) (start, StylishDisable)
             = (xs, Just start)
