@@ -5,22 +5,22 @@
 
 packages:
 - completed:
-    hackage: ghc-lib-parser-9.2.2.20220307@sha256:384755a514a42fe1615862ff6ef5c995a9ed71904360b4b212f9526f80fb214c,12705
+    hackage: ghc-lib-parser-9.4.2.20220822@sha256:566b1ddecee9e526f62dadc98dfc89e0f72f5d0d03ebc628c528f9d51b4a5681,14156
     pantry-tree:
-      size: 27578
-      sha256: 1e7884111d2ef9d7132719f9d04a16873a9c479100f2be310e5880805d9787dc
+      size: 30972
+      sha256: e8b2909bd70d973b2522029edee2c9de53f057f741f15c442521184f5b653c1b
   original:
-    hackage: ghc-lib-parser-9.2.2.20220307
+    hackage: ghc-lib-parser-9.4.2.20220822@sha256:566b1ddecee9e526f62dadc98dfc89e0f72f5d0d03ebc628c528f9d51b4a5681,14156
 - completed:
-    hackage: ghc-lib-parser-ex-9.2.0.3@sha256:a90c3a6aa85f59848d9f8c3928ab7203299a4b560db6f300976d9b1f7da127ee,3655
+    hackage: ghc-lib-parser-ex-9.4.0.0@sha256:a55b192642e1efd3fd3a358aff416e88b6b04f33572bd1d7be9e9008648f2523,3493
     pantry-tree:
-      size: 2212
-      sha256: 940793b79e8c37f8a46f3c5747ecf1e7534ba0d998b4e2da573744f1ac2927d0
+      size: 1954
+      sha256: 291ba772edd7fefe2f1dcb11c36d867b6e19898b79556adb0298a38917e321e3
   original:
-    hackage: ghc-lib-parser-ex-9.2.0.3
+    hackage: ghc-lib-parser-ex-9.4.0.0@sha256:a55b192642e1efd3fd3a358aff416e88b6b04f33572bd1d7be9e9008648f2523,3493
 snapshots:
 - completed:
-    size: 619158
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/12.yaml
-    sha256: d4d7a4ac80485f3c21d0c6bfe5e7a21c3f71ca4fdfea022f98574047ebb58ebb
-  original: lts-19.12
+    size: 646690
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2022/11/5.yaml
+    sha256: dee08c78a10d2e8433969c40e996374717317fcde826cf3f4b8a1e0063307c3e
+  original: nightly-2022-11-05
