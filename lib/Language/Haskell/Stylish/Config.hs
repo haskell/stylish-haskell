@@ -123,14 +123,15 @@ loadConfig verbose userSpecified = do
         Left (pos, err)     -> error $ prettyPosWithSource pos (fromStrict bytes) ("Language.Haskell.Stylish.Config.loadConfig: " ++ err)
         Right config -> do
           cabalLanguageExtensions <- if configCabal config
-            then map show <$> Cabal.findLanguageExtensions verbose
+            then map toStr <$> Cabal.findLanguageExtensions verbose
             else pure []
 
           return $ config
             { configLanguageExtensions = nub $
                 configLanguageExtensions config ++ cabalLanguageExtensions
             }
-
+    where toStr (ext, True)  = show ext
+          toStr (ext, False) = "No" ++ show ext
 
 --------------------------------------------------------------------------------
 parseConfig :: A.Value -> A.Parser Config
