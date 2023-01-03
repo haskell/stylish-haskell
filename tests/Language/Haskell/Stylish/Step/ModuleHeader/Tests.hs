@@ -81,6 +81,7 @@ tests = testGroup "Language.Haskell.Stylish.Printer.ModuleHeader"
     , testCase "Single one export with comment, open_bracket = same_line" ex31a
     , testCase "Single one module comment" ex32
     , testCase "Inline comments" ex33
+    , testCase "Deprecated pragma to the module" ex34
     ]
 
 --------------------------------------------------------------------------------
@@ -908,6 +909,16 @@ ex33 = assertSnippet (step Nothing $ defaultConfig)
     , "      bar -- Inline bar"
     , "      -- Foo"  -- NOTE(jaspervdj): I would prefer to have the `,` here
     , "    , foo -- Inline foo"
+    , "    ) where"
+    ]
+
+ex34 :: Assertion
+ex34 = assertSnippet (step Nothing defaultConfig)
+    [ "module X {-# DEPRECATED \"Do not use this\" #-}"
+    , "  (foo) where"
+    ]
+    [ "module X {-# DEPRECATED \"Do not use this\" #-}"
+    , "    ( foo"
     , "    ) where"
     ]
 
