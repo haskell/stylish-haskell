@@ -324,6 +324,27 @@ steps:
       # Default: false
       group_imports: false
 
+      # Whether to invert the matches on the grouping
+      #
+      # If enabled, the group_rules will be matched in the order they are
+      # listed, then the whole list of imports is reversed.
+      #
+      # Example: having the following rules:
+      #
+      # group_rules:
+      #    - match: "^MyApp.Baz"
+      #    - match: "^MyApp"
+      #
+      # will produce the following result.
+      #
+      # > import MyApp.Foo
+      # > import MyApp.Bar
+      #
+      # > import MyApp.Baz
+      #
+      # Default: false
+      group_inverse: false
+
       # A list of rules specifying how to group modules and how to
       # order the groups.
       #
