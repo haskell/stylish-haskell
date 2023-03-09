@@ -24,7 +24,7 @@ Extra-source-files:
   data/stylish-haskell.yaml
 
 Flag ghc-lib
-  Default: False
+  Default: True
   Manual:  True
   Description:
     Force dependency on ghc-lib-parser even if GHC API in the ghc package is supported
