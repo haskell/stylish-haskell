@@ -2,7 +2,8 @@
 
 <img src="./assets/Logo/SVG/RoundedLogo.svg" width="100px">
 
-![Build Status](https://github.com/jaspervdj/stylish-haskell/workflows/CI/badge.svg)
+![Stack Build Status](https://github.com/jaspervdj/stylish-haskell/workflows/CI/badge.svg)
+![Cabal Build Status](https://github.com/jaspervdj/stylish-haskell/workflows/Cabal/badge.svg)
 
 ## Introduction
 
