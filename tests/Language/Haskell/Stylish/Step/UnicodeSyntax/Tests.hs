@@ -22,6 +22,13 @@ tests = testGroup "Language.Haskell.Stylish.Step.UnicodeSyntax.Tests"
     [ testCase "case 01" case01
     , testCase "case 02" case02
     , testCase "case 03" case03
+    , testCase "case 04 (GADTs)" case04
+    , testCase "case 05 (Linear types)" case05
+    , testCase "case 06 (Forall)" case06
+    , testCase "case 07 (do notation)" case07
+    , testCase "case 08 (arrow syntax)" case08
+    , testCase "case 09 (TH quotes)" case09
+    , testCase "case 10 (Star type)" case10
     ]
 
 
@@ -57,4 +64,117 @@ case03 = assertSnippet (step False "LANGUAGE")
     ]
     [ "x ∷ Int → Int → Int"
     , "x = undefined"
+    ]
+
+case04 :: Assertion
+case04 = assertSnippet (step False "LANGUAGE")
+    [ "data Foo where"
+    , "  Foo0 :: Foo"
+    , "  Foo1 :: Int -> Foo"
+    , "  Foo2 :: Int -> Bool -> Foo"
+    , "  FooC :: Show a => a -> Foo"
+    ]
+    [ "data Foo where"
+    , "  Foo0 ∷ Foo"
+    , "  Foo1 ∷ Int → Foo"
+    , "  Foo2 ∷ Int → Bool → Foo"
+    , "  FooC ∷ Show a ⇒ a → Foo"
+    ]
+
+case05 :: Assertion
+case05 = assertSnippet (step False "LANGUAGE")
+    [ "{-# LANGUAGE LinearTypes #-}"
+    , ""
+    , "construct :: Int -> a %1 -> T1 a"
+    , "construct _ x = MkT1 x"
+    , ""
+    , "data T3 a m where"
+    , "  MkT3 :: a %m -> T3 a m"
+    ]
+    [ "{-# LANGUAGE LinearTypes #-}"
+    , ""
+    , "construct ∷ Int → a %1 → T1 a"
+    , "construct _ x = MkT1 x"
+    , ""
+    , "data T3 a m where"
+    , "  MkT3 ∷ a %m → T3 a m"
+    ]
+
+case06 :: Assertion
+case06 = assertSnippet (step False "LANGUAGE")
+    [ "{-# LANGUAGE ScopedTypeVariables #-}"
+    , ""
+    , "err :: forall a. a"
+    , "err = undefined"
+    , ""
+    , "foo :: forall a. Int -> (forall b. Show b => b -> a) -> Bool"
+    , "foo = undefined"
+    , ""
+    , "data Foo where"
+    , "  Foo :: forall a. Show a => a -> Foo"
+    ]
+    [ "{-# LANGUAGE ScopedTypeVariables #-}"
+    , ""
+    , "err ∷ ∀ a. a"
+    , "err = undefined"
+    , ""
+    , "foo ∷ ∀ a. Int → (∀ b. Show b ⇒ b → a) → Bool"
+    , "foo = undefined"
+    , ""
+    , "data Foo where"
+    , "  Foo ∷ ∀ a. Show a ⇒ a → Foo"
+    ]
+
+case07 :: Assertion
+case07 = assertSnippet (step False "LANGUAGE")
+    [ "main :: IO ()"
+    , "  main = do"
+    , "  s <- getLine"
+    , "  putStrLn s"
+    ]
+    [ "main ∷ IO ()"
+    , "  main = do"
+    , "  s ← getLine"
+    , "  putStrLn s"
+    ]
+
+case08 :: Assertion
+case08 = assertSnippet (step False "LANGUAGE")
+    [ "{-# LANGUAGE Arrows #-}"
+    , ""
+    , "a = proc x -> do"
+    , "  y <- f -< x+1"
+    , "  (|untilA (increment -< x+y) (within 0.5 -< x)|)"
+    , ""
+    , "b = proc x -> f x -<< x+1"
+    ]
+    [ "{-# LANGUAGE Arrows #-}"
+    , ""
+    , "a = proc x → do"
+    , "  y ← f ⤙ x+1"
+    , "  ⦇untilA (increment ⤙ x+y) (within 0.5 ⤙ x)⦈"
+    , ""
+    , "b = proc x → f x ⤛ x+1"
+    ]
+
+case09 :: Assertion
+case09 = assertSnippet (step False "LANGUAGE")
+    [ "{-# LANGUAGE QuasiQuotes #-}"
+    , ""
+    , "exp = [| 2 + 2 |]"
+    ]
+    [ "{-# LANGUAGE QuasiQuotes #-}"
+    , ""
+    , "exp = ⟦ 2 + 2 ⟧"
+    ]
+
+case10 :: Assertion
+case10 = assertSnippet (step False "LANGUAGE")
+    [ "{-# LANGUAGE KindSignatures #-}"
+    , ""
+    , "data A (a :: *) = A a"
+    ]
+    [ "{-# LANGUAGE KindSignatures #-}"
+    , ""
+    , "data A (a ∷ ★) = A a"
     ]
