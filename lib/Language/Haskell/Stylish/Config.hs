@@ -289,6 +289,7 @@ parseImports config o = fmap (Imports.step columns) $ Imports.Options
       <*> o A..:? "space_surround" A..!= def Imports.spaceSurround
       <*> o A..:? "post_qualify" A..!= def Imports.postQualified
       <*> o A..:? "group_imports" A..!= def Imports.groupImports
+      <*> o A..:? "group_inverse" A..!= def Imports.groupInverse
       <*> o A..:? "group_rules" A..!= def Imports.groupRules
   where
     def f = f Imports.defaultOptions

@@ -71,6 +71,7 @@ data Options = Options
     , spaceSurround  :: Bool
     , postQualified  :: Bool
     , groupImports   :: Bool
+    , groupInverse   :: Bool
     , groupRules     :: [GroupRule]
     } deriving (Eq, Show)
 
@@ -86,6 +87,7 @@ defaultOptions = Options
     , spaceSurround  = False
     , postQualified  = False
     , groupImports   = False
+    , groupInverse   = False
     , groupRules     = [defaultGroupRule]
     }
   where defaultGroupRule = GroupRule
@@ -278,7 +280,7 @@ groupAndFormat maxCols options moduleStats groups =
       map (formatImports maxCols options moduleStats) grouped
 
     grouped :: [NonEmpty (GHC.LImportDecl GHC.GhcPs)]
-    grouped = groupByRules (groupRules options) imports
+    grouped = groupByRules options (groupRules options) imports
 
     imports :: [GHC.LImportDecl GHC.GhcPs]
     imports = concatMap toList groups
@@ -297,14 +299,20 @@ groupAndFormat maxCols options moduleStats groups =
 -- @data/stylish-haskell.yaml@ for details about the patterns and
 -- grouping logic.
 groupByRules
-  :: [GroupRule]
+  :: Options
+  -> [GroupRule]
   -- ^ The patterns specifying the groups to build. Order matters:
   -- earlier patterns take precedence over later ones.
   -> [GHC.LImportDecl GHC.GhcPs]
   -- ^ The imports to group. Order does not matter.
   -> [NonEmpty (GHC.LImportDecl GHC.GhcPs)]
-groupByRules rules allImports = toList $ go rules allImports Seq.empty
+groupByRules options rules allImports =
+    mustReverse $ toList $ go rules allImports Seq.empty
   where
+    mustReverse = if groupInverse options
+                  then reverse
+                  else id
+
     go :: [GroupRule]
        -> [GHC.LImportDecl GHC.GhcPs]
        -> Seq (NonEmpty (GHC.LImportDecl GHC.GhcPs))
@@ -330,7 +338,7 @@ groupByRules rules allImports = toList $ go rules allImports Seq.empty
       in
         -- groupBy never produces empty groups, so this mapMaybe will
         -- not discard anything from subgroups
-        (Seq.fromList $ mapMaybe NonEmpty.nonEmpty subgroups, rest)
+        (Seq.fromList $ mustReverse $ mapMaybe NonEmpty.nonEmpty subgroups, rest)
 
     matches :: Pattern -> GHC.LImportDecl GHC.GhcPs -> Bool
     matches Pattern { regex } import_ = Regex.match regex $ moduleName import_
