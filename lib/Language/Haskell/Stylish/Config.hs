@@ -334,6 +334,7 @@ parseLanguagePragmas config o = LanguagePragmas.step
     <*> (o A..:? "style" >>= parseEnum styles LanguagePragmas.Vertical)
     <*> o A..:? "align"            A..!= True
     <*> o A..:? "remove_redundant" A..!= True
+    <*> (o A..:? "language_variant" >>= parseEnum languageVariants LanguagePragmas.Haskell2010)
     <*> mkLanguage o
   where
     styles =
@@ -341,6 +342,11 @@ parseLanguagePragmas config o = LanguagePragmas.step
         , ("compact",          LanguagePragmas.Compact)
         , ("compact_line",     LanguagePragmas.CompactLine)
         , ("vertical_compact", LanguagePragmas.VerticalCompact)
+        ]
+    languageVariants =
+        [ ("GHC2021",     LanguagePragmas.GHC2021)
+        , ("Haskell2010", LanguagePragmas.Haskell2010)
+        , ("Haskell98",   LanguagePragmas.Haskell98)
         ]
 
 
