@@ -22,6 +22,7 @@ import qualified GHC.Types.SrcLoc                as GHC
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Align
 import qualified Language.Haskell.Stylish.Editor as Editor
+import           Language.Haskell.Stylish.GHC
 import           Language.Haskell.Stylish.Module
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
@@ -63,20 +64,16 @@ type Record = [GHC.LocatedA (Hs.ConDeclField Hs.GhcPs)]
 
 
 --------------------------------------------------------------------------------
-records :: GHC.Located Hs.HsModule -> [Record]
+records :: Module -> [Record]
 records modu = do
   let decls           = map GHC.unLoc (Hs.hsmodDecls (GHC.unLoc modu))
       tyClDecls       = [ tyClDecl | Hs.TyClD _ tyClDecl <- decls ]
       dataDecls       = [ d | d@(Hs.DataDecl _ _ _ _ _)  <- tyClDecls ]
       dataDefns       = map Hs.tcdDataDefn dataDecls
-  d@Hs.ConDeclH98 {} <- concatMap getConDecls dataDefns
+  d@Hs.ConDeclH98 {} <- GHC.unLoc <$> concatMap getConDecls dataDefns
   case Hs.con_args d of
       Hs.RecCon rec -> [GHC.unLoc rec]
       _             -> []
- where
-  getConDecls :: Hs.HsDataDefn Hs.GhcPs -> [Hs.ConDecl Hs.GhcPs]
-  getConDecls d@Hs.HsDataDefn {} = map GHC.unLoc $ Hs.dd_cons d
-
 
 --------------------------------------------------------------------------------
 recordToAlignable :: Config -> Record -> [[Alignable GHC.RealSrcSpan]]
@@ -103,8 +100,9 @@ matchGroupToAlignable
     :: Config
     -> Hs.MatchGroup Hs.GhcPs (Hs.LHsExpr Hs.GhcPs)
     -> [[Alignable GHC.RealSrcSpan]]
-matchGroupToAlignable conf (Hs.MG _ alts _) = cases' ++ patterns'
+matchGroupToAlignable conf mg = cases' ++ patterns'
   where
+    alts = Hs.mg_alts mg
     (cases, patterns) = partitionEithers . fromMaybe [] $ traverse matchToAlignable (GHC.unLoc alts)
     cases' = groupAlign (cCases conf) cases
     patterns' = groupAlign (cTopLevelPatterns conf) patterns
@@ -184,7 +182,7 @@ grhsToAlignable (GHC.L _ _)            = Nothing
 step :: Maybe Int -> Config -> Step
 step maxColumns config = makeStep "Cases" $ \ls module' ->
     let changes
-            :: (GHC.Located Hs.HsModule -> [a])
+            :: (Module -> [a])
             -> (a -> [[Alignable GHC.RealSrcSpan]])
             -> Editor.Edits
         changes search toAlign = mconcat $ do

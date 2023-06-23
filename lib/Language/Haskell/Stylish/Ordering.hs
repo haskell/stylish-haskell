@@ -17,7 +17,6 @@ import           Data.Function                (on)
 import           Data.Ord                     (comparing)
 import           GHC.Hs
 import qualified GHC.Hs                       as GHC
-import           GHC.Types.Name.Reader        (RdrName)
 import           GHC.Types.SrcLoc             (unLoc)
 import           GHC.Utils.Outputable         (Outputable)
 import qualified GHC.Utils.Outputable         as GHC
@@ -55,7 +54,7 @@ compareLIE = comparing $ ieKey . unLoc
 
 
 --------------------------------------------------------------------------------
-compareWrappedName :: IEWrappedName RdrName -> IEWrappedName RdrName -> Ordering
+compareWrappedName :: IEWrappedName GhcPs -> IEWrappedName GhcPs -> Ordering
 compareWrappedName = comparing nameKey
 
 

@@ -18,7 +18,6 @@ import           Data.Maybe                            (fromMaybe, isJust,
                                                         listToMaybe)
 import qualified GHC.Hs                                as GHC
 import qualified GHC.Types.SrcLoc                      as GHC
-import qualified GHC.Unit.Module.Name                  as GHC
 
 
 --------------------------------------------------------------------------------
@@ -80,8 +79,8 @@ printModuleHeader maxCols conf ls lmodul =
                 GHC.srcSpanEndLine <$> GHC.srcSpanToRealSrcSpan loc)
 
         keywordLine kw = listToMaybe $ do
-            GHC.EpAnn {..} <- pure $ GHC.hsmodAnn modul
-            GHC.AddEpAnn kw' (GHC.EpaSpan s) <- GHC.am_main anns
+            GHC.EpAnn {..} <- pure $ GHC.hsmodAnn $ GHC.hsmodExt modul
+            GHC.AddEpAnn kw' (GHC.EpaSpan s _) <- GHC.am_main anns
             guard $ kw == kw'
             pure $ GHC.srcSpanEndLine s
 
@@ -89,7 +88,7 @@ printModuleHeader maxCols conf ls lmodul =
         whereLine = keywordLine GHC.AnnWhere
 
         commentOnLine l = listToMaybe $ do
-            comment <- epAnnComments $ GHC.hsmodAnn modul
+            comment <- epAnnComments $ GHC.hsmodAnn $ GHC.hsmodExt modul
             guard $ GHC.srcSpanStartLine (GHC.anchor $ GHC.getLoc comment) == l
             pure comment
 

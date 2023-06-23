@@ -44,8 +44,8 @@ import qualified GHC.Types.Name.Reader             as GHC
 import qualified GHC.Types.PkgQual                 as GHC
 import qualified GHC.Types.SourceText              as GHC
 import qualified GHC.Types.SrcLoc                  as GHC
-import qualified GHC.Unit.Module.Name              as GHC
-import qualified GHC.Unit.Types                    as GHC
+--import qualified GHC.Unit.Module.Name              as GHC
+--import qualified GHC.Unit.Types                    as GHC
 import qualified Text.Regex.TDFA                   as Regex
 import           Text.Regex.TDFA                   (Regex)
 import           Text.Regex.TDFA.ReadRegex         (parseRegex)
@@ -367,7 +367,7 @@ printQualified Options{..} padNames stats ldecl = do
             -- Only print spaces if something follows.
             let somethingFollows =
                     isJust (GHC.ideclAs decl) || isHiding decl ||
-                    not (null $ GHC.ideclHiding decl)
+                    not (null $ GHC.ideclImportList decl)
             when (padNames && somethingFollows) $ putText $ replicate
                 (isLongestImport stats - importModuleNameLength decl)
                 ' '
@@ -396,7 +396,7 @@ printQualified Options{..} padNames stats ldecl = do
 
     pure ()
 
-    case snd <$> GHC.ideclHiding decl of
+    case snd <$> GHC.ideclImportList decl of
         Nothing -> pure ()
         Just limports | null (GHC.unLoc limports) -> case emptyListAlign of
             RightAfter -> modifyCurrentLine trimRight >> space >> putText "()"
@@ -536,9 +536,9 @@ printImport _ (GHC.IEDocNamed _ _) =
 
 
 --------------------------------------------------------------------------------
-printIeWrappedName :: GHC.LIEWrappedName GHC.RdrName -> P ()
+printIeWrappedName :: GHC.LIEWrappedName GHC.GhcPs -> P ()
 printIeWrappedName lie = case GHC.unLoc lie of
-    GHC.IEName      n -> putRdrName n
+    GHC.IEName    _ n -> putRdrName n
     GHC.IEPattern _ n -> putText "pattern" >> space >> putRdrName n
     GHC.IEType    _ n -> putText "type" >> space >> putRdrName n
 
@@ -603,7 +603,9 @@ isQualified :: GHC.ImportDecl GHC.GhcPs -> Bool
 isQualified = (/=) GHC.NotQualified . GHC.ideclQualified
 
 isHiding :: GHC.ImportDecl GHC.GhcPs -> Bool
-isHiding = maybe False fst . GHC.ideclHiding
+isHiding d = case GHC.ideclImportList d of
+  Just (GHC.EverythingBut, _) -> True
+  _ -> False
 
 isSource :: GHC.ImportDecl GHC.GhcPs -> Bool
 isSource = (==) GHC.IsBoot . GHC.ideclSource

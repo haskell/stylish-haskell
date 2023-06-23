@@ -42,7 +42,7 @@ Common depends
     directory         >= 1.2.3  && < 1.4,
     filepath          >= 1.1    && < 1.5,
     file-embed        >= 0.0.10 && < 0.1,
-    mtl               >= 2.0    && < 2.3,
+    mtl               >= 2.0    && < 2.4,
     regex-tdfa        >= 1.3    && < 1.4,
     syb               >= 0.3    && < 0.8,
     text              >= 1.2    && < 2.1,
@@ -53,17 +53,21 @@ Common depends
     Build-depends:
       semigroups >= 0.18 && < 0.20
 
+  -- Use GHC if the ghc-lib flag is not set
+  -- and we have a new enough GHC. Note that 
+  -- this will only work if the user's 
+  -- compiler is of the matching major version!
   if impl(ghc >= 9.4.1) && (!flag(ghc-lib))
     Build-depends:
-      ghc >= 9.4 && < 9.5,
+      ghc >= 9.6 && < 9.7,
       ghc-boot,
       ghc-boot-th
   else
     Build-depends:
-      ghc-lib-parser >= 9.4 && < 9.5
+      ghc-lib-parser >= 9.6 && < 9.7
 
   Build-depends:
-    ghc-lib-parser-ex >= 9.4 && < 9.5
+    ghc-lib-parser-ex >= 9.6 && < 9.7
 
 Library
   Import:         depends
@@ -109,7 +113,7 @@ Executable stylish-haskell
 
   Build-depends:
     stylish-haskell,
-    strict               >= 0.3  && < 0.5,
+    strict               >= 0.3  && < 0.6,
     optparse-applicative >= 0.12 && < 0.18
 
 Test-suite stylish-haskell-tests
