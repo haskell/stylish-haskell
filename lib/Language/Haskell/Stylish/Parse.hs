@@ -20,6 +20,7 @@ import qualified GHC.Driver.Session                                 as GHC
 import qualified GHC.LanguageExtensions.Type                        as LangExt
 import qualified GHC.Parser.Header                                  as GHC
 import qualified GHC.Parser.Lexer                                   as GHC
+import qualified GHC.Types.Error                                    as GHC
 import qualified GHC.Types.SrcLoc                                   as GHC
 import qualified GHC.Utils.Error                                    as GHC
 import qualified Language.Haskell.GhclibParserEx.GHC.Driver.Session as GHCEx
@@ -114,7 +115,7 @@ parseModule externalExts0 fp string = do
     -- Actual parse.
     case GHCEx.parseModule input dynFlags1 of
         GHC.POk _ m -> Right m
-        GHC.PFailed ps -> Left . withFileName . GHC.showSDoc dynFlags1 . GHC.pprMessages . snd $
+        GHC.PFailed ps -> Left . withFileName . GHC.showSDoc dynFlags1 . GHC.pprMessages GHC.NoDiagnosticOpts . snd $
             GHC.getPsMessages ps
   where
     withFileName x = maybe "" (<> ": ") fp <> x

@@ -42,7 +42,6 @@ import qualified GHC.Types.PkgQual            as GHC
 import           GHC.Types.SrcLoc             (GenLocated (..),
                                                RealSrcSpan (..), unLoc)
 import qualified GHC.Types.SrcLoc             as GHC
-import qualified GHC.Unit.Module.Name         as GHC
 
 
 --------------------------------------------------------------------------------
@@ -56,7 +55,7 @@ deriving instance Eq GHC.RawPkgQual
 
 --------------------------------------------------------------------------------
 -- | Concrete module type
-type Module = GHC.Located GHC.HsModule
+type Module = GHC.Located (GHC.HsModule GHC.GhcPs)
 
 importModuleName :: ImportDecl GhcPs -> String
 importModuleName = GHC.moduleNameString . GHC.unLoc . GHC.ideclName
@@ -68,9 +67,8 @@ canMergeImport i0 i1 = and $ fmap (\f -> f i0 i1)
   , (==) `on` ideclPkgQual
   , (==) `on` ideclSource
   , hasMergableQualified `on` ideclQualified
-  , (==) `on` ideclImplicit
   , (==) `on` fmap unLoc . ideclAs
-  , (==) `on` fmap fst . ideclHiding -- same 'hiding' flags
+  , (==) `on` fmap fst . ideclImportList -- same 'hiding' flags
   ]
   where
     hasMergableQualified QualifiedPre QualifiedPost = True
@@ -120,10 +118,10 @@ mergeModuleImport
     :: GHC.LImportDecl GHC.GhcPs -> GHC.LImportDecl GHC.GhcPs
     -> GHC.LImportDecl GHC.GhcPs
 mergeModuleImport (L p0 i0) (L _p1 i1) =
-  L p0 $ i0 { ideclHiding = newImportNames }
+  L p0 $ i0 { ideclImportList = newImportNames }
   where
     newImportNames =
-      case (ideclHiding i0, ideclHiding i1) of
+      case (ideclImportList i0, ideclImportList i1) of
         (Just (b, L p imps0), Just (_, L _ imps1)) -> Just (b, L p (imps0 `merge` imps1))
         (Nothing, Nothing) -> Nothing
         (Just x, Nothing) -> Just x
@@ -137,7 +135,7 @@ queryModule f = everything (++) (mkQ [] f)
 
 moduleLanguagePragmas :: Module -> [(RealSrcSpan, NonEmpty String)]
 moduleLanguagePragmas =
-    mapMaybe prag . epAnnComments . GHC.hsmodAnn . GHC.unLoc
+    mapMaybe prag . epAnnComments . GHC.hsmodAnn . GHC.hsmodExt . GHC.unLoc
   where
     prag :: GHC.LEpaComment -> Maybe (GHC.RealSrcSpan, NonEmpty String)
     prag comment = case GHC.ac_tok (GHC.unLoc comment) of

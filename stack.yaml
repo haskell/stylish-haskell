@@ -1,7 +1,11 @@
-resolver: nightly-2022-11-05
+resolver: nightly-2023-06-23
 
 extra-deps:
-  - ghc-lib-parser-9.4.2.20220822@sha256:566b1ddecee9e526f62dadc98dfc89e0f72f5d0d03ebc628c528f9d51b4a5681,14156
-  - ghc-lib-parser-ex-9.4.0.0@sha256:a55b192642e1efd3fd3a358aff416e88b6b04f33572bd1d7be9e9008648f2523,3493
+  - ghc-lib-parser-9.6.2.20230523
+  - ghc-lib-parser-ex-9.6.0.0
+  - test-framework-0.8.2.0
+  - test-framework-hunit-0.3.0.2
+  - ansi-wl-pprint-0.6.9
 
 save-hackage-creds: false
+compiler: ghc-9.6.1

@@ -18,6 +18,7 @@ module Language.Haskell.Stylish.Step.Data
 
 --------------------------------------------------------------------------------
 import           Control.Monad                     (forM_, unless, when)
+import           Data.Foldable                     (toList)
 import           Data.List                         (sortBy)
 import           Data.Maybe                        (listToMaybe, maybeToList)
 import qualified GHC.Hs                            as GHC
@@ -139,7 +140,7 @@ putDataDecl cfg@Config {..} decl = do
     let defn = dataDefn decl
         constructorComments = commentGroups
             (GHC.srcSpanToRealSrcSpan . GHC.getLocA)
-            (GHC.dd_cons defn)
+            (getConDecls defn)
             (dataComments decl)
 
         onelineEnum =
@@ -296,7 +297,7 @@ putDeriving Config{..} lclause = do
 putUnbrokenEnum :: Config -> DataDecl -> P ()
 putUnbrokenEnum cfg decl = sep
     (space >> putText "|" >> space)
-    (fmap (putConstructor cfg 0) . GHC.dd_cons . dataDefn $ decl)
+    (fmap (putConstructor cfg 0) . getConDecls . dataDefn $ decl)
 
 putName :: DataDecl -> P ()
 putName decl@MkDataDecl{..} =
@@ -329,7 +330,7 @@ putConstructor cfg consIndent lcons = case GHC.unLoc lcons of
   GHC.ConDeclGADT {..} -> do
     -- Put argument to constructor first:
     case con_g_args of
-      GHC.PrefixConGADT _ -> sep (comma >> space) $ fmap putRdrName con_names
+      GHC.PrefixConGADT _ -> sep (comma >> space) $ fmap putRdrName $ toList con_names
       GHC.RecConGADT _ _ -> error . mconcat $
           [ "Language.Haskell.Stylish.Step.Data.putConstructor: "
           , "encountered a GADT with record constructors, not supported yet"
@@ -469,7 +470,7 @@ putNewtypeConstructor cfg lcons = case GHC.unLoc lcons of
 putForAll
     :: GHC.OutputableBndrFlag s 'GHC.Parsed
     => Bool -> [GHC.LHsTyVarBndr s GHC.GhcPs] -> P ()
-putForAll forall ex_tvs = when forall do
+putForAll frall ex_tvs = when frall do
     putText "forall"
     space
     sep space $ putOutputable . GHC.unLoc <$> ex_tvs
@@ -530,7 +531,7 @@ isGADT = any isGADTCons . GHC.dd_cons . dataDefn
       _                  -> False
 
 isNewtype :: DataDecl -> Bool
-isNewtype = (== GHC.NewType) . GHC.dd_ND . dataDefn
+isNewtype = (== GHC.NewType) . GHC.dataDefnConsNewOrData . GHC.dd_cons . dataDefn
 
 isInfix :: DataDecl -> Bool
 isInfix = (== GHC.Infix) . dataFixity

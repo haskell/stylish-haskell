@@ -50,11 +50,9 @@ import           Prelude                         hiding (lines)
 --------------------------------------------------------------------------------
 import qualified GHC.Hs                          as GHC
 import           GHC.Hs.Extension                (GhcPs)
-import qualified GHC.Types.Basic                 as GHC
 import           GHC.Types.Name.Reader           (RdrName (..))
 import           GHC.Types.SrcLoc                (GenLocated (..))
 import qualified GHC.Types.SrcLoc                as GHC
-import qualified GHC.Unit.Module.Name            as GHC
 import           GHC.Utils.Outputable            (Outputable)
 
 --------------------------------------------------------------------------------
