@@ -81,6 +81,8 @@ tests = testGroup "Language.Haskell.Stylish.Printer.ModuleHeader"
     , testCase "Single one export with comment, open_bracket = same_line" ex31a
     , testCase "Single one module comment" ex32
     , testCase "Inline comments" ex33
+    , testCase "Deprecated pragma to the module" ex34
+    , testCase "Warning pragma without export list" ex35
     ]
 
 --------------------------------------------------------------------------------
@@ -910,6 +912,24 @@ ex33 = assertSnippet (step Nothing $ defaultConfig)
     , "    , foo -- Inline foo"
     , "    ) where"
     ]
+
+ex34 :: Assertion
+ex34 = assertSnippet (step Nothing defaultConfig)
+    [ "module X {-# DEPRECATED \"Do not use this\" #-}"
+    , "  (foo) where"
+    ]
+    [ "module X {-# DEPRECATED \"Do not use this\" #-}"
+    , "    ( foo"
+    , "    ) where"
+    ]
+
+ex35 :: Assertion
+ex35 = assertSnippet (step Nothing defaultConfig) inp inp
+    where inp = [ "module X {-# WARNING \"don't use it\" #-} where"
+                , ""
+                , "foo :: Int -> Int"
+                , "foo = undefined"
+                ]
 
 openBracketSameLine :: Config -> Config
 openBracketSameLine cfg = cfg { openBracket = SameLine }

@@ -30,6 +30,7 @@ import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
 import qualified Language.Haskell.Stylish.Step.Imports as Imports
 import           Language.Haskell.Stylish.Util         (flagEnds)
+import qualified GHC.Unit.Module.Warnings as GHC
 
 
 data Config = Config
@@ -69,6 +70,8 @@ printModuleHeader maxCols conf ls lmodul =
     let modul = GHC.unLoc lmodul
         name = GHC.unLoc <$> GHC.hsmodName modul
 
+        deprecMsg = GHC.hsmodDeprecMessage modul
+
         startLine = fromMaybe 1 $ moduleLine <|>
             (fmap GHC.srcSpanStartLine . GHC.srcSpanToRealSrcSpan $
                 GHC.getLoc lmodul)
@@ -106,7 +109,7 @@ printModuleHeader maxCols conf ls lmodul =
         printedModuleHeader = runPrinter_
             (PrinterConfig maxCols)
             (printHeader
-                conf name exportGroups moduleComment whereComment)
+                conf name deprecMsg exportGroups moduleComment whereComment)
 
         changes = Editor.changeLines
             (Editor.Block startLine endLine)
@@ -119,15 +122,20 @@ printModuleHeader maxCols conf ls lmodul =
 printHeader
     :: Config
     -> Maybe GHC.ModuleName
+    -> Maybe (GHC.LocatedP (GHC.WarningTxt GHC.GhcPs))
     -> Maybe [CommentGroup (GHC.LIE GHC.GhcPs)]
     -> Maybe GHC.LEpaComment  -- Comment attached to 'module'
     -> Maybe GHC.LEpaComment  -- Comment attached to 'where'
     -> P ()
-printHeader conf mbName mbExps mbModuleComment mbWhereComment = do
+printHeader conf mbName mbDeprec mbExps mbModuleComment mbWhereComment = do
     forM_ mbName $ \name -> do
         putText "module"
         space
         putText (showOutputable name)
+
+    forM_ mbDeprec \deprec -> do
+        putText " "
+        putText (showOutputable deprec)
 
     case mbExps of
         Nothing -> do
