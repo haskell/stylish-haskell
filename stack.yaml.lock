@@ -18,6 +18,27 @@ packages:
       size: 1955
   original:
     hackage: ghc-lib-parser-ex-9.6.0.0
+- completed:
+    hackage: test-framework-0.8.2.0@sha256:d62395d54bb2a0e2fe2dacd55f55678bc87a769103cca6295ead59720f92158f,6550
+    pantry-tree:
+      sha256: 3977a161a7105e8b4d5685df546eb00960c660afc5a0d295794e47d33c52222d
+      size: 2050
+  original:
+    hackage: test-framework-0.8.2.0
+- completed:
+    hackage: test-framework-hunit-0.3.0.2@sha256:7fd007e9cb082cd64a2213a6d36acf057f7d6df6b5343a088e81b2b3a9a23545,1487
+    pantry-tree:
+      sha256: 355897b03e0320296f207350f8c8aba4071b673021aef726bac27e3ad0bbb2cc
+      size: 239
+  original:
+    hackage: test-framework-hunit-0.3.0.2
+- completed:
+    hackage: ansi-wl-pprint-0.6.9@sha256:fb737bc96e2aef34ad595d54ced7a73f648c521ebcb00fe0679aff45ccd49212,2448
+    pantry-tree:
+      sha256: ebb02b32915c04146b193949c3c48d9e8200c152f38947e8d23ca25b0997e188
+      size: 472
+  original:
+    hackage: ansi-wl-pprint-0.6.9
 snapshots:
 - completed:
     sha256: f040c40c0c7bceb931bb2fd36361e2580a2a78dabee350f18d0af32e2e7182c6

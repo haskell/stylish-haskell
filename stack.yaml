@@ -3,5 +3,9 @@ resolver: nightly-2023-06-23
 extra-deps:
   - ghc-lib-parser-9.6.2.20230523
   - ghc-lib-parser-ex-9.6.0.0
+  - test-framework-0.8.2.0
+  - test-framework-hunit-0.3.0.2
+  - ansi-wl-pprint-0.6.9
 
 save-hackage-creds: false
+compiler: ghc-9.6.1
