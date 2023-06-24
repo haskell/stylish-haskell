@@ -114,7 +114,7 @@ Executable stylish-haskell
   Build-depends:
     stylish-haskell,
     strict               >= 0.3  && < 0.6,
-    optparse-applicative >= 0.12 && < 0.18
+    optparse-applicative >= 0.12 && < 0.19
 
 Test-suite stylish-haskell-tests
   Import:         depends
