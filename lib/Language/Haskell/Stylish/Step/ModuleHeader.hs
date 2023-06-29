@@ -70,7 +70,7 @@ printModuleHeader maxCols conf ls lmodul =
     let modul = GHC.unLoc lmodul
         name = GHC.unLoc <$> GHC.hsmodName modul
 
-        deprecMsg = GHC.hsmodDeprecMessage modul
+        deprecMsg = GHC.hsmodDeprecMessage $ GHC.hsmodExt modul
 
         startLine = fromMaybe 1 $ moduleLine <|>
             (fmap GHC.srcSpanStartLine . GHC.srcSpanToRealSrcSpan $
