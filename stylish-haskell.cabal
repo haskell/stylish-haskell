@@ -57,7 +57,7 @@ Common depends
   -- and we have a new enough GHC. Note that 
   -- this will only work if the user's 
   -- compiler is of the matching major version!
-  if impl(ghc >= 9.4.1) && (!flag(ghc-lib))
+  if !flag(ghc-lib) && impl(ghc >= 9.6) && impl(ghc < 9.7)
     Build-depends:
       ghc >= 9.6 && < 9.7,
       ghc-boot,
