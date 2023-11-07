@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- Unreleased
+     * #468 Add MultilineOnly LongListAlign variant (by sorki)
+
 - 0.14.5.0 (2023-06-23)
      * #459 Support GHC 9.6 (By Michael Peyton Jones)
      * #445 Default `ghc-lib` flag to True (by amesgen)

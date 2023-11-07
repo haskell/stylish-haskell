@@ -215,6 +215,8 @@ steps:
       #   >     , delete
       #   >     )
       #
+      # - multiline_only: One line per import entry.
+      #
       # Default: inline
       long_list_align: inline
 
