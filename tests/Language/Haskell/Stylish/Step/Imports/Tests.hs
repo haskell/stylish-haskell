@@ -420,7 +420,7 @@ case13 =
     options = defaultOptions
       { importAlign   = None
       , listAlign     = WithAlias
-      , longListAlign = InlineWithBreak
+      , longListAlign = InlineToNewline
       }
   in
     assertSnippet (step (Just 80) options)
@@ -438,7 +438,7 @@ case13b =
     options = defaultOptions
       { importAlign   = None
       , listAlign     = WithModuleName
-      , longListAlign = InlineWithBreak
+      , longListAlign = InlineToNewline
       }
   in
     assertSnippet (step (Just 80) options)
@@ -458,7 +458,7 @@ case14 =
     options = defaultOptions
       { importAlign   = None
       , listAlign     = WithAlias
-      , longListAlign = InlineWithBreak
+      , longListAlign = InlineToNewline
       , listPadding   = LPConstant 10
       }
   in
@@ -542,7 +542,7 @@ case17 =
 case18 :: Assertion
 case18 =
   let
-    options = defaultOptions { importAlign = None, longListAlign = InlineToMultiline }
+    options = defaultOptions { importAlign = None, longListAlign = InlineToNewlineToMultiline }
   in
     assertSnippet (step (Just 40) options)
     [ "import Data.Foo as Foo (Bar, Baz, Foo)"
@@ -571,7 +571,7 @@ case19 =
   let
     options = defaultOptions
       { listAlign      = NewLine
-      , longListAlign  = InlineWithBreak
+      , longListAlign  = InlineToNewline
       , emptyListAlign = RightAfter
       , listPadding    = LPConstant 17
       }
@@ -593,7 +593,7 @@ case19b =
     options = defaultOptions
       { importAlign    = File
       , listAlign      = NewLine
-      , longListAlign  = InlineWithBreak
+      , longListAlign  = InlineToNewline
       , emptyListAlign = RightAfter
       , listPadding    = LPConstant 17
       }
@@ -614,7 +614,7 @@ case19c =
     options = defaultOptions
       { importAlign    = File
       , listAlign      = NewLine
-      , longListAlign  = InlineWithBreak
+      , longListAlign  = InlineToNewline
       , emptyListAlign = RightAfter
       , listPadding    = LPModuleName
       }
@@ -634,7 +634,7 @@ case19d =
   let
     options = defaultOptions
       { listAlign      = NewLine
-      , longListAlign  = InlineWithBreak
+      , longListAlign  = InlineToNewline
       , emptyListAlign = RightAfter
       , listPadding    = LPModuleName
       }
@@ -792,7 +792,7 @@ case24 =
     options = defaultOptions
       { importAlign    = None
       , padModuleNames = False
-      , longListAlign  = InlineWithBreak
+      , longListAlign  = InlineToNewline
       , spaceSurround  = True
       }
   in

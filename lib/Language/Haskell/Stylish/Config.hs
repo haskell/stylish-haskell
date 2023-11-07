@@ -311,10 +311,14 @@ parseImports config o = fmap (Imports.step columns) $ Imports.Options
         ]
 
     longListAligns =
-        [ ("inline",             Imports.Inline)
-        , ("new_line",           Imports.InlineWithBreak)
-        , ("new_line_multiline", Imports.InlineToMultiline)
-        , ("multiline",          Imports.Multiline)
+        [ ("inline",                          Imports.Inline)
+        , ("new_line",                        Imports.InlineToNewline)
+        -- ^ deprecated
+        , ("inline_to_new_line",              Imports.InlineToNewline)
+        , ("new_line_multiline",              Imports.InlineToNewlineToMultiline)
+        -- ^ deprecated
+        , ("inline_to_new_line_to_multiline", Imports.InlineToNewlineToMultiline)
+        , ("multiline",                       Imports.Multiline)
         ]
 
     emptyListAligns =

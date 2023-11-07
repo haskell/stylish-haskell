@@ -200,14 +200,26 @@ steps:
       #
       # - inline: This option will put as much specs on same line as possible.
       #
-      # - new_line: Import list will start on new line.
+      # - new_line: Import list will start on new line when it wouldn't fit
+      #   to single line. (deprecated, renamed to inline_to_new_line)
       #
-      # - new_line_multiline: Import list will start on new line when it's
-      #   short enough to fit to single line. Otherwise it'll be multiline.
+      # - inline_to_new_line: Import list will start on new line when it
+      #   wouldn't fit to single line.
       #
-      # - multiline: One line per import list entry.
+      # - new_line_multiline: Import list will be put inline if it fits
+      #   or put on new line when it's short enough to fit to single
+      #   line. Otherwise it'll be multiline.
+      #   (deprecated, renamed to inline_to_new_line_to_multiline)
+      #
+      # - inline_to_new_line_to_multiline: Import list will be put inline if
+      #   it fits or put on new line when it's short enough to fit to single
+      #   line. Otherwise it'll be multiline.
+      #
+      # - multiline: Inline if import list is short enough to fit, otherwise
+      #   one line per import list entry.
       #   Type with constructor list acts like single import.
       #
+      #   > import Data.Map (Map)
       #   > import qualified Data.Map as M
       #   >     ( empty
       #   >     , singleton

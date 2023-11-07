@@ -120,8 +120,8 @@ data EmptyListAlign
 
 data LongListAlign
     = Inline -- inline
-    | InlineWithBreak -- new_line
-    | InlineToMultiline -- new_line_multiline
+    | InlineToNewline -- inline_to_new_line (or deprecated new_line)
+    | InlineToNewlineToMultiline -- inline_to_new_line_to_multiline (or deprecated new_line_multiline)
     | Multiline -- multiline
     deriving (Eq, Show)
 
@@ -483,12 +483,12 @@ printQualified Options{..} padNames stats ldecl = do
                 modifyCurrentLine trimRight
                 newline >> putOffset >> printAsInlineWrapping (putText wrapPrefix)
               Inline -> space >> printAsInlineWrapping (putText wrapPrefix)
-              InlineWithBreak -> wrapping
+              InlineToNewline -> wrapping
                 (space >> printAsSingleLine)
                 (do
                   modifyCurrentLine trimRight
                   newline >> putOffset >> printAsInlineWrapping putOffset)
-              InlineToMultiline -> wrapping
+              InlineToNewlineToMultiline -> wrapping
                 (space >> printAsSingleLine)
                 (wrapping
                   (do
