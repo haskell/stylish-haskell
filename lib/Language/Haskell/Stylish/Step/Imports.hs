@@ -11,6 +11,7 @@ module Language.Haskell.Stylish.Step.Imports
   , ImportAlign (..)
   , ListAlign (..)
   , LongListAlign (..)
+  , EntityListAlign (..)
   , EmptyListAlign (..)
   , ListPadding (..)
   , GroupRule (..)
@@ -61,32 +62,34 @@ import           Language.Haskell.Stylish.Util
 
 --------------------------------------------------------------------------------
 data Options = Options
-    { importAlign    :: ImportAlign
-    , listAlign      :: ListAlign
-    , padModuleNames :: Bool
-    , longListAlign  :: LongListAlign
-    , emptyListAlign :: EmptyListAlign
-    , listPadding    :: ListPadding
-    , separateLists  :: Bool
-    , spaceSurround  :: Bool
-    , postQualified  :: Bool
-    , groupImports   :: Bool
-    , groupRules     :: [GroupRule]
+    { importAlign     :: ImportAlign
+    , listAlign       :: ListAlign
+    , padModuleNames  :: Bool
+    , longListAlign   :: LongListAlign
+    , emptyListAlign  :: EmptyListAlign
+    , entityListAlign :: EntityListAlign
+    , listPadding     :: ListPadding
+    , separateLists   :: Bool
+    , spaceSurround   :: Bool
+    , postQualified   :: Bool
+    , groupImports    :: Bool
+    , groupRules      :: [GroupRule]
     } deriving (Eq, Show)
 
 defaultOptions :: Options
 defaultOptions = Options
-    { importAlign    = Global
-    , listAlign      = AfterAlias
-    , padModuleNames = True
-    , longListAlign  = Inline
-    , emptyListAlign = Inherit
-    , listPadding    = LPConstant 4
-    , separateLists  = True
-    , spaceSurround  = False
-    , postQualified  = False
-    , groupImports   = False
-    , groupRules     = [defaultGroupRule]
+    { importAlign     = Global
+    , listAlign       = AfterAlias
+    , padModuleNames  = True
+    , longListAlign   = Inline
+    , emptyListAlign  = Inherit
+    , entityListAlign = ELInline
+    , listPadding     = LPConstant 4
+    , separateLists   = True
+    , spaceSurround   = False
+    , postQualified   = False
+    , groupImports    = False
+    , groupRules      = [defaultGroupRule]
     }
   where defaultGroupRule = GroupRule
           { match    = unsafeParsePattern ".*"
@@ -123,6 +126,28 @@ data LongListAlign
     | InlineWithBreak -- new_line
     | InlineToMultiline -- new_line_multiline
     | Multiline -- multiline
+    deriving (Eq, Show)
+
+-- | Alignment of lists of constructors, class methods, fields names
+-- in import lists entities.
+-- @ELMultiline@ causes
+--
+--   import Foo (Bar(x, y))
+--
+-- To be expanded to
+--
+--   import Foo
+--     (Bar
+--       ( x
+--       , y
+--       )
+--     )
+--
+-- This is useful in combination with @LongListAlign@ @Multiline@
+-- to get a git friendly formatting.
+data EntityListAlign
+   = ELInline -- default
+   | ELMultiline -- multiline
     deriving (Eq, Show)
 
 -- | A rule for grouping imports that specifies which module names
@@ -347,7 +372,7 @@ groupByRules rules allImports = toList $ go rules allImports Seq.empty
 --------------------------------------------------------------------------------
 printQualified
     :: Options -> Bool -> ImportStats -> GHC.LImportDecl GHC.GhcPs -> P ()
-printQualified Options{..} padNames stats ldecl = do
+printQualified options@Options{..} padNames stats ldecl = do
     putText "import" >> space
 
     case (isSource decl, isAnySource stats) of
@@ -409,7 +434,7 @@ printQualified Options{..} padNames stats ldecl = do
         Just limports -> do
             let imports = GHC.unLoc limports
                 printedImports = flagEnds $ -- [P ()]
-                    (printImport separateLists) . GHC.unLoc <$>
+                    (printImport options) . GHC.unLoc <$>
                     prepareImportList imports
 
             -- Since we might need to output the import module name several times, we
@@ -506,12 +531,12 @@ printQualified Options{..} padNames stats ldecl = do
 
 
 --------------------------------------------------------------------------------
-printImport :: Bool -> GHC.IE GHC.GhcPs -> P ()
+printImport :: Options -> GHC.IE GHC.GhcPs -> P ()
 printImport _ (GHC.IEVar _ name) = do
     printIeWrappedName name
 printImport _ (GHC.IEThingAbs _ name) = do
     printIeWrappedName name
-printImport separateLists (GHC.IEThingAll _ name) = do
+printImport Options{..} (GHC.IEThingAll _ name) = do
     printIeWrappedName name
     when separateLists space
     putText "(..)"
@@ -519,14 +544,43 @@ printImport _ (GHC.IEModuleContents _ modu) = do
     putText "module"
     space
     putText . GHC.moduleNameString $ GHC.unLoc modu
-printImport separateLists (GHC.IEThingWith _ name wildcard imps) = do
+printImport Options{..} (GHC.IEThingWith _ name wildcard imps) = do
     printIeWrappedName name
-    when separateLists space
+
     let ellipsis = case wildcard of
           GHC.IEWildcard _position -> [putText ".."]
           GHC.NoIEWildcard         -> []
-    parenthesize $
-      sep (comma >> space) (ellipsis <> fmap printIeWrappedName imps)
+
+    importNamePosition <- length <$> getCurrentLine
+
+    let putOffset = putText $ replicate offset ' '
+        offset = case listPadding of
+            LPConstant n -> 2 + 2 * n
+            LPModuleName -> importNamePosition
+
+        entityListSeparator = case entityListAlign of
+          ELInline -> comma >> space
+          ELMultiline -> newline >> putOffset >> comma >> space
+
+        printInline = do
+          when separateLists space
+          parenthesize $
+            sep (comma >> space) (ellipsis <> fmap printIeWrappedName imps)
+
+    case entityListAlign of
+      ELInline -> printInline
+      ELMultiline -> do
+        if length imps == 1
+        then
+          printInline
+        else do
+          newline
+          putOffset
+          parenthesize $ do
+            space
+            sep entityListSeparator (ellipsis <> fmap printIeWrappedName imps)
+            newline
+            putOffset
 printImport _ (GHC.IEGroup _ _ _ ) =
     error "Language.Haskell.Stylish.Printer.Imports.printImportExport: unhandled case 'IEGroup'"
 printImport _ (GHC.IEDoc _ _) =

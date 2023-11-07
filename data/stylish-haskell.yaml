@@ -218,6 +218,29 @@ steps:
       # Default: inline
       long_list_align: inline
 
+      # Entity list align can be used to alter alignment of import list entities
+      # like 'Bar' record names in the following example:
+      #
+      #   > import Foo (Bar(x, y))
+      #
+      # - inline: Entities are always formatted inline
+      #
+      # - multiline: The list of entities will start on new line,
+      #   except for a case, when it cotains only a single entity.
+      #
+      #   > import Foo
+      #   >     (Bar
+      #   >         ( x
+      #   >         , y
+      #   >         )
+      #   >     )
+      #
+      #   This is useful in combination with long_list_aling multiline
+      #   and similar to get a git friendly formatting.
+      #
+      # Default: inline
+      entity_list_align: inline
+
       # Align empty list (importing instances)
       #
       # Empty list align has following options

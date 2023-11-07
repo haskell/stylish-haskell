@@ -226,4 +226,7 @@ printMultiLineExportList conf exports = do
 -- NOTE(jaspervdj): This code is almost the same as the import printing in
 -- 'Imports' and should be merged.
 putExport :: Config -> GHC.LIE GHC.GhcPs -> P ()
-putExport conf = Imports.printImport (separateLists conf) . GHC.unLoc
+putExport conf =
+  Imports.printImport
+    (Imports.defaultOptions { Imports.separateLists = separateLists conf})
+  . GHC.unLoc
