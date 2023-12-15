@@ -239,7 +239,7 @@ putType ltp = case GHC.unLoc ltp of
     putOutputable ltp
   GHC.HsQualTy {} ->
     putOutputable ltp
-  GHC.HsAppKindTy _ _ _ ->
+  GHC.HsAppKindTy _ _ _ _ ->
     putOutputable ltp
   GHC.HsListTy _ _ ->
     putOutputable ltp
