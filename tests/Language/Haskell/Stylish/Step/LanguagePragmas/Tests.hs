@@ -61,10 +61,12 @@ case02 = assertSnippet
     (step (Just 80) Vertical True True lANG)
     [ "{-# LANGUAGE BangPatterns #-}"
     , "{-# LANGUAGE ViewPatterns #-}"
+    , "module Main where"
     , "increment ((+ 1) -> x) = x"
     ]
 
     [ "{-# LANGUAGE ViewPatterns #-}"
+    , "module Main where"
     , "increment ((+ 1) -> x) = x"
     ]
 
@@ -75,10 +77,12 @@ case03 = assertSnippet
     (step (Just 80) Vertical True True lANG)
     [ "{-# LANGUAGE BangPatterns #-}"
     , "{-# LANGUAGE ViewPatterns #-}"
+    , "module Main where"
     , "increment x = case x of !_ -> x + 1"
     ]
 
     [ "{-# LANGUAGE BangPatterns #-}"
+    , "module Main where"
     , "increment x = case x of !_ -> x + 1"
     ]
 
@@ -226,6 +230,7 @@ case13 = assertSnippet
     input =
         [ "{-# LANGUAGE BangPatterns  #-}"
         , "{-# LANGUAGE DeriveFunctor #-}"
+        , "module Main where"
         , "main = let !x = 1 + 1 in print x"
         ]
 
