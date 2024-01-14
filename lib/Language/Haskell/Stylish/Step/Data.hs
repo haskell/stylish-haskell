@@ -313,10 +313,10 @@ putName decl@MkDataDecl{..} =
     maybePutKindSig
 
   where
-    firstTvar :: Maybe (GHC.LHsTyVarBndr () GHC.GhcPs)
+    firstTvar :: Maybe (GHC.LHsTyVarBndr (GHC.HsBndrVis GHC.GhcPs) GHC.GhcPs)
     firstTvar = listToMaybe $ GHC.hsq_explicit dataTypeVars
 
-    secondTvar :: Maybe (GHC.LHsTyVarBndr () GHC.GhcPs)
+    secondTvar :: Maybe (GHC.LHsTyVarBndr (GHC.HsBndrVis GHC.GhcPs) GHC.GhcPs)
     secondTvar = listToMaybe . drop 1 $ GHC.hsq_explicit dataTypeVars
 
     maybePutKindSig :: Printer ()

@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest]
-        ghc: ["9.2", "9.4", "9.6"]
+        ghc: ["9.4", "9.6", "9.8"]
       fail-fast: false
 
     steps:

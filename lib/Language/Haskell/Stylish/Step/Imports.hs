@@ -594,8 +594,8 @@ importModuleNameLength imp =
 --------------------------------------------------------------------------------
 stringLiteral :: GHC.StringLiteral -> String
 stringLiteral sl = case GHC.sl_st sl of
-    GHC.NoSourceText -> show . GHC.unpackFS $ GHC.sl_fs sl
-    GHC.SourceText s -> s
+    GHC.NoSourceText -> GHC.unpackFS $ GHC.sl_fs sl
+    GHC.SourceText s -> GHC.unpackFS $ s
 
 
 --------------------------------------------------------------------------------
