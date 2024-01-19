@@ -79,6 +79,8 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 64" case64
     , testCase "case 65" case65
     , testCase "case 66 (issue #411)" case66
+    , testCase "case 67 (issue #425)" case67
+    , testCase "case 68 (issue #426)" case68
     ]
 
 case00 :: Assertion
@@ -1379,6 +1381,41 @@ case66 = assertSnippet (step indentIndentStyle) input input
     input =
       [ "data Foo = A | B | C"
       , "  deriving (Eq, Show)"
+      ]
+
+-- | Inline comment after the last record field
+--
+-- Regression test for https://github.com/haskell/stylish-haskell/issues/425
+case67 :: Assertion
+case67 = assertSnippet (step indentIndentStyle) input input
+  where
+    input =
+      [ "data Foo"
+      , "  = Foo -- ^ foo"
+      , "  | Bar -- ^ bar"
+      , "  | Baz -- ^ baz"
+      , ""
+      , "data Foo'"
+      , "  = Foo' Int -- ^ foo"
+      , "  | Bar' Int -- ^ bar"
+      , "  | Baz' Int -- ^ baz"
+      ]
+
+-- | Inline comment at the different line, than the start of the block
+-- (record constructor)
+--
+-- Regression test for https://github.com/haskell/stylish-haskell/issues/426
+case68 :: Assertion
+case68 = assertSnippet (step indentIndentStyle) input input
+  where
+    input =
+      [ "data Foo"
+      , "  = Foo"
+      , "      { foo :: Int"
+      , "      } -- ^ foo"
+      , "  | Bar"
+      , "      { bar :: Int"
+      , "      } -- ^ bar"
       ]
 
 sameSameStyle :: Config
