@@ -1,7 +1,12 @@
 # CHANGELOG
 
+- 0.14.6.0 (2024-01-19)
+     * #471 Support GHC 9.8 (by Michael Peyton Jones)
+     * #440 Fix dissappearing `DEPRECATED` pragma on module (by Lev Dvorkin)
+     * #464 Fix compilation issue with GHC 9.4
+
 - 0.14.5.0 (2023-06-23)
-     * #459 Support GHC 9.6 (By Michael Peyton Jones)
+     * #459 Support GHC 9.6 (by Michael Peyton Jones)
      * #445 Default `ghc-lib` flag to True (by amesgen)
 
 - 0.14.4.0 (2023-01-09)
