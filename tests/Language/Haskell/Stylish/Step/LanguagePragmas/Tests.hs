@@ -230,7 +230,7 @@ case13 = assertSnippet
     input =
         [ "{-# LANGUAGE BangPatterns  #-}"
         , "{-# LANGUAGE DeriveFunctor #-}"
-        , "module Main where"
+        , ""
         , "main = let !x = 1 + 1 in print x"
         ]
 
