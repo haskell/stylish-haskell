@@ -47,6 +47,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 16" case16
     , testCase "case 17" case17
     , testCase "case 18" case18
+    , testCase "case 18b" case18b
     , testCase "case 19" case19
     , testCase "case 19b" case19b
     , testCase "case 19d" case19c
@@ -556,6 +557,36 @@ case18 =
     , ""
     , "import Data.Identity"
     , "    (Identity (Identity, runIdentity))"
+    , ""
+    , "import Data.Acid as Acid"
+    , "    ( closeAcidState"
+    , "    , createCheckpoint"
+    , "    , openLocalStateFrom"
+    , "    )"
+    ]
+
+case18b :: Assertion
+case18b =
+  let
+    options = defaultOptions { importAlign = None, longListAlign = MultilineOnly }
+  in
+    assertSnippet (step (Just 40) options)
+    [ "import Data.Foo as Foo (Bar, Baz, Foo)"
+    , ""
+    , "import Data.Identity (Identity (Identity, runIdentity))"
+    , ""
+    , "import Data.Acid as Acid (closeAcidState, createCheckpoint, openLocalStateFrom)"
+    ]
+       ----------------------------------------
+    [ "import Data.Foo as Foo"
+    , "    ( Bar"
+    , "    , Baz"
+    , "    , Foo"
+    , "    )"
+    , ""
+    , "import Data.Identity"
+    , "    ( Identity (Identity, runIdentity)"
+    , "    )"
     , ""
     , "import Data.Acid as Acid"
     , "    ( closeAcidState"

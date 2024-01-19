@@ -123,6 +123,7 @@ data LongListAlign
     | InlineWithBreak -- new_line
     | InlineToMultiline -- new_line_multiline
     | Multiline -- multiline
+    | MultilineOnly -- multiline_only
     deriving (Eq, Show)
 
 -- | A rule for grouping imports that specifies which module names
@@ -479,6 +480,7 @@ printQualified Options{..} padNames stats ldecl = do
               Multiline -> wrapping
                 (space >> printAsSingleLine)
                 printAsMultiLine
+              MultilineOnly -> printAsMultiLine
               Inline | NewLine <- listAlign -> do
                 modifyCurrentLine trimRight
                 newline >> putOffset >> printAsInlineWrapping (putText wrapPrefix)

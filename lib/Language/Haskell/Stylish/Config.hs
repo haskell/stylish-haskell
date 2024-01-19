@@ -315,6 +315,7 @@ parseImports config o = fmap (Imports.step columns) $ Imports.Options
         , ("new_line",           Imports.InlineWithBreak)
         , ("new_line_multiline", Imports.InlineToMultiline)
         , ("multiline",          Imports.Multiline)
+        , ("multiline_only",     Imports.MultilineOnly)
         ]
 
     emptyListAligns =
