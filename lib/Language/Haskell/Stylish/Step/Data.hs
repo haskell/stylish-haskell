@@ -521,7 +521,10 @@ putType' cfg lty = case GHC.unLoc lty of
     _ -> putType lty
 
 newOrData :: DataDecl -> String
-newOrData decl = if isNewtype decl then "newtype" else "data"
+newOrData decl
+  | isNewtype decl  = "newtype"
+  | isTypeData decl = "type data"
+  | otherwise       = "data"
 
 isGADT :: DataDecl -> Bool
 isGADT = any isGADTCons . GHC.dd_cons . dataDefn
@@ -532,6 +535,9 @@ isGADT = any isGADTCons . GHC.dd_cons . dataDefn
 
 isNewtype :: DataDecl -> Bool
 isNewtype = (== GHC.NewType) . GHC.dataDefnConsNewOrData . GHC.dd_cons . dataDefn
+
+isTypeData :: DataDecl -> Bool
+isTypeData = GHC.isTypeDataDefnCons . GHC.dd_cons . dataDefn
 
 isInfix :: DataDecl -> Bool
 isInfix = (== GHC.Infix) . dataFixity
