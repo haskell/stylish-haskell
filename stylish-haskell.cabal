@@ -59,17 +59,17 @@ Common depends
   -- and we have a new enough GHC. Note that
   -- this will only work if the user's
   -- compiler is of the matching major version!
-  if !flag(ghc-lib) && impl(ghc >= 9.8) && impl(ghc < 9.9)
+  if !flag(ghc-lib) && impl(ghc >= 9.8) && impl(ghc < 9.11)
     Build-depends:
-      ghc >= 9.8 && < 9.9,
+      ghc >= 9.10 && < 9.11,
       ghc-boot,
       ghc-boot-th
   else
     Build-depends:
-      ghc-lib-parser >= 9.8 && < 9.11
+      ghc-lib-parser >= 9.10 && < 9.11
 
   Build-depends:
-    ghc-lib-parser-ex >= 9.8 && < 9.11
+    ghc-lib-parser-ex >= 9.10 && < 9.11
 
 Library
   Import:         depends

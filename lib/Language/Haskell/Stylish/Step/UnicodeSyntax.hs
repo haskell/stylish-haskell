@@ -20,19 +20,20 @@ import           Language.Haskell.Stylish.Util                 (everything)
 --------------------------------------------------------------------------------
 hsTyReplacements :: GHC.HsType GHC.GhcPs -> Editor.Edits
 hsTyReplacements (GHC.HsFunTy _ arr _ _)
-    | GHC.HsUnrestrictedArrow (GHC.L (GHC.TokenLoc epaLoc) GHC.HsNormalTok) <- arr=
+    | GHC.HsUnrestrictedArrow (GHC.EpUniTok epaLoc GHC.NormalSyntax) <- arr =
         Editor.replaceRealSrcSpan (GHC.epaLocationRealSrcSpan epaLoc) "→"
 hsTyReplacements (GHC.HsQualTy _ ctx _)
-    | Just arrow <- GHC.ac_darrow . GHC.anns . GHC.ann $ GHC.getLoc ctx
-    , (GHC.NormalSyntax, GHC.EpaSpan loc _) <- arrow =
+    | Just arrow <- GHC.ac_darrow . GHC.anns $ GHC.getLoc ctx
+    , (GHC.NormalSyntax, GHC.EpaSpan (GHC.RealSrcSpan loc _)) <- arrow =
         Editor.replaceRealSrcSpan loc "⇒"
 hsTyReplacements _ = mempty
+
 
 --------------------------------------------------------------------------------
 hsSigReplacements :: GHC.Sig GHC.GhcPs -> Editor.Edits
 hsSigReplacements (GHC.TypeSig ann _ _)
-    | GHC.AddEpAnn GHC.AnnDcolon epaLoc <- GHC.asDcolon $ GHC.anns ann
-    , GHC.EpaSpan loc _ <- epaLoc =
+    | GHC.AddEpAnn GHC.AnnDcolon epaLoc <- GHC.asDcolon ann
+    , GHC.EpaSpan (GHC.RealSrcSpan loc _) <- epaLoc =
         Editor.replaceRealSrcSpan loc "∷"
 hsSigReplacements _ = mempty
 

@@ -45,11 +45,10 @@ squashFieldDecl _ = mempty
 
 
 --------------------------------------------------------------------------------
-fieldDeclSeparator :: GHC.EpAnn [GHC.AddEpAnn]-> Maybe GHC.RealSrcSpan
-fieldDeclSeparator GHC.EpAnn {..} = listToMaybe $ do
-    GHC.AddEpAnn GHC.AnnDcolon (GHC.EpaSpan s _) <- anns
+fieldDeclSeparator :: [GHC.AddEpAnn]-> Maybe GHC.RealSrcSpan
+fieldDeclSeparator anns = listToMaybe $ do
+    GHC.AddEpAnn GHC.AnnDcolon (GHC.EpaSpan (GHC.RealSrcSpan s _)) <- anns
     pure s
-fieldDeclSeparator _ = Nothing
 
 
 --------------------------------------------------------------------------------
@@ -76,7 +75,7 @@ squashMatch lmatch = case GHC.m_grhss match of
 --------------------------------------------------------------------------------
 matchSeparator :: GHC.EpAnn GHC.GrhsAnn -> Maybe GHC.RealSrcSpan
 matchSeparator GHC.EpAnn {..}
-    | GHC.AddEpAnn _ (GHC.EpaSpan s _) <- GHC.ga_sep anns = Just s
+    | GHC.AddEpAnn _ (GHC.EpaSpan (GHC.RealSrcSpan s _)) <- GHC.ga_sep anns = Just s
 matchSeparator _ = Nothing
 
 

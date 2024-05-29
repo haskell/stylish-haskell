@@ -58,6 +58,7 @@ import           Language.Haskell.Stylish.Ordering
 import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
+import Control.Applicative ((<|>))
 
 --------------------------------------------------------------------------------
 data Options = Options
@@ -507,11 +508,11 @@ printQualified Options{..} padNames stats ldecl = do
 
 --------------------------------------------------------------------------------
 printImport :: Bool -> GHC.IE GHC.GhcPs -> P ()
-printImport _ (GHC.IEVar _ name) = do
+printImport _ (GHC.IEVar _ name _) = do
     printIeWrappedName name
-printImport _ (GHC.IEThingAbs _ name) = do
+printImport _ (GHC.IEThingAbs _ name _) = do
     printIeWrappedName name
-printImport separateLists (GHC.IEThingAll _ name) = do
+printImport separateLists (GHC.IEThingAll _ name _) = do
     printIeWrappedName name
     when separateLists space
     putText "(..)"
@@ -519,7 +520,7 @@ printImport _ (GHC.IEModuleContents _ modu) = do
     putText "module"
     space
     putText . GHC.moduleNameString $ GHC.unLoc modu
-printImport separateLists (GHC.IEThingWith _ name wildcard imps) = do
+printImport separateLists (GHC.IEThingWith _ name wildcard imps _) = do
     printIeWrappedName name
     when separateLists space
     let ellipsis = case wildcard of
@@ -637,24 +638,24 @@ prepareImportList =
   prepareInner :: GHC.IE GHC.GhcPs -> GHC.IE GHC.GhcPs
   prepareInner = \case
     -- Simplify `A ()` to `A`.
-    GHC.IEThingWith x n GHC.NoIEWildcard [] -> GHC.IEThingAbs x n
-    GHC.IEThingWith x n w ns ->
-      GHC.IEThingWith x n w (sortBy (compareWrappedName `on` GHC.unLoc) ns)
+    GHC.IEThingWith x n GHC.NoIEWildcard [] md -> GHC.IEThingAbs x n md
+    GHC.IEThingWith x n w ns md ->
+      GHC.IEThingWith x n w (sortBy (compareWrappedName `on` GHC.unLoc) ns) md
     ie -> ie
 
   -- Merge two import items, assuming they have the same name.
   ieMerge :: GHC.IE GHC.GhcPs -> GHC.IE GHC.GhcPs -> Maybe (GHC.IE GHC.GhcPs)
-  ieMerge l@(GHC.IEVar _ _)      _                  = Just l
-  ieMerge _                  r@(GHC.IEVar _ _)      = Just r
-  ieMerge (GHC.IEThingAbs _ _)   r                  = Just r
-  ieMerge l                  (GHC.IEThingAbs _ _)   = Just l
-  ieMerge l@(GHC.IEThingAll _ _) _                  = Just l
-  ieMerge _                  r@(GHC.IEThingAll _ _) = Just r
-  ieMerge (GHC.IEThingWith x0 n0 w0 ns0) (GHC.IEThingWith _ _ w1 ns1)
+  ieMerge l@(GHC.IEVar _ _ _)      _                  = Just l
+  ieMerge _                  r@(GHC.IEVar _ _ _)      = Just r
+  ieMerge (GHC.IEThingAbs _ _ _)   r                  = Just r
+  ieMerge l                  (GHC.IEThingAbs _ _ _)   = Just l
+  ieMerge l@(GHC.IEThingAll _ _ _) _                  = Just l
+  ieMerge _                  r@(GHC.IEThingAll _ _ _) = Just r
+  ieMerge (GHC.IEThingWith x0 n0 w0 ns0 me0) (GHC.IEThingWith _ _ w1 ns1 me1)
     | w0 /= w1  = Nothing
     | otherwise = Just $
         -- TODO: sort the `ns0 ++ ns1`?
-        GHC.IEThingWith x0 n0 w0 (nubOn GHC.lieWrappedName $ ns0 ++ ns1)
+        GHC.IEThingWith x0 n0 w0 (nubOn GHC.lieWrappedName $ ns0 ++ ns1) (me0 <|> me1)
   ieMerge _ _ = Nothing
 
 

@@ -45,12 +45,12 @@ compareLIE = comparing $ ieKey . unLoc
     -- constructors first, followed by functions, and then operators.
     ieKey :: IE GhcPs -> (Int, String)
     ieKey = \case
-        IEVar _ n            -> nameKey n
-        IEThingAbs _ n       -> nameKey n
-        IEThingAll _ n       -> nameKey n
-        IEThingWith _ n _ _  -> nameKey n
-        IEModuleContents _ n -> nameKey n
-        _                    -> (2, "")
+        IEVar _ n  _          -> nameKey n
+        IEThingAbs _ n _      -> nameKey n
+        IEThingAll _ n  _     -> nameKey n
+        IEThingWith _ n _ _ _ -> nameKey n
+        IEModuleContents _ n  -> nameKey n
+        _                     -> (2, "")
 
 
 --------------------------------------------------------------------------------
