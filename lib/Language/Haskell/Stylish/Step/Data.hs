@@ -38,7 +38,6 @@ import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
 
-
 --------------------------------------------------------------------------------
 data Indent
     = SameLine
@@ -93,19 +92,14 @@ step cfg = makeStep "Data" \ls m -> Editor.apply (changes m) ls
     changes :: Module -> Editor.Edits
     changes = foldMap (formatDataDecl cfg) . dataDecls
 
-    getComments :: GHC.AddEpAnn -> [GHC.LEpaComment]
-    getComments (GHC.AddEpAnn _ epaLoc) = case epaLoc of
-        GHC.EpaDelta _ comments -> comments
-        GHC.EpaSpan _ -> []
-
     dataDecls :: Module -> [DataDecl]
     dataDecls m = do
         ldecl <- GHC.hsmodDecls $ GHC.unLoc m
-        GHC.TyClD _ tycld <- pure $ GHC.unLoc ldecl
+        GHC.L srcSpanAnnA (GHC.TyClD _ tycld) <- pure ldecl
         loc <- maybeToList $ GHC.srcSpanToRealSrcSpan $ GHC.getLocA ldecl
         case tycld of
             GHC.DataDecl {..} -> pure $ MkDataDecl
-                { dataComments = foldMap getComments tcdDExt
+                { dataComments = epAnnComments srcSpanAnnA
                 , dataLoc      = loc
                 , dataDeclName = tcdLName
                 , dataTypeVars = tcdTyVars

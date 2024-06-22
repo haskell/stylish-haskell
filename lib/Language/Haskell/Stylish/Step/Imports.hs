@@ -23,6 +23,7 @@ module Language.Haskell.Stylish.Step.Imports
   ) where
 
 --------------------------------------------------------------------------------
+import           Control.Applicative               ((<|>))
 import           Control.Monad                     (forM_, void, when)
 import qualified Data.Aeson                        as A
 import           Data.Foldable                     (toList)
@@ -58,7 +59,6 @@ import           Language.Haskell.Stylish.Ordering
 import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
-import Control.Applicative ((<|>))
 
 --------------------------------------------------------------------------------
 data Options = Options
