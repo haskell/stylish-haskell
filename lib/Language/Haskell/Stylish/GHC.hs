@@ -73,7 +73,7 @@ baseDynFlags = defaultDynFlags GHCEx.fakeSettings
 
 getConDecls :: GHC.HsDataDefn GHC.GhcPs -> [GHC.LConDecl GHC.GhcPs]
 getConDecls d@GHC.HsDataDefn {} = case GHC.dd_cons d of
-  GHC.NewTypeCon con -> [con]
+  GHC.NewTypeCon con      -> [con]
   GHC.DataTypeCons _ cons -> cons
 
 showOutputable :: GHC.Outputable a => a -> String

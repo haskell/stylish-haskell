@@ -21,6 +21,7 @@ import qualified GHC.Types.SrcLoc                      as GHC
 
 
 --------------------------------------------------------------------------------
+import qualified GHC.Unit.Module.Warnings              as GHC
 import           Language.Haskell.Stylish.Comments
 import qualified Language.Haskell.Stylish.Editor       as Editor
 import           Language.Haskell.Stylish.GHC
@@ -30,7 +31,6 @@ import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
 import qualified Language.Haskell.Stylish.Step.Imports as Imports
 import           Language.Haskell.Stylish.Util         (flagEnds)
-import qualified GHC.Unit.Module.Warnings as GHC
 
 
 data Config = Config

@@ -606,7 +606,7 @@ isQualified = (/=) GHC.NotQualified . GHC.ideclQualified
 isHiding :: GHC.ImportDecl GHC.GhcPs -> Bool
 isHiding d = case GHC.ideclImportList d of
   Just (GHC.EverythingBut, _) -> True
-  _ -> False
+  _                           -> False
 
 isSource :: GHC.ImportDecl GHC.GhcPs -> Bool
 isSource = (==) GHC.IsBoot . GHC.ideclSource

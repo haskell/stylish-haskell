@@ -7,6 +7,7 @@ module Language.Haskell.Stylish.Parse
 --------------------------------------------------------------------------------
 import           Data.Char                                          (toLower)
 import           Data.List                                          (stripPrefix)
+import qualified Data.List                                          as List
 import           Data.Maybe                                         (catMaybes,
                                                                      fromMaybe,
                                                                      listToMaybe,
@@ -24,7 +25,6 @@ import qualified GHC.Types.SrcLoc                                   as GHC
 import qualified GHC.Utils.Error                                    as GHC
 import qualified Language.Haskell.GhclibParserEx.GHC.Driver.Session as GHCEx
 import qualified Language.Haskell.GhclibParserEx.GHC.Parser         as GHCEx
-import qualified Data.List                                          as List
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.GHC
