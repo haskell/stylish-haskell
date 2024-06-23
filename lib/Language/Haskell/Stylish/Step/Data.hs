@@ -37,7 +37,6 @@ import           Language.Haskell.Stylish.Ordering
 import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
-
 --------------------------------------------------------------------------------
 data Indent
     = SameLine
@@ -140,7 +139,10 @@ putDataDecl cfg@Config {..} decl = do
         constructorComments = commentGroups
             (GHC.srcSpanToRealSrcSpan . GHC.getLocA)
             (getConDecls defn)
-            (dataComments decl)
+            (removeCommentsBeforeDataDecl $ dataComments decl)
+
+        removeCommentsBeforeDataDecl = filter
+            (\comment -> GHC.anchor (GHC.getLoc comment) >= dataLoc decl)
 
         onelineEnum =
             isEnum decl && not cBreakEnums &&
