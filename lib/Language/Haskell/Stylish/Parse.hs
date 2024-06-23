@@ -6,8 +6,7 @@ module Language.Haskell.Stylish.Parse
 
 --------------------------------------------------------------------------------
 import           Data.Char                                          (toLower)
-import           Data.List                                          (foldl',
-                                                                     stripPrefix)
+import           Data.List                                          (stripPrefix)
 import           Data.Maybe                                         (catMaybes,
                                                                      fromMaybe,
                                                                      listToMaybe,
@@ -25,7 +24,7 @@ import qualified GHC.Types.SrcLoc                                   as GHC
 import qualified GHC.Utils.Error                                    as GHC
 import qualified Language.Haskell.GhclibParserEx.GHC.Driver.Session as GHCEx
 import qualified Language.Haskell.GhclibParserEx.GHC.Parser         as GHCEx
-
+import qualified Data.List                                          as List
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.GHC
@@ -91,7 +90,7 @@ parseModule externalExts0 fp string = do
         ExtensionOk x onOff -> pure $ Just (x, onOff)
 
     -- Build first dynflags.
-    let dynFlags0 = foldl' toggleExt baseDynFlags externalExts1
+    let dynFlags0 = List.foldl' toggleExt baseDynFlags externalExts1
 
     -- Parse options from file
     let fileOptions = fmap GHC.unLoc $ snd $ GHC.getOptions (GHC.initParserOpts dynFlags0)
@@ -105,7 +104,7 @@ parseModule externalExts0 fp string = do
             fileOptions
 
     -- Set further dynflags.
-    let dynFlags1 = foldl' toggleExt dynFlags0 fileExtensions
+    let dynFlags1 = List.foldl' toggleExt dynFlags0 fileExtensions
             `GHC.gopt_set` GHC.Opt_KeepRawTokenStream
 
     -- Possibly strip CPP.
@@ -120,7 +119,7 @@ parseModule externalExts0 fp string = do
   where
     withFileName x = maybe "" (<> ": ") fp <> x
 
-    toggleExt dynFlags (ext, onOff) = foldl'
+    toggleExt dynFlags (ext, onOff) = List.foldl'
         toggleExt
         ((if onOff then GHC.xopt_set else GHC.xopt_unset) dynFlags ext)
         [(rhs, onOff') | (lhs, onOff', rhs) <- GHC.impliedXFlags, lhs == ext]

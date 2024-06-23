@@ -10,6 +10,7 @@ Maintainer:    Jasper Van der Jeugt <m@jaspervdj.be>
 Copyright:     2012 Jasper Van der Jeugt
 Category:      Language
 Build-type:    Simple
+Tested-with:   GHC == 9.6.5 || == 9.8.2 || == 9.10.1
 
 Description:
     A Haskell code prettifier. For more information, see:

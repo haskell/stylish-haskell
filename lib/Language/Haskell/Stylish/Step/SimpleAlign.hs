@@ -17,7 +17,7 @@ import           Data.Maybe                      (fromMaybe)
 import qualified GHC.Hs                          as Hs
 import qualified GHC.Parser.Annotation           as GHC
 import qualified GHC.Types.SrcLoc                as GHC
-
+import qualified Data.List                       as List
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Align
@@ -117,7 +117,7 @@ matchToAlignable (GHC.L matchLoc m@(Hs.Match _ Hs.CaseAlt pats@(_ : _) grhss)) =
       pat        = last patsLocs
       guards     = getGuards m
       guardsLocs = map GHC.getLocA guards
-      left       = foldl' GHC.combineSrcSpans pat guardsLocs
+      left       = List.foldl' GHC.combineSrcSpans pat guardsLocs
   body     <- rhsBody grhss
   matchPos <- GHC.srcSpanToRealSrcSpan $ GHC.locA matchLoc
   leftPos  <- GHC.srcSpanToRealSrcSpan left
