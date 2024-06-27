@@ -1,7 +1,7 @@
 # CHANGELOG
 
 - UNRELEASED
-     * #482 Add ConfigSearchStrategy to allow avoiding getCurrentDir when loading config (by Jan Hrček)
+     * #482 Add ConfigSearchStrategy to allow avoiding getCurrentDirectory when loading config (by Jan Hrček)
 
 - 0.14.6.0 (2024-01-19)
      * #471 Support GHC 9.8 (by Michael Peyton Jones)
