@@ -6,6 +6,7 @@
 module Language.Haskell.Stylish.Config
     ( Extensions
     , Config (..)
+    , ConfigSearchStrategy (..)
     , ExitCodeBehavior (..)
     , defaultConfigBytes
     , configFilePath
@@ -95,14 +96,26 @@ defaultConfigBytes = $(FileEmbed.embedFile "data/stylish-haskell.yaml")
 
 
 --------------------------------------------------------------------------------
-configFilePath :: Verbose -> Maybe FilePath -> IO (Maybe FilePath)
-configFilePath _       (Just userSpecified) = return (Just userSpecified)
-configFilePath verbose Nothing              = do
-    current    <- getCurrentDirectory
+data ConfigSearchStrategy
+    = -- | Don't try to search, just use given config file
+      UseConfig FilePath
+    | -- | Search for @.stylish-haskell.yaml@ starting from given directory.
+      -- If not found, try all ancestor directories, @$XDG_CONFIG/stylish-haskell/config.yaml@ and @$HOME/.stylish-haskell.yaml@ in order
+      SearchFromDirectory FilePath
+    | -- | Like SearchFromDirectory, but using current working directory as a starting point
+      SearchFromCurrentDirectory
+
+configFilePath :: Verbose -> ConfigSearchStrategy -> IO (Maybe FilePath)
+configFilePath _ (UseConfig userSpecified) = return (Just userSpecified)
+configFilePath verbose (SearchFromDirectory dir) = searchFrom verbose dir
+configFilePath verbose SearchFromCurrentDirectory = searchFrom verbose =<< getCurrentDirectory
+
+searchFrom :: Verbose -> FilePath -> IO (Maybe FilePath)
+searchFrom verbose startDir = do
     configPath <- getXdgDirectory XdgConfig "stylish-haskell"
-    home       <- getHomeDirectory
+    home <- getHomeDirectory
     search verbose $
-        [d </> configFileName | d <- ancestors current] ++
+        [d </> configFileName | d <- ancestors startDir] ++
         [configPath </> "config.yaml", home </> configFileName]
 
 search :: Verbose -> [FilePath] -> IO (Maybe FilePath)
@@ -114,9 +127,9 @@ search verbose (f : fs) = do
     if exists then return (Just f) else search verbose fs
 
 --------------------------------------------------------------------------------
-loadConfig :: Verbose -> Maybe FilePath -> IO Config
-loadConfig verbose userSpecified = do
-    mbFp <- configFilePath verbose userSpecified
+loadConfig :: Verbose -> ConfigSearchStrategy -> IO Config
+loadConfig verbose configSearchStrategy = do
+    mbFp <- configFilePath verbose configSearchStrategy
     verbose $ "Loading configuration at " ++ fromMaybe "<embedded>" mbFp
     bytes <- maybe (return defaultConfigBytes) B.readFile mbFp
     case decode1Strict bytes of
