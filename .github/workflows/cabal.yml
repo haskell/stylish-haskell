@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - uses: haskell/actions/setup@v2
+    - uses: haskell-actions/setup@v2
       name: Setup Haskell Cabal
       with:
         ghc-version: ${{ matrix.ghc }}
@@ -27,7 +27,7 @@ jobs:
         key: "${{ runner.os }}-${{ matrix.ghc }}-v9-${{ hashFiles('stylish-haskell.cabal') }}"
 
     - name: Build
-      run: cabal build 
+      run: cabal build
       id: build
 
     - name: Test

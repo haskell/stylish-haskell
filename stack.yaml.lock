@@ -3,45 +3,10 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages:
-- completed:
-    hackage: ghc-lib-parser-9.6.2.20230523@sha256:160fc11671ce69e756d67f42a75c564863f59b81782a3d23efc27a845d61041b,15694
-    pantry-tree:
-      sha256: 99328c298629fa921985d3de081354625463b659ca7122a1971e548d7051c68a
-      size: 33893
-  original:
-    hackage: ghc-lib-parser-9.6.2.20230523
-- completed:
-    hackage: ghc-lib-parser-ex-9.6.0.0@sha256:52e6ffb031669183ebfcff373a5cf0d89eb7621151d3822d80b5a2cce9123871,3493
-    pantry-tree:
-      sha256: 46525028b1594a7e3464620bb72158a64d181c556796855907c4e26b6bacf20d
-      size: 1955
-  original:
-    hackage: ghc-lib-parser-ex-9.6.0.0
-- completed:
-    hackage: test-framework-0.8.2.0@sha256:d62395d54bb2a0e2fe2dacd55f55678bc87a769103cca6295ead59720f92158f,6550
-    pantry-tree:
-      sha256: 3977a161a7105e8b4d5685df546eb00960c660afc5a0d295794e47d33c52222d
-      size: 2050
-  original:
-    hackage: test-framework-0.8.2.0
-- completed:
-    hackage: test-framework-hunit-0.3.0.2@sha256:7fd007e9cb082cd64a2213a6d36acf057f7d6df6b5343a088e81b2b3a9a23545,1487
-    pantry-tree:
-      sha256: 355897b03e0320296f207350f8c8aba4071b673021aef726bac27e3ad0bbb2cc
-      size: 239
-  original:
-    hackage: test-framework-hunit-0.3.0.2
-- completed:
-    hackage: ansi-wl-pprint-0.6.9@sha256:fb737bc96e2aef34ad595d54ced7a73f648c521ebcb00fe0679aff45ccd49212,2448
-    pantry-tree:
-      sha256: ebb02b32915c04146b193949c3c48d9e8200c152f38947e8d23ca25b0997e188
-      size: 472
-  original:
-    hackage: ansi-wl-pprint-0.6.9
+packages: []
 snapshots:
 - completed:
-    sha256: f040c40c0c7bceb931bb2fd36361e2580a2a78dabee350f18d0af32e2e7182c6
-    size: 504175
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2023/6/23.yaml
-  original: nightly-2023-06-23
+    sha256: a7f021220a9c5baaf5901b852feaabf773a7a0e3fd10f137379a90620b57a22a
+    size: 650424
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2024/6/28.yaml
+  original: nightly-2024-06-28
