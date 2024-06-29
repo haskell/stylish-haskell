@@ -31,8 +31,10 @@ jobs:
         path: ~/.stack
         key: "${{ runner.os }}-${{ matrix.ghc }}-v9-${{ hashFiles('stylish-haskell.cabal', 'stack.yaml', 'stack.yaml.lock') }}"
 
-    - name: Add ~/.local/bin to PATH
-      run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+    - name: Add ~/.local/bin and ~/.ghcup/bin to PATH
+      run: |
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        echo "$HOME/.ghcup/bin" >> $GITHUB_PATH
 
     - name: Build
       run: make build
