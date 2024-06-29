@@ -1,3 +1,4 @@
+SHELL=/bin/bash
 ARCH=$(shell uname -m)
 UNAME=$(shell uname | tr 'A-Z' 'a-z')
 
