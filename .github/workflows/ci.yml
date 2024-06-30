@@ -19,11 +19,12 @@ jobs:
 
     - uses: actions/checkout@v2
 
-    - uses: haskell/actions/setup@v2
+    - uses: haskell-actions/setup@v2
       name: Setup Haskell Stack
       with:
         ghc-version: ${{ matrix.ghc }}
         stack-version: ${{ matrix.stack }}
+        enable-stack: true
 
     - uses: actions/cache@v2
       name: Cache ~/.stack
