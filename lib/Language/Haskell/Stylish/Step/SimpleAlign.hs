@@ -12,12 +12,12 @@ module Language.Haskell.Stylish.Step.SimpleAlign
 --------------------------------------------------------------------------------
 import           Data.Either                     (partitionEithers)
 import           Data.Foldable                   (toList)
-import           Data.List                       (foldl', foldl1', sortOn)
+import           Data.List                       (foldl1', sortOn)
+import qualified Data.List                       as List
 import           Data.Maybe                      (fromMaybe)
 import qualified GHC.Hs                          as Hs
 import qualified GHC.Parser.Annotation           as GHC
 import qualified GHC.Types.SrcLoc                as GHC
-
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Align
@@ -117,7 +117,7 @@ matchToAlignable (GHC.L matchLoc m@(Hs.Match _ Hs.CaseAlt pats@(_ : _) grhss)) =
       pat        = last patsLocs
       guards     = getGuards m
       guardsLocs = map GHC.getLocA guards
-      left       = foldl' GHC.combineSrcSpans pat guardsLocs
+      left       = List.foldl' GHC.combineSrcSpans pat guardsLocs
   body     <- rhsBody grhss
   matchPos <- GHC.srcSpanToRealSrcSpan $ GHC.locA matchLoc
   leftPos  <- GHC.srcSpanToRealSrcSpan left
@@ -160,9 +160,9 @@ multiWayIfToAlignable _conf _ = []
 
 --------------------------------------------------------------------------------
 grhsToAlignable
-    :: GHC.GenLocated (GHC.SrcSpanAnn' a) (Hs.GRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs))
+    :: GHC.GenLocated (GHC.EpAnnCO) (Hs.GRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs))
     -> Maybe (Alignable GHC.RealSrcSpan)
-grhsToAlignable (GHC.L (GHC.SrcSpanAnn _ grhsloc) (Hs.GRHS _ guards@(_ : _) body)) = do
+grhsToAlignable (GHC.L (GHC.EpAnn (GHC.EpaSpan grhsloc) _ _ ) (Hs.GRHS _ guards@(_ : _) body)) = do
     let guardsLocs = map GHC.getLocA guards
         bodyLoc    = GHC.getLocA $ body
         left       = foldl1' GHC.combineSrcSpans guardsLocs

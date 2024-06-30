@@ -61,7 +61,6 @@ import           Control.Monad.Reader            (MonadReader, ReaderT (..),
                                                   asks, local)
 import           Control.Monad.State             (MonadState, State, get, gets,
                                                   modify, put, runState)
-import           Data.List                       (foldl')
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.GHC    (showOutputable)
@@ -138,7 +137,6 @@ putComment epaComment = case GHC.ac_tok epaComment of
   GHC.EpaLineComment s  -> putText s
   GHC.EpaDocOptions s   -> putText s
   GHC.EpaBlockComment s -> putText s
-  GHC.EpaEofComment     -> pure ()
 
 putMaybeLineComment :: Maybe GHC.EpaComment -> P ()
 putMaybeLineComment = \case
@@ -149,8 +147,7 @@ putMaybeLineComment = \case
 putRdrName :: GenLocated GHC.SrcSpanAnnN RdrName -> P ()
 putRdrName rdrName = case GHC.unLoc rdrName of
     Unqual name -> do
-      let (pre, post) = nameAnnAdornments $
-            GHC.epAnnAnnsL $ GHC.ann $ GHC.getLoc rdrName
+      let (pre, post) = nameAnnAdornment $ GHC.anns $ GHC.getLoc rdrName
       putText pre
       putText (showOutputable name)
       putText post
@@ -160,12 +157,6 @@ putRdrName rdrName = case GHC.unLoc rdrName of
       putText (showOutputable name)
     Exact name ->
       putText (showOutputable name)
-
-nameAnnAdornments :: [GHC.NameAnn] -> (String, String)
-nameAnnAdornments = foldl'
-    (\(accl, accr) nameAnn ->
-        let (l, r) = nameAnnAdornment nameAnn in (accl ++ l, r ++ accr))
-    (mempty, mempty)
 
 nameAnnAdornment :: GHC.NameAnn -> (String, String)
 nameAnnAdornment = \case
@@ -239,7 +230,7 @@ putType ltp = case GHC.unLoc ltp of
     putOutputable ltp
   GHC.HsQualTy {} ->
     putOutputable ltp
-  GHC.HsAppKindTy _ _ _ _ ->
+  GHC.HsAppKindTy _ _ _ ->
     putOutputable ltp
   GHC.HsListTy _ _ ->
     putOutputable ltp

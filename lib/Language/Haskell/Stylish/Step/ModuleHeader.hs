@@ -21,6 +21,7 @@ import qualified GHC.Types.SrcLoc                      as GHC
 
 
 --------------------------------------------------------------------------------
+import qualified GHC.Unit.Module.Warnings              as GHC
 import           Language.Haskell.Stylish.Comments
 import qualified Language.Haskell.Stylish.Editor       as Editor
 import           Language.Haskell.Stylish.GHC
@@ -30,7 +31,6 @@ import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
 import qualified Language.Haskell.Stylish.Step.Imports as Imports
 import           Language.Haskell.Stylish.Util         (flagEnds)
-import qualified GHC.Unit.Module.Warnings as GHC
 
 
 data Config = Config
@@ -83,7 +83,7 @@ printModuleHeader maxCols conf ls lmodul =
 
         keywordLine kw = listToMaybe $ do
             GHC.EpAnn {..} <- pure $ GHC.hsmodAnn $ GHC.hsmodExt modul
-            GHC.AddEpAnn kw' (GHC.EpaSpan s _) <- GHC.am_main anns
+            GHC.AddEpAnn kw' (GHC.EpaSpan (GHC.RealSrcSpan s _)) <- GHC.am_main anns
             guard $ kw == kw'
             pure $ GHC.srcSpanEndLine s
 
@@ -104,7 +104,7 @@ printModuleHeader maxCols conf ls lmodul =
             Just lexports -> Just $ doSort $ commentGroups
                 (GHC.srcSpanToRealSrcSpan . GHC.getLocA)
                 (GHC.unLoc lexports)
-                (epAnnComments . GHC.ann $ GHC.getLoc lexports)
+                (epAnnComments $ GHC.getLoc lexports)
 
         printedModuleHeader = runPrinter_
             (PrinterConfig maxCols)

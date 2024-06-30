@@ -69,18 +69,17 @@ dropBeforeAndAfter :: Located a -> [RealLocated b] -> [RealLocated b]
 dropBeforeAndAfter loc = dropBeforeLocated (Just loc) . dropAfterLocated (Just loc)
 
 baseDynFlags :: GHC.DynFlags
-baseDynFlags = defaultDynFlags GHCEx.fakeSettings 
+baseDynFlags = defaultDynFlags GHCEx.fakeSettings
 
 getConDecls :: GHC.HsDataDefn GHC.GhcPs -> [GHC.LConDecl GHC.GhcPs]
 getConDecls d@GHC.HsDataDefn {} = case GHC.dd_cons d of
-  GHC.NewTypeCon con -> [con]
+  GHC.NewTypeCon con      -> [con]
   GHC.DataTypeCons _ cons -> cons
 
 showOutputable :: GHC.Outputable a => a -> String
 showOutputable = GHC.showPpr baseDynFlags
 
 epAnnComments :: GHC.EpAnn a -> [GHC.LEpaComment]
-epAnnComments GHC.EpAnnNotUsed = []
 epAnnComments GHC.EpAnn {..}   = priorAndFollowing comments
 
 deepAnnComments :: (Data a, Typeable a) => a -> [GHC.LEpaComment]

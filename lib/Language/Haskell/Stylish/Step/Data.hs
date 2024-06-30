@@ -37,8 +37,6 @@ import           Language.Haskell.Stylish.Ordering
 import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
-
-
 --------------------------------------------------------------------------------
 data Indent
     = SameLine
@@ -96,11 +94,11 @@ step cfg = makeStep "Data" \ls m -> Editor.apply (changes m) ls
     dataDecls :: Module -> [DataDecl]
     dataDecls m = do
         ldecl <- GHC.hsmodDecls $ GHC.unLoc m
-        GHC.TyClD _ tycld <- pure $ GHC.unLoc ldecl
+        GHC.L srcSpanAnnA (GHC.TyClD _ tycld) <- pure ldecl
         loc <- maybeToList $ GHC.srcSpanToRealSrcSpan $ GHC.getLocA ldecl
         case tycld of
             GHC.DataDecl {..} -> pure $ MkDataDecl
-                { dataComments = epAnnComments tcdDExt
+                { dataComments = epAnnComments srcSpanAnnA
                 , dataLoc      = loc
                 , dataDeclName = tcdLName
                 , dataTypeVars = tcdTyVars
@@ -141,7 +139,10 @@ putDataDecl cfg@Config {..} decl = do
         constructorComments = commentGroups
             (GHC.srcSpanToRealSrcSpan . GHC.getLocA)
             (getConDecls defn)
-            (dataComments decl)
+            (removeCommentsBeforeDataDecl $ dataComments decl)
+
+        removeCommentsBeforeDataDecl = filter
+            (\comment -> GHC.anchor (GHC.getLoc comment) >= dataLoc decl)
 
         onelineEnum =
             isEnum decl && not cBreakEnums &&
@@ -330,7 +331,7 @@ putConstructor cfg consIndent lcons = case GHC.unLoc lcons of
   GHC.ConDeclGADT {..} -> do
     -- Put argument to constructor first:
     case con_g_args of
-      GHC.PrefixConGADT _ -> sep (comma >> space) $ fmap putRdrName $ toList con_names
+      GHC.PrefixConGADT _ _ -> sep (comma >> space) $ fmap putRdrName $ toList con_names
       GHC.RecConGADT _ _ -> error . mconcat $
           [ "Language.Haskell.Stylish.Step.Data.putConstructor: "
           , "encountered a GADT with record constructors, not supported yet"
@@ -350,7 +351,7 @@ putConstructor cfg consIndent lcons = case GHC.unLoc lcons of
             GHC.HsOuterExplicit {..} -> hso_bndrs)
     forM_ con_mb_cxt $ putContext cfg
     case con_g_args of
-        GHC.PrefixConGADT scaledTys -> forM_ scaledTys $ \scaledTy -> do
+        GHC.PrefixConGADT _ scaledTys -> forM_ scaledTys $ \scaledTy -> do
             putType $ GHC.hsScaledThing scaledTy
             space >> putText "->" >> space
         GHC.RecConGADT _ _ -> error . mconcat $
@@ -384,7 +385,7 @@ putConstructor cfg consIndent lcons = case GHC.unLoc lcons of
         let commented = commentGroups
                 (GHC.srcSpanToRealSrcSpan . GHC.getLocA)
                 (GHC.unLoc largs)
-                (epAnnComments . GHC.ann $ GHC.getLoc largs)
+                (epAnnComments $ GHC.getLoc largs)
 
         forM_ (flagEnds commented) $ \(CommentGroup {..}, firstCommentGroup, _) -> do
 
