@@ -204,7 +204,7 @@ step columns = makeStep "Imports (ghc-lib-parser)" . printImports columns
 
 --------------------------------------------------------------------------------
 printImports :: Maybe Int -> Options -> Lines -> Module -> Lines
-printImports maxCols options ls m = Editor.apply changes ls
+printImports maxCols options ls m = Editor.apply changes m ls
   where
     groups = moduleImportGroups m
     moduleStats = foldMap importStats . fmap GHC.unLoc $ concatMap toList groups
