@@ -66,6 +66,7 @@ languagePragmas :: Maybe Int -- ^ columns
                 -> LanguagePragmas.Style
                 -> Bool -- ^ Pad to same length in vertical mode?
                 -> Bool -- ^ remove redundant?
+                -> LanguagePragmas.LanguageVariant
                 -> String -- ^ language prefix
                 -> Step
 languagePragmas = LanguagePragmas.step
