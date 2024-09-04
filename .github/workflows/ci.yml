@@ -64,7 +64,7 @@ jobs:
       id: get_version
       run: 'echo ::set-output name=version::${GITHUB_REF#refs/tags/}'
 
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v4
       with:
         name: artifacts
 
