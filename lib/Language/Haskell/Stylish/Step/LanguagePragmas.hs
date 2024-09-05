@@ -121,7 +121,7 @@ step = ((((makeStep "LanguagePragmas" .) .) .) .) . step'
 step' :: Maybe Int -> Style -> Bool -> Bool -> String -> Lines -> Module -> Lines
 step' columns style align removeRedundant lngPrefix ls m
   | null languagePragmas = ls
-  | otherwise = Editor.apply changes ls
+  | otherwise = Editor.apply changes m ls
   where
     isRedundant'
         | removeRedundant = isRedundant m
