@@ -108,7 +108,9 @@ stylishHaskell sa = do
             BC8.putStr defaultConfigBytes
 
         else do
-            conf <- loadConfig verbose' (saConfig sa)
+            conf <- loadConfig verbose' $ case saConfig sa of
+              Nothing -> SearchFromCurrentDirectory
+              Just fp -> UseConfig fp
             filesR <- case (saRecursive sa) of
               True -> findHaskellFiles (saVerbose sa) (saFiles sa)
               _    -> return $ saFiles sa

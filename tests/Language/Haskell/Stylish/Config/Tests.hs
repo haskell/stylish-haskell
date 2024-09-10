@@ -96,7 +96,7 @@ createFilesAndGetConfig files = withTestDirTree $ do
   setCurrentDirectory "src"
   -- from that directory read the config file and extract extensions
   -- to make sure the search for .cabal file works
-  loadConfig (const (pure ())) Nothing
+  loadConfig (const (pure ())) SearchFromCurrentDirectory
 
 
 --------------------------------------------------------------------------------
