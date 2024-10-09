@@ -33,6 +33,10 @@ tests = testGroup "Language.Haskell.Stylish.Step.LanguagePragmas.Tests"
     , testCase "case 12" case12
     , testCase "case 13" case13
     , testCase "case 14" case14
+    , testCase "case 15" case15
+    , testCase "case 16" case16
+    , testCase "case 17" case17
+    , testCase "case 18" case18
     ]
 
 lANG :: String
@@ -41,7 +45,7 @@ lANG = "LANGUAGE"
 --------------------------------------------------------------------------------
 case01 :: Assertion
 case01 = assertSnippet
-    (step (Just 80) Vertical True False lANG)
+    (step (Just 80) Vertical True False Haskell2010 lANG)
     [ "{-# LANGUAGE ViewPatterns #-}"
     , "{-# LANGUAGE TemplateHaskell, ViewPatterns #-}"
     , "{-# LANGUAGE ScopedTypeVariables #-}"
@@ -58,7 +62,7 @@ case01 = assertSnippet
 --------------------------------------------------------------------------------
 case02 :: Assertion
 case02 = assertSnippet
-    (step (Just 80) Vertical True True lANG)
+    (step (Just 80) Vertical True True Haskell2010 lANG)
     [ "{-# LANGUAGE BangPatterns #-}"
     , "{-# LANGUAGE ViewPatterns #-}"
     , "module Main where"
@@ -74,7 +78,7 @@ case02 = assertSnippet
 --------------------------------------------------------------------------------
 case03 :: Assertion
 case03 = assertSnippet
-    (step (Just 80) Vertical True True lANG)
+    (step (Just 80) Vertical True True Haskell2010 lANG)
     [ "{-# LANGUAGE BangPatterns #-}"
     , "{-# LANGUAGE ViewPatterns #-}"
     , "module Main where"
@@ -90,7 +94,7 @@ case03 = assertSnippet
 --------------------------------------------------------------------------------
 case04 :: Assertion
 case04 = assertSnippet
-    (step (Just 80) Compact True False lANG)
+    (step (Just 80) Compact True False Haskell2010 lANG)
     [ "{-# LANGUAGE TypeOperators, StandaloneDeriving, DeriveDataTypeable,"
     , "    TemplateHaskell #-}"
     , "{-# LANGUAGE TemplateHaskell, ViewPatterns #-}"
@@ -105,7 +109,7 @@ case04 = assertSnippet
 --------------------------------------------------------------------------------
 case05 :: Assertion
 case05 = assertSnippet
-    (step (Just 80) Vertical True False lANG)
+    (step (Just 80) Vertical True False Haskell2010 lANG)
     [ "{-# LANGUAGE CPP #-}"
     , ""
     , "#if __GLASGOW_HASKELL__ >= 702"
@@ -124,7 +128,7 @@ case05 = assertSnippet
 --------------------------------------------------------------------------------
 case06 :: Assertion
 case06 = assertSnippet
-    (step (Just 80) CompactLine True False lANG)
+    (step (Just 80) CompactLine True False Haskell2010 lANG)
     [ "{-# LANGUAGE TypeOperators, StandaloneDeriving, DeriveDataTypeable,"
     , "    TemplateHaskell #-}"
     , "{-# LANGUAGE TemplateHaskell, ViewPatterns #-}"
@@ -137,7 +141,7 @@ case06 = assertSnippet
 --------------------------------------------------------------------------------
 case07 :: Assertion
 case07 = assertSnippet
-    (step (Just 80) Vertical False False lANG)
+    (step (Just 80) Vertical False False Haskell2010 lANG)
     [ "{-# LANGUAGE ViewPatterns #-}"
     , "{-# LANGUAGE TemplateHaskell, ViewPatterns #-}"
     , "{-# LANGUAGE ScopedTypeVariables, NoImplicitPrelude #-}"
@@ -155,7 +159,7 @@ case07 = assertSnippet
 --------------------------------------------------------------------------------
 case08 :: Assertion
 case08 = assertSnippet
-    (step (Just 80) CompactLine False False lANG)
+    (step (Just 80) CompactLine False False Haskell2010 lANG)
     [ "{-# LANGUAGE TypeOperators, StandaloneDeriving, DeriveDataTypeable,"
     , "    TemplateHaskell #-}"
     , "{-# LANGUAGE TemplateHaskell, ViewPatterns #-}"
@@ -169,7 +173,7 @@ case08 = assertSnippet
 --------------------------------------------------------------------------------
 case09 :: Assertion
 case09 = assertSnippet
-    (step (Just 80) Compact True False lANG)
+    (step (Just 80) Compact True False Haskell2010 lANG)
     [ "{-# LANGUAGE DefaultSignatures, FlexibleInstances, LambdaCase, " ++
       "TypeApplications"
     , "             #-}"
@@ -181,7 +185,7 @@ case09 = assertSnippet
 --------------------------------------------------------------------------------
 case10 :: Assertion
 case10 = assertSnippet
-    (step (Just 80) Compact True False lANG)
+    (step (Just 80) Compact True False Haskell2010 lANG)
     [ "{-# LANGUAGE NondecreasingIndentation, ScopedTypeVariables,"
     , "             TypeApplications #-}"
     ]
@@ -192,7 +196,7 @@ case10 = assertSnippet
 --------------------------------------------------------------------------------
 case11 :: Assertion
 case11 = assertSnippet
-    (step (Just 80) Vertical False False "language")
+    (step (Just 80) Vertical False False Haskell2010 "language")
     [ "{-# LANGUAGE ViewPatterns #-}"
     , "{-# LANGUAGE TemplateHaskell, ViewPatterns #-}"
     , "{-# LANGUAGE ScopedTypeVariables, NoImplicitPrelude #-}"
@@ -210,7 +214,7 @@ case11 = assertSnippet
 --------------------------------------------------------------------------------
 case12 :: Assertion
 case12 = assertSnippet
-    (step Nothing Compact False False "language")
+    (step Nothing Compact False False Haskell2010 "language")
     [ "{-# LANGUAGE ViewPatterns, OverloadedStrings #-}"
     , "{-# LANGUAGE TemplateHaskell, ViewPatterns #-}"
     , "{-# LANGUAGE ScopedTypeVariables, NoImplicitPrelude #-}"
@@ -225,7 +229,7 @@ case12 = assertSnippet
 --------------------------------------------------------------------------------
 case13 :: Assertion
 case13 = assertSnippet
-    (step Nothing Vertical True True lANG) input input
+    (step Nothing Vertical True True Haskell2010 lANG) input input
   where
     input =
         [ "{-# LANGUAGE BangPatterns  #-}"
@@ -236,7 +240,7 @@ case13 = assertSnippet
 
 --------------------------------------------------------------------------------
 case14 :: Assertion
-case14 = assertSnippet (step Nothing VerticalCompact False False "language")
+case14 = assertSnippet (step Nothing VerticalCompact False False Haskell2010 "language")
     [ "{-# LANGUAGE ViewPatterns, OverloadedStrings #-}"
     , "{-# LANGUAGE TemplateHaskell, ViewPatterns #-}"
     , "{-# LANGUAGE ScopedTypeVariables, NoImplicitPrelude #-}"
@@ -250,4 +254,62 @@ case14 = assertSnippet (step Nothing VerticalCompact False False "language")
     , "  , ViewPatterns"
     , "  #-}"
     , "module Main where"
+    ]
+
+--------------------------------------------------------------------------------
+case15 :: Assertion
+case15 = assertSnippet
+    (step (Just 80) Vertical False True Haskell98 lANG)
+    [ "{-# LANGUAGE DeriveGeneric #-}"
+    , "{-# LANGUAGE PatternGuards #-}"
+    , "{-# LANGUAGE StarIsType #-}"
+    , "{-# LANGUAGE TypeFamilies #-}"
+    ]
+
+    [ "{-# LANGUAGE DeriveGeneric #-}"
+    , "{-# LANGUAGE PatternGuards #-}"
+    , "{-# LANGUAGE TypeFamilies #-}"
+    ]
+
+--------------------------------------------------------------------------------
+case16 :: Assertion
+case16 = assertSnippet
+    (step (Just 80) Vertical False True Haskell2010 lANG)
+    [ "{-# LANGUAGE DeriveGeneric #-}"
+    , "{-# LANGUAGE PatternGuards #-}"
+    , "{-# LANGUAGE StarIsType #-}"
+    , "{-# LANGUAGE TypeFamilies #-}"
+    ]
+
+    [ "{-# LANGUAGE DeriveGeneric #-}"
+    , "{-# LANGUAGE TypeFamilies #-}"
+    ]
+
+--------------------------------------------------------------------------------
+case17 :: Assertion
+case17 = assertSnippet
+    (step (Just 80) Vertical False True GHC2021 lANG)
+    [ "{-# LANGUAGE DeriveGeneric #-}"
+    , "{-# LANGUAGE PatternGuards #-}"
+    , "{-# LANGUAGE StarIsType #-}"
+    , "{-# LANGUAGE TypeFamilies #-}"
+    ]
+
+    [ "{-# LANGUAGE TypeFamilies #-}"
+    ]
+
+--------------------------------------------------------------------------------
+case18 :: Assertion
+case18 = assertSnippet
+    (step (Just 80) Vertical False False GHC2021 lANG)
+    [ "{-# LANGUAGE DeriveGeneric #-}"
+    , "{-# LANGUAGE PatternGuards #-}"
+    , "{-# LANGUAGE StarIsType #-}"
+    , "{-# LANGUAGE TypeFamilies #-}"
+    ]
+
+    [ "{-# LANGUAGE DeriveGeneric #-}"
+    , "{-# LANGUAGE PatternGuards #-}"
+    , "{-# LANGUAGE StarIsType #-}"
+    , "{-# LANGUAGE TypeFamilies #-}"
     ]
