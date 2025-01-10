@@ -12,10 +12,6 @@ jobs:
         stack: ["2.15.7"]
 
     steps:
-    - name: Get the version
-      id: get_version
-      run: 'echo ::set-output name=version::${GITHUB_REF#refs/tags/}'
-
     - uses: actions/checkout@v2
 
     - uses: haskell-actions/setup@v2
@@ -44,14 +40,12 @@ jobs:
     - name: Build artifact
       if: startsWith(github.ref, 'refs/tags')
       run: make artifact
-      env:
-        PATAT_TAG: ${{ steps.get_version.outputs.version }}
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v4
       if: startsWith(github.ref, 'refs/tags')
       with:
         path: artifacts/*
-        name: artifacts
+        name: artifacts-${{ runner.os }}
 
   release:
     name: Release
@@ -60,41 +54,15 @@ jobs:
     if: startsWith(github.ref, 'refs/tags')
 
     steps:
-    - name: Get the version
-      id: get_version
-      run: 'echo ::set-output name=version::${GITHUB_REF#refs/tags/}'
-
     - uses: actions/download-artifact@v4
       with:
-        name: artifacts
+        pattern: artifacts-*
 
-    - name: Display structure of downloaded files
-      run: ls -R
+    - run: ls -R
+    - run: 'sha256sum artifacts-*/*'
 
-    - uses: actions/create-release@v1
-      id: create_release
+    - uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ steps.get_version.outputs.version }}
-        release_name: ${{ steps.get_version.outputs.version }}
-
-    - name: Upload Linux Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./stylish-haskell-${{ steps.get_version.outputs.version }}-linux-x86_64.tar.gz
-        asset_name: stylish-haskell-${{ steps.get_version.outputs.version }}-linux-x86_64.tar.gz
-        asset_content_type: application/gzip
-
-    - name: Upload MacOS Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./stylish-haskell-${{ steps.get_version.outputs.version }}-darwin-x86_64.zip
-        asset_name: stylish-haskell-${{ steps.get_version.outputs.version }}-darwin-x86_64.zip
-        asset_content_type: application/zip
+        files: 'artifacts-*/stylish-haskell-*'
