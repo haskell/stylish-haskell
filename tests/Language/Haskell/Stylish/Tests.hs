@@ -35,7 +35,7 @@ tests = testGroup "Language.Haskell.Stylish.Tests"
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = (@?= result) =<< format Nothing Nothing input
+case01 = (@?= result) =<< format SearchFromCurrentDirectory Nothing input
   where
     input = "module Herp where\ndata Foo = Bar | Baz { baz :: Int }"
     result = Right $ lines input
@@ -54,7 +54,7 @@ case02 = withTestDirTree $ do
         , "      via: \"indent 2\""
         ]
 
-    actual <- format (Just $ ConfigPath "test-config.yaml") Nothing input
+    actual <- format (UseConfig "test-config.yaml") Nothing input
     actual @?= result
   where
     input = "module Herp where\ndata Foo = Bar | Baz { baz :: Int }"
@@ -79,7 +79,7 @@ case03 = withTestDirTree $ do
         , "      via: \"indent 2\""
         ]
 
-    actual <- format (Just $ ConfigPath "test-config.yaml") Nothing input
+    actual <- format (UseConfig "test-config.yaml") Nothing input
     actual @?= result
   where
     input = unlines [ "module Herp where"
@@ -98,7 +98,7 @@ case03 = withTestDirTree $ do
 
 --------------------------------------------------------------------------------
 case04 :: Assertion
-case04 = format Nothing (Just fileLocation) input >>= \case
+case04 = format SearchFromCurrentDirectory (Just fileLocation) input >>= \case
     Right _                      -> assertFailure "expected error"
     Left err
         | fileLocation `isInfixOf` err
