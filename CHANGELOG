@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- UNRELEASED
+     * Bump `Cabal` lower bound to 3.14
+
 - 0.14.6.0 (2024-01-19)
      * #471 Support GHC 9.8 (by Michael Peyton Jones)
      * #440 Fix dissappearing `DEPRECATED` pragma on module (by Lev Dvorkin)
