@@ -27,8 +27,6 @@ COMPRESS_BIN_DEPS=$(UPX_BINARY)
 COMPRESS_BIN=upx
 endif
 
-STACK=stack
-
 # Default target.
 .PHONY: build
 build: $(STYLISH_BINARY)
@@ -49,7 +47,7 @@ $(STYLISH_PACKAGE).$(ARCHIVE): $(STYLISH_BINARY) $(COMPRESS_BIN_DEPS)
 	$(ARCHIVE_CREATE) $(STYLISH_PACKAGE).$(ARCHIVE) $(STYLISH_PACKAGE)
 
 $(STYLISH_BINARY):
-	$(STACK) build --copy-bins
+	cabal install --installdir="$(dir $(STYLISH_BINARY))"
 
 # UPX is used to compress the resulting binary.  We currently don't use this on
 # Mac OS.
@@ -62,4 +60,4 @@ $(UPX_BINARY):
 
 .PHONY: test
 test:
-	stack build --test
+	cabal test
