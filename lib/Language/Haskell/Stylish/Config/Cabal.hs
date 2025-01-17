@@ -7,7 +7,6 @@ module Language.Haskell.Stylish.Config.Cabal
 --------------------------------------------------------------------------------
 import           Control.Monad                            (unless)
 import qualified Data.ByteString.Char8                    as BS
-import           Data.Either                              (isRight)
 import           Data.Foldable                            (traverse_)
 import           Data.List                                (nub)
 import           Data.Maybe                               (maybeToList)
@@ -15,6 +14,7 @@ import qualified Distribution.PackageDescription          as Cabal
 import qualified Distribution.PackageDescription.Parsec   as Cabal
 import qualified Distribution.Parsec                      as Cabal
 import qualified Distribution.Simple.Utils                as Cabal
+import qualified Distribution.Utils.Path                  as Cabal
 import qualified Distribution.Verbosity                   as Cabal
 import qualified Language.Haskell.Extension               as Language
 import           Language.Haskell.Stylish.Verbose
@@ -23,8 +23,8 @@ import           System.Directory                         (doesFileExist,
 
 
 --------------------------------------------------------------------------------
+import           GHC.Data.Maybe                           (mapMaybe)
 import           Language.Haskell.Stylish.Config.Internal
-import GHC.Data.Maybe (mapMaybe)
 
 
 --------------------------------------------------------------------------------
@@ -36,18 +36,25 @@ findLanguageExtensions verbose =
 
 --------------------------------------------------------------------------------
 -- | Find the closest .cabal file, possibly going up the directory structure.
+-- TODO: use ConfigSearchStrategy here, too
 findCabalFile :: Verbose -> IO (Maybe FilePath)
 findCabalFile verbose = do
-  potentialProjectRoots <- ancestors <$> getCurrentDirectory
-  potentialCabalFile <- filter isRight <$>
-    traverse Cabal.findPackageDesc potentialProjectRoots
-  case potentialCabalFile of
-    [Right cabalFile] -> return (Just cabalFile)
-    _ -> do
-      verbose $ ".cabal file not found, directories searched: " <>
-        show potentialProjectRoots
-      verbose $ "Stylish Haskell will work basing on LANGUAGE pragmas in source files."
-      return Nothing
+  cwd <- getCurrentDirectory
+  go [] $ ancestors cwd
+ where
+  go :: [FilePath] -> [FilePath] -> IO (Maybe FilePath)
+  go searched [] = do
+    verbose $ ".cabal file not found, directories searched: " <>
+      show searched
+    verbose $ "Stylish Haskell will work basing on LANGUAGE pragmas in source files."
+    return Nothing
+  go searched (p : ps) = do
+    let projectRoot = Just $ Cabal.makeSymbolicPath p
+    potentialCabalFile <- Cabal.findPackageDesc projectRoot
+    case potentialCabalFile of
+      Right cabalFile -> pure $ Just $
+        Cabal.interpretSymbolicPath projectRoot cabalFile
+      _ -> go (p : searched) ps
 
 
 --------------------------------------------------------------------------------
