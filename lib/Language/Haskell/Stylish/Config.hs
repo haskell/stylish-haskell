@@ -96,16 +96,6 @@ defaultConfigBytes = $(FileEmbed.embedFile "data/stylish-haskell.yaml")
 
 
 --------------------------------------------------------------------------------
-data ConfigSearchStrategy
-    = -- | Don't try to search, just use given config file
-      UseConfig FilePath
-    | -- | Search for @.stylish-haskell.yaml@ starting from given directory.
-      -- If not found, try all ancestor directories, @$XDG_CONFIG\/stylish-haskell\/config.yaml@ and @$HOME\/.stylish-haskell.yaml@ in order.
-      -- If no config is found, default built-in config will be used.
-      SearchFromDirectory FilePath
-    | -- | Like SearchFromDirectory, but using current working directory as a starting point
-      SearchFromCurrentDirectory
-
 configFilePath :: Verbose -> ConfigSearchStrategy -> IO (Maybe FilePath)
 configFilePath _ (UseConfig userSpecified) = return (Just userSpecified)
 configFilePath verbose (SearchFromDirectory dir) = searchFrom verbose dir
@@ -137,7 +127,7 @@ loadConfig verbose configSearchStrategy = do
         Left (pos, err)     -> error $ prettyPosWithSource pos (fromStrict bytes) ("Language.Haskell.Stylish.Config.loadConfig: " ++ err)
         Right config -> do
           cabalLanguageExtensions <- if configCabal config
-            then map toStr <$> Cabal.findLanguageExtensions verbose
+            then map toStr <$> Cabal.findLanguageExtensions verbose configSearchStrategy
             else pure []
 
           return $ config
