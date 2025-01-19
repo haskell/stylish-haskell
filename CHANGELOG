@@ -1,6 +1,19 @@
 # CHANGELOG
 
 - UNRELEASED
+     * #482 Add `ConfigSearchStrategy` to allow avoiding `getCurrentDirectory`
+       when loading config (by Jan Hrček)
+
+       This is breaking API change that can be fixed like this:
+
+       ```diff
+       -format Nothing maybeFile contents
+       +format SearchFromCurrentDirectory maybeFile contents
+
+       -format (Just cfgFile) maybeFile content
+       +format (UseConfig cfgFile) maybeFile content
+       ```
+
      * Bump `Cabal` lower bound to 3.14
 
 - 0.14.6.0 (2024-01-19)
