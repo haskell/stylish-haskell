@@ -4,6 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Language.Haskell.Stylish.Step.LanguagePragmas
     ( Style (..)
+    , LanguageVariant (..)
     , step
       -- * Utilities
     , addLanguagePragma
@@ -113,19 +114,20 @@ filterRedundant isRedundant' = snd . foldr filterRedundant' (S.empty, []) . fmap
         known' = xs' `S.union` known
 
 --------------------------------------------------------------------------------
-step :: Maybe Int -> Style -> Bool -> Bool -> String -> Step
-step = ((((makeStep "LanguagePragmas" .) .) .) .) . step'
+step :: Maybe Int -> Style -> Bool -> Bool -> LanguageVariant -> String -> Step
+step = (((((makeStep "LanguagePragmas" .) .) .) .) .) . step'
 
 
 --------------------------------------------------------------------------------
-step' :: Maybe Int -> Style -> Bool -> Bool -> String -> Lines -> Module -> Lines
-step' columns style align removeRedundant lngPrefix ls m
+step' :: Maybe Int -> Style -> Bool -> Bool -> LanguageVariant -> String -> Lines -> Module -> Lines
+step' columns style align removeRedundant lngVariant lngPrefix ls m
   | null languagePragmas = ls
   | otherwise = Editor.apply changes ls
   where
-    isRedundant'
-        | removeRedundant = isRedundant m
-        | otherwise       = const False
+    isRedundant' prag
+        | removeRedundant = isRedundant m prag ||
+                            isRedundantWrtLanguageVariant lngVariant prag
+        | otherwise       = False
 
     languagePragmas = moduleLanguagePragmas m
 
@@ -200,3 +202,97 @@ isRedundantBangPatterns modul =
     getMatchStrict (GHC.Match _ ctx _ _) = case ctx of
       GHC.FunRhs _ _ GHC.SrcStrict -> [()]
       _                            -> []
+
+
+--------------------------------------------------------------------------------
+data LanguageVariant
+    = GHC2021
+    | Haskell2010
+    | Haskell98
+    deriving (Eq, Show)
+
+
+--------------------------------------------------------------------------------
+isRedundantWrtLanguageVariant :: LanguageVariant -> String -> Bool
+isRedundantWrtLanguageVariant lngVariant prag =
+    prag `S.member` case lngVariant of
+                      GHC2021     -> ghc2021Pragmas
+                      Haskell2010 -> haskell2010Pragmas
+                      Haskell98   -> haskell98Pragmas
+  where
+    ghc2021Pragmas = S.fromList
+      [ "BangPatterns"
+      , "BinaryLiterals"
+      , "ConstrainedClassMethods"
+      , "ConstraintKinds"
+      , "DeriveDataTypeable"
+      , "DeriveFoldable"
+      , "DeriveFunctor"
+      , "DeriveGeneric"
+      , "DeriveLift"
+      , "DeriveTraversable"
+      , "DoAndIfThenElse"
+      , "EmptyCase"
+      , "EmptyDataDecls"
+      , "EmptyDataDeriving"
+      , "ExistentialQuantification"
+      , "ExplicitForAll"
+      , "FieldSelectors"
+      , "FlexibleContexts"
+      , "FlexibleInstances"
+      , "ForeignFunctionInterface"
+      , "GADTSyntax"
+      , "GeneralisedNewtypeDeriving"
+      , "GeneralizedNewtypeDeriving"
+      , "HexFloatLiterals"
+      , "ImplicitPrelude"
+      , "ImportQualifiedPost"
+      , "InstanceSigs"
+      , "KindSignatures"
+      , "MonomorphismRestriction"
+      , "MultiParamTypeClasses"
+      , "NamedFieldPuns"
+      , "NamedWildCards"
+      , "NumericUnderscores"
+      , "PatternGuards"
+      , "PolyKinds"
+      , "PostfixOperators"
+      , "RankNTypes"
+      , "RelaxedPolyRec"
+      , "ScopedTypeVariables"
+      , "StandaloneDeriving"
+      , "StandaloneKindSignatures"
+      , "StarIsType"
+      , "TraditionalRecordSyntax"
+      , "TupleSections"
+      , "TypeApplications"
+      , "TypeOperators"
+      , "TypeSynonymInstances"
+      ]
+
+    haskell2010Pragmas = S.fromList
+      [ "CUSKs"
+      , "DatatypeContexts"
+      , "DoAndIfThenElse"
+      , "EmptyDataDecls"
+      , "FieldSelectors"
+      , "ForeignFunctionInterface"
+      , "ImplicitPrelude"
+      , "MonomorphismRestriction"
+      , "PatternGuards"
+      , "RelaxedPolyRec"
+      , "StarIsType"
+      , "TraditionalRecordSyntax"
+      ]
+
+    haskell98Pragmas = S.fromList
+      [ "CUSKs"
+      , "DatatypeContexts"
+      , "FieldSelectors"
+      , "ImplicitPrelude"
+      , "MonomorphismRestriction"
+      , "NPlusKPatterns"
+      , "NondecreasingIndentation"
+      , "StarIsType"
+      , "TraditionalRecordSyntax"
+      ]

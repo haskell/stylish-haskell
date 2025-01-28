@@ -426,6 +426,19 @@ steps:
       # is set to true, it will remove those redundant pragmas. Default: true.
       remove_redundant: true
 
+      # When remove_redundant is enabled, extensions that are implied by the
+      # chosen language variant will also be removed. The following language
+      # variants are supported:
+      #
+      # - GHC2021
+      #
+      # - Haskell2010
+      #
+      # - Haskell98
+      #
+      # Default: Haskell2010
+      language_variant: Haskell2010
+
       # Language prefix to be used for pragma declaration, this allows you to
       # use other options non case-sensitive like "language" or "Language".
       # If a non correct String is provided, it will default to: LANGUAGE.
