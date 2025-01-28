@@ -102,12 +102,10 @@ takeNext [] ((cb, c) : comments) =
 takeNext ((ib, i) : items) [] =
     Just (ib, NextItem i, items, [])
 takeNext ((ib, i) : items) ((cb, c) : comments)
-    | blockStart ib == blockStart cb =
-        Just (ib <> cb, NextItemWithComment i c, items, comments)
-    | blockStart ib < blockStart cb =
-        Just (ib, NextItem i, items, (cb, c) : comments)
-    | otherwise =
-        Just (cb, NextComment c, (ib, i) : items, comments)
+    = case blockEnd ib `compare` blockStart cb of
+        EQ -> Just (ib <> cb, NextItemWithComment i c, items, comments)
+        LT -> Just (ib, NextItem i, items, (cb, c) : comments)
+        GT -> Just (cb, NextComment c, (ib, i) : items, comments)
 
 
 --------------------------------------------------------------------------------
