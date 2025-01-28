@@ -287,6 +287,7 @@ parseImports config o = fmap (Imports.step columns) $ Imports.Options
       <*> (o A..:? "pad_module_names" A..!= def Imports.padModuleNames)
       <*> (o A..:? "long_list_align" >>= parseEnum longListAligns (def Imports.longListAlign))
       <*> (o A..:? "empty_list_align" >>= parseEnum emptyListAligns (def Imports.emptyListAlign))
+      <*> (o A..:? "entity_list_align" >>= parseEnum entityListAligns (def Imports.entityListAlign))
       -- Note that padding has to be at least 1. Default is 4.
       <*> (o A..:? "list_padding" >>= maybe (pure $ def Imports.listPadding) parseListPadding)
       <*> o A..:? "separate_lists" A..!= def Imports.separateLists
@@ -324,6 +325,11 @@ parseImports config o = fmap (Imports.step columns) $ Imports.Options
     emptyListAligns =
         [ ("inherit", Imports.Inherit)
         , ("right_after", Imports.RightAfter)
+        ]
+
+    entityListAligns =
+        [ ("inline", Imports.ELInline)
+        , ("multiline", Imports.ELMultiline)
         ]
 
     parseListPadding = \case
