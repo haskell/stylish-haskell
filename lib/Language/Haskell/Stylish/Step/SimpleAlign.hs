@@ -12,7 +12,7 @@ module Language.Haskell.Stylish.Step.SimpleAlign
 --------------------------------------------------------------------------------
 import           Data.Either                     (partitionEithers)
 import           Data.Foldable                   (toList)
-import           Data.List                       (foldl1', sortOn)
+import           Data.List                       (foldl', foldl1', sortOn)
 import           Data.Maybe                      (fromMaybe)
 import qualified GHC.Hs                          as Hs
 import qualified GHC.Parser.Annotation           as GHC

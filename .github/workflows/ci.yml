@@ -4,12 +4,12 @@ on: ['pull_request', 'push']
 
 jobs:
   build:
-    name: Build on ${{ matrix.os }}
+    name: Build on ${{ matrix.os }} with GHC ${{ matrix.ghc }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest]
-        ghc: ["9.4", "9.6", "9.8", "9.10"]
+        ghc: ["9.6", "9.8", "9.10"]
 
     steps:
     - uses: actions/checkout@v4
