@@ -93,20 +93,27 @@ step cfg = makeStep "Data" \ls m -> Editor.apply (changes m) ls
     changes :: Module -> Editor.Edits
     changes = foldMap (formatDataDecl cfg) . dataDecls
 
-    getComments :: GHC.AddEpAnn -> [GHC.LEpaComment]
-    getComments (GHC.AddEpAnn _ epaLoc) = case epaLoc of
-        GHC.EpaDelta _ comments -> comments
-        GHC.EpaSpan _ -> []
+    getComments :: GHC.RealSrcSpan -> GHC.SrcSpanAnnA -> [GHC.LEpaComment]
+    getComments declSpan declAnnos=
+        filter isAfterStart $ epAnnComments declAnnos
+      where
+        -- workaround to make sure we don't reprint a haddock
+        -- comment before a data declaration after a data
+        -- declaration
+        isAfterStart :: GHC.LEpaComment -> Bool
+        isAfterStart (GHC.L (GHC.EpaSpan (GHC.RealSrcSpan commentSpan _)) _) =
+               GHC.srcSpanStartLine commentSpan >= GHC.srcSpanStartLine declSpan
+        isAfterStart _ = False
 
     dataDecls :: Module -> [DataDecl]
     dataDecls m = do
         ldecl <- GHC.hsmodDecls $ GHC.unLoc m
-        GHC.TyClD _ tycld <- pure $ GHC.unLoc ldecl
-        loc <- maybeToList $ GHC.srcSpanToRealSrcSpan $ GHC.getLocA ldecl
+        (GHC.L declAnnos (GHC.TyClD _ tycld)) <- pure ldecl
+        declSpan <- maybeToList $ GHC.srcSpanToRealSrcSpan $ GHC.getLocA ldecl
         case tycld of
             GHC.DataDecl {..} -> pure $ MkDataDecl
-                { dataComments = foldMap getComments tcdDExt
-                , dataLoc      = loc
+                { dataComments = getComments declSpan declAnnos
+                , dataLoc      = declSpan
                 , dataDeclName = tcdLName
                 , dataTypeVars = tcdTyVars
                 , dataDefn     = tcdDataDefn
