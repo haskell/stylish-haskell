@@ -103,6 +103,8 @@ step cfg = makeStep "Data" \ls m -> Editor.apply (changes m) ls
         isAfterStart :: GHC.LEpaComment -> Bool
         isAfterStart (GHC.L (GHC.EpaSpan (GHC.RealSrcSpan commentSpan _)) _) =
                GHC.srcSpanStartLine commentSpan >= GHC.srcSpanStartLine declSpan
+        isAfterStart (GHC.L (GHC.EpaDelta (GHC.RealSrcSpan commentSpan _) _ _) _) =
+               GHC.srcSpanStartLine commentSpan >= GHC.srcSpanStartLine declSpan
         isAfterStart _ = False
 
     dataDecls :: Module -> [DataDecl]

@@ -61,7 +61,7 @@ commentGroups getSpan allItems allComments =
     commentsWithLines :: [(LineBlock, GHC.LEpaComment)]
     commentsWithLines = do
         comment <- allComments
-        let s = GHC.anchor $ GHC.getLoc comment
+        let s = GHC.epaLocationRealSrcSpan $ GHC.getLoc comment
         pure (realSrcSpanToLineBlock s, comment)
 
     work

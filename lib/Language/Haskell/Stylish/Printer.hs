@@ -53,6 +53,7 @@ import           GHC.Hs.Extension                (GhcPs)
 import           GHC.Types.Name.Reader           (RdrName (..))
 import           GHC.Types.SrcLoc                (GenLocated (..))
 import qualified GHC.Types.SrcLoc                as GHC
+import           GHC.TypeLits                    (symbolVal)
 import           GHC.Utils.Outputable            (Outputable)
 
 --------------------------------------------------------------------------------
@@ -160,18 +161,19 @@ putRdrName rdrName = case GHC.unLoc rdrName of
 
 nameAnnAdornment :: GHC.NameAnn -> (String, String)
 nameAnnAdornment = \case
-    GHC.NameAnn {..}       -> fromAdornment nann_adornment
-    GHC.NameAnnCommas {..} -> fromAdornment nann_adornment
-    GHC.NameAnnBars {..}   -> fromAdornment nann_adornment
-    GHC.NameAnnOnly {..}   -> fromAdornment nann_adornment
+    GHC.NameAnn {GHC.nann_adornment = na}       -> fromAdornment na
+    GHC.NameAnnCommas {GHC.nann_adornment = na}       -> fromAdornment na
+    GHC.NameAnnBars {GHC.nann_parensh = (o, c)}       -> fromAdornment (GHC.NameParensHash o c)
+    GHC.NameAnnOnly {GHC.nann_adornment = na}       -> fromAdornment na
     GHC.NameAnnRArrow {}   -> (mempty, mempty)
     GHC.NameAnnQuote {}    -> ("'", mempty)
     GHC.NameAnnTrailing {} -> (mempty, mempty)
   where
-    fromAdornment GHC.NameParens     = ("(", ")")
-    fromAdornment GHC.NameBackquotes = ("`", "`")
-    fromAdornment GHC.NameParensHash = ("#(", "#)")
-    fromAdornment GHC.NameSquare     = ("[", "]")
+    fromAdornment (GHC.NameParens l r)     = (symbolVal l, symbolVal r)
+    fromAdornment (GHC.NameBackquotes l r) = (symbolVal l, symbolVal r)
+    fromAdornment (GHC.NameParensHash l r) = (symbolVal l, symbolVal r)
+    fromAdornment (GHC.NameSquare l r)     = (symbolVal l, symbolVal r)
+    fromAdornment GHC.NameNoAdornment      = (mempty, mempty)
 
 -- | Print module name
 putModuleName :: GHC.ModuleName -> P ()
@@ -197,7 +199,7 @@ putType ltp = case GHC.unLoc ltp of
       (comma >> space)
       (fmap putType xs)
     putText "]"
-  GHC.HsExplicitTupleTy _ xs -> do
+  GHC.HsExplicitTupleTy _ _ xs -> do
     putText "'("
     sep
       (comma >> space)
