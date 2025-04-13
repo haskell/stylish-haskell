@@ -93,15 +93,27 @@ step cfg = makeStep "Data" \ls m -> Editor.apply (changes m) ls
     changes :: Module -> Editor.Edits
     changes = foldMap (formatDataDecl cfg) . dataDecls
 
+    getComments :: GHC.RealSrcSpan -> GHC.SrcSpanAnnA -> [GHC.LEpaComment]
+    getComments declSpan declAnnos=
+        filter isAfterStart $ epAnnComments declAnnos
+      where
+        -- workaround to make sure we don't reprint a haddock
+        -- comment before a data declaration after a data
+        -- declaration
+        isAfterStart :: GHC.LEpaComment -> Bool
+        isAfterStart (GHC.L (GHC.EpaSpan (GHC.RealSrcSpan commentSpan _)) _) =
+               GHC.srcSpanStartLine commentSpan >= GHC.srcSpanStartLine declSpan
+        isAfterStart _ = False
+
     dataDecls :: Module -> [DataDecl]
     dataDecls m = do
         ldecl <- GHC.hsmodDecls $ GHC.unLoc m
-        GHC.TyClD _ tycld <- pure $ GHC.unLoc ldecl
-        loc <- maybeToList $ GHC.srcSpanToRealSrcSpan $ GHC.getLocA ldecl
+        (GHC.L declAnnos (GHC.TyClD _ tycld)) <- pure ldecl
+        declSpan <- maybeToList $ GHC.srcSpanToRealSrcSpan $ GHC.getLocA ldecl
         case tycld of
             GHC.DataDecl {..} -> pure $ MkDataDecl
-                { dataComments = epAnnComments tcdDExt
-                , dataLoc      = loc
+                { dataComments = getComments declSpan declAnnos
+                , dataLoc      = declSpan
                 , dataDeclName = tcdLName
                 , dataTypeVars = tcdTyVars
                 , dataDefn     = tcdDataDefn
@@ -330,7 +342,7 @@ putConstructor cfg consIndent lcons = case GHC.unLoc lcons of
   GHC.ConDeclGADT {..} -> do
     -- Put argument to constructor first:
     case con_g_args of
-      GHC.PrefixConGADT _ -> sep (comma >> space) $ fmap putRdrName $ toList con_names
+      GHC.PrefixConGADT _ _ -> sep (comma >> space) $ fmap putRdrName $ toList con_names
       GHC.RecConGADT _ _ -> error . mconcat $
           [ "Language.Haskell.Stylish.Step.Data.putConstructor: "
           , "encountered a GADT with record constructors, not supported yet"
@@ -350,7 +362,7 @@ putConstructor cfg consIndent lcons = case GHC.unLoc lcons of
             GHC.HsOuterExplicit {..} -> hso_bndrs)
     forM_ con_mb_cxt $ putContext cfg
     case con_g_args of
-        GHC.PrefixConGADT scaledTys -> forM_ scaledTys $ \scaledTy -> do
+        GHC.PrefixConGADT _ scaledTys -> forM_ scaledTys $ \scaledTy -> do
             putType $ GHC.hsScaledThing scaledTy
             space >> putText "->" >> space
         GHC.RecConGADT _ _ -> error . mconcat $
@@ -384,7 +396,7 @@ putConstructor cfg consIndent lcons = case GHC.unLoc lcons of
         let commented = commentGroups
                 (GHC.srcSpanToRealSrcSpan . GHC.getLocA)
                 (GHC.unLoc largs)
-                (epAnnComments . GHC.ann $ GHC.getLoc largs)
+                (epAnnComments $ GHC.getLoc largs)
 
         forM_ (flagEnds commented) $ \(CommentGroup {..}, firstCommentGroup, _) -> do
 

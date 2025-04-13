@@ -83,7 +83,7 @@ printModuleHeader maxCols conf ls lmodul =
 
         keywordLine kw = listToMaybe $ do
             GHC.EpAnn {..} <- pure $ GHC.hsmodAnn $ GHC.hsmodExt modul
-            GHC.AddEpAnn kw' (GHC.EpaSpan s _) <- GHC.am_main anns
+            GHC.AddEpAnn kw' (GHC.EpaSpan (GHC.RealSrcSpan s _)) <- GHC.am_main anns
             guard $ kw == kw'
             pure $ GHC.srcSpanEndLine s
 
@@ -104,7 +104,7 @@ printModuleHeader maxCols conf ls lmodul =
             Just lexports -> Just $ doSort $ commentGroups
                 (GHC.srcSpanToRealSrcSpan . GHC.getLocA)
                 (GHC.unLoc lexports)
-                (epAnnComments . GHC.ann $ GHC.getLoc lexports)
+                (epAnnComments $ GHC.getLoc lexports)
 
         printedModuleHeader = runPrinter_
             (PrinterConfig maxCols)

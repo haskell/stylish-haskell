@@ -4,12 +4,12 @@ on: ['pull_request', 'push']
 
 jobs:
   build:
-    name: Build on ${{ matrix.os }}
+    name: Build on ${{ matrix.os }} with GHC ${{ matrix.ghc }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest]
-        ghc: ["9.4", "9.6", "9.8"]
+        ghc: ["9.6.6", "9.8", "9.10"]
 
     steps:
     - uses: actions/checkout@v4
@@ -22,18 +22,18 @@ jobs:
     - uses: actions/cache@v3
       with:
         path: ${{ steps.setup.outputs.cabal-store }}
-        key: ${{ runner.os }}-${{ matrix.ghc }}-v1-${{ hashFiles('*.cabal') }}
+        key: ${{ runner.os }}-${{ matrix.ghc }}-v2-${{ hashFiles('*.cabal') }}
         restore-keys: |
-          ${{ runner.os }}-${{ matrix.ghc }}-v1-
+          ${{ runner.os }}-${{ matrix.ghc }}-v2-
 
     - run: make build
     - run: make test
 
-    - if: startsWith(github.ref, 'refs/tags') && matrix.ghc == '9.6'
+    - if: startsWith(github.ref, 'refs/tags') && startsWith(matrix.ghc, '9.8')
       run: make artifact
 
     - uses: actions/upload-artifact@v4
-      if: startsWith(github.ref, 'refs/tags') && matrix.ghc == '9.6'
+      if: startsWith(github.ref, 'refs/tags') && startsWith(matrix.ghc, '9.8')
       with:
         path: artifacts/*
         name: artifacts-${{ runner.os }}

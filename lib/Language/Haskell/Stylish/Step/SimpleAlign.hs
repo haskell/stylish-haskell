@@ -160,9 +160,9 @@ multiWayIfToAlignable _conf _ = []
 
 --------------------------------------------------------------------------------
 grhsToAlignable
-    :: GHC.GenLocated (GHC.SrcSpanAnn' a) (Hs.GRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs))
+    :: GHC.GenLocated (GHC.EpAnnCO) (Hs.GRHS Hs.GhcPs (Hs.LHsExpr Hs.GhcPs))
     -> Maybe (Alignable GHC.RealSrcSpan)
-grhsToAlignable (GHC.L (GHC.SrcSpanAnn _ grhsloc) (Hs.GRHS _ guards@(_ : _) body)) = do
+grhsToAlignable (GHC.L (GHC.EpAnn (GHC.EpaSpan grhsloc) _ _ ) (Hs.GRHS _ guards@(_ : _) body)) = do
     let guardsLocs = map GHC.getLocA guards
         bodyLoc    = GHC.getLocA $ body
         left       = foldl1' GHC.combineSrcSpans guardsLocs
