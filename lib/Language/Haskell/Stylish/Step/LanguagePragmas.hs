@@ -198,5 +198,5 @@ isRedundantBangPatterns modul =
 
     getMatchStrict :: GHC.Match GHC.GhcPs (GHC.LHsExpr GHC.GhcPs) -> [()]
     getMatchStrict (GHC.Match _ ctx _ _) = case ctx of
-      GHC.FunRhs _ _ GHC.SrcStrict -> [()]
-      _                            -> []
+      GHC.FunRhs _ _ GHC.SrcStrict _ -> [()]
+      _                              -> []

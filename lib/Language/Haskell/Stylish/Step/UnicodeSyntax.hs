@@ -24,7 +24,7 @@ hsTyReplacements (GHC.HsFunTy _ arr _ _)
         Editor.replaceRealSrcSpan (GHC.epaLocationRealSrcSpan epaLoc) "→"
 hsTyReplacements (GHC.HsQualTy _ ctx _)
     | Just arrow <- GHC.ac_darrow . GHC.anns $ GHC.getLoc ctx
-    , (GHC.NormalSyntax, GHC.EpaSpan (GHC.RealSrcSpan loc _)) <- arrow =
+    , (GHC.EpUniTok (GHC.EpaSpan (GHC.RealSrcSpan loc _)) GHC.NormalSyntax) <- arrow =
         Editor.replaceRealSrcSpan loc "⇒"
 hsTyReplacements _ = mempty
 
@@ -32,7 +32,7 @@ hsTyReplacements _ = mempty
 --------------------------------------------------------------------------------
 hsSigReplacements :: GHC.Sig GHC.GhcPs -> Editor.Edits
 hsSigReplacements (GHC.TypeSig ann _ _)
-    | GHC.AddEpAnn GHC.AnnDcolon epaLoc <- GHC.asDcolon ann
+    | GHC.EpUniTok epaLoc _ <- GHC.asDcolon ann
     , GHC.EpaSpan (GHC.RealSrcSpan loc _) <- epaLoc =
         Editor.replaceRealSrcSpan loc "∷"
 hsSigReplacements _ = mempty

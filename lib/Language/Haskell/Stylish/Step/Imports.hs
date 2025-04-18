@@ -638,7 +638,7 @@ prepareImportList =
   prepareInner :: GHC.IE GHC.GhcPs -> GHC.IE GHC.GhcPs
   prepareInner = \case
     -- Simplify `A ()` to `A`.
-    GHC.IEThingWith x n GHC.NoIEWildcard [] md -> GHC.IEThingAbs x n md
+    GHC.IEThingWith x n GHC.NoIEWildcard [] md -> GHC.IEThingAbs (fst x) n md
     GHC.IEThingWith x n w ns md ->
       GHC.IEThingWith x n w (sortBy (compareWrappedName `on` GHC.unLoc) ns) md
     ie -> ie

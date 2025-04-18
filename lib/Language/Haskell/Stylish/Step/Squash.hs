@@ -1,4 +1,5 @@
 --------------------------------------------------------------------------------
+{-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE PatternGuards         #-}
 {-# LANGUAGE RecordWildCards       #-}
@@ -9,7 +10,6 @@ module Language.Haskell.Stylish.Step.Squash
 
 
 --------------------------------------------------------------------------------
-import           Data.Maybe                      (listToMaybe)
 import qualified GHC.Hs                          as GHC
 import qualified GHC.Types.SrcLoc                as GHC
 
@@ -45,10 +45,9 @@ squashFieldDecl _ = mempty
 
 
 --------------------------------------------------------------------------------
-fieldDeclSeparator :: [GHC.AddEpAnn]-> Maybe GHC.RealSrcSpan
-fieldDeclSeparator anns = listToMaybe $ do
-    GHC.AddEpAnn GHC.AnnDcolon (GHC.EpaSpan (GHC.RealSrcSpan s _)) <- anns
-    pure s
+fieldDeclSeparator :: GHC.EpUniToken "::" "\8759" -> Maybe GHC.RealSrcSpan
+fieldDeclSeparator (GHC.EpUniTok (GHC.EpaSpan (GHC.RealSrcSpan s _)) _) = Just s
+fieldDeclSeparator _ = Nothing
 
 
 --------------------------------------------------------------------------------
@@ -65,23 +64,23 @@ squashMatch lmatch = case GHC.m_grhss match of
   where
     match = GHC.unLoc lmatch
     mbLeft = case match of
-        GHC.Match _ (GHC.FunRhs name _ _) [] _ ->
+        GHC.Match _ (GHC.FunRhs name _ _ _ ) (GHC.L _ []) _ ->
             GHC.srcSpanToRealSrcSpan $ GHC.getLocA name
-        GHC.Match _ _ pats@(_ : _) _ ->
+        GHC.Match _ _ (GHC.L _ pats@(_ : _)) _ ->
             GHC.srcSpanToRealSrcSpan . GHC.getLocA $ last pats
         _ -> Nothing
 
 
 --------------------------------------------------------------------------------
 matchSeparator :: GHC.EpAnn GHC.GrhsAnn -> Maybe GHC.RealSrcSpan
-matchSeparator GHC.EpAnn {..}
-    | GHC.AddEpAnn _ (GHC.EpaSpan (GHC.RealSrcSpan s _)) <- GHC.ga_sep anns = Just s
-matchSeparator _ = Nothing
-
+matchSeparator GHC.EpAnn {..} = case GHC.ga_sep anns of
+                                  Left (GHC.EpTok (GHC.EpaSpan (GHC.RealSrcSpan s _))) -> Just s
+                                  Right (GHC.EpUniTok (GHC.EpaSpan (GHC.RealSrcSpan s _)) _) -> Just s
+                                  _ -> Nothing
 
 --------------------------------------------------------------------------------
 step :: Step
-step = makeStep "Squash" $ \ls (module') ->
+step = makeStep "Squash" $ \ls module' ->
     let changes =
             foldMap squashFieldDecl (everything module') <>
             foldMap squashMatch (everything module') in

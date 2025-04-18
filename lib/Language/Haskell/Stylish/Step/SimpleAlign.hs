@@ -112,7 +112,7 @@ matchGroupToAlignable conf mg = cases' ++ patterns'
 matchToAlignable
     :: GHC.LocatedA (Hs.Match Hs.GhcPs (Hs.LHsExpr Hs.GhcPs))
     -> Maybe (Either (Alignable GHC.RealSrcSpan) (Alignable GHC.RealSrcSpan))
-matchToAlignable (GHC.L matchLoc m@(Hs.Match _ Hs.CaseAlt pats@(_ : _) grhss)) = do
+matchToAlignable (GHC.L matchLoc m@(Hs.Match _ Hs.CaseAlt (GHC.L _ pats@(_ : _)) grhss)) = do
   let patsLocs   = map GHC.getLocA pats
       pat        = last patsLocs
       guards     = getGuards m
@@ -128,7 +128,7 @@ matchToAlignable (GHC.L matchLoc m@(Hs.Match _ Hs.CaseAlt pats@(_ : _) grhss)) =
     , aRight     = rightPos
     , aRightLead = length "-> "
     }
-matchToAlignable (GHC.L matchLoc (Hs.Match _ (Hs.FunRhs name _ _) pats@(_ : _) grhss)) = do
+matchToAlignable (GHC.L matchLoc (Hs.Match _ (Hs.FunRhs name _ _ _) (GHC.L _ pats@(_ : _)) grhss)) = do
   body <- unguardedRhsBody grhss
   let patsLocs = map GHC.getLocA pats
       nameLoc  = GHC.getLocA name

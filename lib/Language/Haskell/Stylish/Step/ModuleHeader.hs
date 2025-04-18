@@ -81,18 +81,18 @@ printModuleHeader maxCols conf ls lmodul =
                 loc <- GHC.getLocA <$> GHC.hsmodExports modul
                 GHC.srcSpanEndLine <$> GHC.srcSpanToRealSrcSpan loc)
 
-        keywordLine kw = listToMaybe $ do
+        keywordLine kw = do
             GHC.EpAnn {..} <- pure $ GHC.hsmodAnn $ GHC.hsmodExt modul
-            GHC.AddEpAnn kw' (GHC.EpaSpan (GHC.RealSrcSpan s _)) <- GHC.am_main anns
-            guard $ kw == kw'
-            pure $ GHC.srcSpanEndLine s
+            case kw anns of
+              GHC.EpTok (GHC.EpaSpan (GHC.RealSrcSpan s _)) -> Just . GHC.srcSpanEndLine $ s
+              _ -> Nothing
 
-        moduleLine = keywordLine GHC.AnnModule
-        whereLine = keywordLine GHC.AnnWhere
+        moduleLine = keywordLine GHC.am_mod
+        whereLine = keywordLine GHC.am_where
 
         commentOnLine l = listToMaybe $ do
             comment <- epAnnComments $ GHC.hsmodAnn $ GHC.hsmodExt modul
-            guard $ GHC.srcSpanStartLine (GHC.anchor $ GHC.getLoc comment) == l
+            guard $ GHC.srcSpanStartLine (GHC.epaLocationRealSrcSpan $ GHC.getLoc comment) == l
             pure comment
 
         moduleComment = moduleLine >>= commentOnLine
@@ -152,7 +152,7 @@ printHeader conf mbName mbDeprec mbExps mbModuleComment mbWhereComment = do
                 attachModuleComment
             Single  | [egroup] <- exports
                     , not (commentGroupHasComments egroup)
-                    , [(export, _)] <- (cgItems egroup) -> do
+                    , [(export, _)] <- cgItems egroup -> do
                 printSingleLineExportList conf [export]
                 attachModuleComment
             Inline  | [] <- exports -> do

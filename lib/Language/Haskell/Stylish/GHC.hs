@@ -86,6 +86,6 @@ deepAnnComments :: (Data a, Typeable a) => a -> [GHC.LEpaComment]
 deepAnnComments = everything (++) (mkQ [] priorAndFollowing)
 
 priorAndFollowing :: GHC.EpAnnComments -> [GHC.LEpaComment]
-priorAndFollowing = sortOn (GHC.anchor . GHC.getLoc) . \case
+priorAndFollowing = sortOn (GHC.epaLocationRealSrcSpan . GHC.getLoc) . \case
     GHC.EpaComments         {..} -> priorComments
     GHC.EpaCommentsBalanced {..} -> priorComments ++ followingComments

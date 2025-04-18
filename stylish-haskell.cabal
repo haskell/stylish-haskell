@@ -37,7 +37,7 @@ Common depends
 
   Build-depends:
     aeson             >= 0.6    && < 2.3,
-    base              >= 4.8    && < 5,
+    base              >= 4.19    && < 5,
     bytestring        >= 0.9    && < 0.13,
     Cabal             >= 3.10   && < 4.0,
     containers        >= 0.3    && < 0.9,
@@ -59,17 +59,17 @@ Common depends
   -- and we have a new enough GHC. Note that
   -- this will only work if the user's
   -- compiler is of the matching major version!
-  if !flag(ghc-lib) && impl(ghc >= 9.8) && impl(ghc < 9.11)
+  if !flag(ghc-lib) && impl(ghc >= 9.8) && impl(ghc < 9.13)
     Build-depends:
-      ghc >= 9.10 && < 9.11,
+      ghc >= 9.12 && < 9.13,
       ghc-boot,
       ghc-boot-th
   else
     Build-depends:
-      ghc-lib-parser >= 9.10 && < 9.11
+      ghc-lib-parser >= 9.12 && < 9.13
 
   Build-depends:
-    ghc-lib-parser-ex >= 9.10 && < 9.11
+    ghc-lib-parser-ex >= 9.12 && < 9.13
 
 Library
   Import:         depends

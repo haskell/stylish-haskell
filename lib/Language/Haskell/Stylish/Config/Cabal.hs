@@ -53,7 +53,7 @@ findCabalFile verbose configSearchStrategy = case configSearchStrategy of
   go searched (p : ps) = do
 
 #if MIN_VERSION_Cabal(3,14,0)
-    let projectRoot = Just $ makeSymbolicPath p
+    let projectRoot = Just $ Cabal.makeSymbolicPath p
     potentialCabalFile <- Cabal.findPackageDesc projectRoot
 #else
     potentialCabalFile <- Cabal.findPackageDesc p

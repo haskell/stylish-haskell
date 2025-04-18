@@ -141,7 +141,7 @@ moduleLanguagePragmas =
     prag comment = case GHC.ac_tok (GHC.unLoc comment) of
         GHC.EpaBlockComment str
             | lang : p1 : ps <- tokenize str, map toLower lang == "language" ->
-                pure (GHC.anchor (GHC.getLoc comment), p1 :| ps)
+                pure (GHC.epaLocationRealSrcSpan (GHC.getLoc comment), p1 :| ps)
         _ -> Nothing
 
     tokenize = words .

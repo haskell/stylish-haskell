@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest]
-        ghc: ["9.6.6", "9.8", "9.10"] #using 9.6.6 as ghc-lib-parser-9.10.1.20250103 is not compatible with ghc-9.6.7. Re-enable when sorted
+        ghc: ["9.10", "9.12"]
 
     steps:
     - uses: actions/checkout@v4
