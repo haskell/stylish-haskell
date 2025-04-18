@@ -1,6 +1,6 @@
 Cabal-version: 2.4
 Name:          stylish-haskell
-Version:       0.14.6.0
+Version:       0.15.0.1
 Synopsis:      Haskell code prettifier
 Homepage:      https://github.com/haskell/stylish-haskell
 License:       BSD-3-Clause
@@ -39,7 +39,7 @@ Common depends
     aeson             >= 0.6    && < 2.3,
     base              >= 4.19    && < 5,
     bytestring        >= 0.9    && < 0.13,
-    Cabal             >= 3.14   && < 4.0,
+    Cabal             >= 3.10   && < 4.0,
     containers        >= 0.3    && < 0.9,
     directory         >= 1.2.3  && < 1.4,
     filepath          >= 1.1    && < 1.6,
