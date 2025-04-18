@@ -79,6 +79,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Data.Tests"
     , testCase "case 64" case64
     , testCase "case 65" case65
     , testCase "case 66 (issue #411)" case66
+    , testCase "case 67" case67
     ]
 
 case00 :: Assertion
@@ -1379,6 +1380,14 @@ case66 = assertSnippet (step indentIndentStyle) input input
     input =
       [ "data Foo = A | B | C"
       , "  deriving (Eq, Show)"
+      ]
+
+-- | Don't drop type from type data (TypeData)
+case67 :: Assertion
+case67 = assertSnippet (step indentIndentStyle) input input
+  where
+    input =
+      [ "type data Foo = A | B | C"
       ]
 
 sameSameStyle :: Config
