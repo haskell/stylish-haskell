@@ -1,42 +1,45 @@
 # CHANGELOG
 
-- 0.15.0.0 (2024-04-13)
-     * #480 Support with GHC 9.10 (By Jan Hrček)
+- 0.15.0.1 (2025-04-13)
+     *  #493 Support Cabal 3.12 again (By GuillaumedeVolpiano)
 
-     * #482 Add `ConfigSearchStrategy` to allow avoiding `getCurrentDirectory`
-       when loading config (by Jan Hrček)
+- 0.15.0.0 (2025-04-13)
+     *  #480 Support with GHC 9.10 (By Jan Hrček)
 
-       This is breaking API change that can be fixed like this:
+     *  #482 Add `ConfigSearchStrategy` to allow avoiding `getCurrentDirectory`
+        when loading config (by Jan Hrček)
 
-       ```diff
-       -format Nothing maybeFile contents
-       +format SearchFromCurrentDirectory maybeFile contents
+        This is breaking API change that can be fixed like this:
 
-       -format (Just cfgFile) maybeFile content
-       +format (UseConfig cfgFile) maybeFile content
-       ```
+        ```diff
+        -format Nothing maybeFile contents
+        +format SearchFromCurrentDirectory maybeFile contents
 
-     * Bump `Cabal` lower bound to 3.14
+        -format (Just cfgFile) maybeFile content
+        +format (UseConfig cfgFile) maybeFile content
+        ```
+
+     *  Bump `Cabal` lower bound to 3.14
 
 - 0.14.6.0 (2024-01-19)
-     * #471 Support GHC 9.8 (by Michael Peyton Jones)
-     * #440 Fix dissappearing `DEPRECATED` pragma on module (by Lev Dvorkin)
-     * #464 Fix compilation issue with GHC 9.4
+     *  #471 Support GHC 9.8 (by Michael Peyton Jones)
+     *  #440 Fix dissappearing `DEPRECATED` pragma on module (by Lev Dvorkin)
+     *  #464 Fix compilation issue with GHC 9.4
 
 - 0.14.5.0 (2023-06-23)
-     * #459 Support GHC 9.6 (by Michael Peyton Jones)
-     * #445 Default `ghc-lib` flag to True (by amesgen)
+     *  #459 Support GHC 9.6 (by Michael Peyton Jones)
+     *  #445 Default `ghc-lib` flag to True (by amesgen)
 
 - 0.14.4.0 (2023-01-09)
-     * #421 Support GHC 9.4 (by Lei Zhu)
-     * #439 Fix NoXyz extension issues for .cabal files (by Lev Dvorkin)
-     * #424 Deriving alignment for enums (by Lev Dvorkin)
-     * #416 Support Safe/Trustworthy/Unsafe extensions
+     *  #421 Support GHC 9.4 (by Lei Zhu)
+     *  #439 Fix NoXyz extension issues for .cabal files (by Lev Dvorkin)
+     *  #424 Deriving alignment for enums (by Lev Dvorkin)
+     *  #416 Support Safe/Trustworthy/Unsafe extensions
 
 - 0.14.3.0 (2022-09-28)
-     * Fix parsing of NoXyz extensions
-     * Bump `Cabal` upper bound to 4.0
-     * Add option to automatically group imports (by Tikhon Jelvis)
+     *  Fix parsing of NoXyz extensions
+     *  Bump `Cabal` upper bound to 4.0
+     *  Add option to automatically group imports (by Tikhon Jelvis)
 
 - 0.14.2.0 (2022-04-27)
      *  Add a build flag to force the use of ghc-lib-parser
