@@ -14,10 +14,6 @@ import           System.Exit              (exitFailure)
 import qualified System.IO                as IO
 import qualified System.IO.Strict         as IO.Strict
 
---------------------------------------------------------------------------------
-#if __GLASGOW_HASKELL__ < 808
-import           Data.Monoid              ((<>))
-#endif
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish
@@ -108,9 +104,8 @@ stylishHaskell sa = do
             BC8.putStr defaultConfigBytes
 
         else do
-            conf <- loadConfig verbose' $ case saConfig sa of
-              Nothing -> SearchFromCurrentDirectory
-              Just fp -> UseConfig fp
+            conf <- loadConfig verbose' $
+              maybe SearchFromCurrentDirectory UseConfig (saConfig sa)
             filesR <- case (saRecursive sa) of
               True -> findHaskellFiles (saVerbose sa) (saFiles sa)
               _    -> return $ saFiles sa

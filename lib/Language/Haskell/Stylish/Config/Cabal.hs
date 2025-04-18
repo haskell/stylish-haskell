@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 --------------------------------------------------------------------------------
 module Language.Haskell.Stylish.Config.Cabal
     ( findLanguageExtensions
@@ -50,11 +51,20 @@ findCabalFile verbose configSearchStrategy = case configSearchStrategy of
     verbose $ "Stylish Haskell will work basing on LANGUAGE pragmas in source files."
     return Nothing
   go searched (p : ps) = do
-    let projectRoot = Just $ Cabal.makeSymbolicPath p
+
+#if MIN_VERSION_Cabal(3,14,0)
+    let projectRoot = Just $ makeSymbolicPath p
     potentialCabalFile <- Cabal.findPackageDesc projectRoot
+#else
+    potentialCabalFile <- Cabal.findPackageDesc p
+#endif
     case potentialCabalFile of
       Right cabalFile -> pure $ Just $
+#if MIN_VERSION_Cabal(3,14,0)
         Cabal.interpretSymbolicPath projectRoot cabalFile
+#else
+        cabalFile
+#endif
       _ -> go (p : searched) ps
 
 
