@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- 0.15.1.0 (2025-04-13)
+     *  #491 Support GHC 9.12 (By GuillaumedeVolpiano)
+
 - 0.15.0.1 (2025-04-13)
      *  #493 Support Cabal 3.12 again (By GuillaumedeVolpiano)
 

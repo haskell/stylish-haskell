@@ -29,11 +29,11 @@ jobs:
     - run: make build
     - run: make test
 
-    - if: startsWith(github.ref, 'refs/tags') && startsWith(matrix.ghc, '9.8')
+    - if: startsWith(github.ref, 'refs/tags') && startsWith(matrix.ghc, '9.10')
       run: make artifact
 
     - uses: actions/upload-artifact@v4
-      if: startsWith(github.ref, 'refs/tags') && startsWith(matrix.ghc, '9.8')
+      if: startsWith(github.ref, 'refs/tags') && startsWith(matrix.ghc, '9.10')
       with:
         path: artifacts/*
         name: artifacts-${{ runner.os }}
