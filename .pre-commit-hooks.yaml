@@ -1,0 +1,7 @@
+-   id: stylish-haskell
+    name: haskell code prettifier
+    description: A haskell code prettifier.
+    entry: stylish-haskell
+    language: haskell
+    types: [haskell]
+    args: [-i]
