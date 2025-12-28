@@ -51,8 +51,8 @@ tests = testGroup "Language.Haskell.Stylish.Printer.ModuleHeader"
     , testCase "Group doc with 2 spaces" ex15
     , testCase "Group doc with 2 spaces, open_bracket = same_line" ex15a
     , testCase "Does not sort" ex16
-    , testCase "Repects separate_lists" ex17
-    , testCase "Repects separate_lists, open_bracket = same_line" ex17a
+    , testCase "Respects separate_lists" ex17
+    , testCase "Respects separate_lists, open_bracket = same_line" ex17a
     , testCase "Indents absent export list with always break_where" ex18
     , testCase "Respects bundled patterns" ex19
     , testCase "Respects bundled patterns, open_bracket = same_line" ex19a
