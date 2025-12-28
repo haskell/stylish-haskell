@@ -84,7 +84,7 @@ moduleImportGroups =
     groupByLine (fromMaybe err . GHC.srcSpanToRealSrcSpan . GHC.getLocA) .
     GHC.hsmodImports . GHC.unLoc
   where
-    err = error "moduleImportGroups: import without soure span"
+    err = error "moduleImportGroups: import without source span"
 
 -- The same logic as 'Language.Haskell.Stylish.Module.moduleImportGroups'.
 groupByLine :: (a -> RealSrcSpan) -> [a] -> [NonEmpty a]
