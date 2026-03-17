@@ -19,6 +19,7 @@ module Language.Haskell.Stylish
     , module Language.Haskell.Stylish.Verbose
     , version
     , format
+    , formatWith
     , ConfigSearchStrategy(..)
     , Lines
     , Step
@@ -106,6 +107,12 @@ runSteps exts mfp steps ls =
  foldM (runStep exts mfp) ls steps
 
 
+-- | Formats given contents using a 'Config' value directly.
+formatWith :: Config -> Maybe FilePath -> String -> Either String Lines
+formatWith conf maybeFilePath contents =
+  runSteps (configLanguageExtensions conf) maybeFilePath (configSteps conf) (lines contents)
+
+
 -- | Formats given contents.
 format ::
      ConfigSearchStrategy
@@ -116,7 +123,7 @@ format ::
   -> IO (Either String Lines)
 format configSearchStrategy maybeFilePath contents = do
   conf <- loadConfig (makeVerbose True) configSearchStrategy
-  pure $ runSteps (configLanguageExtensions conf) maybeFilePath (configSteps conf) $ lines contents
+  pure $ formatWith conf maybeFilePath contents
 
 
 --------------------------------------------------------------------------------
