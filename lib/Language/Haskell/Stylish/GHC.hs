@@ -27,7 +27,6 @@ import           Data.Generics                                       (Data,
                                                                       everything,
                                                                       mkQ)
 import           Data.List                                           (sortOn)
-import qualified GHC.Driver.Ppr                                      as GHC (showPpr)
 import           GHC.Driver.Session                                  (defaultDynFlags)
 import qualified GHC.Driver.Session                                  as GHC
 import qualified GHC.Hs                                              as GHC
@@ -77,7 +76,7 @@ getConDecls d@GHC.HsDataDefn {} = case GHC.dd_cons d of
   GHC.DataTypeCons _ cons -> cons
 
 showOutputable :: GHC.Outputable a => a -> String
-showOutputable = GHC.showPpr baseDynFlags
+showOutputable = GHC.showSDocOneLine GHC.defaultSDocContext . GHC.ppr
 
 epAnnComments :: GHC.EpAnn a -> [GHC.LEpaComment]
 epAnnComments GHC.EpAnn {..}   = priorAndFollowing comments

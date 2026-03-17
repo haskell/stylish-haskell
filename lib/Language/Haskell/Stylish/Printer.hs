@@ -98,11 +98,18 @@ runPrinter cfg (Printer printer) =
 runPrinter_ :: PrinterConfig -> Printer a -> Lines
 runPrinter_ cfg printer = snd (runPrinter cfg printer)
 
--- | Print text
+-- | Print text, handling embedded newlines by splitting across lines
 putText :: String -> P ()
-putText txt = do
-  l <- gets currentLine
-  modify \s -> s { currentLine = l <> txt }
+putText txt = go (break (== '\n') txt)
+  where
+    go (pre, rest) = do
+      l <- gets currentLine
+      modify \s -> s { currentLine = l <> pre }
+      case rest of
+        ('\n' : post) -> do
+          newline
+          go (break (== '\n') post)
+        _ -> pure ()
 
 -- | Check condition post action, and use fallback if false
 putCond :: (PrinterState -> Bool) -> P b -> P b -> P b
