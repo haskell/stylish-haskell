@@ -69,29 +69,52 @@ findCabalFile verbose configSearchStrategy = case configSearchStrategy of
 
 
 --------------------------------------------------------------------------------
+-- | Cabal 3.18 split 'Cabal.Verbosity' into flags plus output handles, so the
+-- verbosity constants are no longer a 'Cabal.Verbosity' on their own.
+silentVerbosity :: Cabal.Verbosity
+#if MIN_VERSION_Cabal(3,18,0)
+silentVerbosity = Cabal.mkVerbosity Cabal.defaultVerbosityHandles Cabal.silent
+#else
+silentVerbosity = Cabal.silent
+#endif
+
+
+--------------------------------------------------------------------------------
+-- | Flatten a 'Cabal.CondTree'.  Cabal 3.18 dropped the constraint type
+-- parameter, so 'Cabal.ignoreConditions' no longer returns a tuple.
+#if MIN_VERSION_Cabal(3,18,0)
+ignoreConds :: Semigroup a => Cabal.CondTree v a -> a
+ignoreConds = Cabal.ignoreConditions
+#else
+ignoreConds :: (Semigroup a, Semigroup c) => Cabal.CondTree v c a -> a
+ignoreConds = fst . Cabal.ignoreConditions
+#endif
+
+
+--------------------------------------------------------------------------------
 -- | Extract @default-extensions@ fields from a @.cabal@ file
 readDefaultLanguageExtensions :: Verbose -> FilePath -> IO [(Language.KnownExtension, Bool)]
 readDefaultLanguageExtensions verbose cabalFile = do
   verbose $ "Parsing " <> cabalFile <> "..."
-  packageDescription <- readGenericPackageDescription Cabal.silent cabalFile
+  packageDescription <- readGenericPackageDescription silentVerbosity cabalFile
   let library :: [Cabal.Library]
-      library = maybeToList $ fst . Cabal.ignoreConditions <$>
+      library = maybeToList $ ignoreConds <$>
         Cabal.condLibrary packageDescription
 
       subLibraries :: [Cabal.Library]
-      subLibraries = fst . Cabal.ignoreConditions . snd <$>
+      subLibraries = ignoreConds . snd <$>
         Cabal.condSubLibraries packageDescription
 
       executables :: [Cabal.Executable]
-      executables = fst . Cabal.ignoreConditions . snd <$>
+      executables = ignoreConds . snd <$>
         Cabal.condExecutables packageDescription
 
       testSuites :: [Cabal.TestSuite]
-      testSuites = fst . Cabal.ignoreConditions . snd <$>
+      testSuites = ignoreConds . snd <$>
         Cabal.condTestSuites packageDescription
 
       benchmarks :: [Cabal.Benchmark]
-      benchmarks = fst . Cabal.ignoreConditions . snd <$>
+      benchmarks = ignoreConds . snd <$>
         Cabal.condBenchmarks packageDescription
 
       gatherBuildInfos :: [Cabal.BuildInfo]
@@ -123,9 +146,17 @@ readGenericPackageDescription = readAndParseFile Cabal.parseGenericPackageDescri
 
     parseString parser verbosity name bs = do
       let (warnings, result) = Cabal.runParseResult (parser bs)
+#if MIN_VERSION_Cabal(3,18,0)
+      traverse_ (Cabal.warn verbosity . Cabal.showPWarning name . Cabal.pwarning) warnings
+#else
       traverse_ (Cabal.warn verbosity . Cabal.showPWarning name) warnings
+#endif
       case result of
           Right x -> return x
           Left (_, errors) -> do
+#if MIN_VERSION_Cabal(3,18,0)
+              traverse_ (Cabal.warn verbosity . Cabal.showPError name . Cabal.perror) errors
+#else
               traverse_ (Cabal.warn verbosity . Cabal.showPError name) errors
+#endif
               Cabal.die' verbosity $ "Failed parsing \"" ++ name ++ "\"."
